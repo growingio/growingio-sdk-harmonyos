@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "GrowingAnalytics",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet"
+    ]
+  }
+}
