@@ -6,7 +6,7 @@ import { GrowingAnalytics } from '@growingio/analytics'
 export default class EntryAbility extends UIAbility {
   onCreate(want, launchParam) {
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
-    GrowingAnalytics.start(this.context, 'Your AccountId', 'Your DataSourceId')
+    GrowingAnalytics.start(this.context, 'Your AccountId', 'Your DataSourceId', 'URL Scheme')
   }
 
   onDestroy() {
@@ -34,10 +34,12 @@ export default class EntryAbility extends UIAbility {
   onForeground() {
     // Ability has brought to foreground
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onForeground');
+    GrowingAnalytics.onForeground()
   }
 
   onBackground() {
     // Ability has back to background
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onBackground');
+    GrowingAnalytics.onBackground()
   }
 }
