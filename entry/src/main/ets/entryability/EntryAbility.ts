@@ -1,12 +1,17 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import hilog from '@ohos.hilog';
 import window from '@ohos.window';
-import { GrowingAnalytics } from '@growingio/analytics'
+import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 
 export default class EntryAbility extends UIAbility {
   onCreate(want, launchParam) {
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
-    GrowingAnalytics.start(this.context, 'Your AccountId', 'Your DataSourceId', 'URL Scheme')
+    var config = new GrowingConfig(
+      '0a1b4118dd954ec3bcc69da5138bdb96', 'ab555003531e0fd1', 'growing.123456789'
+    )
+    config.debugEnabled = true
+    config.sessionInterval = 30
+    GrowingAnalytics.start(this.context, config)
   }
 
   onDestroy() {

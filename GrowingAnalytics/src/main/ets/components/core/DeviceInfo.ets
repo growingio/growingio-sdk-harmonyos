@@ -19,13 +19,12 @@ export default class DeviceInfo {
 
   static instance: DeviceInfo = null
 
-  constructor() {
-  }
+  constructor() { }
 
-  static sharedInstance(): DeviceInfo {
+  static async sharedInstance(): Promise<DeviceInfo> {
     if (this.instance == null) {
       this.instance = new DeviceInfo()
-      this.instance.initDeviceInfo()
+      await this.instance.initDeviceInfo()
     }
     return this.instance
   }
@@ -47,7 +46,7 @@ export default class DeviceInfo {
     var deviceId = await GrowingAnalytics.core.preferences.getValue(PREFERENCE_DEVICE_ID) as string
     if (deviceId == '') {
       let uuid = util.generateRandomUUID(false)
-      GrowingAnalytics.core.preferences.put(PREFERENCE_DEVICE_ID, uuid)
+      GrowingAnalytics.core.preferences.put(uuid, PREFERENCE_DEVICE_ID)
       deviceId = uuid
     }
     this.deviceId = deviceId

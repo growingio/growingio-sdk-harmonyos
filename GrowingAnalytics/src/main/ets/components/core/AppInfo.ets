@@ -2,7 +2,6 @@ import bundleManager from '@ohos.bundle.bundleManager'
 
 export default class AppInfo {
   domain: string = ''
-  appState: string = ''
   appChannel: string = ''
   appName: string = ''
   appVersion: string = ''
@@ -10,19 +9,20 @@ export default class AppInfo {
   static instance: AppInfo = null
   constructor() { }
 
-  static sharedInstance(): AppInfo {
+  static async sharedInstance(): Promise<AppInfo> {
     if (this.instance == null) {
       this.instance = new AppInfo()
-      this.instance.initAppInfo()
+      await this.instance.initAppInfo()
     }
     return this.instance
   }
 
   async initAppInfo() {
-    var bundleInfo = await bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION)
+    var bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
+    var bundleInfo = await bundleManager.getBundleInfoForSelf(bundleFlags)
     this.domain = bundleInfo.name
     this.appChannel = 'Harmony'
-    this.appName = bundleInfo.appInfo.label
+    this.appName = bundleInfo.name // TODO
     this.appVersion = bundleInfo.versionName
   }
 }

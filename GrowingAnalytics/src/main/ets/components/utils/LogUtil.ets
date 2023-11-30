@@ -5,20 +5,20 @@ export class LogUtil {
     if (!this.debugEnabled) {
       return
     }
-    console.info(message, args)
+    console.info('[GrowingAnalytics] ' + message, args)
   }
 
   static error(message: string, ...args: any[]) {
     if (!this.debugEnabled) {
       return
     }
-    console.error(message, args)
+    console.error('[GrowingAnalytics] ' + message, args)
   }
 
   static warn(message: string, ...args: any[]) {
     if (!this.debugEnabled) {
       return
     }
-    console.warn(message, args)
+    console.warn('[GrowingAnalytics] ' + message, args)
   }
 }

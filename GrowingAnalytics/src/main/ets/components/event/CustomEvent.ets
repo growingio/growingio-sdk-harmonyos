@@ -1,20 +1,29 @@
-import Event, { EventType } from './Event'
-import Session from '../core/Session'
+import Event, { EventType, AttributesType } from './Event'
+import EventBuilder from './EventBuilder'
 
 export default class CustomEvent extends Event {
   eventName: string = ''
-  attributes: object
+  attributes: AttributesType
 
-  static create(eventName: string, attributes: object): Promise<CustomEvent> {
+  static create(eventName: string, attributes: AttributesType): Promise<CustomEvent> {
     var event = new CustomEvent()
     event.eventName = eventName
-    event.attributes = attributes
+    event.attributes = this.convertAttributes(attributes)
     event.eventType = EventType.Custom
-    event.sessionId = Session.sharedInstance().sessionId
-    return event.build()
+    return EventBuilder.build(event)
   }
 
-  toSerialize(): Object {
-    return null
+  static convertAttributes(attributes: AttributesType): { [key: string]: string } {
+    var result: { [key: string]: string } = {}
+    Object.keys(attributes).forEach(key => {
+      var value = attributes[key]
+      if (Array.isArray(value)) {
+        const stringValue = value.map(String).join('||')
+        result[key] = stringValue
+      } else {
+        result[key] = String(value)
+      }
+    })
+    return result
   }
 }

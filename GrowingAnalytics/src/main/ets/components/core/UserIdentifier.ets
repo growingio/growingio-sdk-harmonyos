@@ -1,5 +1,6 @@
 import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
 import { PREFERENCE_USER_ID, PREFERENCE_USER_KEY } from '../utils/Constants'
+import { LogUtil } from '../utils/LogUtil'
 
 export default class UserIdentifier {
   curUserId: string = ''
@@ -32,6 +33,7 @@ export default class UserIdentifier {
       return
     }
     if (userId == null || userId.length == 0) {
+      LogUtil.info('Clear loginUserId')
       this.curUserId = null
       this.curUserKey = null
       GrowingAnalytics.core.preferences.put('', PREFERENCE_USER_ID)
@@ -41,6 +43,11 @@ export default class UserIdentifier {
     if (userId === this.curUserId && userKey === this.curUserKey) {
       return
     }
+
+    LogUtil.info('loginUserId did changed, userId from '
+    + ((this.curUserId == null || this.curUserId.length == 0) ? 'undefined' : this.curUserId) + ' to ' + userId
+    + ', userKey from ' + ((this.curUserKey == null || this.curUserKey.length == 0) ? 'undefined' : this.curUserKey)
+    + ' to ' + userKey)
     this.curUserId = userId
     this.curUserKey = userKey
     GrowingAnalytics.core.preferences.put(userId, PREFERENCE_USER_ID)
