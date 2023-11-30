@@ -1,4 +1,5 @@
 import Event, { EventType } from './Event'
+import Session from '../core/Session'
 
 export default class CustomEvent extends Event {
   eventName: string = ''
@@ -9,6 +10,7 @@ export default class CustomEvent extends Event {
     event.eventName = eventName
     event.attributes = attributes
     event.eventType = EventType.Custom
+    event.sessionId = Session.sharedInstance().sessionId
     return event.build()
   }
 

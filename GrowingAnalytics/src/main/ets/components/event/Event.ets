@@ -1,6 +1,5 @@
 import AppInfo from '../core/AppInfo'
 import DeviceInfo from '../core/DeviceInfo'
-import Session from '../core/Session'
 import UserIdentifier from '../core/UserIdentifier'
 import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
 import { PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
@@ -46,7 +45,6 @@ export default class Event {
     this.userId = userId
     var userKey = await userIdentifier.userKey()
     this.userKey = userKey
-    this.sessionId = Session.sharedInstance().sessionId
     this.eventSequenceId = await this.updateEventSequenceId()
     this.networkState = 'WiFi'
     this.timestamp = new Date().getUTCMilliseconds()
