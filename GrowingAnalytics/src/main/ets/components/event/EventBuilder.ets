@@ -13,7 +13,7 @@ export default class EventBuilder {
     event.timestamp = Date.now()
     event.sdkVersion = SDK_VERSION
 
-    var deviceInfo = await DeviceInfo.sharedInstance()
+    let deviceInfo = await DeviceInfo.sharedInstance()
     event.deviceId = deviceInfo.deviceId
     event.platform = deviceInfo.platform
     event.platformVersion = deviceInfo.platformVersion
@@ -25,13 +25,13 @@ export default class EventBuilder {
     event.language = deviceInfo.language
     event.timezoneOffset = deviceInfo.timezoneOffset
 
-    var appInfo = await AppInfo.sharedInstance()
+    let appInfo = await AppInfo.sharedInstance()
     event.domain = appInfo.domain
     event.appChannel = appInfo.appChannel
     event.appName = appInfo.appName
     event.appVersion = appInfo.appVersion
 
-    var core = GrowingAnalytics.core
+    let core = GrowingAnalytics.core
     event.dataSourceId = core.config.dataSourceId
     event.urlScheme = core.config.urlScheme
     event.sessionId = core.session.sessionId
@@ -39,17 +39,17 @@ export default class EventBuilder {
     event.latitude = Math.abs(core.location.latitude) > 0 ? core.location.latitude : undefined
     event.longitude = Math.abs(core.location.longitude) > 0 ? core.location.longitude : undefined
 
-    var userIdentifier = UserIdentifier.sharedInstance()
-    var userId = await userIdentifier.userId()
+    let userIdentifier = UserIdentifier.sharedInstance()
+    let userId = await userIdentifier.userId()
     event.userId = userId.length > 0 ? userId : undefined
-    var userKey = await userIdentifier.userKey()
+    let userKey = await userIdentifier.userKey()
     event.userKey = userKey.length > 0 ? userKey : undefined
 
     return event
   }
 
   static async updateEventSequenceId(): Promise<number> {
-    var se = await GrowingAnalytics.core.preferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID) as number
+    let se = await GrowingAnalytics.core.preferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID) as number
     if (!se || se == 0 || se == NaN) {
       se = 0
     }

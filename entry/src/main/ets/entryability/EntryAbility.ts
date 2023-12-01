@@ -6,7 +6,7 @@ import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 export default class EntryAbility extends UIAbility {
   onCreate(want, launchParam) {
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
-    var config = new GrowingConfig(
+    let config = new GrowingConfig(
       '0a1b4118dd954ec3bcc69da5138bdb96', 'ab555003531e0fd1', 'growing.123456789'
     )
     config.debugEnabled = true

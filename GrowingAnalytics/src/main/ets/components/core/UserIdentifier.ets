@@ -60,7 +60,7 @@ export default class UserIdentifier {
     if (userId == null || userId.length == 0) {
       return
     }
-    var oldUserId = this.latestNonnullUserId
+    let oldUserId = this.latestNonnullUserId
     this.latestNonnullUserId = userId
 
     if (oldUserId == null || oldUserId.length == 0) {

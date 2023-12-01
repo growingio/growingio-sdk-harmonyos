@@ -23,7 +23,7 @@ export class GrowingConfig {
   }
 
   copy(): GrowingConfig {
-    var config = new GrowingConfig(
+    let config = new GrowingConfig(
       this.accountId,
       this.dataSourceId,
       this.urlScheme,

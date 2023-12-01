@@ -33,7 +33,7 @@ export default class DeviceInfo {
     this.platform = 'HarmonyOS'
     this.platformVersion = deviceInfo.displayVersion
 
-    var displayInfo = display.getDefaultDisplaySync()
+    let displayInfo = display.getDefaultDisplaySync()
     this.screenHeight = displayInfo.height
     this.screenWidth = displayInfo.width
 
@@ -43,7 +43,7 @@ export default class DeviceInfo {
     this.language = I18n.System.getSystemLanguage()
     this.timezoneOffset = new Date().getTimezoneOffset() + ''
 
-    var deviceId = await GrowingAnalytics.core.preferences.getValue(PREFERENCE_DEVICE_ID) as string
+    let deviceId = await GrowingAnalytics.core.preferences.getValue(PREFERENCE_DEVICE_ID) as string
     if (deviceId == '') {
       let uuid = util.generateRandomUUID(false)
       GrowingAnalytics.core.preferences.put(uuid, PREFERENCE_DEVICE_ID)

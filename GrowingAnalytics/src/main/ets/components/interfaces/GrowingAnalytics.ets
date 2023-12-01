@@ -15,7 +15,7 @@ export class GrowingAnalytics {
     if (GrowingAnalytics._isInitializedSuccessfully) {
       return
     }
-    var config = configuration.copy()
+    let config = configuration.copy()
     GrowingAnalytics.core = new AnalyticsCore(context, config)
     GrowingAnalytics._isInitializedSuccessfully = true
     LogUtil.debugEnabled = config.debugEnabled

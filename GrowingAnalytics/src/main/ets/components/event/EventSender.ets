@@ -15,9 +15,9 @@ export default class EventSender {
       GrowingAnalytics.core.session.generateVisit()
     }
 
-    var serialize = event.toSerialize()
-    var request = http.createHttp()
-    var url = EventSender.url()
+    let serialize = event.toSerialize()
+    let request = http.createHttp()
+    let url = EventSender.url()
 
     request.request(url, {
       method: http.RequestMethod.POST,
@@ -40,9 +40,9 @@ export default class EventSender {
   }
 
   static url() {
-    var config = GrowingAnalytics.core.config
-    var serverHost = config.dataCollectionServerHost
-    var accountId = config.accountId
+    let config = GrowingAnalytics.core.config
+    let serverHost = config.dataCollectionServerHost
+    let accountId = config.accountId
     return serverHost + '/v3/projects/' + accountId + '/collect?stm=' + Date.now()
   }
 }

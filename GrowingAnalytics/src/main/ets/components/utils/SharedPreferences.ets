@@ -35,9 +35,9 @@ export default class SharedPreferences {
 
   async getValue(key: string): Promise<preferences.ValueType> {
     await this.getPreferences()
-    var value: preferences.ValueType
+    let value: preferences.ValueType
     try {
-      const result = await this.preferences.get(key, '')
+      let result = await this.preferences.get(key, '')
       value = result as preferences.ValueType
     } catch (e) {
       LogUtil.error("Failed to get value of " + key + ". code =" + e.code + ", message =" + e.message)

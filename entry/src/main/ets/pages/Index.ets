@@ -83,8 +83,8 @@ struct Index {
   }
 
   setLocation() {
-    var latitude: number = 30.0
-    var longitude: number = 120.0
+    const latitude: number = 30.0
+    const longitude: number = 120.0
     GrowingAnalytics.setLocation(latitude, longitude)
   }
 

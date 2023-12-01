@@ -25,7 +25,7 @@ export default class AnalyticsCore {
   }
 
   setDataCollectionEnabled(enabled: boolean) {
-    var config = this.config
+    let config = this.config
     if (config.dataCollectionEnabled == enabled) {
       return
     }
@@ -54,12 +54,12 @@ export default class AnalyticsCore {
   async setLoginUserAttributes(
     attributes: AttributesType
   ) {
-    var e = await LoginUserAttributesEvent.create(attributes)
+    let e = await LoginUserAttributesEvent.create(attributes)
     EventSender.sendEvent(e)
   }
 
   async getDeviceId() {
-    var deviceInfo = await DeviceInfo.sharedInstance()
+    let deviceInfo = await DeviceInfo.sharedInstance()
     return deviceInfo.deviceId
   }
 
@@ -67,9 +67,8 @@ export default class AnalyticsCore {
     eventName: string,
     attributes: AttributesType = null
   ) {
-    var generalProps = this.generalProps.getGeneralProps()
-    var attributesM = { ...generalProps, ...attributes }
-    var e = await CustomEvent.create(eventName, attributesM)
+    let generalProps = this.generalProps.getGeneralProps()
+    let e = await CustomEvent.create(eventName, { ...generalProps, ...attributes })
     EventSender.sendEvent(e)
   }
 }

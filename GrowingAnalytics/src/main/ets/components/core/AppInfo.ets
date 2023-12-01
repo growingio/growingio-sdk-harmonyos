@@ -18,8 +18,8 @@ export default class AppInfo {
   }
 
   async initAppInfo() {
-    var bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
-    var bundleInfo = await bundleManager.getBundleInfoForSelf(bundleFlags)
+    let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
+    let bundleInfo = await bundleManager.getBundleInfoForSelf(bundleFlags)
     this.domain = bundleInfo.name
     this.appChannel = 'Harmony'
     this.appName = bundleInfo.name // TODO

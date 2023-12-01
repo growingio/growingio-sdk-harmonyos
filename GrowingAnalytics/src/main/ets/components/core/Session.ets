@@ -18,7 +18,7 @@ export default class Session {
     if (this._latestOnBackgroundTime == 0) {
       return
     }
-    var config = GrowingAnalytics.core.config
+    let config = GrowingAnalytics.core.config
     if (Date.now() - this._latestOnBackgroundTime >= config.sessionInterval * 1000) {
       this.refreshSession()
       this.generateVisit()
@@ -36,12 +36,12 @@ export default class Session {
   }
 
   async generateVisit() {
-    var config = GrowingAnalytics.core.config
+    let config = GrowingAnalytics.core.config
     if (!config.dataCollectionEnabled) {
       return
     }
     this.sentVisitAfterRefreshSession = true
-    var e = await VisitEvent.create()
+    let e = await VisitEvent.create()
     EventSender.sendEvent(e)
   }
 }

@@ -23,22 +23,22 @@ export default class EventTimer {
   }
 
   static async trackTimerStart(eventName: string): Promise<string> {
-    var config = GrowingAnalytics.core.config
+    let config = GrowingAnalytics.core.config
     if (!config.dataCollectionEnabled) {
       return
     }
 
-    var currentTime = await systemUptime.getRealTime(false)
-    var timer = new EventTimer(eventName, currentTime, 0)
-    var timerId = eventName + util.generateRandomUUID(false)
+    let currentTime = await systemUptime.getRealTime(false)
+    let timer = new EventTimer(eventName, currentTime, 0)
+    let timerId = eventName + '_' + util.generateRandomUUID(false)
 
     this.timers[timerId] = timer
     return timerId
   }
 
   static async trackTimerPause(timerId: string) {
-    var currentTime = await systemUptime.getRealTime(false)
-    var timer = this.timers[timerId]
+    let currentTime = await systemUptime.getRealTime(false)
+    let timer = this.timers[timerId]
     if (!timer || timer.isPaused()) {
       return
     }
@@ -47,8 +47,8 @@ export default class EventTimer {
   }
 
   static async trackTimerResume(timerId: string) {
-    var currentTime = await systemUptime.getRealTime(false)
-    var timer = this.timers[timerId]
+    let currentTime = await systemUptime.getRealTime(false)
+    let timer = this.timers[timerId]
     if (!timer || !timer.isPaused()) {
       return
     }
@@ -56,15 +56,15 @@ export default class EventTimer {
   }
 
   static async trackTimerEnd(timerId: string, attributes: AttributesType = {}) {
-    var currentTime = await systemUptime.getRealTime(false)
-    var timer = this.timers[timerId]
+    let currentTime = await systemUptime.getRealTime(false)
+    let timer = this.timers[timerId]
     if (!timer) {
       return
     }
-    var eventName = timer.eventName
-    var duration = this.durationFrom(timer.startTime, currentTime) + timer.duration
+    let eventName = timer.eventName
+    let duration = this.durationFrom(timer.startTime, currentTime) + timer.duration
     attributes[Event_DURATION] = (duration / 1000.0).toFixed(3) + ''
-    var e = await CustomEvent.create(eventName, attributes)
+    let e = await CustomEvent.create(eventName, attributes)
     EventSender.sendEvent(e)
     delete this.timers[timerId]
   }
@@ -78,9 +78,9 @@ export default class EventTimer {
   }
 
   static async handleAllTimersPause() {
-    var currentTime = await systemUptime.getRealTime(false)
+    let currentTime = await systemUptime.getRealTime(false)
     Object.keys(this.timers).forEach(timerId => {
-      var timer = this.timers[timerId]
+      let timer = this.timers[timerId]
       if (timer.isPaused()) {
         return
       }
@@ -90,9 +90,9 @@ export default class EventTimer {
   }
 
   static async handleAllTimersResume() {
-    var currentTime = await systemUptime.getRealTime(false)
+    let currentTime = await systemUptime.getRealTime(false)
     Object.keys(this.timers).forEach(timerId => {
-      var timer = this.timers[timerId]
+      let timer = this.timers[timerId]
       if (timer.isPaused()) {
         return
       }
@@ -108,7 +108,7 @@ export default class EventTimer {
     if (startTime <= 0) {
       return 0
     }
-    var duration = endTime - startTime
+    let duration = endTime - startTime
     return (duration > 0 && duration < 24 * 60 * 60 * 1000) ? duration : 0
   }
 }
