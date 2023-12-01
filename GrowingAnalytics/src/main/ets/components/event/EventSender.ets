@@ -11,10 +11,6 @@ export default class EventSender {
       return
     }
 
-    if (!GrowingAnalytics.core.session.sentVisitAfterRefreshSession) {
-      GrowingAnalytics.core.session.generateVisit()
-    }
-
     let serialize = event.toSerialize()
     let request = http.createHttp()
     let url = EventSender.url()

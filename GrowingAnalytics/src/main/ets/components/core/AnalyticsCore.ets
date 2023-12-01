@@ -32,7 +32,6 @@ export default class AnalyticsCore {
     config.dataCollectionEnabled = enabled
     if (enabled) {
       this.session.refreshSession()
-      this.session.generateVisit()
     }
   }
 

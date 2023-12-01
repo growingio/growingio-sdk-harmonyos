@@ -69,7 +69,6 @@ export default class UserIdentifier {
     // A=>B
     if (oldUserId != userId) {
       GrowingAnalytics.core.session.refreshSession()
-      GrowingAnalytics.core.session.generateVisit()
     }
   }
 }

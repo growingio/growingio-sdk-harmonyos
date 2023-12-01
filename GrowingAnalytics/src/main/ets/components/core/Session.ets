@@ -5,12 +5,11 @@ import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
 
 export default class Session {
   sessionId: string = null
-  sentVisitAfterRefreshSession: boolean = false
-  private _latestOnBackgroundTime: number = 0
   sessionState: SessionState = SessionState.Foreground
+  private _latestOnBackgroundTime: number = 0
 
   constructor() {
-    this.refreshSession()
+    this.sessionId = util.generateRandomUUID(false)
   }
 
   onForeground() {
@@ -21,7 +20,6 @@ export default class Session {
     let config = GrowingAnalytics.core.config
     if (Date.now() - this._latestOnBackgroundTime >= config.sessionInterval * 1000) {
       this.refreshSession()
-      this.generateVisit()
     }
   }
 
@@ -32,7 +30,7 @@ export default class Session {
 
   refreshSession() {
     this.sessionId = util.generateRandomUUID(false)
-    this.sentVisitAfterRefreshSession = false
+    this.generateVisit()
   }
 
   async generateVisit() {
@@ -40,7 +38,6 @@ export default class Session {
     if (!config.dataCollectionEnabled) {
       return
     }
-    this.sentVisitAfterRefreshSession = true
     let e = await VisitEvent.create()
     EventSender.sendEvent(e)
   }
