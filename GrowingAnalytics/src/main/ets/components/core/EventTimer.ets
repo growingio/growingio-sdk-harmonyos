@@ -6,7 +6,7 @@ import CustomEvent from '../event/CustomEvent'
 import EventSender from '../event/EventSender'
 
 export default class EventTimer {
-  static timers: { string: EventTimer }
+  static timers: { [key: string]: EventTimer } = {}
 
   eventName: string
   startTime: number
@@ -74,7 +74,7 @@ export default class EventTimer {
   }
 
   static clearAllTimers() {
-    this.timers = {} as { string: EventTimer }
+    this.timers = {}
   }
 
   static async handleAllTimersPause() {

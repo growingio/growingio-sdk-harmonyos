@@ -30,6 +30,9 @@ export class GrowingAnalytics {
   }
 
   static setDataCollectionEnabled = (enabled: boolean) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.setDataCollectionEnabled(enabled)
   }
 
@@ -37,6 +40,9 @@ export class GrowingAnalytics {
     userId: string,
     userKey: string = ''
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.setLoginUserId(userId, userKey)
   }
 
@@ -44,20 +50,32 @@ export class GrowingAnalytics {
     latitude: number,
     longitude: number
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.setLocation(latitude, longitude)
   }
 
   static cleanLocation = () => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.setLocation(0, 0)
   }
 
   static setLoginUserAttributes = (
     attributes: AttributesType
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.setLoginUserAttributes(attributes)
   }
 
   static getDeviceId = async () => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return ''
+    }
     return await GrowingAnalytics.core.getDeviceId()
   }
 
@@ -65,24 +83,36 @@ export class GrowingAnalytics {
   eventName: string,
   attributes: AttributesType = null
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.track(eventName, attributes)
   }
 
   static trackTimerStart = async (
     eventName: string
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return ''
+    }
     return await EventTimer.trackTimerStart(eventName)
   }
 
   static trackTimerPause = (
     timerId: string
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     EventTimer.trackTimerPause(timerId)
   }
 
   static trackTimerResume = (
     timerId: string
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     EventTimer.trackTimerResume(timerId)
   }
 
@@ -90,41 +120,65 @@ export class GrowingAnalytics {
     timerId: string,
     attributes: AttributesType = {}
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     EventTimer.trackTimerEnd(timerId, attributes)
   }
 
   static removeTimer = (
     timerId: string
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     EventTimer.removeTimer(timerId)
   }
 
   static clearTrackTimer = () => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     EventTimer.clearAllTimers()
   }
 
   static setGeneralProps = (
     props: AttributesType
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.generalProps.setGeneralProps(props)
   }
 
   static removeGeneralProps = (
     keys: string[]
   ) => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.generalProps.removeGeneralProps(keys)
   }
 
   static clearGeneralProps = () => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.generalProps.clearGeneralProps()
   }
 
   static onForeground = () => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.session.onForeground()
     EventTimer.handleAllTimersResume()
   }
 
   static onBackground = () => {
+    if (!GrowingAnalytics._isInitializedSuccessfully) {
+      return
+    }
     GrowingAnalytics.core.session.onBackground()
     EventTimer.handleAllTimersPause()
   }
