@@ -152,7 +152,7 @@ GrowingAnalytics.cleanLocation()
 | 参数         | 参数类型                                                     | 说明                                                         |
 | ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | `eventName`  | `string`                                                     | 事件名，事件标识符                                           |
-| `attributes` | `{ [key: string]: string | number | boolean | string[] | number[] }` | 事件发生时所伴随的属性信息；当事件属性关联有维度表时，属性值为对应的维度表模型 ID(记录 ID)（可选） |
+| `attributes` | `{ [key: string]: string &#124; number &#124; boolean &#124; string[] &#124; number[] }` | 事件发生时所伴随的属性信息；当事件属性关联有维度表时，属性值为对应的维度表模型 ID(记录 ID)（可选） |
 
 ##### 示例
 
@@ -202,7 +202,7 @@ GrowingAnalytics.track('buyProduct2', {
 | 参数         | 参数类型                     | 说明                                                         |
 | ------------ |--------------------------| ------------------------------------------------------------ |
 | `eventName`  | `string`                 | 事件名，事件标识符                                           |
-| `attributes` | `{ [key: string]: string | number | boolean | string[] | number[] }` | 事件发生时所伴随的属性信息；当事件属性关联有维度表时，属性值为对应的维度表模型 ID(记录 ID)（可选） |
+| `attributes` | `{ [key: string]: string &#124; number &#124; boolean &#124; string[] &#124; number[] }` | 事件发生时所伴随的属性信息；当事件属性关联有维度表时，属性值为对应的维度表模型 ID(记录 ID)（可选） |
 | `timerId`    | `string`                 | 计时器唯一标识符，由`trackTimerStart`返回                    |
 
 ##### 示例
@@ -242,7 +242,7 @@ GrowingAnalytics.clearTrackTimer()
 
 | 参数         | 参数类型                                                     | 说明         |
 | ------------ | ------------------------------------------------------------ | ------------ |
-| `attributes` | `{ [key: string]: string | number | boolean | string[] | number[] }` | 用户属性信息 |
+| `attributes` | `{ [key: string]: string &#124; number &#124; boolean &#124; string[] &#124; number[] }` | 用户属性信息 |
 
 ##### 示例
 
@@ -283,7 +283,7 @@ let deviceId = await GrowingAnalytics.getDeviceId()
 
 | 参数    | 参数类型                                                     | 说明                                                         |
 | ------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `props` | `{ [key: string]: string | number | boolean | string[] | number[] }` | 事件发生时所伴随的属性信息；当事件属性关联有维度表时，属性值为对应的维度表模型 ID(记录 ID) |
+| `props` | `{ [key: string]: string &#124; number &#124; boolean &#124; string[] &#124; number[] }`  | 事件发生时所伴随的属性信息；当事件属性关联有维度表时，属性值为对应的维度表模型 ID(记录 ID) |
 
 ##### 示例
 
