@@ -22,6 +22,7 @@ export default class UserIdentifier {
     if (this.instance == null) {
       let curUserId = await this.getUserId()
       let curUserKey = await this.getUserKey()
+      LogUtil.info('UserId from preferences is ' + curUserId + ', userKey from preferences is ' + curUserKey)
       this.instance = new UserIdentifier(curUserId, curUserKey)
     }
     return this.instance
@@ -54,7 +55,7 @@ export default class UserIdentifier {
       return
     }
 
-    LogUtil.info('loginUserId did changed, userId from '
+    LogUtil.info('LoginUserId did changed, userId from '
     + ((this.curUserId == null || this.curUserId.length == 0) ? 'undefined' : this.curUserId) + ' to ' + userId
     + ', userKey from ' + ((this.curUserKey == null || this.curUserKey.length == 0) ? 'undefined' : this.curUserKey)
     + ' to ' + userKey)

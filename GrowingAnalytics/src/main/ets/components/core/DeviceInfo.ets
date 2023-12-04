@@ -4,6 +4,7 @@ import I18n from '@ohos.i18n'
 import util from '@ohos.util'
 
 import { PREFERENCE_DEVICE_ID } from '../utils/Constants'
+import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
 export default class DeviceInfo {
@@ -45,6 +46,7 @@ export default class DeviceInfo {
     this.timezoneOffset = new Date().getTimezoneOffset() + ''
 
     let deviceId = await SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
+    LogUtil.info('DeviceId from preferences is ' + deviceId)
     if (deviceId == '') {
       deviceId = util.generateRandomUUID(false)
       SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)

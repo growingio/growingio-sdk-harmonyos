@@ -5,6 +5,7 @@ import AnalyticsCore from './AnalyticsCore'
 import CustomEvent from '../event/CustomEvent'
 import EventSender from '../event/EventSender'
 import { AttributesType, Event_DURATION } from '../utils/Constants'
+import { LogUtil } from '../utils/LogUtil'
 
 export default class EventTimer {
   static timers: { [key: string]: EventTimer } = {}
@@ -34,6 +35,7 @@ export default class EventTimer {
     let timerId = eventName + '_' + util.generateRandomUUID(false)
 
     this.timers[timerId] = timer
+    LogUtil.info('Track timer start, eventName: ' + eventName + ', timerId: ' + timerId)
     return timerId
   }
 
@@ -45,6 +47,7 @@ export default class EventTimer {
     }
     timer.duration = this.durationFrom(timer.startTime, currentTime)
     timer.startTime = 0
+    LogUtil.info('Track timer pause, timerId is ' + timerId)
   }
 
   static async trackTimerResume(timerId: string) {
@@ -54,6 +57,7 @@ export default class EventTimer {
       return
     }
     timer.startTime = currentTime
+    LogUtil.info('Track timer resume, timerId is ' + timerId)
   }
 
   static async trackTimerEnd(timerId: string, attributes: AttributesType = {}) {
@@ -68,17 +72,22 @@ export default class EventTimer {
     let e = await CustomEvent.create(eventName, attributes)
     EventSender.sendEvent(e)
     delete this.timers[timerId]
+    LogUtil.info('Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
+    + JSON.stringify(attributes))
   }
 
   static removeTimer(timerId: string) {
+    LogUtil.info('Track timer remove, timerId is ' + timerId)
     delete this.timers[timerId]
   }
 
   static clearTrackTimer() {
+    LogUtil.info('Track timer all delete')
     this.timers = {}
   }
 
   static async handleAllTimersPause() {
+    LogUtil.info('Track timer all pause with appState is background')
     let currentTime = await systemUptime.getRealTime(false)
     Object.keys(this.timers).forEach(timerId => {
       let timer = this.timers[timerId]
@@ -91,6 +100,7 @@ export default class EventTimer {
   }
 
   static async handleAllTimersResume() {
+    LogUtil.info('Track timer all resume with appState is foreground')
     let currentTime = await systemUptime.getRealTime(false)
     Object.keys(this.timers).forEach(timerId => {
       let timer = this.timers[timerId]

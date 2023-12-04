@@ -8,6 +8,7 @@ import CustomEvent from '../event/CustomEvent'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import { AttributesType } from '../utils/Constants'
+import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
 export default class AnalyticsCore {
@@ -27,6 +28,7 @@ export default class AnalyticsCore {
     if (config.dataCollectionEnabled == enabled) {
       return
     }
+    LogUtil.info('Set dataCollectionEnabled: ' + enabled)
     config.dataCollectionEnabled = enabled
     if (enabled) {
       Session.refreshSession()
@@ -54,6 +56,7 @@ export default class AnalyticsCore {
   ) {
     let e = await LoginUserAttributesEvent.create(attributes)
     EventSender.sendEvent(e)
+    LogUtil.info('Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
 
   async getDeviceId() {
@@ -68,6 +71,8 @@ export default class AnalyticsCore {
     let generalProps = GeneralProps.getGeneralProps()
     let e = await CustomEvent.create(eventName, { ...generalProps, ...attributes })
     EventSender.sendEvent(e)
+    LogUtil.info('Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes)
+    + ', current generalProps: ' + JSON.stringify(generalProps))
   }
 
   async trackTimerStart(eventName: string): Promise<string> {

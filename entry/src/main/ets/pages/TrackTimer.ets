@@ -9,25 +9,6 @@ struct TrackTimer {
 
   build() {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
-      List({space: 15}) {
-        ForEach(this.timerIds, timerId => {
-          ListItem() {
-            Row() {
-              Radio({ value: timerId, group: 'timerIds' }).checked(this.curTimerId == timerId)
-                .height(25)
-                .width(25)
-                .onChange((isChecked: boolean) => {
-                  if(isChecked) {
-                    this.curTimerId = timerId
-                  }
-                })
-              Text(timerId)
-            }
-          }
-        })
-      }
-      .width('100%')
-      .height('100%')
       Button('trackTimerStart')
         .onClick(async () => {
           let timerId = await this.trackTimerStart()
@@ -54,6 +35,25 @@ struct TrackTimer {
         .onClick(() => {
           this.clearTrackTimer()
         }).margin({ top: 15 })
+      List({space: 15}) {
+        ForEach(this.timerIds, timerId => {
+          ListItem() {
+            Row() {
+              Radio({ value: timerId, group: 'timerIds' }).checked(this.curTimerId == timerId)
+                .height(25)
+                .width(25)
+                .onChange((isChecked: boolean) => {
+                  if(isChecked) {
+                    this.curTimerId = timerId
+                  }
+                })
+              Text(timerId)
+            }
+          }
+        })
+      }
+      .width('100%')
+      .height('50%')
       Button('routerBack')
         .onClick(() => {
           router.back()
