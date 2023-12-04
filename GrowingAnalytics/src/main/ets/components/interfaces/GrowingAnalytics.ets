@@ -43,6 +43,13 @@ export class GrowingAnalytics {
     await AnalyticsCore.core.setLoginUserId(userId, userKey)
   }
 
+  static async cleanLoginUserId() {
+    if (!AnalyticsCore.core) {
+      return
+    }
+    await AnalyticsCore.core.setLoginUserId('')
+  }
+
   static setLocation(
     latitude: number,
     longitude: number

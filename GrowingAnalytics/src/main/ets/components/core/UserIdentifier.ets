@@ -1,3 +1,4 @@
+import AnalyticsCore from './AnalyticsCore'
 import Session from './Session'
 import { PREFERENCE_USER_ID, PREFERENCE_USER_KEY } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -37,6 +38,9 @@ export default class UserIdentifier {
   }
 
   setLoginUserId(userId: string, userKey: string = '') {
+    if (AnalyticsCore.core.config.idMappingEnabled == false) {
+      userKey = ''
+    }
     if (userId && userId.length > 1000) {
       return
     }

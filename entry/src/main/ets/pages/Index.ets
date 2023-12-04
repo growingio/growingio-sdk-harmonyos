@@ -25,9 +25,9 @@ struct Index {
         .onClick(() => {
           this.setLoginUserId()
         }).margin({ top: 15 })
-      Button('clearUserId')
+      Button('cleanLoginUserId')
         .onClick(() => {
-          this.clearUserId()
+          this.cleanLoginUserId()
         }).margin({ top: 15 })
       Button('setLocation')
         .onClick(() => {
@@ -85,8 +85,8 @@ struct Index {
     GrowingAnalytics.setLoginUserId(userId, 'harmony')
   }
 
-  clearUserId() {
-    GrowingAnalytics.setLoginUserId(null)
+  cleanLoginUserId() {
+    GrowingAnalytics.cleanLoginUserId()
   }
 
   setLocation() {

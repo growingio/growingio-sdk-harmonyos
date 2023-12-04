@@ -11,7 +11,10 @@ export default class EntryAbility extends UIAbility {
     )
     config.debugEnabled = true
     config.sessionInterval = 30
+    config.idMappingEnabled = true
     GrowingAnalytics.start(this.context, config)
+
+    GrowingAnalytics.isInitializedSuccessfully()
   }
 
   onDestroy() {
