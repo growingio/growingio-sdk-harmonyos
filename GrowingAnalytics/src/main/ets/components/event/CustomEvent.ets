@@ -24,6 +24,6 @@ export default class CustomEvent extends Event {
         result[key] = String(value)
       }
     })
-    return result
+    return Object.keys(result).length > 0 ? result : undefined
   }
 }

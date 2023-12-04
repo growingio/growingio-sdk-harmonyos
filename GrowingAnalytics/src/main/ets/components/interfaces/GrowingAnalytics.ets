@@ -1,23 +1,20 @@
 import AnalyticsCore from '../core/AnalyticsCore'
 import { GrowingConfig } from './GrowingConfig'
-import { AttributesType, SDK_VERSION } from '../utils/Constants'
-import { LogUtil } from '../utils/LogUtil'
 import EventTimer from '../core/EventTimer'
 import Session from '../core/Session'
-import GeneralProps from '../core/GeneralProps'
+import { AttributesType, SDK_VERSION } from '../utils/Constants'
+import { LogUtil } from '../utils/LogUtil'
 
 export class GrowingAnalytics {
-  static core: AnalyticsCore = null
-
   static start(
     context: Context,
     configuration: GrowingConfig
   ) {
-    if (this.core) {
+    if (AnalyticsCore.core) {
       return
     }
     let config = configuration.copy()
-    this.core = new AnalyticsCore(context, config)
+    AnalyticsCore.core = new AnalyticsCore(context, config)
     LogUtil.debugEnabled = config.debugEnabled
     LogUtil.info('Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
     + 'GrowingIO version: ' + SDK_VERSION)
@@ -26,131 +23,131 @@ export class GrowingAnalytics {
   }
 
   static isInitializedSuccessfully(): boolean {
-    return this.core != null
+    return AnalyticsCore.core != null
   }
 
   static setDataCollectionEnabled(enabled: boolean) {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    this.core.setDataCollectionEnabled(enabled)
+    AnalyticsCore.core.setDataCollectionEnabled(enabled)
   }
 
-  static setLoginUserId(
+  static async setLoginUserId(
     userId: string,
     userKey: string = ''
   ) {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    this.core.setLoginUserId(userId, userKey)
+    await AnalyticsCore.core.setLoginUserId(userId, userKey)
   }
 
   static setLocation(
     latitude: number,
     longitude: number
   ) {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    this.core.setLocation(latitude, longitude)
+    AnalyticsCore.core.setLocation(latitude, longitude)
   }
 
   static cleanLocation() {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    this.core.setLocation(0, 0)
+    AnalyticsCore.core.setLocation(0, 0)
   }
 
-  static setLoginUserAttributes(attributes: AttributesType) {
-    if (!this.core) {
+  static async setLoginUserAttributes(attributes: AttributesType) {
+    if (!AnalyticsCore.core) {
       return
     }
-    this.core.setLoginUserAttributes(attributes)
+    await AnalyticsCore.core.setLoginUserAttributes(attributes)
   }
 
   static async getDeviceId(): Promise<string> {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return ''
     }
-    return await this.core.getDeviceId()
+    return await AnalyticsCore.core.getDeviceId()
   }
 
-  static track(
+  static async track(
     eventName: string,
-    attributes: AttributesType = null
+    attributes: AttributesType = {}
   ) {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    this.core.track(eventName, attributes)
+    await AnalyticsCore.core.track(eventName, attributes)
   }
 
   static async trackTimerStart(eventName: string): Promise<string> {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return ''
     }
-    return await EventTimer.trackTimerStart(eventName)
+    return await AnalyticsCore.core.trackTimerStart(eventName)
   }
 
-  static trackTimerPause(timerId: string) {
-    if (!this.core) {
+  static async trackTimerPause(timerId: string) {
+    if (!AnalyticsCore.core) {
       return
     }
-    EventTimer.trackTimerPause(timerId)
+    await AnalyticsCore.core.trackTimerPause(timerId)
   }
 
-  static trackTimerResume(timerId: string) {
-    if (!this.core) {
+  static async trackTimerResume(timerId: string) {
+    if (!AnalyticsCore.core) {
       return
     }
-    EventTimer.trackTimerResume(timerId)
+    await AnalyticsCore.core.trackTimerResume(timerId)
   }
 
-  static trackTimerEnd(
+  static async trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {}
   ) {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    EventTimer.trackTimerEnd(timerId, attributes)
+    await AnalyticsCore.core.trackTimerEnd(timerId, attributes)
   }
 
   static removeTimer(timerId: string) {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    EventTimer.removeTimer(timerId)
+    AnalyticsCore.core.removeTimer(timerId)
   }
 
   static clearTrackTimer() {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    EventTimer.clearAllTimers()
+    AnalyticsCore.core.clearTrackTimer()
   }
 
   static setGeneralProps(props: AttributesType) {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    GeneralProps.setGeneralProps(props)
+    AnalyticsCore.core.setGeneralProps(props)
   }
 
   static removeGeneralProps(keys: string[]) {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    GeneralProps.removeGeneralProps(keys)
+    AnalyticsCore.core.removeGeneralProps(keys)
   }
 
   static clearGeneralProps() {
-    if (!this.core) {
+    if (!AnalyticsCore.core) {
       return
     }
-    GeneralProps.clearGeneralProps()
+    AnalyticsCore.core.clearGeneralProps()
   }
 
   static onForeground() {

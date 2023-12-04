@@ -1,21 +1,23 @@
 import { GrowingConfig } from '../interfaces/GrowingConfig'
-import SharedPreferences from '../utils/SharedPreferences'
+import DeviceInfo from './DeviceInfo'
+import EventTimer from './EventTimer'
+import GeneralProps from './GeneralProps'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
-import { AttributesType } from '../utils/Constants'
-import DeviceInfo from './DeviceInfo'
 import CustomEvent from '../event/CustomEvent'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
-import GeneralProps from './GeneralProps'
+import { AttributesType } from '../utils/Constants'
+import SharedPreferences from '../utils/SharedPreferences'
 
 export default class AnalyticsCore {
-  preferences: SharedPreferences
+  static core: AnalyticsCore = null
+
   config: GrowingConfig
   location: Location
 
   constructor(context: Context, config: GrowingConfig) {
-    this.preferences = new SharedPreferences(context)
+    SharedPreferences.configContext(context)
     this.config = config
     this.location = new Location()
   }
@@ -31,11 +33,12 @@ export default class AnalyticsCore {
     }
   }
 
-  setLoginUserId(
+  async setLoginUserId(
     userId: string,
     userKey: string = ''
   ) {
-    UserIdentifier.sharedInstance().setLoginUserId(userId, userKey)
+    let userIdentifier = await UserIdentifier.sharedInstance()
+    userIdentifier.setLoginUserId(userId, userKey)
   }
 
   setLocation(
@@ -60,11 +63,50 @@ export default class AnalyticsCore {
 
   async track(
     eventName: string,
-    attributes: AttributesType = null
+    attributes: AttributesType = {}
   ) {
     let generalProps = GeneralProps.getGeneralProps()
     let e = await CustomEvent.create(eventName, { ...generalProps, ...attributes })
     EventSender.sendEvent(e)
+  }
+
+  async trackTimerStart(eventName: string): Promise<string> {
+    return await EventTimer.trackTimerStart(eventName)
+  }
+
+  async trackTimerPause(timerId: string) {
+    await EventTimer.trackTimerPause(timerId)
+  }
+
+  async trackTimerResume(timerId: string) {
+    await EventTimer.trackTimerResume(timerId)
+  }
+
+  async trackTimerEnd(
+    timerId: string,
+    attributes: AttributesType = {}
+  ) {
+    await EventTimer.trackTimerEnd(timerId, attributes)
+  }
+
+  removeTimer(timerId: string) {
+    EventTimer.removeTimer(timerId)
+  }
+
+  clearTrackTimer() {
+    EventTimer.clearTrackTimer()
+  }
+
+  setGeneralProps(props: AttributesType) {
+    GeneralProps.setGeneralProps(props)
+  }
+
+  removeGeneralProps(keys: string[]) {
+    GeneralProps.removeGeneralProps(keys)
+  }
+
+  clearGeneralProps() {
+    GeneralProps.clearGeneralProps()
   }
 }
 

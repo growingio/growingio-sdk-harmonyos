@@ -1,8 +1,8 @@
 import util from '@ohos.util'
+
+import AnalyticsCore from './AnalyticsCore'
 import EventSender from '../event/EventSender'
 import VisitEvent from '../event/VisitEvent'
-import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
-
 
 export enum SessionState {
   Foreground,
@@ -19,7 +19,7 @@ export default class Session {
     if (this._latestOnBackgroundTime == 0) {
       return
     }
-    var core = GrowingAnalytics.core
+    var core = AnalyticsCore.core
     if (core) {
       let config = core.config
       if (Date.now() - this._latestOnBackgroundTime >= config.sessionInterval * 1000) {
@@ -39,7 +39,7 @@ export default class Session {
   }
 
   static async generateVisit() {
-    let config = GrowingAnalytics.core.config
+    let config = AnalyticsCore.core.config
     if (!config.dataCollectionEnabled) {
       return
     }

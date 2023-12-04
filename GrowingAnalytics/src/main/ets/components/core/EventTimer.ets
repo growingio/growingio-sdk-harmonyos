@@ -1,9 +1,10 @@
-import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
 import systemUptime from '@ohos.systemDateTime'
 import util from '@ohos.util'
-import { AttributesType, Event_DURATION } from '../utils/Constants'
+
+import AnalyticsCore from './AnalyticsCore'
 import CustomEvent from '../event/CustomEvent'
 import EventSender from '../event/EventSender'
+import { AttributesType, Event_DURATION } from '../utils/Constants'
 
 export default class EventTimer {
   static timers: { [key: string]: EventTimer } = {}
@@ -23,7 +24,7 @@ export default class EventTimer {
   }
 
   static async trackTimerStart(eventName: string): Promise<string> {
-    let config = GrowingAnalytics.core.config
+    let config = AnalyticsCore.core.config
     if (!config.dataCollectionEnabled) {
       return
     }
@@ -73,7 +74,7 @@ export default class EventTimer {
     delete this.timers[timerId]
   }
 
-  static clearAllTimers() {
+  static clearTrackTimer() {
     this.timers = {}
   }
 

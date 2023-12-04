@@ -1,20 +1,21 @@
 import preferences from '@ohos.data.preferences'
+
 import { PREFERENCE_NAME } from './Constants'
 import { LogUtil } from './LogUtil'
 
 export default class SharedPreferences {
-  private preferences: preferences.Preferences = null
-  private context: Context
+  private static context: Context
+  private static preferences: preferences.Preferences = null
 
-  constructor(context: Context) {
+  static configContext(context: Context) {
     this.context = context
+    this.getPreferences()
   }
 
-  async getPreferences() {
+  static async getPreferences() {
     if (this.preferences) {
       return
     }
-
     try {
       let promise = preferences.getPreferences(this.context, PREFERENCE_NAME)
       await promise.then((p) => {
@@ -27,14 +28,20 @@ export default class SharedPreferences {
     }
   }
 
-  async put(value: preferences.ValueType, key: string) {
+  static async put(key: string, value: preferences.ValueType) {
     await this.getPreferences()
+    if (!this.preferences) {
+      return
+    }
     await this.preferences.put(key, value)
     await this.preferences.flush()
   }
 
-  async getValue(key: string): Promise<preferences.ValueType> {
+  static async getValue(key: string): Promise<preferences.ValueType> {
     await this.getPreferences()
+    if (!this.preferences) {
+      return null
+    }
     let value: preferences.ValueType
     try {
       let result = await this.preferences.get(key, '')

@@ -1,13 +1,14 @@
-import { LogUtil } from '../utils/LogUtil'
-import Event from './Event'
 import http from '@ohos.net.http'
-import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
+
+import Event from './Event'
+import AnalyticsCore from '../core/AnalyticsCore'
+import { LogUtil } from '../utils/LogUtil'
 
 export default class EventSender {
   static sendEvent = <T extends Event>(
   event: T
   ) => {
-    if (!GrowingAnalytics.core.config.dataCollectionEnabled) {
+    if (!AnalyticsCore.core.config.dataCollectionEnabled) {
       return
     }
 
@@ -36,7 +37,7 @@ export default class EventSender {
   }
 
   static url() {
-    let config = GrowingAnalytics.core.config
+    let config = AnalyticsCore.core.config
     let serverHost = config.dataCollectionServerHost
     let accountId = config.accountId
     return serverHost + '/v3/projects/' + accountId + '/collect?stm=' + Date.now()

@@ -1,10 +1,11 @@
 import Event from './Event'
-import UserIdentifier from '../core/UserIdentifier'
-import DeviceInfo from '../core/DeviceInfo'
+import AnalyticsCore from '../core/AnalyticsCore'
 import AppInfo from '../core/AppInfo'
+import DeviceInfo from '../core/DeviceInfo'
 import Session, { SessionState } from '../core/Session'
-import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
+import UserIdentifier from '../core/UserIdentifier'
 import { SDK_VERSION, PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
+import SharedPreferences from '../utils/SharedPreferences'
 
 export default class EventBuilder {
   static async build<T extends Event>(event: T): Promise<T> {
@@ -33,27 +34,27 @@ export default class EventBuilder {
     event.appName = appInfo.appName
     event.appVersion = appInfo.appVersion
 
-    let core = GrowingAnalytics.core
+    let core = AnalyticsCore.core
     event.dataSourceId = core.config.dataSourceId
     event.urlScheme = core.config.urlScheme
     event.latitude = Math.abs(core.location.latitude) > 0 ? core.location.latitude : undefined
     event.longitude = Math.abs(core.location.longitude) > 0 ? core.location.longitude : undefined
 
-    let userIdentifier = UserIdentifier.sharedInstance()
-    let userId = await userIdentifier.userId()
+    let userIdentifier = await UserIdentifier.sharedInstance()
+    let userId = userIdentifier.curUserId
     event.userId = userId.length > 0 ? userId : undefined
-    let userKey = await userIdentifier.userKey()
+    let userKey = userIdentifier.curUserKey
     event.userKey = userKey.length > 0 ? userKey : undefined
 
     return event
   }
 
   static async updateEventSequenceId(): Promise<number> {
-    let se = await GrowingAnalytics.core.preferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID) as number
+    let se = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID) as number
     if (!se || se == 0 || se == NaN) {
       se = 0
     }
-    GrowingAnalytics.core.preferences.put(se + 1, PREFERENCE_EVENT_SEQUENCE_ID)
+    SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, se + 1)
     return se
   }
 }

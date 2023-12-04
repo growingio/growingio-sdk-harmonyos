@@ -2,8 +2,9 @@ import deviceInfo from '@ohos.deviceInfo'
 import display from '@ohos.display'
 import I18n from '@ohos.i18n'
 import util from '@ohos.util'
-import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
+
 import { PREFERENCE_DEVICE_ID } from '../utils/Constants'
+import SharedPreferences from '../utils/SharedPreferences'
 
 export default class DeviceInfo {
   deviceId: string = ''
@@ -43,11 +44,10 @@ export default class DeviceInfo {
     this.language = I18n.System.getSystemLanguage()
     this.timezoneOffset = new Date().getTimezoneOffset() + ''
 
-    let deviceId = await GrowingAnalytics.core.preferences.getValue(PREFERENCE_DEVICE_ID) as string
+    let deviceId = await SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
     if (deviceId == '') {
-      let uuid = util.generateRandomUUID(false)
-      GrowingAnalytics.core.preferences.put(uuid, PREFERENCE_DEVICE_ID)
-      deviceId = uuid
+      deviceId = util.generateRandomUUID(false)
+      SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)
     }
     this.deviceId = deviceId
   }

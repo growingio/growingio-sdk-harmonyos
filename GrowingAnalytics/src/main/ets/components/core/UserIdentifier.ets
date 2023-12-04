@@ -1,32 +1,41 @@
-import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
+import Session from './Session'
 import { PREFERENCE_USER_ID, PREFERENCE_USER_KEY } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
-import Session from './Session'
+import SharedPreferences from '../utils/SharedPreferences'
 
 export default class UserIdentifier {
-  curUserId: string = ''
-  curUserKey: string = ''
-  private latestNonnullUserId: string = ''
+  curUserId: string
+  curUserKey: string
+  private latestNonnullUserId: string
 
   static instance: UserIdentifier = null
-  constructor() { }
+  constructor(
+    curUserId: string,
+    curUserKey: string,
+  ) {
+    this.curUserId = curUserId
+    this.curUserKey = curUserKey
+    this.latestNonnullUserId = curUserId
+  }
 
-  static sharedInstance(): UserIdentifier {
+  static async sharedInstance(): Promise<UserIdentifier> {
     if (this.instance == null) {
-      this.instance = new UserIdentifier()
+      let curUserId = await this.getUserId()
+      let curUserKey = await this.getUserKey()
+      this.instance = new UserIdentifier(curUserId, curUserKey)
     }
     return this.instance
   }
 
-  async userId(): Promise<string> {
-    return GrowingAnalytics.core.preferences.getValue(PREFERENCE_USER_ID) as Promise<string>
+  static async getUserId(): Promise<string> {
+    return SharedPreferences.getValue(PREFERENCE_USER_ID) as Promise<string>
   }
 
-  async userKey(): Promise<string> {
-    return GrowingAnalytics.core.preferences.getValue(PREFERENCE_USER_KEY) as Promise<string>
+  static async getUserKey(): Promise<string> {
+    return SharedPreferences.getValue(PREFERENCE_USER_KEY) as Promise<string>
   }
 
-  setLoginUserId(userId: string, userKey: string) {
+  setLoginUserId(userId: string, userKey: string = '') {
     if (userId && userId.length > 1000) {
       return
     }
@@ -35,10 +44,10 @@ export default class UserIdentifier {
     }
     if (userId == null || userId.length == 0) {
       LogUtil.info('Clear loginUserId')
-      this.curUserId = null
-      this.curUserKey = null
-      GrowingAnalytics.core.preferences.put('', PREFERENCE_USER_ID)
-      GrowingAnalytics.core.preferences.put('', PREFERENCE_USER_KEY)
+      this.curUserId = ''
+      this.curUserKey = ''
+      SharedPreferences.put(PREFERENCE_USER_ID, '')
+      SharedPreferences.put(PREFERENCE_USER_KEY, '')
       return
     }
     if (userId === this.curUserId && userKey === this.curUserKey) {
@@ -51,22 +60,19 @@ export default class UserIdentifier {
     + ' to ' + userKey)
     this.curUserId = userId
     this.curUserKey = userKey
-    GrowingAnalytics.core.preferences.put(userId, PREFERENCE_USER_ID)
-    GrowingAnalytics.core.preferences.put(userKey, PREFERENCE_USER_KEY)
+    SharedPreferences.put(PREFERENCE_USER_ID, userId)
+    SharedPreferences.put(PREFERENCE_USER_KEY, userKey)
 
     this.userIdDidChanged(userId)
   }
 
   userIdDidChanged(userId: string) {
-    if (userId == null || userId.length == 0) {
+    let oldUserId = this.latestNonnullUserId
+    if (oldUserId.length == 0) {
       return
     }
-    let oldUserId = this.latestNonnullUserId
     this.latestNonnullUserId = userId
 
-    if (oldUserId == null || oldUserId.length == 0) {
-      return
-    }
     // A=>B
     if (oldUserId != userId) {
       Session.refreshSession()

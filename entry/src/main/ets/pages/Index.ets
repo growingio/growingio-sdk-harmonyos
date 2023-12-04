@@ -100,7 +100,9 @@ struct Index {
   }
 
   track() {
-    GrowingAnalytics.track('buyProduct', {
+    GrowingAnalytics.track('buyProduct1')
+
+    GrowingAnalytics.track('buyProduct2', {
       'name': 'apple',
       'money': 1000,
       'num': 100,
