@@ -1,6 +1,7 @@
 import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
 import { PREFERENCE_USER_ID, PREFERENCE_USER_KEY } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
+import Session from './Session'
 
 export default class UserIdentifier {
   curUserId: string = ''
@@ -68,7 +69,7 @@ export default class UserIdentifier {
     }
     // A=>B
     if (oldUserId != userId) {
-      GrowingAnalytics.core.session.refreshSession()
+      Session.refreshSession()
     }
   }
 }

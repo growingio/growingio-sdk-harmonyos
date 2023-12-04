@@ -12,7 +12,6 @@ import GeneralProps from './GeneralProps'
 export default class AnalyticsCore {
   preferences: SharedPreferences
   config: GrowingConfig
-  session: Session
   location: Location
   generalProps: GeneralProps
 
@@ -20,7 +19,6 @@ export default class AnalyticsCore {
     this.preferences = new SharedPreferences(context)
     this.config = config
     this.location = new Location()
-    this.session = new Session()
     this.generalProps = new GeneralProps()
   }
 
@@ -31,7 +29,7 @@ export default class AnalyticsCore {
     }
     config.dataCollectionEnabled = enabled
     if (enabled) {
-      this.session.refreshSession()
+      Session.refreshSession()
     }
   }
 

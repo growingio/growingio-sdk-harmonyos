@@ -2,12 +2,14 @@ import Event from './Event'
 import UserIdentifier from '../core/UserIdentifier'
 import DeviceInfo from '../core/DeviceInfo'
 import AppInfo from '../core/AppInfo'
-import { SessionState } from '../core/Session'
+import Session, { SessionState } from '../core/Session'
 import { GrowingAnalytics } from '../interfaces/GrowingAnalytics'
 import { SDK_VERSION, PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 
 export default class EventBuilder {
   static async build<T extends Event>(event: T): Promise<T> {
+    event.sessionId = Session.sessionId
+    event.appState = Session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
     event.eventSequenceId = await EventBuilder.updateEventSequenceId()
     event.networkState = 'WiFi' // TODO
     event.timestamp = Date.now()
@@ -34,8 +36,6 @@ export default class EventBuilder {
     let core = GrowingAnalytics.core
     event.dataSourceId = core.config.dataSourceId
     event.urlScheme = core.config.urlScheme
-    event.sessionId = core.session.sessionId
-    event.appState = core.session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
     event.latitude = Math.abs(core.location.latitude) > 0 ? core.location.latitude : undefined
     event.longitude = Math.abs(core.location.longitude) > 0 ? core.location.longitude : undefined
 

@@ -3,183 +3,162 @@ import { GrowingConfig } from './GrowingConfig'
 import { AttributesType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import EventTimer from '../core/EventTimer'
+import Session from '../core/Session'
 
 export class GrowingAnalytics {
   static core: AnalyticsCore = null
-  private static _isInitializedSuccessfully: boolean = false
 
-  static start = (
+  static start(
     context: Context,
     configuration: GrowingConfig
-  ) => {
-    if (GrowingAnalytics._isInitializedSuccessfully) {
+  ) {
+    if (this.core) {
       return
     }
     let config = configuration.copy()
-    GrowingAnalytics.core = new AnalyticsCore(context, config)
-    GrowingAnalytics._isInitializedSuccessfully = true
+    this.core = new AnalyticsCore(context, config)
     LogUtil.debugEnabled = config.debugEnabled
     LogUtil.info('Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
     + 'GrowingIO version: ' + SDK_VERSION)
 
-    GrowingAnalytics.core.session.generateVisit()
+    Session.refreshSession()
   }
 
-  static isInitializedSuccessfully = () => {
-    return GrowingAnalytics._isInitializedSuccessfully
+  static isInitializedSuccessfully(): boolean {
+    return this.core != null
   }
 
-  static setDataCollectionEnabled = (enabled: boolean) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static setDataCollectionEnabled(enabled: boolean) {
+    if (!this.core) {
       return
     }
-    GrowingAnalytics.core.setDataCollectionEnabled(enabled)
+    this.core.setDataCollectionEnabled(enabled)
   }
 
-  static setLoginUserId = (
+  static setLoginUserId(
     userId: string,
     userKey: string = ''
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  ) {
+    if (!this.core) {
       return
     }
-    GrowingAnalytics.core.setLoginUserId(userId, userKey)
+    this.core.setLoginUserId(userId, userKey)
   }
 
-  static setLocation = (
+  static setLocation(
     latitude: number,
     longitude: number
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  ) {
+    if (!this.core) {
       return
     }
-    GrowingAnalytics.core.setLocation(latitude, longitude)
+    this.core.setLocation(latitude, longitude)
   }
 
-  static cleanLocation = () => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static cleanLocation() {
+    if (!this.core) {
       return
     }
-    GrowingAnalytics.core.setLocation(0, 0)
+    this.core.setLocation(0, 0)
   }
 
-  static setLoginUserAttributes = (
-    attributes: AttributesType
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static setLoginUserAttributes(attributes: AttributesType) {
+    if (!this.core) {
       return
     }
-    GrowingAnalytics.core.setLoginUserAttributes(attributes)
+    this.core.setLoginUserAttributes(attributes)
   }
 
-  static getDeviceId = async () => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static async getDeviceId(): Promise<string> {
+    if (!this.core) {
       return ''
     }
-    return await GrowingAnalytics.core.getDeviceId()
+    return await this.core.getDeviceId()
   }
 
-  static track = (
-  eventName: string,
-  attributes: AttributesType = null
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static track(
+    eventName: string,
+    attributes: AttributesType = null
+  ) {
+    if (!this.core) {
       return
     }
-    GrowingAnalytics.core.track(eventName, attributes)
+    this.core.track(eventName, attributes)
   }
 
-  static trackTimerStart = async (
-    eventName: string
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static async trackTimerStart(eventName: string): Promise<string> {
+    if (!this.core) {
       return ''
     }
     return await EventTimer.trackTimerStart(eventName)
   }
 
-  static trackTimerPause = (
-    timerId: string
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static trackTimerPause(timerId: string) {
+    if (!this.core) {
       return
     }
     EventTimer.trackTimerPause(timerId)
   }
 
-  static trackTimerResume = (
-    timerId: string
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static trackTimerResume(timerId: string) {
+    if (!this.core) {
       return
     }
     EventTimer.trackTimerResume(timerId)
   }
 
-  static trackTimerEnd = (
+  static trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {}
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  ) {
+    if (!this.core) {
       return
     }
     EventTimer.trackTimerEnd(timerId, attributes)
   }
 
-  static removeTimer = (
-    timerId: string
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static removeTimer(timerId: string) {
+    if (!this.core) {
       return
     }
     EventTimer.removeTimer(timerId)
   }
 
-  static clearTrackTimer = () => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static clearTrackTimer() {
+    if (!this.core) {
       return
     }
     EventTimer.clearAllTimers()
   }
 
-  static setGeneralProps = (
-    props: AttributesType
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static setGeneralProps(props: AttributesType) {
+    if (!this.core) {
       return
     }
-    GrowingAnalytics.core.generalProps.setGeneralProps(props)
+    this.core.generalProps.setGeneralProps(props)
   }
 
-  static removeGeneralProps = (
-    keys: string[]
-  ) => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static removeGeneralProps(keys: string[]) {
+    if (!this.core) {
       return
     }
-    GrowingAnalytics.core.generalProps.removeGeneralProps(keys)
+    this.core.generalProps.removeGeneralProps(keys)
   }
 
-  static clearGeneralProps = () => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
+  static clearGeneralProps() {
+    if (!this.core) {
       return
     }
-    GrowingAnalytics.core.generalProps.clearGeneralProps()
+    this.core.generalProps.clearGeneralProps()
   }
 
-  static onForeground = () => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
-      return
-    }
-    GrowingAnalytics.core.session.onForeground()
+  static onForeground() {
+    Session.onForeground()
     EventTimer.handleAllTimersResume()
   }
 
-  static onBackground = () => {
-    if (!GrowingAnalytics._isInitializedSuccessfully) {
-      return
-    }
-    GrowingAnalytics.core.session.onBackground()
+  static onBackground() {
+    Session.onBackground()
     EventTimer.handleAllTimersPause()
   }
 }
