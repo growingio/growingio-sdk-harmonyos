@@ -26,6 +26,8 @@ struct TrackTimer {
           }
         })
       }
+      .width('100%')
+      .height('100%')
       Button('trackTimerStart')
         .onClick(async () => {
           let timerId = await this.trackTimerStart()

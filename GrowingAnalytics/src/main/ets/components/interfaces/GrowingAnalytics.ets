@@ -4,6 +4,7 @@ import { AttributesType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import EventTimer from '../core/EventTimer'
 import Session from '../core/Session'
+import GeneralProps from '../core/GeneralProps'
 
 export class GrowingAnalytics {
   static core: AnalyticsCore = null
@@ -135,21 +136,21 @@ export class GrowingAnalytics {
     if (!this.core) {
       return
     }
-    this.core.generalProps.setGeneralProps(props)
+    GeneralProps.setGeneralProps(props)
   }
 
   static removeGeneralProps(keys: string[]) {
     if (!this.core) {
       return
     }
-    this.core.generalProps.removeGeneralProps(keys)
+    GeneralProps.removeGeneralProps(keys)
   }
 
   static clearGeneralProps() {
     if (!this.core) {
       return
     }
-    this.core.generalProps.clearGeneralProps()
+    GeneralProps.clearGeneralProps()
   }
 
   static onForeground() {

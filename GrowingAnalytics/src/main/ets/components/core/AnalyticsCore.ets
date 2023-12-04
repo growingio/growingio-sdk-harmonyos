@@ -13,13 +13,11 @@ export default class AnalyticsCore {
   preferences: SharedPreferences
   config: GrowingConfig
   location: Location
-  generalProps: GeneralProps
 
   constructor(context: Context, config: GrowingConfig) {
     this.preferences = new SharedPreferences(context)
     this.config = config
     this.location = new Location()
-    this.generalProps = new GeneralProps()
   }
 
   setDataCollectionEnabled(enabled: boolean) {
@@ -64,7 +62,7 @@ export default class AnalyticsCore {
     eventName: string,
     attributes: AttributesType = null
   ) {
-    let generalProps = this.generalProps.getGeneralProps()
+    let generalProps = GeneralProps.getGeneralProps()
     let e = await CustomEvent.create(eventName, { ...generalProps, ...attributes })
     EventSender.sendEvent(e)
   }
