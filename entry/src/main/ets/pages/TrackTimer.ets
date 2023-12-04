@@ -75,6 +75,12 @@ struct TrackTimer {
 
   trackTimerEnd() {
     GrowingAnalytics.trackTimerEnd(this.curTimerId, {"key": "value"})
+    this.timerIds = this.timerIds.filter((timerId) => timerId !== this.curTimerId)
+    if (this.timerIds.length > 0) {
+      this.curTimerId = this.timerIds[0]
+    } else {
+      this.curTimerId = undefined
+    }
   }
 
   removeTimer() {
