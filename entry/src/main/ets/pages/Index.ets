@@ -1,9 +1,10 @@
 import { GrowingAnalytics } from '@growingio/analytics'
+import router from '@ohos.router'
 
 @Entry
 @Component
 struct Index {
-  @State deviceId: string = '请点击获取'
+  @State deviceId: string = '请点击下方按钮获取'
 
   build() {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
@@ -14,8 +15,10 @@ struct Index {
         }).margin({ top: 15 })
       Toggle({ type: ToggleType.Button, isOn: true }) {
         Text('setDataCollectionEnabled')
+          .fontColor('#182431')
           .fontSize(16)
-      }.onChange((isOn: boolean) => {
+      }.height(40).selectedColor(Color.Green)
+      .onChange((isOn: boolean) => {
         this.setDataCollectionEnabled(isOn)
       }).margin({ top: 15 })
       Button('setLoginUserId')
@@ -53,6 +56,10 @@ struct Index {
       Button('clearGeneralProps')
         .onClick(() => {
           this.clearGeneralProps()
+        }).margin({ top: 15 })
+      Button('trackTimer')
+        .onClick(() => {
+          router.pushUrl({url: 'pages/TrackTimer'})
         }).margin({ top: 15 })
     }
     .width('100%')
