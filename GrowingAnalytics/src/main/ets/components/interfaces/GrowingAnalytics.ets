@@ -11,6 +11,11 @@ export class GrowingAnalytics {
     configuration: GrowingConfig
   ) {
     if (AnalyticsCore.core) {
+      LogUtil.warn('Do not initialize GrowingAnalytics repeatedly')
+      return
+    }
+    if (!context.stageMode) {
+      LogUtil.error('Only support stageMode(HarmonyOS 3.1+, API 9+)')
       return
     }
     let config = configuration.copy()
@@ -155,15 +160,5 @@ export class GrowingAnalytics {
       return
     }
     AnalyticsCore.core.clearGeneralProps()
-  }
-
-  static onForeground() {
-    Session.onForeground()
-    EventTimer.handleAllTimersResume()
-  }
-
-  static onBackground() {
-    Session.onBackground()
-    EventTimer.handleAllTimersPause()
   }
 }

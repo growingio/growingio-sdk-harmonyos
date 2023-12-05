@@ -8,7 +8,7 @@ export default class SharedPreferences {
   private static preferences: preferences.Preferences = null
 
   static configContext(context: Context) {
-    this.context = context
+    this.context = context.getApplicationContext()
     this.getPreferences()
   }
 

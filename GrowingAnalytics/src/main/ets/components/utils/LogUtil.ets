@@ -14,4 +14,11 @@ export class LogUtil {
     }
     console.error('[GrowingAnalytics] ' + message, args)
   }
+
+  static warn(message: string, ...args: any[]) {
+    if (!this.debugEnabled) {
+      return
+    }
+    console.warn('[GrowingAnalytics] ' + message, args)
+  }
 }

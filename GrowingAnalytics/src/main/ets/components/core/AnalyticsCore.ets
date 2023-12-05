@@ -18,9 +18,38 @@ export default class AnalyticsCore {
   location: Location
 
   constructor(context: Context, config: GrowingConfig) {
-    SharedPreferences.configContext(context)
     this.config = config
     this.location = new Location()
+    SharedPreferences.configContext(context)
+    this.setAbilityLifecycleCallback(context)
+  }
+
+  setAbilityLifecycleCallback(context: Context) {
+    let abilityLifecycleCallback = {
+      onAbilityCreate(ability) {
+      },
+      onWindowStageCreate(ability, windowStage) {
+      },
+      onWindowStageActive(ability, windowStage) {
+        Session.onForeground()
+        EventTimer.handleAllTimersResume()
+      },
+      onWindowStageInactive(ability, windowStage) {
+        Session.onBackground()
+        EventTimer.handleAllTimersPause()
+      },
+      onWindowStageDestroy(ability, windowStage) {
+      },
+      onAbilityDestroy(ability) {
+      },
+      onAbilityForeground(ability) {
+      },
+      onAbilityBackground(ability) {
+      },
+      onAbilityContinue(ability) {
+      }
+    }
+    context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
   }
 
   setDataCollectionEnabled(enabled: boolean) {
