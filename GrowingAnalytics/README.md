@@ -30,18 +30,6 @@ onCreate(want, launchParam) {
 ```
 > 其中 accountId/dataSourceId/urlScheme 为必填项，dataCollectionServerHost 为可选项
 
-在 EntryAbility.ets 的 onForeground 和 onBackground 方法中调用 SDK 方法：
-
-```typescript
-onForeground() {
-  GrowingAnalytics.onForeground()
-}
-
-onBackground() {
-  GrowingAnalytics.onBackground()
-}
-```
-
 其他初始化配置项见下表，在 start 方法调用前通过`config.<配置项> = 对应值`进行配置：
 
 | 配置项                   | 参数类型 | 默认值 | 说明                                                         |
