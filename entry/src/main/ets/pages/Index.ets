@@ -1,4 +1,6 @@
 import { GrowingAnalytics } from '@growingio/analytics'
+import AppContext from '@ohos.app.ability.common'
+import Want from '@ohos.app.ability.Want'
 import router from '@ohos.router'
 
 @Entry
@@ -59,7 +61,16 @@ struct Index {
         }).margin({ top: 15 })
       Button('trackTimer')
         .onClick(() => {
-          router.pushUrl({url: 'pages/TrackTimer'})
+          let context = getContext(this) as AppContext.UIAbilityContext
+          const want: Want = {
+            bundleName: getContext(context).applicationInfo.name,
+            abilityName: 'TrackTimerAbility',
+          };
+          try {
+            context.startAbility(want)
+          } catch (error) {
+          }
+          // router.pushUrl({url: 'pages/TrackTimer'})
         }).margin({ top: 15 })
     }
     .width('100%')

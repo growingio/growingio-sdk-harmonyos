@@ -15,6 +15,14 @@
     {
       "name": "network_permission",
       "value": "network_permission"
+    },
+    {
+      "name": "TrackTimerAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "TrackTimerAbility_label",
+      "value": "label"
     }
   ]
 }

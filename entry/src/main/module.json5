@@ -31,37 +31,49 @@
             ]
           }
         ]
+      },
+      {
+        "name": "TrackTimerAbility",
+        "srcEntry": "./ets/tracktimerability/TrackTimerAbility.ts",
+        "description": "$string:TrackTimerAbility_desc",
+        "icon": "$media:icon",
+        "label": "$string:TrackTimerAbility_label",
+        "startWindowIcon": "$media:icon",
+        "startWindowBackground": "$color:start_window_background"
       }
     ],
-    "requestPermissions":[
+    "requestPermissions": [
       {
-        "name" : "ohos.permission.GET_NETWORK_INFO",
+        "name": "ohos.permission.GET_NETWORK_INFO",
         "reason": "$string:network_permission",
         "usedScene": {
           "abilities": [
-            "EntryAbility"
+            "EntryAbility",
+            "TrackTimerAbility"
           ],
-          "when":"always"
+          "when": "always"
         }
       },
       {
-        "name" : "ohos.permission.SET_NETWORK_INFO",
+        "name": "ohos.permission.SET_NETWORK_INFO",
         "reason": "$string:network_permission",
         "usedScene": {
           "abilities": [
-            "EntryAbility"
+            "EntryAbility",
+            "TrackTimerAbility"
           ],
-          "when":"always"
+          "when": "always"
         }
       },
       {
-        "name" : "ohos.permission.INTERNET",
+        "name": "ohos.permission.INTERNET",
         "reason": "$string:network_permission",
         "usedScene": {
           "abilities": [
-            "EntryAbility"
+            "EntryAbility",
+            "TrackTimerAbility"
           ],
-          "when":"always"
+          "when": "always"
         }
       }
     ]

@@ -1,4 +1,5 @@
 import { GrowingAnalytics } from '@growingio/analytics'
+import AppContext from '@ohos.app.ability.common'
 import router from '@ohos.router'
 
 @Entry
@@ -54,9 +55,11 @@ struct TrackTimer {
       }
       .width('100%')
       .height('50%')
-      Button('routerBack')
+      Button('Back')
         .onClick(() => {
-          router.back()
+          let context = getContext(this) as AppContext.UIAbilityContext
+          context.terminateSelf()
+          // router.back()
         }).margin({ top: 15 })
     }
     .width('100%')
