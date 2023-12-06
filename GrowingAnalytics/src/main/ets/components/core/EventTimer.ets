@@ -57,38 +57,42 @@ export default class EventTimer {
   }
 
   static async trackTimerPause(timerId: string) {
-    let currentTime = await systemUptime.getRealTime(false)
     let timer = this.timers[timerId]
     if (!timer || timer.isPaused()) {
       return
     }
-    timer.duration = this.durationFrom(timer.startTime, currentTime)
+    let startTime = timer.startTime
     timer.startTime = 0
+    let currentTime = await systemUptime.getRealTime(false)
+    timer.duration = this.durationFrom(startTime, currentTime)
     LogUtil.info('Track timer pause, timerId is ' + timerId)
   }
 
   static async trackTimerResume(timerId: string) {
-    let currentTime = await systemUptime.getRealTime(false)
     let timer = this.timers[timerId]
     if (!timer || !timer.isPaused()) {
       return
     }
+    let currentTime = await systemUptime.getRealTime(false)
     timer.startTime = currentTime
     LogUtil.info('Track timer resume, timerId is ' + timerId)
   }
 
   static async trackTimerEnd(timerId: string, attributes: AttributesType = {}) {
-    let currentTime = await systemUptime.getRealTime(false)
     let timer = this.timers[timerId]
     if (!timer) {
       return
     }
     let eventName = timer.eventName
-    let duration = this.durationFrom(timer.startTime, currentTime) + timer.duration
+    let startTime = timer.startTime
+    let duration = timer.duration
+    delete this.timers[timerId]
+
+    let currentTime = await systemUptime.getRealTime(false)
+    duration = this.durationFrom(startTime, currentTime) + duration
     attributes[Event_DURATION] = (duration / 1000.0).toFixed(3) + ''
     let e = CustomEvent.create(eventName, attributes)
     EventSender.sendEvent(e)
-    delete this.timers[timerId]
     LogUtil.info('Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
     + JSON.stringify(attributes))
   }
