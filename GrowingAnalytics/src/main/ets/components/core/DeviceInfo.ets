@@ -56,7 +56,7 @@ export default class DeviceInfo {
     LogUtil.info('DeviceId from preferences is ' + deviceId)
     if (deviceId == '') {
       deviceId = util.generateRandomUUID(false)
-      SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)
+      await SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)
     }
     this.deviceId = deviceId
   }

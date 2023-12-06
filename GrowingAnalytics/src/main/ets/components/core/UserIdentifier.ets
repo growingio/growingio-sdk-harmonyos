@@ -17,7 +17,7 @@
 
 import AnalyticsCore from './AnalyticsCore'
 import Session from './Session'
-import { PREFERENCE_USER_ID, PREFERENCE_USER_KEY } from '../utils/Constants'
+import { PREFERENCE_USER_ID, PREFERENCE_USER_IDENTIFIER, PREFERENCE_USER_KEY } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
@@ -27,8 +27,10 @@ export default class UserIdentifier {
   private static latestNonnullUserId: string
 
   static async initUser() {
-    this.curUserId = await SharedPreferences.getValue(PREFERENCE_USER_ID) as string
-    this.curUserKey = await SharedPreferences.getValue(PREFERENCE_USER_KEY) as string
+    let userInfoString = await SharedPreferences.getValue(PREFERENCE_USER_IDENTIFIER) as string
+    let userInfo = JSON.parse(userInfoString)
+    this.curUserId = userInfo[PREFERENCE_USER_ID]
+    this.curUserKey = userInfo[PREFERENCE_USER_KEY]
     this.latestNonnullUserId = this.curUserId
     LogUtil.info('UserId from preferences is ' + this.curUserId + ', userKey from preferences is ' + this.curUserKey)
   }
@@ -47,8 +49,7 @@ export default class UserIdentifier {
       LogUtil.info('Clear loginUserId')
       this.curUserId = ''
       this.curUserKey = ''
-      SharedPreferences.put(PREFERENCE_USER_ID, '')
-      SharedPreferences.put(PREFERENCE_USER_KEY, '')
+      this.saveToPreferences()
       return
     }
     if (userId === this.curUserId && userKey === this.curUserKey) {
@@ -61,10 +62,16 @@ export default class UserIdentifier {
     + ' to ' + userKey)
     this.curUserId = userId
     this.curUserKey = userKey
-    SharedPreferences.put(PREFERENCE_USER_ID, userId)
-    SharedPreferences.put(PREFERENCE_USER_KEY, userKey)
-
+    this.saveToPreferences()
     this.userIdDidChanged(userId)
+  }
+
+  static saveToPreferences() {
+    let userIdentifier = {
+      PREFERENCE_USER_ID: this.curUserId,
+      PREFERENCE_USER_KEY: this.curUserKey
+    }
+    SharedPreferences.put(PREFERENCE_USER_IDENTIFIER, JSON.stringify(userIdentifier))
   }
 
   static userIdDidChanged(userId: string) {
