@@ -78,7 +78,7 @@ struct Index {
   }
 
   async getDeviceId() {
-    this.deviceId = await GrowingAnalytics.getDeviceId()
+    this.deviceId = GrowingAnalytics.getDeviceId()
   }
 
   setDataCollectionEnabled(enabled: boolean) {
@@ -111,9 +111,7 @@ struct Index {
   }
 
   track() {
-    GrowingAnalytics.track('buyProduct1')
-
-    GrowingAnalytics.track('buyProduct2', {
+    GrowingAnalytics.track('buyProduct', {
       'name': 'apple',
       'money': 1000,
       'num': 100,

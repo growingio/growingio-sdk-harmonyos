@@ -5,7 +5,7 @@ export default class CustomEvent extends Event {
   eventName: string = ''
   attributes: AttributesType
 
-  static create(eventName: string, attributes: AttributesType): Promise<CustomEvent> {
+  static create(eventName: string, attributes: AttributesType): CustomEvent {
     let event = new CustomEvent()
     event.eventName = eventName
     event.attributes = this.convertAttributes(attributes)

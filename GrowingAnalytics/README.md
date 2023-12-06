@@ -16,19 +16,23 @@ ohpm install @growingio/analytics
 ```
 
 ### 初始化
-在 EntryAbility.ets 的 onCreate 方法中初始化 SDK：
+在 Ability 的 onCreate 方法中初始化 SDK (Stage 模型)：
 ```typescript
+async startAnalytics() {
+  let config = new GrowingConfig(
+    'Your AccountId',
+    'Your DataSourceId',
+    'Your UrlScheme',
+    'Your DataCollectionServerHost<Optional>'
+  )
+  await GrowingAnalytics.start(this.context, config)
+}
+
 onCreate(want, launchParam) {
-    let config = new GrowingConfig(
-      'Your AccountId', 
-      'Your DataSourceId', 
-      'Your UrlScheme', 
-      'Your DataCollectionServerHost<Optional>'
-    )
-    GrowingAnalytics.start(this.context, config)
+  this.startAnalytics()
 }
 ```
-> 其中 accountId/dataSourceId/urlScheme 为必填项，dataCollectionServerHost 为可选项
+> 其中 accountId/dataSourceId/urlScheme 为必填项，dataCollectionServerHost 为可选项，若不清楚请联系您的专属项目经理或技术支持
 
 其他初始化配置项见下表，在 start 方法调用前通过`config.<配置项> = 对应值`进行配置：
 
@@ -67,7 +71,7 @@ GrowingAnalytics.setDataCollectionEnabled(true)
 
 #### 设置登录用户 ID
 
-`static async setLoginUserId(userId: string, userKey: string = '')`
+`static setLoginUserId(userId: string, userKey: string = '')`
 
 当用户登录之后调用，设置登录用户 ID 和用户 Key
 如果您的 App 每次用户升级版本时无需重新登录的话，为防止用户本地缓存被清除导致的无法被识别为登录用户，建议在用户每次升级 App 版本后初次访问时重新调用 setLoginUserId 方法
@@ -90,7 +94,7 @@ GrowingAnalytics.setLoginUserId('user', 'harmony')
 
 #### 清除登录用户 ID
 
-`static async cleanLoginUserId()`
+`static cleanLoginUserId()`
 
 当用户登出之后调用，清除已经设置的登录用户ID
 
@@ -131,7 +135,7 @@ GrowingAnalytics.cleanLocation()
 
 #### 设置埋点事件
 
-`static async track(eventName: string, attributes: { [key: string]: string | number | boolean | string[] | number[] } = {})`
+`static track(eventName: string, attributes: { [key: string]: string | number | boolean | string[] | number[] } = {})`
 
 发送一个埋点事件；注意：在添加发送的埋点事件代码之前，需在分析云平台事件管理界面创建埋点事件以及关联事件属性
 
@@ -222,7 +226,7 @@ GrowingAnalytics.clearTrackTimer()
 
 #### 设置登录用户属性
 
-`static async setLoginUserAttributes(attributes: { [key: string]: string | number | boolean | string[] | number[] })`
+`static setLoginUserAttributes(attributes: { [key: string]: string | number | boolean | string[] | number[] })`
 
 以登录用户的身份定义登录用户属性，用于用户信息相关分析
 
@@ -245,12 +249,12 @@ GrowingAnalytics.setLoginUserAttributes({
 
 #### 获取设备 ID
 
-`static async getDeviceId(): Promise<string>`
+`static getDeviceId(): string`
 
 获取设备 id，又称为匿名用户 id，SDK 自动生成用来定义唯一设备
 
 ```typescript
-let deviceId = await GrowingAnalytics.getDeviceId()
+let deviceId = GrowingAnalytics.getDeviceId()
 ```
 
 #### 埋点事件通用属性

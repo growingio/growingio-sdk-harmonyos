@@ -10,7 +10,11 @@ import SharedPreferences from '../utils/SharedPreferences'
 export default class EventBuilder {
   private static _eventSequenceId: number
 
-  static async build<T extends Event>(event: T): Promise<T> {
+  static async initEventBuilder() {
+    this._eventSequenceId = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
+  }
+
+  static build<T extends Event>(event: T): T {
     event.sessionId = Session.sessionId
     event.appState = Session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
     event.timestamp = Date.now()
@@ -41,22 +45,18 @@ export default class EventBuilder {
     event.latitude = Math.abs(core.location.latitude) > 0 ? core.location.latitude : undefined
     event.longitude = Math.abs(core.location.longitude) > 0 ? core.location.longitude : undefined
 
-    let userIdentifier = await UserIdentifier.sharedInstance()
-    let userId = userIdentifier.curUserId
+    let userId = UserIdentifier.curUserId
     event.userId = userId.length > 0 ? userId : undefined
-    let userKey = userIdentifier.curUserKey
+    let userKey = UserIdentifier.curUserKey
     event.userKey = userKey.length > 0 ? userKey : undefined
 
-    event.eventSequenceId = await this.updateEventSequenceId()
+    this.updateEventSequenceId()
+    event.eventSequenceId = this._eventSequenceId
     return event
   }
 
-  static async updateEventSequenceId(): Promise<number> {
-    if (this._eventSequenceId == undefined) {
-      this._eventSequenceId = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
-    }
+  private static updateEventSequenceId() {
     this._eventSequenceId = this._eventSequenceId + 1
     SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, this._eventSequenceId)
-    return this._eventSequenceId
   }
 }

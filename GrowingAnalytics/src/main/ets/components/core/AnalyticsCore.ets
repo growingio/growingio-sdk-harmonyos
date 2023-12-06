@@ -6,6 +6,7 @@ import GeneralProps from './GeneralProps'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import CustomEvent from '../event/CustomEvent'
+import EventBuilder from '../event/EventBuilder'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import { AttributesType } from '../utils/Constants'
@@ -26,10 +27,12 @@ export default class AnalyticsCore {
   static async startCore(context: Context, config: GrowingConfig) {
     let core = new AnalyticsCore(config)
     AnalyticsCore.core = core
-    SharedPreferences.configContext(context)
     this.setAbilityLifecycleCallback(context)
-    await DeviceInfo.initDeviceInfo()
+    await SharedPreferences.initWithContext(context)
     await AppInfo.initAppInfo()
+    await DeviceInfo.initDeviceInfo()
+    await UserIdentifier.initUser()
+    await EventBuilder.initEventBuilder()
   }
 
   static setAbilityLifecycleCallback(context: Context) {
@@ -72,12 +75,11 @@ export default class AnalyticsCore {
     }
   }
 
-  async setLoginUserId(
+  setLoginUserId(
     userId: string,
     userKey: string = ''
   ) {
-    let userIdentifier = await UserIdentifier.sharedInstance()
-    userIdentifier.setLoginUserId(userId, userKey)
+    UserIdentifier.setLoginUserId(userId, userKey)
   }
 
   setLocation(
@@ -88,10 +90,10 @@ export default class AnalyticsCore {
     this.location.longitude = longitude
   }
 
-  async setLoginUserAttributes(
+  setLoginUserAttributes(
     attributes: AttributesType
   ) {
-    let e = await LoginUserAttributesEvent.create(attributes)
+    let e = LoginUserAttributesEvent.create(attributes)
     EventSender.sendEvent(e)
     LogUtil.info('Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
@@ -100,12 +102,12 @@ export default class AnalyticsCore {
     return DeviceInfo.deviceId
   }
 
-  async track(
+  track(
     eventName: string,
     attributes: AttributesType = {}
   ) {
     let generalProps = GeneralProps.getGeneralProps()
-    let e = await CustomEvent.create(eventName, { ...generalProps, ...attributes })
+    let e = CustomEvent.create(eventName, { ...generalProps, ...attributes })
     EventSender.sendEvent(e)
     LogUtil.info('Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes)
     + ', current generalProps: ' + JSON.stringify(generalProps))

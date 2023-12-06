@@ -4,20 +4,12 @@ import { PREFERENCE_NAME } from './Constants'
 import { LogUtil } from './LogUtil'
 
 export default class SharedPreferences {
-  private static context: Context
   private static preferences: preferences.Preferences = null
 
-  static configContext(context: Context) {
-    this.context = context.getApplicationContext()
-    this.getPreferences()
-  }
-
-  static async getPreferences() {
-    if (this.preferences) {
-      return
-    }
+  static async initWithContext(context: Context) {
+    let appContext = context.getApplicationContext()
     try {
-      let promise = preferences.getPreferences(this.context, PREFERENCE_NAME)
+      let promise = preferences.getPreferences(appContext, PREFERENCE_NAME)
       await promise.then((p) => {
         this.preferences = p
       }).catch ((e) => {
@@ -29,7 +21,6 @@ export default class SharedPreferences {
   }
 
   static async put(key: string, value: preferences.ValueType) {
-    await this.getPreferences()
     if (!this.preferences) {
       return
     }
@@ -38,7 +29,6 @@ export default class SharedPreferences {
   }
 
   static async getValue(key: string, defValue: preferences.ValueType = ''): Promise<preferences.ValueType> {
-    await this.getPreferences()
     if (!this.preferences) {
       return null
     }

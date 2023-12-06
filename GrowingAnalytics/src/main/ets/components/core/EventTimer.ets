@@ -69,7 +69,7 @@ export default class EventTimer {
     let eventName = timer.eventName
     let duration = this.durationFrom(timer.startTime, currentTime) + timer.duration
     attributes[Event_DURATION] = (duration / 1000.0).toFixed(3) + ''
-    let e = await CustomEvent.create(eventName, attributes)
+    let e = CustomEvent.create(eventName, attributes)
     EventSender.sendEvent(e)
     delete this.timers[timerId]
     LogUtil.info('Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '

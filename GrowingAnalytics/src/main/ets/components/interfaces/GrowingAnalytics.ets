@@ -1,6 +1,5 @@
 import AnalyticsCore from '../core/AnalyticsCore'
 import { GrowingConfig } from './GrowingConfig'
-import EventTimer from '../core/EventTimer'
 import Session from '../core/Session'
 import { AttributesType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -39,21 +38,21 @@ export class GrowingAnalytics {
     AnalyticsCore.core.setDataCollectionEnabled(enabled)
   }
 
-  static async setLoginUserId(
+  static setLoginUserId(
     userId: string,
     userKey: string = ''
   ) {
     if (!AnalyticsCore.core) {
       return
     }
-    await AnalyticsCore.core.setLoginUserId(userId, userKey)
+    AnalyticsCore.core.setLoginUserId(userId, userKey)
   }
 
-  static async cleanLoginUserId() {
+  static cleanLoginUserId() {
     if (!AnalyticsCore.core) {
       return
     }
-    await AnalyticsCore.core.setLoginUserId('')
+    AnalyticsCore.core.setLoginUserId('')
   }
 
   static setLocation(
@@ -73,11 +72,11 @@ export class GrowingAnalytics {
     AnalyticsCore.core.setLocation(0, 0)
   }
 
-  static async setLoginUserAttributes(attributes: AttributesType) {
+  static setLoginUserAttributes(attributes: AttributesType) {
     if (!AnalyticsCore.core) {
       return
     }
-    await AnalyticsCore.core.setLoginUserAttributes(attributes)
+    AnalyticsCore.core.setLoginUserAttributes(attributes)
   }
 
   static getDeviceId(): string {
@@ -87,14 +86,14 @@ export class GrowingAnalytics {
     return AnalyticsCore.core.getDeviceId()
   }
 
-  static async track(
+  static track(
     eventName: string,
     attributes: AttributesType = {}
   ) {
     if (!AnalyticsCore.core) {
       return
     }
-    await AnalyticsCore.core.track(eventName, attributes)
+    AnalyticsCore.core.track(eventName, attributes)
   }
 
   static async trackTimerStart(eventName: string): Promise<string> {

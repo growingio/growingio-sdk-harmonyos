@@ -43,14 +43,14 @@ export default class Session {
     this.generateVisit()
   }
 
-  static async generateVisit() {
+  static generateVisit() {
     LogUtil.info('Generate Visit')
     let config = AnalyticsCore.core.config
     if (!config.dataCollectionEnabled) {
       LogUtil.info('Failed to Generate Visit, dataCollectionEnabled is false')
       return
     }
-    let e = await VisitEvent.create()
+    let e = VisitEvent.create()
     EventSender.sendEvent(e)
   }
 }

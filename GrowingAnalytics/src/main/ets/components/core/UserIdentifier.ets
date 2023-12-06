@@ -5,39 +5,18 @@ import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
 export default class UserIdentifier {
-  curUserId: string
-  curUserKey: string
-  private latestNonnullUserId: string
+  static curUserId: string
+  static curUserKey: string
+  private static latestNonnullUserId: string
 
-  static instance: UserIdentifier = null
-  constructor(
-    curUserId: string,
-    curUserKey: string,
-  ) {
-    this.curUserId = curUserId
-    this.curUserKey = curUserKey
-    this.latestNonnullUserId = curUserId
+  static async initUser() {
+    this.curUserId = await SharedPreferences.getValue(PREFERENCE_USER_ID) as string
+    this.curUserKey = await SharedPreferences.getValue(PREFERENCE_USER_KEY) as string
+    this.latestNonnullUserId = this.curUserId
+    LogUtil.info('UserId from preferences is ' + this.curUserId + ', userKey from preferences is ' + this.curUserKey)
   }
 
-  static async sharedInstance(): Promise<UserIdentifier> {
-    if (this.instance == null) {
-      let curUserId = await this.getUserId()
-      let curUserKey = await this.getUserKey()
-      LogUtil.info('UserId from preferences is ' + curUserId + ', userKey from preferences is ' + curUserKey)
-      this.instance = new UserIdentifier(curUserId, curUserKey)
-    }
-    return this.instance
-  }
-
-  static async getUserId(): Promise<string> {
-    return SharedPreferences.getValue(PREFERENCE_USER_ID) as Promise<string>
-  }
-
-  static async getUserKey(): Promise<string> {
-    return SharedPreferences.getValue(PREFERENCE_USER_KEY) as Promise<string>
-  }
-
-  setLoginUserId(userId: string, userKey: string = '') {
+  static setLoginUserId(userId: string, userKey: string = '') {
     if (AnalyticsCore.core.config.idMappingEnabled == false) {
       userKey = ''
     }
@@ -71,7 +50,7 @@ export default class UserIdentifier {
     this.userIdDidChanged(userId)
   }
 
-  userIdDidChanged(userId: string) {
+  static userIdDidChanged(userId: string) {
     let oldUserId = this.latestNonnullUserId
     this.latestNonnullUserId = userId
     // A=>B

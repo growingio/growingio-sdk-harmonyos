@@ -4,17 +4,20 @@ import window from '@ohos.window';
 import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 
 export default class EntryAbility extends UIAbility {
-  onCreate(want, launchParam) {
-    hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
+  async startAnalytics() {
     let config = new GrowingConfig(
       '0a1b4118dd954ec3bcc69da5138bdb96', 'ab555003531e0fd1', 'growing.bf30ad277eaae1aa'
     )
     config.debugEnabled = true
     config.sessionInterval = 30
     config.idMappingEnabled = true
-    GrowingAnalytics.start(this.context, config)
+    await GrowingAnalytics.start(this.context, config)
+  }
 
-    GrowingAnalytics.isInitializedSuccessfully()
+  onCreate(want, launchParam) {
+    hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
+
+    this.startAnalytics()
   }
 
   onDestroy() {
