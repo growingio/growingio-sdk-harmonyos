@@ -73,13 +73,9 @@ export default class UserIdentifier {
 
   userIdDidChanged(userId: string) {
     let oldUserId = this.latestNonnullUserId
-    if (oldUserId.length == 0) {
-      return
-    }
     this.latestNonnullUserId = userId
-
     // A=>B
-    if (oldUserId != userId) {
+    if (oldUserId.length > 0 && oldUserId != userId) {
       Session.refreshSession()
     }
   }
