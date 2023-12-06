@@ -1,4 +1,5 @@
 import { GrowingConfig } from '../interfaces/GrowingConfig'
+import AppInfo from './AppInfo'
 import DeviceInfo from './DeviceInfo'
 import EventTimer from './EventTimer'
 import GeneralProps from './GeneralProps'
@@ -17,14 +18,21 @@ export default class AnalyticsCore {
   config: GrowingConfig
   location: Location
 
-  constructor(context: Context, config: GrowingConfig) {
+  constructor(config: GrowingConfig) {
     this.config = config
     this.location = new Location()
-    SharedPreferences.configContext(context)
-    this.setAbilityLifecycleCallback(context)
   }
 
-  setAbilityLifecycleCallback(context: Context) {
+  static async startCore(context: Context, config: GrowingConfig) {
+    let core = new AnalyticsCore(config)
+    AnalyticsCore.core = core
+    SharedPreferences.configContext(context)
+    this.setAbilityLifecycleCallback(context)
+    await DeviceInfo.initDeviceInfo()
+    await AppInfo.initAppInfo()
+  }
+
+  static setAbilityLifecycleCallback(context: Context) {
     let abilityLifecycleCallback = {
       onAbilityCreate(ability) {
       },
@@ -88,9 +96,8 @@ export default class AnalyticsCore {
     LogUtil.info('Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
 
-  async getDeviceId() {
-    let deviceInfo = await DeviceInfo.sharedInstance()
-    return deviceInfo.deviceId
+  getDeviceId() {
+    return DeviceInfo.deviceId
   }
 
   async track(

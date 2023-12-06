@@ -8,30 +8,19 @@ import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
 export default class DeviceInfo {
-  deviceId: string = ''
-  platform: string = ''
-  platformVersion: string = ''
-  screenHeight: number = 0
-  screenWidth: number = 0
-  deviceBrand: string = ''
-  deviceModel: string = ''
-  deviceType: string = ''
-  language: string = ''
-  timezoneOffset: string = ''
+  static deviceId: string = ''
+  static platform: string = ''
+  static platformVersion: string = ''
+  static screenHeight: number = 0
+  static screenWidth: number = 0
+  static deviceBrand: string = ''
+  static deviceModel: string = ''
+  static deviceType: string = ''
+  static language: string = ''
+  static timezoneOffset: string = ''
+  static networkState: string = ''
 
-  static instance: DeviceInfo = null
-
-  constructor() { }
-
-  static async sharedInstance(): Promise<DeviceInfo> {
-    if (this.instance == null) {
-      this.instance = new DeviceInfo()
-      await this.instance.initDeviceInfo()
-    }
-    return this.instance
-  }
-
-  async initDeviceInfo() {
+  static async initDeviceInfo() {
     this.platform = 'HarmonyOS'
     this.platformVersion = deviceInfo.displayVersion
 
@@ -44,6 +33,7 @@ export default class DeviceInfo {
     this.deviceType = deviceInfo.deviceType
     this.language = I18n.System.getSystemLanguage()
     this.timezoneOffset = new Date().getTimezoneOffset() + ''
+    this.networkState = 'WIFI' //TODO
 
     let deviceId = await SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
     LogUtil.info('DeviceId from preferences is ' + deviceId)

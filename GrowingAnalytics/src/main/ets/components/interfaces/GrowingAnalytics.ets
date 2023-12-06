@@ -6,7 +6,7 @@ import { AttributesType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
 export class GrowingAnalytics {
-  static start(
+  static async start(
     context: Context,
     configuration: GrowingConfig
   ) {
@@ -19,7 +19,8 @@ export class GrowingAnalytics {
       return
     }
     let config = configuration.copy()
-    AnalyticsCore.core = new AnalyticsCore(context, config)
+    await AnalyticsCore.startCore(context, config)
+
     LogUtil.debugEnabled = config.debugEnabled
     LogUtil.info('Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
     + 'GrowingIO version: ' + SDK_VERSION)
@@ -79,11 +80,11 @@ export class GrowingAnalytics {
     await AnalyticsCore.core.setLoginUserAttributes(attributes)
   }
 
-  static async getDeviceId(): Promise<string> {
+  static getDeviceId(): string {
     if (!AnalyticsCore.core) {
       return ''
     }
-    return await AnalyticsCore.core.getDeviceId()
+    return AnalyticsCore.core.getDeviceId()
   }
 
   static async track(

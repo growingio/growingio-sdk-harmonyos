@@ -11,31 +11,29 @@ export default class EventBuilder {
   private static _eventSequenceId: number
 
   static async build<T extends Event>(event: T): Promise<T> {
-    event.eventSequenceId = await this.updateEventSequenceId()
-
     event.sessionId = Session.sessionId
     event.appState = Session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
-    event.networkState = 'WiFi' // TODO
     event.timestamp = Date.now()
     event.sdkVersion = SDK_VERSION
 
-    let deviceInfo = await DeviceInfo.sharedInstance()
-    event.deviceId = deviceInfo.deviceId
-    event.platform = deviceInfo.platform
-    event.platformVersion = deviceInfo.platformVersion
-    event.screenHeight = deviceInfo.screenHeight
-    event.screenWidth = deviceInfo.screenWidth
-    event.deviceBrand = deviceInfo.deviceBrand
-    event.deviceModel = deviceInfo.deviceModel
-    event.deviceType = deviceInfo.deviceType
-    event.language = deviceInfo.language
-    event.timezoneOffset = deviceInfo.timezoneOffset
+    // device info
+    event.deviceId = DeviceInfo.deviceId
+    event.platform = DeviceInfo.platform
+    event.platformVersion = DeviceInfo.platformVersion
+    event.screenHeight = DeviceInfo.screenHeight
+    event.screenWidth = DeviceInfo.screenWidth
+    event.deviceBrand = DeviceInfo.deviceBrand
+    event.deviceModel = DeviceInfo.deviceModel
+    event.deviceType = DeviceInfo.deviceType
+    event.language = DeviceInfo.language
+    event.timezoneOffset = DeviceInfo.timezoneOffset
+    event.networkState = DeviceInfo.networkState
 
-    let appInfo = await AppInfo.sharedInstance()
-    event.domain = appInfo.domain
-    event.appChannel = appInfo.appChannel
-    event.appName = appInfo.appName
-    event.appVersion = appInfo.appVersion
+    // app info
+    event.domain = AppInfo.domain
+    event.appChannel = AppInfo.appChannel
+    event.appName = AppInfo.appName
+    event.appVersion = AppInfo.appVersion
 
     let core = AnalyticsCore.core
     event.dataSourceId = core.config.dataSourceId
@@ -49,6 +47,7 @@ export default class EventBuilder {
     let userKey = userIdentifier.curUserKey
     event.userKey = userKey.length > 0 ? userKey : undefined
 
+    event.eventSequenceId = await this.updateEventSequenceId()
     return event
   }
 
