@@ -46,10 +46,12 @@ export default class AnalyticsCore {
     AnalyticsCore.core = core
     this.setAbilityLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
-    await AppInfo.initAppInfo()
-    await DeviceInfo.initDeviceInfo()
-    await UserIdentifier.initUser()
-    await EventBuilder.initEventBuilder()
+    await Promise.all([
+      AppInfo.initAppInfo(),
+      DeviceInfo.initDeviceInfo(),
+      UserIdentifier.initUser(),
+      EventBuilder.initEventBuilder()
+    ])
   }
 
   static setAbilityLifecycleCallback(context: Context) {
