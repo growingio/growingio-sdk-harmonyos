@@ -27,10 +27,10 @@ export default class UserIdentifier {
   private static latestNonnullUserId: string
 
   static async initUser() {
-    let userInfoString = await SharedPreferences.getValue(PREFERENCE_USER_IDENTIFIER) as string
+    let userInfoString = await SharedPreferences.getValue(PREFERENCE_USER_IDENTIFIER, '{}') as string
     let userInfo = JSON.parse(userInfoString)
-    this.curUserId = userInfo[PREFERENCE_USER_ID]
-    this.curUserKey = userInfo[PREFERENCE_USER_KEY]
+    this.curUserId = userInfo[PREFERENCE_USER_ID] ?? ''
+    this.curUserKey = userInfo[PREFERENCE_USER_KEY] ?? ''
     this.latestNonnullUserId = this.curUserId
     LogUtil.info('UserId from preferences is ' + this.curUserId + ', userKey from preferences is ' + this.curUserKey)
   }
@@ -68,8 +68,8 @@ export default class UserIdentifier {
 
   static saveToPreferences() {
     let userIdentifier = {
-      PREFERENCE_USER_ID: this.curUserId,
-      PREFERENCE_USER_KEY: this.curUserKey
+      [PREFERENCE_USER_ID]: this.curUserId,
+      [PREFERENCE_USER_KEY]: this.curUserKey
     }
     SharedPreferences.put(PREFERENCE_USER_IDENTIFIER, JSON.stringify(userIdentifier))
   }
@@ -78,7 +78,7 @@ export default class UserIdentifier {
     let oldUserId = this.latestNonnullUserId
     this.latestNonnullUserId = userId
     // A=>B
-    if (oldUserId.length > 0 && oldUserId != userId) {
+    if (oldUserId && oldUserId.length > 0 && oldUserId != userId) {
       Session.refreshSession()
     }
   }
