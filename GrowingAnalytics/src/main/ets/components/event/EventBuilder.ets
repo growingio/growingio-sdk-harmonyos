@@ -8,10 +8,13 @@ import { SDK_VERSION, PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 import SharedPreferences from '../utils/SharedPreferences'
 
 export default class EventBuilder {
+  private static _eventSequenceId: number
+
   static async build<T extends Event>(event: T): Promise<T> {
+    event.eventSequenceId = await this.updateEventSequenceId()
+
     event.sessionId = Session.sessionId
     event.appState = Session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
-    event.eventSequenceId = await EventBuilder.updateEventSequenceId()
     event.networkState = 'WiFi' // TODO
     event.timestamp = Date.now()
     event.sdkVersion = SDK_VERSION
@@ -50,11 +53,11 @@ export default class EventBuilder {
   }
 
   static async updateEventSequenceId(): Promise<number> {
-    let se = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID) as number
-    if (!se || se == 0 || se == NaN) {
-      se = 0
+    if (this._eventSequenceId == undefined) {
+      this._eventSequenceId = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
     }
-    SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, se + 1)
-    return se
+    this._eventSequenceId = this._eventSequenceId + 1
+    SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, this._eventSequenceId)
+    return this._eventSequenceId
   }
 }
