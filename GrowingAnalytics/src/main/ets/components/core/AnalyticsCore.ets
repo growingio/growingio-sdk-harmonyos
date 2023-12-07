@@ -26,7 +26,7 @@ import CustomEvent from '../event/CustomEvent'
 import EventBuilder from '../event/EventBuilder'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
-import { AttributesType } from '../utils/Constants'
+import { AttributesType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
@@ -44,6 +44,7 @@ export default class AnalyticsCore {
   static async startCore(context: Context, config: GrowingConfig) {
     let core = new AnalyticsCore(config)
     AnalyticsCore.core = core
+    LogUtil.debugEnabled = config.debugEnabled
     this.setAbilityLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
     await Promise.all([
@@ -52,6 +53,9 @@ export default class AnalyticsCore {
       UserIdentifier.initUser(),
       EventBuilder.initEventBuilder()
     ])
+
+    LogUtil.info('Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
+    + 'GrowingIO version: ' + SDK_VERSION)
   }
 
   static setAbilityLifecycleCallback(context: Context) {

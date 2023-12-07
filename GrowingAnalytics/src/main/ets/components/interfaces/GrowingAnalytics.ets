@@ -18,8 +18,7 @@
 import AnalyticsCore from '../core/AnalyticsCore'
 import { GrowingConfig } from './GrowingConfig'
 import Session from '../core/Session'
-import { AttributesType, SDK_VERSION } from '../utils/Constants'
-import { LogUtil } from '../utils/LogUtil'
+import { AttributesType } from '../utils/Constants'
 
 export class GrowingAnalytics {
   static async start(
@@ -27,20 +26,15 @@ export class GrowingAnalytics {
     configuration: GrowingConfig
   ) {
     if (AnalyticsCore.core) {
-      LogUtil.warn('Do not initialize GrowingAnalytics repeatedly')
+      console.warn('[GrowingAnalytics] Do not initialize GrowingAnalytics repeatedly')
       return
     }
     if (!context.stageMode) {
-      LogUtil.error('Only support stageMode(HarmonyOS 3.1+, API 9+)')
+      console.error('[GrowingAnalytics] Only support stageMode(HarmonyOS 3.1+, API 9+)')
       return
     }
     let config = configuration.copy()
     await AnalyticsCore.startCore(context, config)
-
-    LogUtil.debugEnabled = config.debugEnabled
-    LogUtil.info('Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
-    + 'GrowingIO version: ' + SDK_VERSION)
-
     Session.refreshSession()
   }
 
