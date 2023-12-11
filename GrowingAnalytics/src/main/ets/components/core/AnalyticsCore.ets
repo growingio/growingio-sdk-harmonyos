@@ -61,9 +61,10 @@ export default class AnalyticsCore {
     LogUtil.info('Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
     + 'GrowingIO version: ' + SDK_VERSION)
 
+    let delay = config.dataUploadInterval * 1000
     setInterval(() => {
       EventSender.sendEvent()
-    }, 15000)
+    }, delay)
   }
 
   static setAbilityLifecycleCallback(context: Context) {
