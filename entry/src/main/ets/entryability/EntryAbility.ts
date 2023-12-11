@@ -10,6 +10,7 @@ export default class EntryAbility extends UIAbility {
     )
     config.debugEnabled = true
     config.sessionInterval = 30
+    config.dataUploadInterval = 15
     config.idMappingEnabled = true
     await GrowingAnalytics.start(this.context, config)
   }

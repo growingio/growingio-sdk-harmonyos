@@ -44,6 +44,7 @@ onCreate(want, launchParam) {
 | dataCollectionServerHost | string   | -      | 服务端部署后的 ServerHost，默认值为 https://napi.growingio.com |
 | debugEnabled             | boolean  | false  | 调试模式，开启后会输出 SDK 日志，在线上环境请关闭            |
 | sessionInterval          | number   | 30     | 设置会话后台留存时长，指当前会话在应用进入后台后的最大留存时间，默认为 30 秒。另外，其他情况下也会重新生成一个新的会话，如设置用户 ID 等核心信息，重新打开数据收集等 |
+| dataUploadInterval       | number   | 15     | 数据发送的间隔，默认为 15 秒。SDK 会先将事件存入数据库中，然后以每隔默认时间 15 秒向服务器发送事件包 |
 | dataCollectionEnabled    | boolean  | true   | 数据收集，当数据收集关闭时，SDK 将不会再产生事件和上报事件   |
 | idMappingEnabled         | boolean  | false  | 是否开启多用户身份上报                                       |
 

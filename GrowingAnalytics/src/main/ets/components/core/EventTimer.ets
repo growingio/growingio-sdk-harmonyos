@@ -20,7 +20,6 @@ import util from '@ohos.util'
 
 import AnalyticsCore from './AnalyticsCore'
 import CustomEvent from '../event/CustomEvent'
-import EventSender from '../event/EventSender'
 import { AttributesType, Event_DURATION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
@@ -92,7 +91,7 @@ export default class EventTimer {
     duration = this.durationFrom(startTime, currentTime) + duration
     attributes[Event_DURATION] = (duration / 1000.0).toFixed(3) + ''
     let e = CustomEvent.create(eventName, attributes)
-    EventSender.sendEvent(e)
+    AnalyticsCore.core.writeEventToDisk(e)
     LogUtil.info('Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
     + JSON.stringify(attributes))
   }

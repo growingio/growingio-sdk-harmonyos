@@ -23,6 +23,7 @@ export class GrowingConfig {
 
   debugEnabled: boolean = false
   sessionInterval: number = 30
+  dataUploadInterval: number = 15
   dataCollectionEnabled: boolean = true
   idMappingEnabled: boolean = true
   encryptEnabled: boolean = false
@@ -48,6 +49,7 @@ export class GrowingConfig {
 
     config.debugEnabled = this.debugEnabled
     config.sessionInterval = this.sessionInterval
+    config.dataUploadInterval = this.dataUploadInterval
     config.dataCollectionEnabled = this.dataCollectionEnabled
     config.idMappingEnabled = this.idMappingEnabled
     config.encryptEnabled = this.encryptEnabled

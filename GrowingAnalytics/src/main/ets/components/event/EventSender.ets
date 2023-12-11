@@ -17,19 +17,29 @@
 
 import http from '@ohos.net.http'
 
-import Event from './Event'
+import EventDatabase from './EventDatabase'
 import AnalyticsCore from '../core/AnalyticsCore'
+import { DATABASE_MAX_BATCH_SIZE } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
 export default class EventSender {
-  static sendEvent = <T extends Event>(
-  event: T
-  ) => {
+  static isUploading: boolean = false
+
+  static async sendEvent() {
     if (!AnalyticsCore.core.config.dataCollectionEnabled) {
       return
     }
 
-    let serialize = event.toSerialize()
+    if (this.isUploading) {
+      return
+    }
+
+    let events = await EventDatabase.getEventsByCount(DATABASE_MAX_BATCH_SIZE)
+    if (events.length == 0) {
+      return
+    }
+    this.isUploading = true
+    let serialize = events.map(event => String(event.data)).join(',')
     let request = http.createHttp()
     let url = EventSender.url()
 
@@ -46,8 +56,18 @@ export default class EventSender {
     }, (e, v) => {
       if (e) {
         LogUtil.info('Request Failure, error: ' + JSON.stringify(e))
+        this.isUploading = false
       } else {
         LogUtil.info('Request Success, Url = ' + url + ', Send event = ' + serialize)
+
+        EventDatabase.removeEvents(events).then(() => {
+          this.isUploading = false
+          EventDatabase.countOfEvents().then(count => {
+            if (count > DATABASE_MAX_BATCH_SIZE) {
+              this.sendEvent()
+            }
+          })
+        })
       }
       request.destroy()
     })

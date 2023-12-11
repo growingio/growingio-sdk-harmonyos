@@ -18,7 +18,6 @@
 import util from '@ohos.util'
 
 import AnalyticsCore from './AnalyticsCore'
-import EventSender from '../event/EventSender'
 import VisitEvent from '../event/VisitEvent'
 import { LogUtil } from '../utils/LogUtil'
 
@@ -62,12 +61,13 @@ export default class Session {
 
   static generateVisit() {
     LogUtil.info('Generate Visit')
-    let config = AnalyticsCore.core.config
+    let core = AnalyticsCore.core
+    let config = core.config
     if (!config.dataCollectionEnabled) {
       LogUtil.info('Failed to Generate Visit, dataCollectionEnabled is false')
       return
     }
     let e = VisitEvent.create()
-    EventSender.sendEvent(e)
+    core.writeEventToDisk(e)
   }
 }
