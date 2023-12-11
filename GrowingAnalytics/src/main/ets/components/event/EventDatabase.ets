@@ -1,12 +1,11 @@
 import relationalStore from '@ohos.data.relationalStore'
 
 import EventPersistence from './EventPersistence'
-import { DATABASE_NAME } from '../utils/Constants'
+import { DATABASE_EXPIRATION_TIME, DATABASE_NAME } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
 export default class EventDatabase {
   static store: relationalStore.RdbStore
-  static expirationTime: number = 86400000 * 7
 
   static async initDatabase(context: Context) {
     const config: relationalStore.StoreConfig = {
@@ -44,7 +43,7 @@ export default class EventDatabase {
       'EVENT_UUID': event.uuid,
       'DATA': event.data,
       'TYPE': event.eventType,
-      'CREATE_AT': event.timestamp,
+      'CREATE_AT': Date.now(),
       'SDK_VERSION': event.sdkVersion
     }
 
@@ -66,14 +65,13 @@ export default class EventDatabase {
     try {
       let predicates = new relationalStore.RdbPredicates('EVENT')
       predicates.orderByAsc('CREATE_AT')
-      let r = await this.store.query(predicates, ['EVENT_UUID', 'DATA', 'TYPE', 'CREATE_AT', 'SDK_VERSION'])
+      let r = await this.store.query(predicates, ['EVENT_UUID', 'DATA', 'TYPE', 'SDK_VERSION'])
       while (r.goToNextRow() && events.length < count) {
         const uuid = r.getString(r.getColumnIndex('EVENT_UUID'))
         const data = r.getString(r.getColumnIndex('DATA'))
         const eventType = r.getString(r.getColumnIndex('TYPE'))
-        const timestamp = r.getLong(r.getColumnIndex('CREATE_AT'))
         const sdkVersion = r.getString(r.getColumnIndex('SDK_VERSION'))
-        let e = EventPersistence.fromDatabase(uuid, data, eventType, timestamp, sdkVersion)
+        let e = EventPersistence.fromDatabase(uuid, data, eventType, sdkVersion)
         events.push(e)
       }
       r.close()
@@ -89,14 +87,15 @@ export default class EventDatabase {
       return
     }
 
-    let timestamp = Math.max(...(events.map(e => e.timestamp)))
-
-    try {
-      let predicates = new relationalStore.RdbPredicates('EVENT')
-      predicates.lessThanOrEqualTo('CREATE_AT', timestamp)
-      await this.store.delete(predicates)
-    } catch (e) {
-      LogUtil.error("Failed to remove event from disk. code = " + e.code + ", message = " + e.message)
+    while (events.length > 0) {
+      let event = events.shift()
+      try {
+        let predicates = new relationalStore.RdbPredicates('EVENT')
+        predicates.equalTo('EVENT_UUID', event.uuid)
+        await this.store.delete(predicates)
+      } catch (e) {
+        LogUtil.error("Failed to remove event from disk. code = " + e.code + ", message = " + e.message)
+      }
     }
   }
 
@@ -125,7 +124,7 @@ export default class EventDatabase {
       return
     }
 
-    let daysAgo = Date.now() - this.expirationTime
+    let daysAgo = Date.now() - DATABASE_EXPIRATION_TIME
 
     try {
       let predicates = new relationalStore.RdbPredicates('EVENT')

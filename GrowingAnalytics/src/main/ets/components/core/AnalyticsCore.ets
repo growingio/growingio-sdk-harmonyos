@@ -23,7 +23,7 @@ import GeneralProps from './GeneralProps'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import CustomEvent from '../event/CustomEvent'
-import Event from '../event/Event'
+import Event, { EventType } from '../event/Event'
 import EventBuilder from '../event/EventBuilder'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
@@ -184,12 +184,15 @@ export default class AnalyticsCore {
     GeneralProps.clearGeneralProps()
   }
 
-  writeEventToDisk<T extends Event>(event: T) {
+  async writeEventToDisk<T extends Event>(event: T) {
     if (!this.config.dataCollectionEnabled) {
       return
     }
     let pst = EventPersistence.fromEvent(event)
-    EventDatabase.writeEvent(pst)
+    await EventDatabase.writeEvent(pst)
+    if (pst.eventType == EventType.Visit) {
+      await EventSender.sendEvent()
+    }
   }
 }
 
