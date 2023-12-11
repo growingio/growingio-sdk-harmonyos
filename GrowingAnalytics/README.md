@@ -15,6 +15,12 @@ GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社�
 ohpm install @growingio/analytics
 ```
 
+### 通过本地 har 集成
+首先将下载的 GrowingAnalytics.har 放入项目根目录，再执行以下命令：
+```c
+ohpm install ./GrowingAnalytics.har
+```
+
 ### 初始化
 在 Ability 的 onCreate 方法中初始化 SDK (Stage 模型)：
 ```typescript
