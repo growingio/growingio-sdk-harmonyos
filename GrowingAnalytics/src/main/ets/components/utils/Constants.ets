@@ -22,6 +22,9 @@ export const PREFERENCE_USER_IDENTIFIER = "growing_user_identifier"
 export const PREFERENCE_DEVICE_ID = "growing_device_id"
 export const PREFERENCE_EVENT_SEQUENCE_ID = "growing_event_sequence_id"
 
+export const DATABASE_NAME = 'growing_analytics_database'
+export const DATABASE_MAX_BATCH_SIZE = 500
+
 export const Event_DURATION = "event_duration"
 
 export const SDK_VERSION = "1.0.0"

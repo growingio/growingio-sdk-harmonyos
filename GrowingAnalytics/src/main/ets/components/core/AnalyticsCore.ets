@@ -23,7 +23,10 @@ import GeneralProps from './GeneralProps'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import CustomEvent from '../event/CustomEvent'
+import Event from '../event/Event'
 import EventBuilder from '../event/EventBuilder'
+import EventDatabase from '../event/EventDatabase'
+import EventPersistence from '../event/EventPersistence'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import { AttributesType, SDK_VERSION } from '../utils/Constants'
@@ -51,11 +54,16 @@ export default class AnalyticsCore {
       AppInfo.initAppInfo(),
       DeviceInfo.initDeviceInfo(),
       UserIdentifier.initUser(),
-      EventBuilder.initEventBuilder()
+      EventBuilder.initEventBuilder(),
+      EventDatabase.initDatabase(context)
     ])
 
     LogUtil.info('Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
     + 'GrowingIO version: ' + SDK_VERSION)
+
+    setInterval(() => {
+      EventSender.sendEvent()
+    }, 15000)
   }
 
   static setAbilityLifecycleCallback(context: Context) {
@@ -117,7 +125,7 @@ export default class AnalyticsCore {
     attributes: AttributesType
   ) {
     let e = LoginUserAttributesEvent.create(attributes)
-    EventSender.sendEvent(e)
+    this.writeEventToDisk(e)
     LogUtil.info('Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
 
@@ -131,7 +139,7 @@ export default class AnalyticsCore {
   ) {
     let generalProps = GeneralProps.getGeneralProps()
     let e = CustomEvent.create(eventName, { ...generalProps, ...attributes })
-    EventSender.sendEvent(e)
+    this.writeEventToDisk(e)
     LogUtil.info('Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes)
     + ', current generalProps: ' + JSON.stringify(generalProps))
   }
@@ -173,6 +181,14 @@ export default class AnalyticsCore {
 
   clearGeneralProps() {
     GeneralProps.clearGeneralProps()
+  }
+
+  writeEventToDisk<T extends Event>(event: T) {
+    if (!this.config.dataCollectionEnabled) {
+      return
+    }
+    let pst = EventPersistence.fromEvent(event)
+    EventDatabase.writeEvent(pst)
   }
 }
 

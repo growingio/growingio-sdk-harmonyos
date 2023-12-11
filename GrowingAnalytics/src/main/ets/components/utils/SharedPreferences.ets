@@ -30,10 +30,10 @@ export default class SharedPreferences {
       await promise.then((p) => {
         this.preferences = p
       }).catch ((e) => {
-        LogUtil.error("Failed to get preferences. code =" + e.code + ", message =" + e.message)
+        LogUtil.error("Failed to get preferences. code = " + e.code + ", message = " + e.message)
       })
     } catch (e) {
-      LogUtil.error("Failed to get preferences. code =" + e.code + ", message =" + e.message)
+      LogUtil.error("Failed to get preferences. code = " + e.code + ", message = " + e.message)
     }
   }
 
@@ -54,7 +54,7 @@ export default class SharedPreferences {
       let result = await this.preferences.get(key, defValue)
       value = result as preferences.ValueType
     } catch (e) {
-      LogUtil.error("Failed to get value of " + key + ". code =" + e.code + ", message =" + e.message)
+      LogUtil.error("Failed to get value of " + key + ". code = " + e.code + ", message = " + e.message)
     }
     return value
   }
