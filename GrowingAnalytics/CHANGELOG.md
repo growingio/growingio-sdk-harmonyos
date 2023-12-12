@@ -1,4 +1,4 @@
-# [1.0.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/1.0.0) (2023-12-08)
+# [0.0.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/0.0.1) (2023-12-08)
 
 ### Features
 
@@ -9,4 +9,5 @@
 * 支持用户 ID 配置，包括 ID Mapping
 * 支持数据采集开关配置
 * 支持静态公共属性配置
+* 支持 HarmonyOS 3.1.0 (OpenHarmony API 9)
 

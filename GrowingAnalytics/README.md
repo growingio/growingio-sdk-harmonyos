@@ -302,7 +302,7 @@ GrowingAnalytics.clearGeneralProps()
 
 在下述版本验证通过：
 
-- DevEco Studio: 3.1.0.501, SDK: API9 Release(3.2.12.5)
+- DevEco Studio: 3.1.0.501, SDK: API9 Release(3.2.13.5)
 
 ## License
 ```
