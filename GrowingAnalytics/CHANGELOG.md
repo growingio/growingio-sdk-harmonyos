@@ -1,3 +1,10 @@
+# [1.0.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/1.0.0) (2023-12-14)
+
+### Features
+
+* 适配 ArkTS 语法
+* 支持 OpenHarmony API 10
+
 # [0.0.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/0.0.1) (2023-12-08)
 
 ### Features
