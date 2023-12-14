@@ -19,12 +19,10 @@ import AnalyticsCore from '../core/AnalyticsCore'
 import { GrowingConfig } from './GrowingConfig'
 import Session from '../core/Session'
 import { AttributesType } from '../utils/Constants'
+export { AttributesType as GrowingAttrType } from '../utils/Constants'
 
 export class GrowingAnalytics {
-  static async start(
-    context: Context,
-    configuration: GrowingConfig
-  ) {
+  static async start(context: Context, configuration: GrowingConfig): Promise<void> {
     if (AnalyticsCore.core) {
       console.warn('[GrowingAnalytics] Do not initialize GrowingAnalytics repeatedly')
       return
@@ -39,7 +37,7 @@ export class GrowingAnalytics {
   }
 
   static isInitializedSuccessfully(): boolean {
-    return AnalyticsCore.core != null
+    return AnalyticsCore.core != undefined
   }
 
   static setDataCollectionEnabled(enabled: boolean) {

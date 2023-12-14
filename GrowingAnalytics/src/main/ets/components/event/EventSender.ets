@@ -26,11 +26,12 @@ export default class EventSender {
   static isUploading: boolean = false
 
   static async sendEvent() {
-    if (!AnalyticsCore.core.config.dataCollectionEnabled) {
+    let config = (AnalyticsCore.core as AnalyticsCore).config
+    if (!config.dataCollectionEnabled) {
       return
     }
 
-    if (this.isUploading) {
+    if (EventSender.isUploading) {
       return
     }
 
@@ -38,7 +39,7 @@ export default class EventSender {
     if (events.length == 0) {
       return
     }
-    this.isUploading = true
+    EventSender.isUploading = true
     let serialize = events.map(event => String(event.data)).join(',')
     let request = http.createHttp()
     let url = EventSender.url()
@@ -56,15 +57,15 @@ export default class EventSender {
     }, (e, v) => {
       if (e) {
         LogUtil.info('Request Failure, error: ' + JSON.stringify(e))
-        this.isUploading = false
+        EventSender.isUploading = false
       } else {
         LogUtil.info('Request Success, Url = ' + url + ', Send event = ' + serialize)
 
         EventDatabase.removeEvents(events).then(() => {
-          this.isUploading = false
+          EventSender.isUploading = false
           EventDatabase.countOfEvents().then(count => {
             if (count > DATABASE_MAX_BATCH_SIZE) {
-              this.sendEvent()
+              EventSender.sendEvent()
             }
           })
         })
@@ -74,7 +75,7 @@ export default class EventSender {
   }
 
   static url() {
-    let config = AnalyticsCore.core.config
+    let config = (AnalyticsCore.core as AnalyticsCore).config
     let serverHost = config.dataCollectionServerHost
     let accountId = config.accountId
     return serverHost + '/v3/projects/' + accountId + '/collect?stm=' + Date.now()

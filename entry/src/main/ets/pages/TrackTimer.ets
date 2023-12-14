@@ -6,7 +6,7 @@ import router from '@ohos.router'
 @Component
 struct TrackTimer {
   @State timerIds: string[] = []
-  @State curTimerId: string = undefined
+  @State curTimerId: string = ''
 
   build() {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
@@ -37,7 +37,7 @@ struct TrackTimer {
           this.clearTrackTimer()
         }).margin({ top: 15 })
       List({space: 15}) {
-        ForEach(this.timerIds, timerId => {
+        ForEach(this.timerIds, (timerId: string) => {
           ListItem() {
             Row() {
               Radio({ value: timerId, group: 'timerIds' }).checked(this.curTimerId == timerId)
@@ -84,7 +84,7 @@ struct TrackTimer {
     if (this.timerIds.length > 0) {
       this.curTimerId = this.timerIds[0]
     } else {
-      this.curTimerId = undefined
+      this.curTimerId = ''
     }
   }
 
@@ -94,13 +94,13 @@ struct TrackTimer {
     if (this.timerIds.length > 0) {
       this.curTimerId = this.timerIds[0]
     } else {
-      this.curTimerId = undefined
+      this.curTimerId = ''
     }
   }
 
   clearTrackTimer() {
     GrowingAnalytics.clearTrackTimer()
     this.timerIds = []
-    this.curTimerId = undefined
+    this.curTimerId = ''
   }
 }

@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback'
+import UIAbility from '@ohos.app.ability.UIAbility'
+import window from '@ohos.window'
+
 import { GrowingConfig } from '../interfaces/GrowingConfig'
 import AppInfo from './AppInfo'
 import DeviceInfo from './DeviceInfo'
@@ -32,9 +36,10 @@ import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import { AttributesType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
+import Util from '../utils/Util'
 
 export default class AnalyticsCore {
-  static core: AnalyticsCore = null
+  static core: AnalyticsCore | undefined = undefined
 
   config: GrowingConfig
   location: Location
@@ -48,9 +53,9 @@ export default class AnalyticsCore {
     let core = new AnalyticsCore(config)
     AnalyticsCore.core = core
     LogUtil.debugEnabled = config.debugEnabled
-    this.setAbilityLifecycleCallback(context)
+    AnalyticsCore.setAbilityLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
-    await Promise.all([
+    await Promise.all<Promise<void>>([
       AppInfo.initAppInfo(),
       DeviceInfo.initDeviceInfo(),
       UserIdentifier.initUser(),
@@ -68,28 +73,28 @@ export default class AnalyticsCore {
   }
 
   static setAbilityLifecycleCallback(context: Context) {
-    let abilityLifecycleCallback = {
-      onAbilityCreate(ability) {
+    let abilityLifecycleCallback: AbilityLifecycleCallback = {
+      onAbilityCreate(ability: UIAbility) {
       },
-      onWindowStageCreate(ability, windowStage) {
+      onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
       },
-      onWindowStageActive(ability, windowStage) {
+      onWindowStageActive(ability: UIAbility, windowStage: window.WindowStage) {
         Session.onForeground()
         EventTimer.handleAllTimersResume()
       },
-      onWindowStageInactive(ability, windowStage) {
+      onWindowStageInactive(ability: UIAbility, windowStage: window.WindowStage) {
         Session.onBackground()
         EventTimer.handleAllTimersPause()
       },
-      onWindowStageDestroy(ability, windowStage) {
+      onWindowStageDestroy(ability: UIAbility, windowStage: window.WindowStage) {
       },
-      onAbilityDestroy(ability) {
+      onAbilityDestroy(ability: UIAbility) {
       },
-      onAbilityForeground(ability) {
+      onAbilityForeground(ability: UIAbility) {
       },
-      onAbilityBackground(ability) {
+      onAbilityBackground(ability: UIAbility) {
       },
-      onAbilityContinue(ability) {
+      onAbilityContinue(ability: UIAbility) {
       }
     }
     context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
@@ -139,7 +144,7 @@ export default class AnalyticsCore {
     attributes: AttributesType = {}
   ) {
     let generalProps = GeneralProps.getGeneralProps()
-    let e = CustomEvent.create(eventName, { ...generalProps, ...attributes })
+    let e = CustomEvent.create(eventName, Util.concatObject(generalProps, attributes))
     this.writeEventToDisk(e)
     LogUtil.info('Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes)
     + ', current generalProps: ' + JSON.stringify(generalProps))
