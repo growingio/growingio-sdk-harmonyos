@@ -27,41 +27,41 @@ export enum SessionState {
 }
 
 export default class Session {
-  static sessionId: string = null
+  static sessionId: string
   static sessionState: SessionState = SessionState.Foreground
   private static _latestOnBackgroundTime: number = 0
 
   static onForeground() {
     LogUtil.info('Session state set to foreground')
-    this.sessionState = SessionState.Foreground
-    if (this._latestOnBackgroundTime == 0) {
+    Session.sessionState = SessionState.Foreground
+    if (Session._latestOnBackgroundTime == 0) {
       return
     }
-    var core = AnalyticsCore.core
+    let core = AnalyticsCore.core
     if (core) {
       let config = core.config
-      if (Date.now() - this._latestOnBackgroundTime >= config.sessionInterval * 1000) {
+      if (Date.now() - Session._latestOnBackgroundTime >= config.sessionInterval * 1000) {
         LogUtil.info('Latest session is outdated')
-        this.refreshSession()
+        Session.refreshSession()
       }
     }
   }
 
   static onBackground() {
     LogUtil.info('Session state set to background')
-    this.sessionState = SessionState.Background
-    this._latestOnBackgroundTime = Date.now()
+    Session.sessionState = SessionState.Background
+    Session._latestOnBackgroundTime = Date.now()
   }
 
   static refreshSession() {
     LogUtil.info('Refresh Session')
-    this.sessionId = util.generateRandomUUID(false)
-    this.generateVisit()
+    Session.sessionId = util.generateRandomUUID(false)
+    Session.generateVisit()
   }
 
   static generateVisit() {
     LogUtil.info('Generate Visit')
-    let core = AnalyticsCore.core
+    let core = AnalyticsCore.core as AnalyticsCore
     let config = core.config
     if (!config.dataCollectionEnabled) {
       LogUtil.info('Failed to Generate Visit, dataCollectionEnabled is false')

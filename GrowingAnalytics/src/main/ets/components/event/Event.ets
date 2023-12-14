@@ -18,38 +18,38 @@
 export { AttributesType } from '../utils/Constants'
 
 export default abstract class Event {
-  userId: string
-  userKey: string
-  sessionId: string
-  eventSequenceId: number
-  networkState: string
-  timestamp: number
-  latitude: number
-  longitude: number
-  sdkVersion: string
-  dataSourceId: string
-  urlScheme: string
+  userId: string | undefined = undefined
+  userKey: string | undefined = undefined
+  sessionId: string = ''
+  eventSequenceId: number = 0
+  networkState: string = ''
+  timestamp: number = 0
+  latitude: number | undefined = undefined
+  longitude: number | undefined = undefined
+  sdkVersion: string = ''
+  dataSourceId: string = ''
+  urlScheme: string = ''
 
   eventType: EventType = EventType.Visit
 
   // deviceInfo
-  deviceId: string
-  platform: string
-  platformVersion: string
-  screenHeight: number
-  screenWidth: number
-  deviceBrand: string
-  deviceModel: string
-  deviceType: string
-  language: string
-  timezoneOffset: string
+  deviceId: string = ''
+  platform: string = ''
+  platformVersion: string = ''
+  screenHeight: number = 0
+  screenWidth: number = 0
+  deviceBrand: string = ''
+  deviceModel: string = ''
+  deviceType: string = ''
+  language: string = ''
+  timezoneOffset: string = ''
 
   // appInfo
-  domain: string
-  appState: string
-  appChannel: string
-  appName: string
-  appVersion: string
+  domain: string = ''
+  appState: string = ''
+  appChannel: string = ''
+  appName: string = ''
+  appVersion: string = ''
 
   toSerialize(): string {
     return JSON.stringify(this)

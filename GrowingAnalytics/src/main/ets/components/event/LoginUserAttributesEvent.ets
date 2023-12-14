@@ -17,13 +17,14 @@
 
 import Event, { EventType, AttributesType } from './Event'
 import EventBuilder from './EventBuilder'
+import Util from '../utils/Util'
 
 export default class LoginUserAttributesEvent extends Event {
-  attributes: AttributesType
+  attributes: AttributesType = {}
 
   static create(attributes: AttributesType): LoginUserAttributesEvent {
     let event = new LoginUserAttributesEvent()
-    event.attributes = attributes
+    event.attributes = Util.convertAttributes(attributes) as AttributesType
     event.eventType = EventType.LoginUserAttributes
     return EventBuilder.build(event)
   }

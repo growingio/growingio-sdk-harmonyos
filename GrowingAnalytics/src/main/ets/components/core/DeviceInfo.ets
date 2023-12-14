@@ -38,19 +38,19 @@ export default class DeviceInfo {
   static networkState: string = ''
 
   static async initDeviceInfo() {
-    this.platform = 'HarmonyOS'
-    this.platformVersion = deviceInfo.displayVersion
+    DeviceInfo.platform = 'HarmonyOS'
+    DeviceInfo.platformVersion = deviceInfo.displayVersion
 
     let displayInfo = display.getDefaultDisplaySync()
-    this.screenHeight = displayInfo.height
-    this.screenWidth = displayInfo.width
+    DeviceInfo.screenHeight = displayInfo.height
+    DeviceInfo.screenWidth = displayInfo.width
 
-    this.deviceBrand = deviceInfo.brand
-    this.deviceModel = deviceInfo.productModel
-    this.deviceType = deviceInfo.deviceType
-    this.language = I18n.System.getSystemLanguage()
-    this.timezoneOffset = new Date().getTimezoneOffset() + ''
-    this.networkState = 'WIFI' //TODO
+    DeviceInfo.deviceBrand = deviceInfo.brand
+    DeviceInfo.deviceModel = deviceInfo.productModel
+    DeviceInfo.deviceType = deviceInfo.deviceType
+    DeviceInfo.language = I18n.System.getSystemLanguage()
+    DeviceInfo.timezoneOffset = new Date().getTimezoneOffset() + ''
+    DeviceInfo.networkState = 'WIFI' //TODO
 
     let deviceId = await SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
     LogUtil.info('DeviceId from preferences is ' + deviceId)
@@ -58,6 +58,6 @@ export default class DeviceInfo {
       deviceId = util.generateRandomUUID(false)
       await SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)
     }
-    this.deviceId = deviceId
+    DeviceInfo.deviceId = deviceId
   }
 }

@@ -30,4 +30,5 @@ export const Event_DURATION = "event_duration"
 
 export const SDK_VERSION = "1.0.0"
 
-export type AttributesType = { [key: string]: string | number | boolean | string[] | number[] };
+export type ValueType = string | number | boolean | string[] | number[] | boolean[]
+export type AttributesType = { [key: string]: ValueType }

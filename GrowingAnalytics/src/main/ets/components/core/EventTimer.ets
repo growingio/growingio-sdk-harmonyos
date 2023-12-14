@@ -24,7 +24,7 @@ import { AttributesType, Event_DURATION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
 export default class EventTimer {
-  static timers: { [key: string]: EventTimer } = {}
+  static timers: Map<string, EventTimer> = new Map()
 
   eventName: string
   startTime: number
@@ -41,34 +41,34 @@ export default class EventTimer {
   }
 
   static async trackTimerStart(eventName: string): Promise<string> {
-    let config = AnalyticsCore.core.config
+    let config = (AnalyticsCore.core as AnalyticsCore).config
     if (!config.dataCollectionEnabled) {
-      return
+      return ''
     }
 
     let currentTime = await systemUptime.getRealTime(false)
     let timer = new EventTimer(eventName, currentTime, 0)
     let timerId = eventName + '_' + util.generateRandomUUID(false)
 
-    this.timers[timerId] = timer
+    EventTimer.timers.set(timerId, timer)
     LogUtil.info('Track timer start, eventName: ' + eventName + ', timerId: ' + timerId)
     return timerId
   }
 
   static async trackTimerPause(timerId: string) {
-    let timer = this.timers[timerId]
+    let timer: EventTimer | undefined = EventTimer.timers.get(timerId)
     if (!timer || timer.isPaused()) {
       return
     }
     let startTime = timer.startTime
     timer.startTime = 0
     let currentTime = await systemUptime.getRealTime(false)
-    timer.duration = this.durationFrom(startTime, currentTime)
+    timer.duration = EventTimer.durationFrom(startTime, currentTime)
     LogUtil.info('Track timer pause, timerId is ' + timerId)
   }
 
   static async trackTimerResume(timerId: string) {
-    let timer = this.timers[timerId]
+    let timer: EventTimer | undefined = EventTimer.timers.get(timerId)
     if (!timer || !timer.isPaused()) {
       return
     }
@@ -78,57 +78,56 @@ export default class EventTimer {
   }
 
   static async trackTimerEnd(timerId: string, attributes: AttributesType = {}) {
-    let timer = this.timers[timerId]
+    let timer: EventTimer | undefined = EventTimer.timers.get(timerId)
     if (!timer) {
       return
     }
     let eventName = timer.eventName
     let startTime = timer.startTime
     let duration = timer.duration
-    delete this.timers[timerId]
+    EventTimer.timers.delete(timerId)
 
     let currentTime = await systemUptime.getRealTime(false)
-    duration = this.durationFrom(startTime, currentTime) + duration
+    duration = EventTimer.durationFrom(startTime, currentTime) + duration
     attributes[Event_DURATION] = (duration / 1000.0).toFixed(3) + ''
     let e = CustomEvent.create(eventName, attributes)
-    AnalyticsCore.core.writeEventToDisk(e)
+    let core = AnalyticsCore.core as AnalyticsCore
+    core.writeEventToDisk(e)
     LogUtil.info('Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
     + JSON.stringify(attributes))
   }
 
   static removeTimer(timerId: string) {
     LogUtil.info('Track timer remove, timerId is ' + timerId)
-    delete this.timers[timerId]
+    EventTimer.timers.delete(timerId)
   }
 
   static clearTrackTimer() {
     LogUtil.info('Track timer all delete')
-    this.timers = {}
+    EventTimer.timers.clear()
   }
 
   static async handleAllTimersPause() {
     LogUtil.info('Track timer all pause with appState is background')
-    let currentTime = await systemUptime.getRealTime(false)
-    Object.keys(this.timers).forEach(timerId => {
-      let timer = this.timers[timerId]
+    for (let timer of EventTimer.timers.values()) {
       if (timer.isPaused()) {
         return
       }
-      timer.duration = this.durationFrom(timer.startTime, currentTime)
+      let currentTime = await systemUptime.getRealTime(false)
+      timer.duration = EventTimer.durationFrom(timer.startTime, currentTime)
       timer.startTime = currentTime
-    })
+    }
   }
 
   static async handleAllTimersResume() {
     LogUtil.info('Track timer all resume with appState is foreground')
-    let currentTime = await systemUptime.getRealTime(false)
-    Object.keys(this.timers).forEach(timerId => {
-      let timer = this.timers[timerId]
+    for (let timer of EventTimer.timers.values()) {
       if (timer.isPaused()) {
         return
       }
+      let currentTime = await systemUptime.getRealTime(false)
       timer.startTime = currentTime
-    })
+    }
   }
 
   isPaused(): boolean {

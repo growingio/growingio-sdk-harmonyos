@@ -28,7 +28,7 @@ export default class EventBuilder {
   private static _eventSequenceId: number
 
   static async initEventBuilder() {
-    this._eventSequenceId = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
+    EventBuilder._eventSequenceId = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
   }
 
   static build<T extends Event>(event: T): T {
@@ -56,7 +56,7 @@ export default class EventBuilder {
     event.appName = AppInfo.appName
     event.appVersion = AppInfo.appVersion
 
-    let core = AnalyticsCore.core
+    let core = AnalyticsCore.core as AnalyticsCore
     event.dataSourceId = core.config.dataSourceId
     event.urlScheme = core.config.urlScheme
     event.latitude = Math.abs(core.location.latitude) > 0 ? core.location.latitude : undefined
@@ -67,13 +67,13 @@ export default class EventBuilder {
     let userKey = UserIdentifier.curUserKey
     event.userKey = userKey.length > 0 ? userKey : undefined
 
-    this.updateEventSequenceId()
-    event.eventSequenceId = this._eventSequenceId
+    EventBuilder.updateEventSequenceId()
+    event.eventSequenceId = EventBuilder._eventSequenceId
     return event
   }
 
   private static updateEventSequenceId() {
-    this._eventSequenceId = this._eventSequenceId + 1
-    SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, this._eventSequenceId)
+    EventBuilder._eventSequenceId = EventBuilder._eventSequenceId + 1
+    SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, EventBuilder._eventSequenceId)
   }
 }

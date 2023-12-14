@@ -20,6 +20,7 @@ import Session from './Session'
 import { PREFERENCE_USER_ID, PREFERENCE_USER_IDENTIFIER, PREFERENCE_USER_KEY } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
+import Util from '../utils/Util'
 
 export default class UserIdentifier {
   static curUserId: string
@@ -28,15 +29,16 @@ export default class UserIdentifier {
 
   static async initUser() {
     let userInfoString = await SharedPreferences.getValue(PREFERENCE_USER_IDENTIFIER, '{}') as string
-    let userInfo = JSON.parse(userInfoString)
-    this.curUserId = userInfo[PREFERENCE_USER_ID] ?? ''
-    this.curUserKey = userInfo[PREFERENCE_USER_KEY] ?? ''
-    this.latestNonnullUserId = this.curUserId
-    LogUtil.info('UserId from preferences is ' + this.curUserId + ', userKey from preferences is ' + this.curUserKey)
+    let userInfo = JSON.parse(userInfoString) as object
+    UserIdentifier.curUserId = userInfo[PREFERENCE_USER_ID] ?? ''
+    UserIdentifier.curUserKey = userInfo[PREFERENCE_USER_KEY] ?? ''
+    UserIdentifier.latestNonnullUserId = UserIdentifier.curUserId
+    LogUtil.info('UserId from preferences is ' + UserIdentifier.curUserId + ', userKey from preferences is ' + UserIdentifier.curUserKey)
   }
 
   static setLoginUserId(userId: string, userKey: string = '') {
-    if (AnalyticsCore.core.config.idMappingEnabled == false) {
+    let core = AnalyticsCore.core as AnalyticsCore
+    if (core.config.idMappingEnabled == false) {
       userKey = ''
     }
     if (userId && userId.length > 1000) {
@@ -47,36 +49,37 @@ export default class UserIdentifier {
     }
     if (userId == null || userId.length == 0) {
       LogUtil.info('Clear loginUserId')
-      this.curUserId = ''
-      this.curUserKey = ''
-      this.saveToPreferences()
+      UserIdentifier.curUserId = ''
+      UserIdentifier.curUserKey = ''
+      UserIdentifier.saveToPreferences()
       return
     }
-    if (userId === this.curUserId && userKey === this.curUserKey) {
+    if (userId === UserIdentifier.curUserId && userKey === UserIdentifier.curUserKey) {
       return
     }
 
     LogUtil.info('LoginUserId did changed, userId from '
-    + ((this.curUserId == null || this.curUserId.length == 0) ? 'undefined' : this.curUserId) + ' to ' + userId
-    + ', userKey from ' + ((this.curUserKey == null || this.curUserKey.length == 0) ? 'undefined' : this.curUserKey)
+    + ((UserIdentifier.curUserId == null || UserIdentifier.curUserId.length == 0) ? 'undefined' : UserIdentifier.curUserId)
+    + ' to ' + userId + ', userKey from '
+    + ((UserIdentifier.curUserKey == null || UserIdentifier.curUserKey.length == 0) ? 'undefined' : UserIdentifier.curUserKey)
     + ' to ' + userKey)
-    this.curUserId = userId
-    this.curUserKey = userKey
-    this.saveToPreferences()
-    this.userIdDidChanged(userId)
+
+    UserIdentifier.curUserId = userId
+    UserIdentifier.curUserKey = userKey
+    UserIdentifier.saveToPreferences()
+    UserIdentifier.userIdDidChanged(userId)
   }
 
   static saveToPreferences() {
-    let userIdentifier = {
-      [PREFERENCE_USER_ID]: this.curUserId,
-      [PREFERENCE_USER_KEY]: this.curUserKey
-    }
-    SharedPreferences.put(PREFERENCE_USER_IDENTIFIER, JSON.stringify(userIdentifier))
+    let u = new Map<string, string>()
+    u.set(PREFERENCE_USER_ID, String(UserIdentifier.curUserId))
+    u.set(PREFERENCE_USER_KEY, String(UserIdentifier.curUserKey))
+    SharedPreferences.put(PREFERENCE_USER_IDENTIFIER, JSON.stringify(Util.mapToObject(u)))
   }
 
   static userIdDidChanged(userId: string) {
-    let oldUserId = this.latestNonnullUserId
-    this.latestNonnullUserId = userId
+    let oldUserId = UserIdentifier.latestNonnullUserId
+    UserIdentifier.latestNonnullUserId = userId
     // A=>B
     if (oldUserId && oldUserId.length > 0 && oldUserId != userId) {
       Session.refreshSession()

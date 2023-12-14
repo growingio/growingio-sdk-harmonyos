@@ -21,37 +21,32 @@ import { PREFERENCE_NAME } from './Constants'
 import { LogUtil } from './LogUtil'
 
 export default class SharedPreferences {
-  private static preferences: preferences.Preferences = null
+  private static preferences: preferences.Preferences
 
   static async initWithContext(context: Context) {
     let appContext = context.getApplicationContext()
     try {
-      let promise = preferences.getPreferences(appContext, PREFERENCE_NAME)
-      await promise.then((p) => {
-        this.preferences = p
-      }).catch ((e) => {
-        LogUtil.error("Failed to get preferences. code = " + e.code + ", message = " + e.message)
-      })
+      SharedPreferences.preferences = await preferences.getPreferences(appContext, PREFERENCE_NAME)
     } catch (e) {
       LogUtil.error("Failed to get preferences. code = " + e.code + ", message = " + e.message)
     }
   }
 
   static async put(key: string, value: preferences.ValueType) {
-    if (!this.preferences) {
+    if (!SharedPreferences.preferences) {
       return
     }
-    await this.preferences.put(key, value)
-    await this.preferences.flush()
+    await SharedPreferences.preferences.put(key, value)
+    await SharedPreferences.preferences.flush()
   }
 
   static async getValue(key: string, defValue: preferences.ValueType = ''): Promise<preferences.ValueType> {
-    if (!this.preferences) {
-      return null
+    let value: preferences.ValueType = defValue
+    if (!SharedPreferences.preferences) {
+      return value
     }
-    let value: preferences.ValueType
     try {
-      let result = await this.preferences.get(key, defValue)
+      let result = await SharedPreferences.preferences.get(key, defValue)
       value = result as preferences.ValueType
     } catch (e) {
       LogUtil.error("Failed to get value of " + key + ". code = " + e.code + ", message = " + e.message)
