@@ -109,6 +109,8 @@ export default class AnalyticsCore {
     config.dataCollectionEnabled = enabled
     if (enabled) {
       Session.refreshSession()
+    } else {
+      EventTimer.clearTrackTimer()
     }
   }
 
