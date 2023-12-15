@@ -9,7 +9,7 @@
     "GrowingIO"
   ],
   "author": "GrowingIO",
-  "description": "GrowingAnalytics for HarmonyOS.",
+  "description": "GrowingAnalytics for OpenHarmony/HarmonyOS.",
   "main": "index.ets",
   "type": "module",
   "repository": "https://github.com/growingio/growingio-sdk-harmonyos",
