@@ -1,6 +1,6 @@
 {
   "module": {
-    "name": "GrowingAnalytics",
+    "name": "library",
     "type": "har",
     "deviceTypes": [
       "default",

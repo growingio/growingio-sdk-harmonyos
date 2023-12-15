@@ -24,8 +24,8 @@
       ]
     },
     {
-      "name": "GrowingAnalytics",
-      "srcPath": "./GrowingAnalytics"
+      "name": "library",
+      "srcPath": "./library"
     }
   ]
 }

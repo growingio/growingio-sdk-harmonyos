@@ -5,9 +5,7 @@
   "main": "",
   "author": "",
   "license": "",
-  "dependencies": {
-    "@growingio/analytics": "file:./GrowingAnalytics"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@ohos/hypium": "1.0.6",
   }
