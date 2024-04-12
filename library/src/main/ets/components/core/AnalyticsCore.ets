@@ -19,6 +19,7 @@ import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 
+import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
 import { GrowingConfig } from '../interfaces/GrowingConfig'
 import AppInfo from './AppInfo'
 import DeviceInfo from './DeviceInfo'
@@ -37,20 +38,23 @@ import { AttributesType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
+import GrowingContext from './Context'
 
-export default class AnalyticsCore {
+export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static core: AnalyticsCore | undefined = undefined
+  static trackers: Array<AnalyticsCore> = []
+  static location: Location
 
-  config: GrowingConfig
-  location: Location
+  context: GrowingContext
 
-  constructor(config: GrowingConfig) {
-    this.config = config
-    this.location = new Location()
+  constructor(context: GrowingContext) {
+    this.context = context
   }
 
   static async startCore(context: Context, config: GrowingConfig) {
-    let core = new AnalyticsCore(config)
+    GrowingContext.setDefaultContext(config)
+    let gContext = GrowingContext.getDefaultContext()
+    let core = new AnalyticsCore(gContext)
     AnalyticsCore.core = core
     LogUtil.debugEnabled = config.debugEnabled
     AnalyticsCore.setAbilityLifecycleCallback(context)
@@ -58,7 +62,7 @@ export default class AnalyticsCore {
     await Promise.all<Promise<void>>([
       AppInfo.initAppInfo(),
       DeviceInfo.initDeviceInfo(),
-      UserIdentifier.initUser(),
+      UserIdentifier.initUser(gContext),
       EventBuilder.initEventBuilder(),
       EventDatabase.initDatabase(context)
     ])
@@ -68,8 +72,38 @@ export default class AnalyticsCore {
 
     let delay = config.dataUploadInterval * 1000
     setInterval(() => {
-      EventSender.sendEvent()
+      EventSender.sendEvent(gContext)
     }, delay)
+  }
+
+  static startMultiTracker(trackerId: string, config: GrowingConfig): boolean {
+    if (GrowingContext.getContext(trackerId)) {
+      return false
+    }
+
+    GrowingContext.setContext(trackerId, config)
+    let context = GrowingContext.getContext(trackerId)
+    let core = new AnalyticsCore(context)
+    AnalyticsCore.trackers.push(core)
+
+    UserIdentifier.initMultiUser(context)
+
+    let delay = config.dataUploadInterval * 1000
+    setInterval(() => {
+      EventSender.sendEvent(context)
+    }, delay)
+
+    return true
+  }
+
+  static tracker(trackerId: string): AnalyticsCore | undefined {
+    AnalyticsCore.trackers.forEach(function (tracker) {
+      if (tracker.context.trackerId == trackerId) {
+        return tracker
+      }
+    })
+
+    return undefined
   }
 
   static setAbilityLifecycleCallback(context: Context) {
@@ -101,16 +135,16 @@ export default class AnalyticsCore {
   }
 
   setDataCollectionEnabled(enabled: boolean) {
-    let config = this.config
+    let config = this.context.config
     if (config.dataCollectionEnabled == enabled) {
       return
     }
     LogUtil.info('Set dataCollectionEnabled: ' + enabled)
     config.dataCollectionEnabled = enabled
     if (enabled) {
-      Session.refreshSession()
+      Session.refreshSession(this.context)
     } else {
-      EventTimer.clearTrackTimer()
+      EventTimer.clearTrackTimer(this.context)
     }
   }
 
@@ -118,26 +152,20 @@ export default class AnalyticsCore {
     userId: string,
     userKey: string = ''
   ) {
-    UserIdentifier.setLoginUserId(userId, userKey)
+    UserIdentifier.setLoginUserId(userId, userKey, this.context)
   }
 
-  setLocation(
-    latitude: number,
-    longitude: number
-  ) {
-    this.location.latitude = latitude
-    this.location.longitude = longitude
+  cleanLoginUserId() {
+    UserIdentifier.setLoginUserId('', '', this.context)
   }
 
-  setLoginUserAttributes(
-    attributes: AttributesType
-  ) {
-    let e = LoginUserAttributesEvent.create(attributes)
-    this.writeEventToDisk(e)
+  setLoginUserAttributes(attributes: AttributesType) {
+    let e = LoginUserAttributesEvent.create(attributes, this.context)
+    AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info('Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
 
-  getDeviceId() {
+  getDeviceId(): string {
     return DeviceInfo.deviceId
   }
 
@@ -146,14 +174,14 @@ export default class AnalyticsCore {
     attributes: AttributesType = {}
   ) {
     let generalProps = GeneralProps.getGeneralProps()
-    let e = CustomEvent.create(eventName, Util.concatObject(generalProps, attributes))
-    this.writeEventToDisk(e)
+    let e = CustomEvent.create(eventName, Util.concatObject(generalProps, attributes), this.context)
+    AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info('Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes)
     + ', current generalProps: ' + JSON.stringify(generalProps))
   }
 
   async trackTimerStart(eventName: string): Promise<string> {
-    return await EventTimer.trackTimerStart(eventName)
+    return await EventTimer.trackTimerStart(eventName, this.context)
   }
 
   async trackTimerPause(timerId: string) {
@@ -168,7 +196,7 @@ export default class AnalyticsCore {
     timerId: string,
     attributes: AttributesType = {}
   ) {
-    await EventTimer.trackTimerEnd(timerId, attributes)
+    await EventTimer.trackTimerEnd(timerId, attributes, this.context)
   }
 
   removeTimer(timerId: string) {
@@ -176,7 +204,7 @@ export default class AnalyticsCore {
   }
 
   clearTrackTimer() {
-    EventTimer.clearTrackTimer()
+    EventTimer.clearTrackTimer(this.context)
   }
 
   setGeneralProps(props: AttributesType) {
@@ -191,15 +219,28 @@ export default class AnalyticsCore {
     GeneralProps.clearGeneralProps()
   }
 
-  async writeEventToDisk<T extends Event>(event: T) {
-    if (!this.config.dataCollectionEnabled) {
+  static async writeEventToDisk<T extends Event>(event: T, context: GrowingContext) {
+    if (!context.config.dataCollectionEnabled) {
       return
     }
-    let pst = EventPersistence.fromEvent(event)
+    let pst = EventPersistence.fromEvent(event, context)
     await EventDatabase.writeEvent(pst)
     if (pst.eventType == EventType.Visit) {
-      await EventSender.sendEvent()
+      await EventSender.sendEvent(context)
     }
+  }
+
+  static setLocation(
+    latitude: number,
+    longitude: number
+  ) {
+    AnalyticsCore.location.latitude = latitude
+    AnalyticsCore.location.longitude = longitude
+  }
+
+  static cleanLocation() {
+    AnalyticsCore.location.latitude = 0
+    AnalyticsCore.location.longitude = 0
   }
 }
 

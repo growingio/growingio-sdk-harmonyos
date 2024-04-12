@@ -18,6 +18,7 @@
 import util from '@ohos.util'
 
 import AnalyticsCore from './AnalyticsCore'
+import GrowingContext from './Context'
 import VisitEvent from '../event/VisitEvent'
 import { LogUtil } from '../utils/LogUtil'
 
@@ -27,47 +28,78 @@ export enum SessionState {
 }
 
 export default class Session {
-  static sessionId: string
+  sessionId: string
+  trackerId: string
+  latestOnBackgroundTime: number
+
   static sessionState: SessionState = SessionState.Foreground
-  private static _latestOnBackgroundTime: number = 0
+  static sessions: Array<Session> = []
+
+  constructor(
+    sessionId: string,
+    trackerId: string,
+    latestOnBackgroundTime: number = 0
+  ) {
+    this.sessionId = sessionId
+    this.trackerId = trackerId
+    this.latestOnBackgroundTime = latestOnBackgroundTime
+  }
 
   static onForeground() {
     LogUtil.info('Session state set to foreground')
     Session.sessionState = SessionState.Foreground
-    if (Session._latestOnBackgroundTime == 0) {
-      return
-    }
-    let core = AnalyticsCore.core
-    if (core) {
-      let config = core.config
-      if (Date.now() - Session._latestOnBackgroundTime >= config.sessionInterval * 1000) {
-        LogUtil.info('Latest session is outdated')
-        Session.refreshSession()
+    Session.sessions.forEach(function (session) {
+      if (session.latestOnBackgroundTime == 0) {
+        return
       }
-    }
+
+      let context = GrowingContext.getContext(session.trackerId)
+      if (Date.now() - session.latestOnBackgroundTime >= context.config.sessionInterval * 1000) {
+        LogUtil.info('current session is outdated, trackerId = ' + context.trackerId)
+        Session.refreshSession(context)
+      }
+    })
   }
 
   static onBackground() {
     LogUtil.info('Session state set to background')
     Session.sessionState = SessionState.Background
-    Session._latestOnBackgroundTime = Date.now()
+    Session.sessions.forEach(function (session) {
+      session.latestOnBackgroundTime = Date.now()
+    })
   }
 
-  static refreshSession() {
-    LogUtil.info('Refresh Session')
-    Session.sessionId = util.generateRandomUUID(false)
-    Session.generateVisit()
+  static startSession(context: GrowingContext) {
+    let session = new Session(context.trackerId, util.generateRandomUUID(false))
+    Session.sessions.push(session)
   }
 
-  static generateVisit() {
-    LogUtil.info('Generate Visit')
-    let core = AnalyticsCore.core as AnalyticsCore
-    let config = core.config
-    if (!config.dataCollectionEnabled) {
+  static refreshSession(context: GrowingContext) {
+    LogUtil.info('Refresh Session for tracker = ' + context.trackerId)
+    Session.sessions.forEach(function (session) {
+      if (session.trackerId == context.trackerId) {
+        session.sessionId = util.generateRandomUUID(false)
+        Session.generateVisit(context)
+      }
+    })
+  }
+
+  static getSessionId(context: GrowingContext): string | undefined {
+    Session.sessions.forEach(function (session) {
+      if (session.trackerId == context.trackerId) {
+        return session.sessionId
+      }
+    })
+    return undefined
+  }
+
+  static generateVisit(context: GrowingContext) {
+    LogUtil.info('Generate Visit for tracker = %s', context.trackerId)
+    if (!context.config.dataCollectionEnabled) {
       LogUtil.info('Failed to Generate Visit, dataCollectionEnabled is false')
       return
     }
-    let e = VisitEvent.create()
-    core.writeEventToDisk(e)
+    let e = VisitEvent.create(context)
+    AnalyticsCore.writeEventToDisk(e, context)
   }
 }

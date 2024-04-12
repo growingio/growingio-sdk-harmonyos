@@ -19,6 +19,7 @@ import systemUptime from '@ohos.systemDateTime'
 import util from '@ohos.util'
 
 import AnalyticsCore from './AnalyticsCore'
+import GrowingContext from './Context'
 import CustomEvent from '../event/CustomEvent'
 import { AttributesType, Event_DURATION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -29,25 +30,29 @@ export default class EventTimer {
   eventName: string
   startTime: number
   duration: number
+  trackerId: string
 
   constructor(
     eventName: string,
     startTime: number,
-    duration: number
+    duration: number,
+    trackerId: string
   ) {
     this.eventName = eventName
     this.startTime = startTime
     this.duration = duration
+    this.trackerId = trackerId
   }
 
-  static async trackTimerStart(eventName: string): Promise<string> {
-    let config = (AnalyticsCore.core as AnalyticsCore).config
-    if (!config.dataCollectionEnabled) {
+  static async trackTimerStart(eventName: string,
+                               context: GrowingContext
+  ): Promise<string> {
+    if (!context.config.dataCollectionEnabled) {
       return ''
     }
 
     let currentTime = await systemUptime.getRealTime(false)
-    let timer = new EventTimer(eventName, currentTime, 0)
+    let timer = new EventTimer(eventName, currentTime, 0, context.trackerId)
     let timerId = eventName + '_' + util.generateRandomUUID(false)
 
     EventTimer.timers.set(timerId, timer)
@@ -77,9 +82,17 @@ export default class EventTimer {
     LogUtil.info('Track timer resume, timerId is ' + timerId)
   }
 
-  static async trackTimerEnd(timerId: string, attributes: AttributesType = {}) {
+  static async trackTimerEnd(timerId: string,
+                             attributes: AttributesType = {},
+                             context: GrowingContext
+  ) {
     let timer: EventTimer | undefined = EventTimer.timers.get(timerId)
     if (!timer) {
+      return
+    }
+    if (timer.trackerId != context.trackerId) {
+      LogUtil.warn("Track timer end failed, this timer's trackerId (" + timer.trackerId
+      +") is not equal to current tracker's trackerId(" + context.trackerId + ")")
       return
     }
     let eventName = timer.eventName
@@ -90,9 +103,8 @@ export default class EventTimer {
     let currentTime = await systemUptime.getRealTime(false)
     duration = EventTimer.durationFrom(startTime, currentTime) + duration
     attributes[Event_DURATION] = (duration / 1000.0).toFixed(3) + ''
-    let e = CustomEvent.create(eventName, attributes)
-    let core = AnalyticsCore.core as AnalyticsCore
-    core.writeEventToDisk(e)
+    let e = CustomEvent.create(eventName, attributes, context)
+    AnalyticsCore.writeEventToDisk(e, context)
     LogUtil.info('Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
     + JSON.stringify(attributes))
   }
@@ -102,9 +114,17 @@ export default class EventTimer {
     EventTimer.timers.delete(timerId)
   }
 
-  static clearTrackTimer() {
+  static clearTrackTimer(context: GrowingContext) {
     LogUtil.info('Track timer all delete')
-    EventTimer.timers.clear()
+    let timersToDelete: string[] = []
+    for (let [timerId, timer] of EventTimer.timers) {
+      if (timer.trackerId == context.trackerId) {
+        timersToDelete.push(timerId)
+      }
+    }
+    for (let timerId of timersToDelete) {
+      EventTimer.timers.delete(timerId)
+    }
   }
 
   static async handleAllTimersPause() {

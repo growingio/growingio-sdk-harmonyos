@@ -23,8 +23,10 @@ export const PREFERENCE_DEVICE_ID = "growing_device_id"
 export const PREFERENCE_EVENT_SEQUENCE_ID = "growing_event_sequence_id"
 
 export const DATABASE_NAME = 'growing_analytics_database'
-export const DATABASE_MAX_BATCH_SIZE = 500
 export const DATABASE_EXPIRATION_TIME = 86400000 * 7
+
+export const REQUEST_MAX_EVENT_COUNT = 500
+export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
 
 export const Event_DURATION = "event_duration"
 

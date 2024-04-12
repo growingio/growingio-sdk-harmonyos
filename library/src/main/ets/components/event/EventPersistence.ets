@@ -16,6 +16,7 @@
  */
 
 import util from '@ohos.util'
+import GrowingContext from '../core/Context'
 
 import Event from './Event'
 
@@ -24,27 +25,36 @@ export default class EventPersistence {
   data: string
   eventType: string
   sdkVersion: string
+  accountId: string
+  dataSourceId: string
 
   constructor(
     uuid: string,
     data: string,
     eventType: string,
-    sdkVersion: string
+    sdkVersion: string,
+    accountId: string,
+    dataSourceId: string
   ) {
     this.uuid = uuid
     this.data = data
     this.eventType = eventType
     this.sdkVersion = sdkVersion
+    this.accountId = accountId
+    this.dataSourceId = dataSourceId
   }
 
   static fromEvent<T extends Event>(
-    event: T
+    event: T,
+    context: GrowingContext
   ): EventPersistence {
     let uuid = util.generateRandomUUID(false)
     let data = event.toSerialize()
     let eventType = event.eventType
     let sdkVersion = event.sdkVersion
-    let e = new EventPersistence(uuid, data, eventType, sdkVersion)
+    let accountId = context.config.accountId
+    let dataSourceId = context.config.dataSourceId
+    let e = new EventPersistence(uuid, data, eventType, sdkVersion, accountId, dataSourceId)
     return e
   }
 
@@ -52,9 +62,11 @@ export default class EventPersistence {
     uuid: string,
     data: string,
     eventType: string,
-    sdkVersion: string
+    sdkVersion: string,
+    accountId: string,
+    dataSourceId: string
   ): EventPersistence {
-    let e = new EventPersistence(uuid, data, eventType, sdkVersion)
+    let e = new EventPersistence(uuid, data, eventType, sdkVersion, accountId, dataSourceId)
     return e
   }
 }

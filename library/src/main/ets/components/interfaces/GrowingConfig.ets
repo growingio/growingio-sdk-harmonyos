@@ -27,6 +27,7 @@ export class GrowingConfig {
   dataCollectionEnabled: boolean = true
   idMappingEnabled: boolean = true
   encryptEnabled: boolean = false
+  trackerId: string = ''
 
   constructor(
     accountId: string,
@@ -53,6 +54,7 @@ export class GrowingConfig {
     config.dataCollectionEnabled = this.dataCollectionEnabled
     config.idMappingEnabled = this.idMappingEnabled
     config.encryptEnabled = this.encryptEnabled
+    config.trackerId = this.trackerId
 
     return config
   }
