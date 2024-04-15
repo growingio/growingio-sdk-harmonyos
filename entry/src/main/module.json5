@@ -40,6 +40,16 @@
         "label": "$string:TrackTimerAbility_label",
         "startWindowIcon": "$media:icon",
         "startWindowBackground": "$color:start_window_background"
+      },
+      {
+        "name": "SubTrackerAbility",
+        "srcEntry": "./ets/subtrackerability/SubTrackerAbility.ts",
+        "launchType": "multiton",
+        "description": "$string:SubTrackerAbility_desc",
+        "icon": "$media:icon",
+        "label": "$string:SubTrackerAbility_label",
+        "startWindowIcon": "$media:icon",
+        "startWindowBackground": "$color:start_window_background"
       }
     ],
     "requestPermissions": [
@@ -49,7 +59,8 @@
         "usedScene": {
           "abilities": [
             "EntryAbility",
-            "TrackTimerAbility"
+            "TrackTimerAbility",
+            "SubTrackerAbility"
           ],
           "when": "always"
         }
@@ -60,7 +71,8 @@
         "usedScene": {
           "abilities": [
             "EntryAbility",
-            "TrackTimerAbility"
+            "TrackTimerAbility",
+            "SubTrackerAbility"
           ],
           "when": "always"
         }
@@ -71,7 +83,8 @@
         "usedScene": {
           "abilities": [
             "EntryAbility",
-            "TrackTimerAbility"
+            "TrackTimerAbility",
+            "SubTrackerAbility"
           ],
           "when": "always"
         }

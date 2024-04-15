@@ -1,14 +1,28 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import hilog from '@ohos.hilog';
 import window from '@ohos.window';
+import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 
-export default class TrackTimerAbility extends UIAbility {
-  trackTimerAbilityWant
+export default class SubTrackerAbility extends UIAbility {
+  subTrackerAbilityWant
+
+  startSubTracker(trackerId: string) {
+    let config = new GrowingConfig(
+      '1111111111111', trackerId, 'growing.33333333333', "https://www.baidu.com"
+    )
+    config.debugEnabled = true
+    config.sessionInterval = 30
+    config.dataUploadInterval = 15
+    config.idMappingEnabled = true
+    GrowingAnalytics.startSubTracker(trackerId, config)
+  }
 
   onCreate(want, launchParam) {
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
 
-    globalThis.trackTimerAbilityWant = want
+    globalThis.subTrackerAbilityWant = want
+    let trackerId = want?.parameters?.trackerId
+    this.startSubTracker(trackerId)
   }
 
   onDestroy() {
@@ -19,7 +33,7 @@ export default class TrackTimerAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    windowStage.loadContent('pages/TrackTimer', (err, data) => {
+    windowStage.loadContent('pages/SubTracker', (err, data) => {
       if (err.code) {
         hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
         return;

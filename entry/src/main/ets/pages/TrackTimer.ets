@@ -5,11 +5,21 @@ import router from '@ohos.router'
 @Entry
 @Component
 struct TrackTimer {
+  @State trackerId: string = ''
   @State timerIds: string[] = []
   @State curTimerId: string = ''
 
+  onPageShow() {
+    if (!this.trackerId) {
+      let trackTimerAbilityWant = globalThis.trackTimerAbilityWant
+      let trackerId = trackTimerAbilityWant?.parameters?.trackerId
+      this.trackerId = trackerId
+    }
+  }
+
   build() {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+      Text('trackerId = ' + this.trackerId)
       Button('trackTimerStart')
         .onClick(async () => {
           let timerId = await this.trackTimerStart()
@@ -67,19 +77,36 @@ struct TrackTimer {
   }
 
   async trackTimerStart() {
-    return await GrowingAnalytics.trackTimerStart("timer")
+    if (this.trackerId) {
+      return await GrowingAnalytics.tracker(this.trackerId).trackTimerStart("timer")
+    } else {
+      return await GrowingAnalytics.trackTimerStart("timer")
+    }
   }
 
   trackTimerPause() {
-    GrowingAnalytics.trackTimerPause(this.curTimerId)
+    if (this.trackerId) {
+      GrowingAnalytics.tracker(this.trackerId).trackTimerPause(this.curTimerId)
+    } else {
+      GrowingAnalytics.trackTimerPause(this.curTimerId)
+    }
   }
 
   trackTimerResume() {
-    GrowingAnalytics.trackTimerResume(this.curTimerId)
+    if (this.trackerId) {
+      GrowingAnalytics.tracker(this.trackerId).trackTimerResume(this.curTimerId)
+    } else {
+      GrowingAnalytics.trackTimerResume(this.curTimerId)
+    }
   }
 
   trackTimerEnd() {
-    GrowingAnalytics.trackTimerEnd(this.curTimerId, {"key": "value"})
+    if (this.trackerId) {
+      GrowingAnalytics.tracker(this.trackerId).trackTimerEnd(this.curTimerId, {"key": "value"})
+    } else {
+      GrowingAnalytics.trackTimerEnd(this.curTimerId, {"key": "value"})
+    }
+
     this.timerIds = this.timerIds.filter((timerId) => timerId !== this.curTimerId)
     if (this.timerIds.length > 0) {
       this.curTimerId = this.timerIds[0]
@@ -89,7 +116,11 @@ struct TrackTimer {
   }
 
   removeTimer() {
-    GrowingAnalytics.removeTimer(this.curTimerId)
+    if (this.trackerId) {
+      GrowingAnalytics.tracker(this.trackerId).removeTimer(this.curTimerId)
+    } else {
+      GrowingAnalytics.removeTimer(this.curTimerId)
+    }
     this.timerIds = this.timerIds.filter((timerId) => timerId !== this.curTimerId)
     if (this.timerIds.length > 0) {
       this.curTimerId = this.timerIds[0]
@@ -99,7 +130,11 @@ struct TrackTimer {
   }
 
   clearTrackTimer() {
-    GrowingAnalytics.clearTrackTimer()
+    if (this.trackerId) {
+      GrowingAnalytics.tracker(this.trackerId).clearTrackTimer()
+    } else {
+      GrowingAnalytics.clearTrackTimer()
+    }
     this.timerIds = []
     this.curTimerId = ''
   }
