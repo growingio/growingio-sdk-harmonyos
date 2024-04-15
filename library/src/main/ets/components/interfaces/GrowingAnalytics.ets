@@ -28,7 +28,7 @@ export interface GrowingAnalyticsInterface {
    cleanLoginUserId()
 
    setLoginUserAttributes(attributes: AttributesType)
-   track(eventName: string, attributes: AttributesType)
+   track(eventName: string, attributes: AttributesType, sendTo?: string[])
    trackTimerStart(eventName: string): Promise<string>
    trackTimerPause(timerId: string)
    trackTimerResume(timerId: string)
@@ -123,12 +123,13 @@ export class GrowingAnalytics {
 
   static track(
     eventName: string,
-    attributes: AttributesType = {}
+    attributes: AttributesType = {},
+    sendTo?: string[]
   ) {
     if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.track(eventName, attributes)
+    AnalyticsCore.core.track(eventName, attributes, sendTo)
   }
 
   static async trackTimerStart(eventName: string): Promise<string> {

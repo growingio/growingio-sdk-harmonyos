@@ -171,13 +171,35 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
   track(
     eventName: string,
-    attributes: AttributesType = {}
+    attributes: AttributesType = {},
+    sendTo?: string[]
   ) {
     let generalProps = GeneralProps.getGeneralProps()
-    let e = CustomEvent.create(eventName, Util.concatObject(generalProps, attributes), this.context)
+    let finalAttributes = Util.concatObject(generalProps, attributes)
+    let e = CustomEvent.create(eventName, finalAttributes, this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info('Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes)
     + ', current generalProps: ' + JSON.stringify(generalProps))
+
+    if (sendTo && sendTo.length > 0) {
+      AnalyticsCore.sendTo(sendTo, eventName, finalAttributes)
+    }
+  }
+
+  static sendTo(
+    trackers: string[],
+    eventName: string,
+    attributes: AttributesType = {}
+  ) {
+    trackers.forEach(function (trackerId) {
+      let tracker = AnalyticsCore.tracker(trackerId)
+      if (tracker) {
+        let e = CustomEvent.create(eventName, attributes, tracker.context)
+        AnalyticsCore.writeEventToDisk(e, tracker.context)
+        LogUtil.info('Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
+        + ', attributes: ' + JSON.stringify(attributes))
+      }
+    })
   }
 
   async trackTimerStart(eventName: string): Promise<string> {
