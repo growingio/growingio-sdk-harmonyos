@@ -35,10 +35,6 @@ export interface GrowingAnalyticsInterface {
    trackTimerEnd(timerId: string, attributes: AttributesType)
    removeTimer(timerId: string)
    clearTrackTimer()
-
-   setGeneralProps(props: AttributesType)
-   removeGeneralProps(keys: string[])
-   clearGeneralProps()
 }
 
 export class GrowingAnalytics {
