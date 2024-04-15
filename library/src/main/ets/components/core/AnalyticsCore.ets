@@ -57,6 +57,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     let core = new AnalyticsCore(gContext)
     AnalyticsCore.core = core
     LogUtil.debugEnabled = config.debugEnabled
+    AnalyticsCore.location = new Location()
     AnalyticsCore.setAbilityLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
     await Promise.all<Promise<void>>([
