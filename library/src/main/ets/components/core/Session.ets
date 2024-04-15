@@ -69,27 +69,30 @@ export default class Session {
     })
   }
 
-  static startSession(context: GrowingContext) {
-    let session = new Session(context.trackerId, util.generateRandomUUID(false))
-    Session.sessions.push(session)
-  }
-
   static refreshSession(context: GrowingContext) {
     LogUtil.info('Refresh Session for tracker = ' + context.trackerId)
-    Session.sessions.forEach(function (session) {
-      if (session.trackerId == context.trackerId) {
-        session.sessionId = util.generateRandomUUID(false)
-        Session.generateVisit(context)
+    let session = undefined
+    for (let s of Session.sessions) {
+      if (s.trackerId == context.trackerId) {
+        session = s
+        break
       }
-    })
+    }
+    if (session) {
+      session.sessionId = util.generateRandomUUID(false)
+    } else {
+      session = new Session(util.generateRandomUUID(false), context.trackerId)
+      Session.sessions.push(session)
+    }
+    Session.generateVisit(context)
   }
 
   static getSessionId(context: GrowingContext): string | undefined {
-    Session.sessions.forEach(function (session) {
+    for (let session of Session.sessions) {
       if (session.trackerId == context.trackerId) {
         return session.sessionId
       }
-    })
+    }
     return undefined
   }
 

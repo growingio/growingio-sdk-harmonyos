@@ -52,14 +52,14 @@ export class GrowingAnalytics {
     Session.refreshSession(GrowingContext.getDefaultContext())
   }
 
-  static startMultiTracker(trackerId: string, configuration: GrowingConfig) {
+  static startSubTracker(trackerId: string, configuration: GrowingConfig) {
     if (!AnalyticsCore.core) {
       console.error('[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
       return
     }
 
     let config = configuration.copy()
-    let success = AnalyticsCore.startMultiTracker(trackerId, config)
+    let success = AnalyticsCore.startSubTracker(trackerId, config)
     if (success) {
       Session.refreshSession(GrowingContext.getContext(trackerId))
     } else {

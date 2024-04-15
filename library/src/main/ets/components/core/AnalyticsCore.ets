@@ -77,7 +77,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     }, delay)
   }
 
-  static startMultiTracker(trackerId: string, config: GrowingConfig): boolean {
+  static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
     if (GrowingContext.getContext(trackerId)) {
       return false
     }
@@ -98,12 +98,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   static tracker(trackerId: string): AnalyticsCore | undefined {
-    AnalyticsCore.trackers.forEach(function (tracker) {
+    for (let tracker of AnalyticsCore.trackers) {
       if (tracker.context.trackerId == trackerId) {
         return tracker
       }
-    })
-
+    }
     return undefined
   }
 

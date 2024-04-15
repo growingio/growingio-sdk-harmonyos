@@ -44,6 +44,7 @@ export default class GrowingContext {
     let config = configuration.copy()
     let context = new GrowingContext(trackerId, config)
     GrowingContext.defaultContext = context
+    GrowingContext.contexts.set(trackerId, context)
   }
 
   static getDefaultContext(): GrowingContext | undefined {
