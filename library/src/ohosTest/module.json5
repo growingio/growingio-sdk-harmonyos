@@ -1,11 +1,11 @@
 {
   "module": {
-    "name": "entry_test",
+    "name": "library_test",
     "type": "feature",
     "description": "$string:module_test_desc",
     "mainElement": "TestAbility",
     "deviceTypes": [
-      "phone",
+      "default",
       "tablet",
       "2in1"
     ],
