@@ -18,16 +18,15 @@
 import http from '@ohos.net.http'
 
 import EventDatabase from './EventDatabase'
-import AnalyticsCore from '../core/AnalyticsCore'
-import { DATABASE_MAX_BATCH_SIZE } from '../utils/Constants'
+import { REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
+import GrowingContext from '../core/Context'
 
 export default class EventSender {
   static isUploading: boolean = false
 
-  static async sendEvent() {
-    let config = (AnalyticsCore.core as AnalyticsCore).config
-    if (!config.dataCollectionEnabled) {
+  static async sendEvent(context: GrowingContext) {
+    if (!context.config.dataCollectionEnabled) {
       return
     }
 
@@ -35,14 +34,14 @@ export default class EventSender {
       return
     }
 
-    let events = await EventDatabase.getEventsByCount(DATABASE_MAX_BATCH_SIZE)
+    let events = await EventDatabase.getEventsByCount(REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE, context)
     if (events.length == 0) {
       return
     }
     EventSender.isUploading = true
     let serialize = events.map(event => String(event.data)).join(',')
     let request = http.createHttp()
-    let url = EventSender.url()
+    let url = EventSender.url(context)
 
     request.request(url, {
       method: http.RequestMethod.POST,
@@ -64,9 +63,9 @@ export default class EventSender {
 
         EventDatabase.removeEvents(events).then(() => {
           EventSender.isUploading = false
-          EventDatabase.countOfEvents().then(count => {
-            if (count > DATABASE_MAX_BATCH_SIZE) {
-              EventSender.sendEvent()
+          EventDatabase.countOfEvents(context).then(count => {
+            if (count > REQUEST_MAX_EVENT_COUNT) {
+              EventSender.sendEvent(context)
             }
           })
         })
@@ -75,8 +74,8 @@ export default class EventSender {
     })
   }
 
-  static url() {
-    let config = (AnalyticsCore.core as AnalyticsCore).config
+  static url(context: GrowingContext) {
+    let config = context.config
     let serverHost = config.dataCollectionServerHost
     let accountId = config.accountId
     return serverHost + '/v3/projects/' + accountId + '/collect?stm=' + Date.now()

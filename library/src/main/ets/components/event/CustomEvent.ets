@@ -17,17 +17,18 @@
 
 import Event, { EventType, AttributesType } from './Event'
 import EventBuilder from './EventBuilder'
+import GrowingContext from '../core/Context'
 import Util from '../utils/Util'
 
 export default class CustomEvent extends Event {
   eventName: string = ''
   attributes: AttributesType | undefined = undefined
 
-  static create(eventName: string, attributes: AttributesType): CustomEvent {
+  static create(eventName: string, attributes: AttributesType, context: GrowingContext): CustomEvent {
     let event = new CustomEvent()
     event.eventName = eventName
     event.attributes = Util.convertAttributes(attributes)
     event.eventType = EventType.Custom
-    return EventBuilder.build(event)
+    return EventBuilder.build(event, context)
   }
 }

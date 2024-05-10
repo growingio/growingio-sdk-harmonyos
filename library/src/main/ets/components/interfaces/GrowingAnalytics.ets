@@ -19,7 +19,23 @@ import AnalyticsCore from '../core/AnalyticsCore'
 import { GrowingConfig } from './GrowingConfig'
 import Session from '../core/Session'
 import { AttributesType } from '../utils/Constants'
+import GrowingContext from '../core/Context'
 export { AttributesType as GrowingAttrType } from '../utils/Constants'
+
+export interface GrowingAnalyticsInterface {
+   setDataCollectionEnabled(enabled: boolean): void
+   setLoginUserId(userId: string, userKey: string): void
+   cleanLoginUserId(): void
+
+   setLoginUserAttributes(attributes: AttributesType): void
+   track(eventName: string, attributes: AttributesType, sendTo?: string[]): void
+   trackTimerStart(eventName: string): Promise<string>
+   trackTimerPause(timerId: string): void
+   trackTimerResume(timerId: string): void
+   trackTimerEnd(timerId: string, attributes: AttributesType): void
+   removeTimer(timerId: string): void
+   clearTrackTimer(): void
+}
 
 export class GrowingAnalytics {
   static async start(context: Context, configuration: GrowingConfig): Promise<void> {
@@ -33,141 +49,166 @@ export class GrowingAnalytics {
     }
     let config = configuration.copy()
     await AnalyticsCore.startCore(context, config)
-    Session.refreshSession()
+    Session.refreshSession(GrowingContext.getDefaultContext()!)
   }
 
-  static isInitializedSuccessfully(): boolean {
-    return AnalyticsCore.core != undefined
+  static startSubTracker(trackerId: string, configuration: GrowingConfig) {
+    if (!AnalyticsCore.core) {
+      console.error('[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
+      return
+    }
+
+    let config = configuration.copy()
+    let success = AnalyticsCore.startSubTracker(trackerId, config)
+    if (success) {
+      Session.refreshSession(GrowingContext.getContext(trackerId)!)
+    } else {
+      console.error('[GrowingAnalytics] Do not start tracker with same trackerId')
+    }
+  }
+
+  static tracker(trackerId: string): GrowingAnalyticsInterface | undefined {
+    let tracker = AnalyticsCore.tracker(trackerId)
+    return tracker
+  }
+
+  static isInitializedSuccessfully(trackerId?: string): boolean {
+    if (trackerId && trackerId.length > 0) {
+      return AnalyticsCore.tracker(trackerId) != undefined
+    } else {
+      return AnalyticsCore.core != undefined
+    }
   }
 
   static setDataCollectionEnabled(enabled: boolean) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.setDataCollectionEnabled(enabled)
+    AnalyticsCore.core!.setDataCollectionEnabled(enabled)
   }
 
   static setLoginUserId(
     userId: string,
     userKey: string = ''
   ) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.setLoginUserId(userId, userKey)
+    AnalyticsCore.core!.setLoginUserId(userId, userKey)
   }
 
   static cleanLoginUserId() {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.setLoginUserId('')
-  }
-
-  static setLocation(
-    latitude: number,
-    longitude: number
-  ) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.setLocation(latitude, longitude)
-  }
-
-  static cleanLocation() {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.setLocation(0, 0)
+    AnalyticsCore.core!.setLoginUserId('')
   }
 
   static setLoginUserAttributes(attributes: AttributesType) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.setLoginUserAttributes(attributes)
+    AnalyticsCore.core!.setLoginUserAttributes(attributes)
   }
 
   static getDeviceId(): string {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return ''
     }
-    return AnalyticsCore.core.getDeviceId()
+    return AnalyticsCore.core!.getDeviceId()
   }
 
   static track(
     eventName: string,
-    attributes: AttributesType = {}
+    attributes: AttributesType = {},
+    sendTo?: string[]
   ) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.track(eventName, attributes)
+    AnalyticsCore.core!.track(eventName, attributes, sendTo)
   }
 
   static async trackTimerStart(eventName: string): Promise<string> {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return ''
     }
-    return await AnalyticsCore.core.trackTimerStart(eventName)
+    return await AnalyticsCore.core!.trackTimerStart(eventName)
   }
 
   static async trackTimerPause(timerId: string) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    await AnalyticsCore.core.trackTimerPause(timerId)
+    await AnalyticsCore.core!.trackTimerPause(timerId)
   }
 
   static async trackTimerResume(timerId: string) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    await AnalyticsCore.core.trackTimerResume(timerId)
+    await AnalyticsCore.core!.trackTimerResume(timerId)
   }
 
   static async trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {}
   ) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    await AnalyticsCore.core.trackTimerEnd(timerId, attributes)
+    await AnalyticsCore.core!.trackTimerEnd(timerId, attributes)
   }
 
   static removeTimer(timerId: string) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.removeTimer(timerId)
+    AnalyticsCore.core!.removeTimer(timerId)
   }
 
   static clearTrackTimer() {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.clearTrackTimer()
+    AnalyticsCore.core!.clearTrackTimer()
   }
 
   static setGeneralProps(props: AttributesType) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.setGeneralProps(props)
+    AnalyticsCore.core!.setGeneralProps(props)
   }
 
   static removeGeneralProps(keys: string[]) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.removeGeneralProps(keys)
+    AnalyticsCore.core!.removeGeneralProps(keys)
   }
 
   static clearGeneralProps() {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    AnalyticsCore.core.clearGeneralProps()
+    AnalyticsCore.core!.clearGeneralProps()
+  }
+
+  static setLocation(
+    latitude: number,
+    longitude: number
+  ) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
+      return
+    }
+    AnalyticsCore.setLocation(latitude, longitude)
+  }
+
+  static cleanLocation() {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
+      return
+    }
+    AnalyticsCore.setLocation(0, 0)
   }
 }
