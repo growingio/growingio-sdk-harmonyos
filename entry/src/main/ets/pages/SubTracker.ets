@@ -121,10 +121,7 @@ struct SubTracker {
   }
 
   setDataCollectionEnabled(enabled: boolean) {
-    let tracker = GrowingAnalytics.tracker(this.curTrackerId)
-    if (tracker) {
-      tracker.setDataCollectionEnabled(enabled)
-    }
+    this.subTracker().setDataCollectionEnabled(enabled)
   }
 
   setLoginUserId() {
@@ -135,15 +132,15 @@ struct SubTracker {
       const randomIndex = Math.floor(Math.random() * characters.length)
       userId += characters.charAt(randomIndex)
     }
-    (GrowingAnalytics.tracker(this.curTrackerId) as GrowingAnalyticsInterface).setLoginUserId(userId, 'harmony')
+    this.subTracker().setLoginUserId(userId, 'harmony')
   }
 
   cleanLoginUserId() {
-    (GrowingAnalytics.tracker(this.curTrackerId) as GrowingAnalyticsInterface).cleanLoginUserId()
+    this.subTracker().cleanLoginUserId()
   }
 
   track() {
-    (GrowingAnalytics.tracker(this.curTrackerId) as GrowingAnalyticsInterface).track('buyProduct', {
+    this.subTracker().track('buyProduct', {
       'name': 'apple',
       'money': 1000,
       'num': 100,
@@ -152,9 +149,13 @@ struct SubTracker {
   }
 
   loginUserAttributes() {
-    (GrowingAnalytics.tracker(this.curTrackerId) as GrowingAnalyticsInterface).setLoginUserAttributes({
+    this.subTracker().setLoginUserAttributes({
       'name': 'ben',
       'age': 30
     })
+  }
+
+  subTracker(): GrowingAnalyticsInterface {
+    return GrowingAnalytics.tracker(this.curTrackerId) as GrowingAnalyticsInterface;
   }
 }
