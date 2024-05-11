@@ -24,6 +24,7 @@ import GrowingContext from '../core/Context'
 
 export default class EventDatabase {
   static store: relationalStore.RdbStore
+  static tableName: string = 'EVENTS'
 
   static async initDatabase(context: Context) {
     const config: relationalStore.StoreConfig = {
@@ -31,24 +32,22 @@ export default class EventDatabase {
       securityLevel: relationalStore.SecurityLevel.S1
     }
 
-    const SQL_CREATE_TABLE = 'CREATE TABLE IF NOT EXISTS EVENT ('
-    + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
-    + 'EVENT_UUID TEXT NOT NULL, '
-    + 'DATA TEXT NOT NULL, '
-    + 'TYPE TEXT NOT NULL, '
-    + 'CREATE_AT INTEGER NOT NULL, '
-    + 'SDK_VERSION TEXT NOT NULL)'
-
-    const SQL_ADD_ACCOUNT_ID = "ALTER TABLE EVENT ADD ACCOUNT_ID TEXT NOT NULL DEFAULT ''"
-    const SQL_ADD_DATASOURCE_ID = "ALTER TABLE EVENT ADD DATASOURCE_ID TEXT NOT NULL DEFAULT ''"
+    const SQL_CREATE_TABLE = 'CREATE TABLE IF NOT EXISTS'
+      + EventDatabase.tableName + '('
+      + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
+      + 'EVENT_UUID TEXT NOT NULL, '
+      + 'DATA TEXT NOT NULL, '
+      + 'TYPE TEXT NOT NULL, '
+      + 'CREATE_AT INTEGER NOT NULL, '
+      + 'ACCOUNT_ID TEXT NOT NULL, '
+      + 'DATASOURCE_ID TEXT NOT NULL, '
+      + 'SDK_VERSION TEXT NOT NULL)'
 
     let appContext = context.getApplicationContext()
 
     try {
       let store = await relationalStore.getRdbStore(appContext, config)
       await store.executeSql(SQL_CREATE_TABLE)
-      await store.executeSql(SQL_ADD_ACCOUNT_ID)
-      await store.executeSql(SQL_ADD_DATASOURCE_ID)
       EventDatabase.store = store
     } catch (e) {
       LogUtil.error("Failed to create database. code = " + e.code + ", message = " + e.message)
@@ -73,7 +72,7 @@ export default class EventDatabase {
     }
 
     try {
-      await EventDatabase.store.insert('EVENT', valueBucket)
+      await EventDatabase.store.insert(EventDatabase.tableName, valueBucket)
       LogUtil.info('Write event to disk = ' + event.data)
     } catch (e) {
       LogUtil.error("Failed to write event to disk. code = " + e.code + ", message = " + e.message)
@@ -88,7 +87,7 @@ export default class EventDatabase {
     }
 
     try {
-      let predicates = new relationalStore.RdbPredicates('EVENT')
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
       predicates.orderByAsc('CREATE_AT')
       predicates.equalTo('ACCOUNT_ID', context.config.accountId)
       predicates.equalTo('DATASOURCE_ID', context.config.dataSourceId)
@@ -122,7 +121,7 @@ export default class EventDatabase {
       let event = events.shift()
       if (event) {
         try {
-          let predicates = new relationalStore.RdbPredicates('EVENT')
+          let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
           predicates.equalTo('EVENT_UUID', event.uuid)
           await EventDatabase.store.delete(predicates)
         } catch (e) {
@@ -139,7 +138,7 @@ export default class EventDatabase {
 
     let count = 0
     try {
-      let predicates = new relationalStore.RdbPredicates('EVENT')
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
       predicates.equalTo('ACCOUNT_ID', context.config.accountId)
       predicates.equalTo('DATASOURCE_ID', context.config.dataSourceId)
       let r = await EventDatabase.store.query(predicates)
@@ -160,7 +159,7 @@ export default class EventDatabase {
     let daysAgo = Date.now() - DATABASE_EXPIRATION_TIME
 
     try {
-      let predicates = new relationalStore.RdbPredicates('EVENT')
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
       predicates.lessThanOrEqualTo('CREATE_AT', daysAgo)
       await EventDatabase.store.delete(predicates)
     } catch (e) {
