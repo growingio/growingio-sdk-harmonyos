@@ -24,6 +24,8 @@ import UserIdentifier from '../core/UserIdentifier'
 import { SDK_VERSION, PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 import SharedPreferences from '../utils/SharedPreferences'
 import GrowingContext from '../core/Context'
+import GrowingGeneralProps from '../core/GeneralProps'
+import Util from '../utils/Util'
 
 export default class EventBuilder {
   private static _eventSequenceId: number
@@ -67,6 +69,12 @@ export default class EventBuilder {
     event.userId = userId.length > 0 ? userId : undefined
     let userKey = user.userKey
     event.userKey = userKey.length > 0 ? userKey : undefined
+
+    let attributes = GrowingGeneralProps.getGeneralProps()
+    if (event.attributes) {
+      attributes = Util.concatObject(attributes, event.attributes)
+    }
+    event.attributes = Util.serializableAttributes(attributes)
 
     EventBuilder.updateEventSequenceId()
     event.eventSequenceId = EventBuilder._eventSequenceId

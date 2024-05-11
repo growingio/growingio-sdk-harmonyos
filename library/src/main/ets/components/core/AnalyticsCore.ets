@@ -24,7 +24,6 @@ import { GrowingConfig } from '../interfaces/GrowingConfig'
 import AppInfo from './AppInfo'
 import DeviceInfo from './DeviceInfo'
 import EventTimer from './EventTimer'
-import GeneralProps from './GeneralProps'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import CustomEvent from '../event/CustomEvent'
@@ -160,7 +159,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   setLoginUserAttributes(attributes: AttributesType) {
-    let e = LoginUserAttributesEvent.create(attributes, this.context)
+    let e = LoginUserAttributesEvent.create(Util.cloneObject(attributes), this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info('Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
@@ -174,15 +173,12 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     attributes: AttributesType = {},
     sendTo?: string[]
   ) {
-    let generalProps = GeneralProps.getGeneralProps()
-    let finalAttributes = Util.concatObject(generalProps, attributes)
-    let e = CustomEvent.create(eventName, finalAttributes, this.context)
+    let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
-    LogUtil.info('Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes)
-    + ', current generalProps: ' + JSON.stringify(generalProps))
+    LogUtil.info('Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes))
 
     if (sendTo && sendTo.length > 0) {
-      AnalyticsCore.sendTo(sendTo, eventName, finalAttributes)
+      AnalyticsCore.sendTo(sendTo, eventName, attributes)
     }
   }
 
@@ -194,7 +190,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     trackers.forEach(trackerId => {
       let tracker = AnalyticsCore.tracker(trackerId)
       if (tracker) {
-        let e = CustomEvent.create(eventName, attributes, tracker.context)
+        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), tracker.context)
         AnalyticsCore.writeEventToDisk(e, tracker.context)
         LogUtil.info('Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
         + ', attributes: ' + JSON.stringify(attributes))
@@ -218,7 +214,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     timerId: string,
     attributes: AttributesType = {}
   ) {
-    await EventTimer.trackTimerEnd(timerId, attributes, this.context)
+    await EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context)
   }
 
   removeTimer(timerId: string) {
@@ -227,18 +223,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
   clearTrackTimer() {
     EventTimer.clearTrackTimer(this.context)
-  }
-
-  setGeneralProps(props: AttributesType) {
-    GeneralProps.setGeneralProps(props)
-  }
-
-  removeGeneralProps(keys: string[]) {
-    GeneralProps.removeGeneralProps(keys)
-  }
-
-  clearGeneralProps() {
-    GeneralProps.clearGeneralProps()
   }
 
   static async writeEventToDisk<T extends Event>(event: T, context: GrowingContext) {

@@ -18,8 +18,9 @@
 import AnalyticsCore from '../core/AnalyticsCore'
 import { GrowingConfig } from './GrowingConfig'
 import Session from '../core/Session'
-import { AttributesType } from '../utils/Constants'
 import GrowingContext from '../core/Context'
+import GeneralProps from '../core/GeneralProps'
+import { AttributesType } from '../utils/Constants'
 export { AttributesType as GrowingAttrType } from '../utils/Constants'
 
 export interface GrowingAnalyticsInterface {
@@ -175,24 +176,19 @@ export class GrowingAnalytics {
   }
 
   static setGeneralProps(props: AttributesType) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.setGeneralProps(props)
+    GeneralProps.setGeneralProps(props)
   }
 
   static removeGeneralProps(keys: string[]) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.removeGeneralProps(keys)
+    GeneralProps.removeGeneralProps(keys)
   }
 
   static clearGeneralProps() {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.clearGeneralProps()
+    GeneralProps.clearGeneralProps()
+  }
+
+  static setDynamicGeneralProps(generator: () => AttributesType) {
+    GeneralProps.setDynamicGeneralProps(generator)
   }
 
   static setLocation(

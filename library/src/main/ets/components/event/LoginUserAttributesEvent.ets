@@ -21,11 +21,9 @@ import GrowingContext from '../core/Context'
 import Util from '../utils/Util'
 
 export default class LoginUserAttributesEvent extends Event {
-  attributes: AttributesType = {}
-
   static create(attributes: AttributesType, context: GrowingContext): LoginUserAttributesEvent {
     let event = new LoginUserAttributesEvent()
-    event.attributes = Util.convertAttributes(attributes) as AttributesType
+    event.attributes = attributes
     event.eventType = EventType.LoginUserAttributes
     return EventBuilder.build(event, context)
   }

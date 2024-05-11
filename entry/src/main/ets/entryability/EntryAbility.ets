@@ -5,6 +5,12 @@ import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics';
 
 export default class EntryAbility extends UIAbility {
   async startAnalytics() {
+    // let count = 0
+    // GrowingAnalytics.setDynamicGeneralProps(() => {
+    //   count++
+    //   return { 'count' : count}
+    // })
+
     let config = new GrowingConfig(
       '0a1b4118dd954ec3bcc69da5138bdb96', 'ab555003531e0fd1', 'growing.bf30ad277eaae1aa'
     )

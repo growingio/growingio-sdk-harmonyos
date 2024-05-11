@@ -23,7 +23,7 @@ export default class Util {
     return { ...obj }
   }
 
-  static convertAttributes(attr: AttributesType): AttributesType | undefined {
+  static serializableAttributes(attr: AttributesType): AttributesType | undefined {
     let result: AttributesType = {}
     Object.keys(attr).forEach(key => {
       let value = attr[key] as ValueType

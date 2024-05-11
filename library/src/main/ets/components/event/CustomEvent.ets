@@ -22,12 +22,11 @@ import Util from '../utils/Util'
 
 export default class CustomEvent extends Event {
   eventName: string = ''
-  attributes: AttributesType | undefined = undefined
 
   static create(eventName: string, attributes: AttributesType, context: GrowingContext): CustomEvent {
     let event = new CustomEvent()
     event.eventName = eventName
-    event.attributes = Util.convertAttributes(attributes)
+    event.attributes = attributes
     event.eventType = EventType.Custom
     return EventBuilder.build(event, context)
   }

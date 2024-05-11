@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { AttributesType } from '../utils/Constants'
 export { AttributesType } from '../utils/Constants'
 
 export default abstract class Event {
@@ -29,6 +30,7 @@ export default abstract class Event {
   sdkVersion: string = ''
   dataSourceId: string = ''
   urlScheme: string = ''
+  attributes: AttributesType | undefined = undefined
 
   eventType: EventType = EventType.Visit
 

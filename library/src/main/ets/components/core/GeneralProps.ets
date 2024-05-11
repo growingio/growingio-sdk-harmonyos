@@ -21,6 +21,9 @@ import Util from '../utils/Util'
 
 export default class GeneralProps {
   private static _internalProps: AttributesType = {}
+  private static _dynamicGeneralPropsGenerator: () => AttributesType = () => {
+    return {}
+  }
 
   static setGeneralProps(props: AttributesType) {
     LogUtil.info('Set generalProps: ' + JSON.stringify(props))
@@ -37,7 +40,15 @@ export default class GeneralProps {
     GeneralProps._internalProps = {}
   }
 
+  static setDynamicGeneralProps(generator: () => AttributesType) {
+    LogUtil.info('Set dynamicGeneralProps')
+    GeneralProps._dynamicGeneralPropsGenerator = generator
+  }
+
   static getGeneralProps(): AttributesType {
-    return Util.cloneObject(GeneralProps._internalProps)
+    let dynamicProps = GeneralProps._dynamicGeneralPropsGenerator()
+    let props = Util.cloneObject(GeneralProps._internalProps)
+    let properties = Util.concatObject(props, dynamicProps)
+    return properties
   }
 }

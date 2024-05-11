@@ -32,7 +32,7 @@ export default class EventDatabase {
       securityLevel: relationalStore.SecurityLevel.S1
     }
 
-    const SQL_CREATE_TABLE = 'CREATE TABLE IF NOT EXISTS'
+    const SQL_CREATE_TABLE = 'CREATE TABLE IF NOT EXISTS '
       + EventDatabase.tableName + '('
       + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
       + 'EVENT_UUID TEXT NOT NULL, '
