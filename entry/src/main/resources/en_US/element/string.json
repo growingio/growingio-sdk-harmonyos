@@ -23,6 +23,14 @@
     {
       "name": "TrackTimerAbility_label",
       "value": "label"
+    },
+    {
+      "name": "SubTrackerAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "SubTrackerAbility_label",
+      "value": "label"
     }
   ]
 }

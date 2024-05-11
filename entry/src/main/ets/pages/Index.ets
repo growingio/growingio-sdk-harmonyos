@@ -19,7 +19,7 @@ struct Index {
         Text('setDataCollectionEnabled')
           .fontColor('#182431')
           .fontSize(16)
-      }.height(40).selectedColor(Color.Green)
+      }.height(40).selectedColor('rgba(0, 125, 255, 0.20)')
       .onChange((isOn: boolean) => {
         this.setDataCollectionEnabled(isOn)
       }).margin({ top: 15 })
@@ -72,9 +72,37 @@ struct Index {
           }
           // router.pushUrl({url: 'pages/TrackTimer'})
         }).margin({ top: 15 })
+      Button('subTracker')
+        .onClick(() => {
+          let trackerId = this.getRandomString()
+          let context = getContext(this) as AppContext.UIAbilityContext
+          const want: Want = {
+            bundleName: getContext(context).applicationInfo.name,
+            abilityName: 'SubTrackerAbility',
+            parameters: {
+              trackerId: trackerId,
+            },
+          };
+          try {
+            context.startAbility(want)
+          } catch (error) {
+          }
+          // router.pushUrl({url: 'pages/TrackTimer'})
+        }).margin({ top: 15 })
     }
     .width('100%')
     .height('100%')
+  }
+
+  getRandomString(): string {
+    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
+    let random = ''
+
+    for (let i = 0; i < 10; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length)
+      random += characters.charAt(randomIndex)
+    }
+    return random
   }
 
   async getDeviceId() {
@@ -86,13 +114,7 @@ struct Index {
   }
 
   setLoginUserId() {
-    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
-    let userId = ''
-
-    for (let i = 0; i < 10; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length)
-      userId += characters.charAt(randomIndex)
-    }
+    let userId = this.getRandomString()
     GrowingAnalytics.setLoginUserId(userId, 'harmony')
   }
 

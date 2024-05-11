@@ -1,6 +1,7 @@
 {
   "src": [
     "pages/Index",
-    "pages/TrackTimer"
+    "pages/TrackTimer",
+    "pages/SubTracker"
   ]
 }
