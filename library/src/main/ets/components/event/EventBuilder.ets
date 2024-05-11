@@ -33,7 +33,7 @@ export default class EventBuilder {
   }
 
   static build<T extends Event>(event: T, context: GrowingContext): T {
-    event.sessionId = Session.getSessionId(context)
+    event.sessionId = Session.getSessionId(context)!
     event.appState = Session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
     event.timestamp = Date.now()
     event.sdkVersion = SDK_VERSION
@@ -62,7 +62,7 @@ export default class EventBuilder {
     event.latitude = Math.abs(AnalyticsCore.location.latitude) > 0 ? AnalyticsCore.location.latitude : undefined
     event.longitude = Math.abs(AnalyticsCore.location.longitude) > 0 ? AnalyticsCore.location.longitude : undefined
 
-    let user = UserIdentifier.getUser(context)
+    let user = UserIdentifier.getUser(context)!
     let userId = user.userId
     event.userId = userId.length > 0 ? userId : undefined
     let userKey = user.userKey

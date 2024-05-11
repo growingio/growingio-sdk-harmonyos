@@ -117,11 +117,11 @@ export default class EventTimer {
   static clearTrackTimer(context: GrowingContext) {
     LogUtil.info('Track timer all delete')
     let timersToDelete: string[] = []
-    for (let [timerId, timer] of EventTimer.timers) {
+    EventTimer.timers.forEach((timer, timerId) => {
       if (timer.trackerId == context.trackerId) {
         timersToDelete.push(timerId)
       }
-    }
+    })
     for (let timerId of timersToDelete) {
       EventTimer.timers.delete(timerId)
     }

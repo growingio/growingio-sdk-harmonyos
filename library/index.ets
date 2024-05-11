@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
-export { GrowingAnalytics, GrowingAttrType } from './src/main/ets/components/interfaces/GrowingAnalytics'
+export {
+  GrowingAnalytics,
+  GrowingAttrType,
+  GrowingAnalyticsInterface
+} from './src/main/ets/components/interfaces/GrowingAnalytics'
 export { GrowingConfig } from './src/main/ets/components/interfaces/GrowingConfig'
 

@@ -48,12 +48,12 @@ export default class Session {
   static onForeground() {
     LogUtil.info('Session state set to foreground')
     Session.sessionState = SessionState.Foreground
-    Session.sessions.forEach(function (session) {
+    Session.sessions.forEach(session => {
       if (session.latestOnBackgroundTime == 0) {
         return
       }
 
-      let context = GrowingContext.getContext(session.trackerId)
+      let context = GrowingContext.getContext(session.trackerId)!
       if (Date.now() - session.latestOnBackgroundTime >= context.config.sessionInterval * 1000) {
         LogUtil.info('current session is outdated, trackerId = ' + context.trackerId)
         Session.refreshSession(context)
@@ -64,14 +64,14 @@ export default class Session {
   static onBackground() {
     LogUtil.info('Session state set to background')
     Session.sessionState = SessionState.Background
-    Session.sessions.forEach(function (session) {
+    Session.sessions.forEach(session => {
       session.latestOnBackgroundTime = Date.now()
     })
   }
 
   static refreshSession(context: GrowingContext) {
     LogUtil.info('Refresh Session for tracker = ' + context.trackerId)
-    let session = undefined
+    let session: Session | undefined = undefined
     for (let s of Session.sessions) {
       if (s.trackerId == context.trackerId) {
         session = s

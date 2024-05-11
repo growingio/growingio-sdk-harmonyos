@@ -22,7 +22,7 @@ import SharedPreferences from '../utils/SharedPreferences'
 import GrowingContext from './Context'
 
 export default class UserIdentifier {
-  userId; string
+  userId: string
   userKey: string
   private latestNonnullUserId: string
 
@@ -43,8 +43,8 @@ export default class UserIdentifier {
     let userInfo = JSON.parse(userInfoString) as object
     UserIdentifier.userInfo = userInfo
 
-    let userId = userInfo[PREFERENCE_USER_ID] ?? ''
-    let userKey = userInfo[PREFERENCE_USER_KEY] ?? ''
+    let userId = (userInfo[PREFERENCE_USER_ID] as string | undefined) ?? ''
+    let userKey = (userInfo[PREFERENCE_USER_KEY] as string | undefined) ?? ''
     let user = new UserIdentifier(userId, userKey)
     UserIdentifier.users.set(context.trackerId, user)
     LogUtil.info('UserId from preferences is ' + userId + ', userKey from preferences is ' + userKey)
@@ -53,8 +53,8 @@ export default class UserIdentifier {
   static initMultiUser(context: GrowingContext) {
     let userInfo = UserIdentifier.userInfo
 
-    let userId = userInfo[PREFERENCE_USER_ID + '_' + context.trackerId] ?? ''
-    let userKey = userInfo[PREFERENCE_USER_KEY + '_' + context.trackerId] ?? ''
+    let userId = (userInfo[PREFERENCE_USER_ID + '_' + context.trackerId] as string | undefined) ?? ''
+    let userKey = (userInfo[PREFERENCE_USER_KEY + '_' + context.trackerId] as string | undefined) ?? ''
     let user = new UserIdentifier(userId, userKey)
     UserIdentifier.users.set(context.trackerId, user)
     LogUtil.info('UserId from preferences is ' + userId + ', userKey from preferences is ' + userKey)
