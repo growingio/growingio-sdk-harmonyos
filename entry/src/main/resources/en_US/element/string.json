@@ -39,6 +39,14 @@
     {
       "name": "GeneralPropsAbility_label",
       "value": "label"
+    },
+    {
+      "name": "TrackAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "TrackAbility_label",
+      "value": "label"
     }
   ]
 }

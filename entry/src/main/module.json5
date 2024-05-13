@@ -59,6 +59,15 @@
         "label": "$string:GeneralPropsAbility_label",
         "startWindowIcon": "$media:startIcon",
         "startWindowBackground": "$color:start_window_background"
+      },
+      {
+        "name": "TrackAbility",
+        "srcEntry": "./ets/trackability/TrackAbility.ets",
+        "description": "$string:TrackAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:TrackAbility_label",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background"
       }
     ],
     "requestPermissions": [
@@ -70,7 +79,8 @@
             "EntryAbility",
             "TrackTimerAbility",
             "SubTrackerAbility",
-            "GeneralPropsAbility"
+            "GeneralPropsAbility",
+            "TrackAbility"
           ],
           "when": "always"
         }
@@ -83,7 +93,8 @@
             "EntryAbility",
             "TrackTimerAbility",
             "SubTrackerAbility",
-            "GeneralPropsAbility"
+            "GeneralPropsAbility",
+            "TrackAbility"
           ],
           "when": "always"
         }
@@ -96,7 +107,8 @@
             "EntryAbility",
             "TrackTimerAbility",
             "SubTrackerAbility",
-            "GeneralPropsAbility"
+            "GeneralPropsAbility",
+            "TrackAbility"
           ],
           "when": "always"
         }

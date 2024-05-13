@@ -1,7 +1,5 @@
 import { GrowingAnalytics } from '@growingio/analytics'
-import AppContext from '@ohos.app.ability.common'
-import Want from '@ohos.app.ability.Want'
-import router from '@ohos.router'
+import Util from '../Util'
 
 @Entry
 @Component
@@ -39,71 +37,29 @@ struct Index {
         .onClick(() => {
           this.cleanLocation()
         }).margin({ top: 15 })
-      Button('track')
-        .onClick(() => {
-          this.track()
-        }).margin({ top: 15 })
       Button('loginUserAttributes')
         .onClick(() => {
           this.loginUserAttributes()
         }).margin({ top: 15 })
+      Button('track')
+        .onClick(() => {
+          Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track')
+        }).margin({ top: 15 })
       Button('generalProps')
         .onClick(() => {
-          let context = getContext(this) as AppContext.UIAbilityContext
-          const want: Want = {
-            bundleName: getContext(context).applicationInfo.name,
-            abilityName: 'GeneralPropsAbility',
-          };
-          try {
-            context.startAbility(want)
-          } catch (error) {
-          }
-          // router.pushUrl({url: 'pages/GeneralProps'})
+          Util.startAbility(getContext(this), 'GeneralPropsAbility', 'pages/GeneralProps')
         }).margin({ top: 15 })
       Button('trackTimer')
         .onClick(() => {
-          let context = getContext(this) as AppContext.UIAbilityContext
-          const want: Want = {
-            bundleName: getContext(context).applicationInfo.name,
-            abilityName: 'TrackTimerAbility',
-          };
-          try {
-            context.startAbility(want)
-          } catch (error) {
-          }
-          // router.pushUrl({url: 'pages/TrackTimer'})
+          Util.startAbility(getContext(this), 'TrackTimerAbility', 'pages/TrackTimer')
         }).margin({ top: 15 })
       Button('subTracker')
         .onClick(() => {
-          let trackerId = this.getRandomString()
-          let context = getContext(this) as AppContext.UIAbilityContext
-          const want: Want = {
-            bundleName: getContext(context).applicationInfo.name,
-            abilityName: 'SubTrackerAbility',
-            parameters: {
-              trackerId: trackerId,
-            },
-          };
-          try {
-            context.startAbility(want)
-          } catch (error) {
-          }
-          // router.pushUrl({url: 'pages/SubTracker'})
+          Util.startAbility(getContext(this), 'SubTrackerAbility', 'pages/SubTracker')
         }).margin({ top: 15 })
     }
     .width('100%')
     .height('100%')
-  }
-
-  getRandomString(): string {
-    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
-    let random = ''
-
-    for (let i = 0; i < 10; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length)
-      random += characters.charAt(randomIndex)
-    }
-    return random
   }
 
   async getDeviceId() {
@@ -115,7 +71,7 @@ struct Index {
   }
 
   setLoginUserId() {
-    let userId = this.getRandomString()
+    let userId = Util.getRandomString()
     GrowingAnalytics.setLoginUserId(userId, 'harmony')
   }
 
@@ -131,17 +87,6 @@ struct Index {
 
   cleanLocation() {
     GrowingAnalytics.cleanLocation()
-  }
-
-  track() {
-    GrowingAnalytics.track('buyProduct1')
-
-    GrowingAnalytics.track('buyProduct2', {
-      'name': 'apple',
-      'money': 1000,
-      'num': 100,
-      'from': ['sichuan', 'guizhou', 'hunan']
-    })
   }
 
   loginUserAttributes() {

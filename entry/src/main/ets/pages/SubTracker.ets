@@ -1,7 +1,7 @@
 import { GrowingAnalytics, GrowingConfig, GrowingAnalyticsInterface } from '@growingio/analytics'
 import AppContext from '@ohos.app.ability.common'
-import Want from '@ohos.app.ability.Want'
 import router from '@ohos.router'
+import Util from '../Util'
 
 @Entry
 @Component
@@ -41,7 +41,10 @@ struct SubTracker {
         }).margin({ top: 15 })
       Button('track')
         .onClick(() => {
-          this.track()
+          if (this.curTrackerId.length == 0) {
+            return
+          }
+          Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track', {'trackerId': this.curTrackerId})
         }).margin({ top: 15 })
       Button('loginUserAttributes')
         .onClick(() => {
@@ -52,19 +55,7 @@ struct SubTracker {
           if (this.curTrackerId.length == 0) {
             return
           }
-          let context = getContext(this) as AppContext.UIAbilityContext
-          const want: Want = {
-            bundleName: getContext(context).applicationInfo.name,
-            abilityName: 'TrackTimerAbility',
-            parameters: {
-              trackerId: this.curTrackerId,
-            },
-          };
-          try {
-            context.startAbility(want)
-          } catch (error) {
-          }
-          // router.pushUrl({url: 'pages/TrackTimer'})
+          Util.startAbility(getContext(this), 'TrackTimerAbility', 'pages/TrackTimer', {'trackerId': this.curTrackerId})
         }).margin({ top: 15 })
       List({space: 15}) {
         ForEach(this.trackerIds, (trackerId: string) => {
@@ -96,19 +87,8 @@ struct SubTracker {
     .height('100%')
   }
 
-  getRandomString(): string {
-    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
-    let random = ''
-
-    for (let i = 0; i < 10; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length)
-      random += characters.charAt(randomIndex)
-    }
-    return random
-  }
-
   createSubTracker(): string {
-    let trackerId = this.getRandomString()
+    let trackerId = Util.getRandomString()
     let config = new GrowingConfig(
       '1111111111111', trackerId, 'growing.33333333333', "https://www.baidu.com"
     )
@@ -125,27 +105,12 @@ struct SubTracker {
   }
 
   setLoginUserId() {
-    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
-    let userId = ''
-
-    for (let i = 0; i < 10; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length)
-      userId += characters.charAt(randomIndex)
-    }
+    let userId = Util.getRandomString()
     this.subTracker().setLoginUserId(userId, 'harmony')
   }
 
   cleanLoginUserId() {
     this.subTracker().cleanLoginUserId()
-  }
-
-  track() {
-    this.subTracker().track('buyProduct', {
-      'name': 'apple',
-      'money': 1000,
-      'num': 100,
-      'from': ['sichuan', 'guizhou', 'hunan']
-    })
   }
 
   loginUserAttributes() {
@@ -156,6 +121,6 @@ struct SubTracker {
   }
 
   subTracker(): GrowingAnalyticsInterface {
-    return GrowingAnalytics.tracker(this.curTrackerId) as GrowingAnalyticsInterface;
+    return GrowingAnalytics.tracker(this.curTrackerId) as GrowingAnalyticsInterface
   }
 }

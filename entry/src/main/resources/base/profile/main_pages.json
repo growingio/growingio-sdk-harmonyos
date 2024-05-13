@@ -3,6 +3,7 @@
     "pages/Index",
     "pages/TrackTimer",
     "pages/SubTracker",
-    "pages/GeneralProps"
+    "pages/GeneralProps",
+    "pages/Track"
   ]
 }

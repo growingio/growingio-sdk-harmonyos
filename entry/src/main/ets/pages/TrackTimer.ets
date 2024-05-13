@@ -72,7 +72,7 @@ struct TrackTimer {
 
   async trackTimerStart() {
     if (this.trackerId && this.trackerId.length > 0) {
-      return await (GrowingAnalytics.tracker(this.trackerId) as GrowingAnalyticsInterface).trackTimerStart("timer")
+      return await this.subTracker().trackTimerStart("timer")
     } else {
       return await GrowingAnalytics.trackTimerStart("timer")
     }
@@ -80,7 +80,7 @@ struct TrackTimer {
 
   trackTimerPause() {
     if (this.trackerId && this.trackerId.length > 0) {
-      (GrowingAnalytics.tracker(this.trackerId) as GrowingAnalyticsInterface).trackTimerPause(this.curTimerId)
+      this.subTracker().trackTimerPause(this.curTimerId)
     } else {
       GrowingAnalytics.trackTimerPause(this.curTimerId)
     }
@@ -88,7 +88,7 @@ struct TrackTimer {
 
   trackTimerResume() {
     if (this.trackerId && this.trackerId.length > 0) {
-      (GrowingAnalytics.tracker(this.trackerId) as GrowingAnalyticsInterface).trackTimerResume(this.curTimerId)
+      this.subTracker().trackTimerResume(this.curTimerId)
     } else {
       GrowingAnalytics.trackTimerResume(this.curTimerId)
     }
@@ -96,7 +96,7 @@ struct TrackTimer {
 
   trackTimerEnd() {
     if (this.trackerId && this.trackerId.length > 0) {
-      (GrowingAnalytics.tracker(this.trackerId) as GrowingAnalyticsInterface).trackTimerEnd(this.curTimerId, {"key": "value"})
+      this.subTracker().trackTimerEnd(this.curTimerId, {"key": "value"})
     } else {
       GrowingAnalytics.trackTimerEnd(this.curTimerId, {"key": "value"})
     }
@@ -110,7 +110,7 @@ struct TrackTimer {
 
   removeTimer() {
     if (this.trackerId && this.trackerId.length > 0) {
-      (GrowingAnalytics.tracker(this.trackerId) as GrowingAnalyticsInterface).removeTimer(this.curTimerId)
+      this.subTracker().removeTimer(this.curTimerId)
     } else {
       GrowingAnalytics.removeTimer(this.curTimerId)
     }
@@ -124,11 +124,15 @@ struct TrackTimer {
 
   clearTrackTimer() {
     if (this.trackerId && this.trackerId.length > 0) {
-      (GrowingAnalytics.tracker(this.trackerId) as GrowingAnalyticsInterface).clearTrackTimer()
+      this.subTracker().clearTrackTimer()
     } else {
       GrowingAnalytics.clearTrackTimer()
     }
     this.timerIds = []
     this.curTimerId = ''
+  }
+
+  subTracker(): GrowingAnalyticsInterface {
+    return GrowingAnalytics.tracker(this.trackerId) as GrowingAnalyticsInterface
   }
 }
