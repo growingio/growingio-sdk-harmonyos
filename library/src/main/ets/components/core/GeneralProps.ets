@@ -28,11 +28,13 @@ export default class GeneralProps {
   static setGeneralProps(props: AttributesType) {
     LogUtil.info('Set generalProps: ' + JSON.stringify(props))
     GeneralProps._internalProps = Util.concatObject(GeneralProps._internalProps, props)
+    LogUtil.info('Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
   }
 
   static removeGeneralProps(keys: string[]) {
     LogUtil.info('Remove generalProps by keys: ' + keys)
     Util.removeKeysForObject(keys, GeneralProps._internalProps)
+    LogUtil.info('Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
   }
 
   static clearGeneralProps() {

@@ -47,17 +47,18 @@ struct Index {
         .onClick(() => {
           this.loginUserAttributes()
         }).margin({ top: 15 })
-      Button('setGeneralProps')
+      Button('generalProps')
         .onClick(() => {
-          this.setGeneralProps()
-        }).margin({ top: 15 })
-      Button('removeGeneralProps')
-        .onClick(() => {
-          this.removeGeneralProps()
-        }).margin({ top: 15 })
-      Button('clearGeneralProps')
-        .onClick(() => {
-          this.clearGeneralProps()
+          let context = getContext(this) as AppContext.UIAbilityContext
+          const want: Want = {
+            bundleName: getContext(context).applicationInfo.name,
+            abilityName: 'GeneralPropsAbility',
+          };
+          try {
+            context.startAbility(want)
+          } catch (error) {
+          }
+          // router.pushUrl({url: 'pages/GeneralProps'})
         }).margin({ top: 15 })
       Button('trackTimer')
         .onClick(() => {
@@ -87,7 +88,7 @@ struct Index {
             context.startAbility(want)
           } catch (error) {
           }
-          // router.pushUrl({url: 'pages/TrackTimer'})
+          // router.pushUrl({url: 'pages/SubTracker'})
         }).margin({ top: 15 })
     }
     .width('100%')
@@ -148,23 +149,5 @@ struct Index {
       'name': 'ben',
       'age': 30
     })
-  }
-
-  setGeneralProps() {
-    GrowingAnalytics.setGeneralProps({
-      'prop1': 10,
-      'prop2': 'kkk',
-      'prop3': [1, 2, 3],
-      'prop4': ['a', 'b', 'c'],
-      'name': 'banana'
-    })
-  }
-
-  removeGeneralProps() {
-    GrowingAnalytics.removeGeneralProps(['prop1', 'prop2', 'prop3'])
-  }
-
-  clearGeneralProps() {
-    GrowingAnalytics.clearGeneralProps()
   }
 }

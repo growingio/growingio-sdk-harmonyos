@@ -97,7 +97,7 @@ export default class Session {
   }
 
   static generateVisit(context: GrowingContext) {
-    LogUtil.info('Generate Visit for tracker = %s', context.trackerId)
+    LogUtil.info('Generate Visit for tracker = ' + context.trackerId)
     if (!context.config.dataCollectionEnabled) {
       LogUtil.info('Failed to Generate Visit, dataCollectionEnabled is false')
       return

@@ -31,6 +31,14 @@
     {
       "name": "SubTrackerAbility_label",
       "value": "label"
+    },
+    {
+      "name": "GeneralPropsAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "GeneralPropsAbility_label",
+      "value": "label"
     }
   ]
 }
