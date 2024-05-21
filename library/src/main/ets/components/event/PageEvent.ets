@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (C) 2023 Beijing Yishu Technology Co., Ltd.
+ * Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,21 @@ import Event, { EventType, AttributesType } from './Event'
 import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
 
-export default class LoginUserAttributesEvent extends Event {
-  static create(attributes: AttributesType, context: GrowingContext): LoginUserAttributesEvent {
-    let event = new LoginUserAttributesEvent()
+export default class PageEvent extends Event {
+  path: string | undefined = undefined
+  title: string | undefined = undefined
+
+  static create(
+    path: string,
+    title: string,
+    attributes: AttributesType,
+    context: GrowingContext
+  ): PageEvent {
+    let event = new PageEvent()
+    event.path = path
+    event.title = title
     event.attributes = attributes
-    event.eventType = EventType.LoginUserAttributes
+    event.eventType = EventType.Page
     return EventBuilder.build(event, context)
   }
 }

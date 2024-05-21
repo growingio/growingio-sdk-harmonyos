@@ -16,9 +16,9 @@
  */
 
 import util from '@ohos.util'
-import GrowingContext from '../core/Context'
 
 import Event from './Event'
+import GrowingContext from '../core/Context'
 
 export default class EventPersistence {
   uuid: string

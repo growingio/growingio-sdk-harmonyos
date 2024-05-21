@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (C) 2023 Beijing Yishu Technology Co., Ltd.
+ * Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,7 @@
  * limitations under the License.
  */
 
-import Event, { EventType, AttributesType } from './Event'
-import EventBuilder from './EventBuilder'
-import GrowingContext from '../core/Context'
-
-export default class LoginUserAttributesEvent extends Event {
-  static create(attributes: AttributesType, context: GrowingContext): LoginUserAttributesEvent {
-    let event = new LoginUserAttributesEvent()
-    event.attributes = attributes
-    event.eventType = EventType.LoginUserAttributes
-    return EventBuilder.build(event, context)
-  }
+export default interface HybridEvent {
+  path: string | undefined
+  query: string | undefined
 }

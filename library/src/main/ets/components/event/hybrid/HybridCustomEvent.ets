@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (C) 2023 Beijing Yishu Technology Co., Ltd.
+ * Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,33 @@
  * limitations under the License.
  */
 
-import Event, { EventType, AttributesType } from './Event'
-import EventBuilder from './EventBuilder'
-import GrowingContext from '../core/Context'
+import HybridEvent from './HybridEvent'
+import Event, { EventType, AttributesType } from '../Event'
+import EventBuilder from '../EventBuilder'
+import GrowingContext from '../../core/Context'
 
-export default class CustomEvent extends Event {
+export default class HybridCustomEvent extends Event implements HybridEvent {
   eventName: string = ''
 
-  static create(eventName: string, attributes: AttributesType, context: GrowingContext): CustomEvent {
-    let event = new CustomEvent()
+  path: string | undefined = undefined
+  query: string | undefined = undefined
+
+  static create(
+    eventName: string,
+    attributes: AttributesType,
+    path: string,
+    query: string,
+    timestamp: number,
+    domain: string,
+    context: GrowingContext
+  ): HybridCustomEvent {
+    let event = new HybridCustomEvent()
     event.eventName = eventName
     event.attributes = attributes
+    event.path = path
+    event.query = query
+    event.timestamp = timestamp
+    event.domain = domain
     event.eventType = EventType.Custom
     return EventBuilder.build(event, context)
   }

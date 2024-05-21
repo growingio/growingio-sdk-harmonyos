@@ -61,5 +61,8 @@ export default abstract class Event {
 export enum EventType {
   Visit = 'VISIT',
   Custom = 'CUSTOM',
-  LoginUserAttributes = 'LOGIN_USER_ATTRIBUTES'
+  LoginUserAttributes = 'LOGIN_USER_ATTRIBUTES',
+  Page = 'PAGE',
+  ViewClick = 'VIEW_CLICK',
+  ViewChange = 'VIEW_CHANGE',
 }

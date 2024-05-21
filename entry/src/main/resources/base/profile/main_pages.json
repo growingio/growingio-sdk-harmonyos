@@ -4,6 +4,7 @@
     "pages/TrackTimer",
     "pages/SubTracker",
     "pages/GeneralProps",
-    "pages/Track"
+    "pages/Track",
+    "pages/Hybrid"
   ]
 }

@@ -18,9 +18,9 @@
 import http from '@ohos.net.http'
 
 import EventDatabase from './EventDatabase'
+import GrowingContext from '../core/Context'
 import { REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
-import GrowingContext from '../core/Context'
 
 export default class EventSender {
   static isUploading: boolean = false

@@ -68,51 +68,17 @@
         "label": "$string:TrackAbility_label",
         "startWindowIcon": "$media:startIcon",
         "startWindowBackground": "$color:start_window_background"
+      },
+      {
+        "name": "HybridAbility",
+        "srcEntry": "./ets/hybridability/HybridAbility.ets",
+        "description": "$string:HybridAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:HybridAbility_label",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background"
       }
     ],
-    "requestPermissions": [
-      {
-        "name": "ohos.permission.GET_NETWORK_INFO",
-        "reason": "$string:network_permission",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility",
-            "TrackTimerAbility",
-            "SubTrackerAbility",
-            "GeneralPropsAbility",
-            "TrackAbility"
-          ],
-          "when": "always"
-        }
-      },
-      {
-        "name": "ohos.permission.SET_NETWORK_INFO",
-        "reason": "$string:network_permission",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility",
-            "TrackTimerAbility",
-            "SubTrackerAbility",
-            "GeneralPropsAbility",
-            "TrackAbility"
-          ],
-          "when": "always"
-        }
-      },
-      {
-        "name": "ohos.permission.INTERNET",
-        "reason": "$string:network_permission",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility",
-            "TrackTimerAbility",
-            "SubTrackerAbility",
-            "GeneralPropsAbility",
-            "TrackAbility"
-          ],
-          "when": "always"
-        }
-      }
-    ]
+    "requestPermissions": []
   }
 }

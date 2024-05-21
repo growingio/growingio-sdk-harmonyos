@@ -19,12 +19,12 @@ import Event from './Event'
 import AnalyticsCore from '../core/AnalyticsCore'
 import AppInfo from '../core/AppInfo'
 import DeviceInfo from '../core/DeviceInfo'
+import GrowingContext from '../core/Context'
+import GrowingGeneralProps from '../core/GeneralProps'
 import Session, { SessionState } from '../core/Session'
 import UserIdentifier from '../core/UserIdentifier'
 import { SDK_VERSION, PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 import SharedPreferences from '../utils/SharedPreferences'
-import GrowingContext from '../core/Context'
-import GrowingGeneralProps from '../core/GeneralProps'
 import Util from '../utils/Util'
 
 export default class EventBuilder {
@@ -37,7 +37,7 @@ export default class EventBuilder {
   static build<T extends Event>(event: T, context: GrowingContext): T {
     event.sessionId = Session.getSessionId(context)!
     event.appState = Session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
-    event.timestamp = Date.now()
+    event.timestamp = event.timestamp > 0 ? event.timestamp : Date.now()
     event.sdkVersion = SDK_VERSION
 
     // device info
@@ -54,7 +54,7 @@ export default class EventBuilder {
     event.networkState = DeviceInfo.networkState
 
     // app info
-    event.domain = AppInfo.domain
+    event.domain = event.domain.length > 0 ? event.domain : AppInfo.domain
     event.appChannel = AppInfo.appChannel
     event.appName = AppInfo.appName
     event.appVersion = AppInfo.appVersion

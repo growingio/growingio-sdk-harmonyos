@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import webview from '@ohos.web.webview'
+
 export const PREFERENCE_NAME = 'growing_analytics_sp'
 export const PREFERENCE_USER_ID = "growing_user_id"
 export const PREFERENCE_USER_KEY = "growing_user_key"
@@ -34,3 +36,9 @@ export const SDK_VERSION = "1.0.0"
 
 export type ValueType = string | number | boolean | string[] | number[] | boolean[]
 export type AttributesType = { [key: string]: ValueType }
+export type JavaScriptProxyType = {
+  object: object;
+  name: string;
+  methodList: Array<string>;
+  controller: webview.WebviewController;
+}

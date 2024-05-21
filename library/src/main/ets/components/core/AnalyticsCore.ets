@@ -18,12 +18,15 @@
 import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
+import webview from '@ohos.web.webview'
 
 import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
 import { GrowingConfig } from '../interfaces/GrowingConfig'
 import AppInfo from './AppInfo'
+import GrowingContext from './Context'
 import DeviceInfo from './DeviceInfo'
 import EventTimer from './EventTimer'
+import Hybrid from './Hybrid'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import CustomEvent from '../event/CustomEvent'
@@ -33,11 +36,10 @@ import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
-import { AttributesType, SDK_VERSION } from '../utils/Constants'
+import { AttributesType, JavaScriptProxyType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
-import GrowingContext from './Context'
 
 export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static core: AnalyticsCore | undefined = undefined
@@ -131,6 +133,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       }
     }
     context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
+  }
+
+  createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
+    return Hybrid.createHybridProxy(controller, this.context)
   }
 
   setDataCollectionEnabled(enabled: boolean) {

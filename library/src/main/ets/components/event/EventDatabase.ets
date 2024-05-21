@@ -18,9 +18,9 @@
 import relationalStore from '@ohos.data.relationalStore'
 
 import EventPersistence from './EventPersistence'
+import GrowingContext from '../core/Context'
 import { DATABASE_EXPIRATION_TIME, DATABASE_NAME } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
-import GrowingContext from '../core/Context'
 
 export default class EventDatabase {
   static store: relationalStore.RdbStore

@@ -47,6 +47,14 @@
     {
       "name": "TrackAbility_label",
       "value": "label"
+    },
+    {
+      "name": "HybridAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "HybridAbility_label",
+      "value": "label"
     }
   ]
 }

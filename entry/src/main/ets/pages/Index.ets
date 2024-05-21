@@ -57,6 +57,10 @@ struct Index {
         .onClick(() => {
           Util.startAbility(getContext(this), 'SubTrackerAbility', 'pages/SubTracker')
         }).margin({ top: 15 })
+      Button('hybrid')
+        .onClick(() => {
+          Util.startAbility(getContext(this), 'HybridAbility', 'pages/Hybrid')
+        }).margin({ top: 15 })
     }
     .width('100%')
     .height('100%')

@@ -15,13 +15,16 @@
  * limitations under the License.
  */
 
-import AnalyticsCore from '../core/AnalyticsCore'
+import webview from '@ohos.web.webview'
+
 import { GrowingConfig } from './GrowingConfig'
-import Session from '../core/Session'
+import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
 import GeneralProps from '../core/GeneralProps'
-import { AttributesType } from '../utils/Constants'
-export { AttributesType as GrowingAttrType } from '../utils/Constants'
+import Session from '../core/Session'
+import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
+
+export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
 
 export interface GrowingAnalyticsInterface {
    setDataCollectionEnabled(enabled: boolean): void
@@ -40,7 +43,7 @@ export interface GrowingAnalyticsInterface {
 
 export class GrowingAnalytics {
   static async start(context: Context, configuration: GrowingConfig): Promise<void> {
-    if (AnalyticsCore.core) {
+    if (GrowingAnalytics.isInitializedSuccessfully()) {
       console.warn('[GrowingAnalytics] Do not initialize GrowingAnalytics repeatedly')
       return
     }
@@ -54,7 +57,7 @@ export class GrowingAnalytics {
   }
 
   static startSubTracker(trackerId: string, configuration: GrowingConfig) {
-    if (!AnalyticsCore.core) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
       console.error('[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
       return
     }
@@ -71,6 +74,13 @@ export class GrowingAnalytics {
   static tracker(trackerId: string): GrowingAnalyticsInterface | undefined {
     let tracker = AnalyticsCore.tracker(trackerId)
     return tracker
+  }
+
+  static createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
+      return undefined
+    }
+    return AnalyticsCore.core!.createHybridProxy(controller)
   }
 
   static isInitializedSuccessfully(trackerId?: string): boolean {
