@@ -56,51 +56,55 @@ export default class Hybrid {
   }
 
   dispatchEvent(eventString: string) {
-    let event: Record<string, Object> = JSON.parse(eventString)
-    let eventType: string = event.eventType as string
-    if (eventType == EventType.Custom) {
-      let e = HybridCustomEvent.create(
-        event.eventName as string,
-        event.attributes as AttributesType,
-        event.path as string,
-        event.query as string,
-        event.timestamp as number,
-        event.domain as string,
-        this.context
-      )
-      AnalyticsCore.writeEventToDisk(e, this.context)
-    } else if (eventType == EventType.Page) {
-      let e = HybridPageEvent.create(
-        event.title as string,
-        event.referralPage as string,
-        event.protocolType as string,
-        event.attributes as AttributesType,
-        event.path as string,
-        event.query as string,
-        event.timestamp as number,
-        event.domain as string,
-        this.context
-      )
-      AnalyticsCore.writeEventToDisk(e, this.context)
-    } else if (eventType == EventType.ViewClick || eventType == EventType.ViewChange) {
-      let e = HybridViewElementEvent.create(
-        event.textValue as string,
-        event.xpath as string,
-        event.xcontent as string,
-        event.index as number,
-        event.hyperlink as string,
-        event.attributes as AttributesType,
-        event.path as string,
-        event.query as string,
-        event.timestamp as number,
-        event.domain as string,
-        eventType,
-        this.context
-      )
-      AnalyticsCore.writeEventToDisk(e, this.context)
-    } else if (eventType == EventType.LoginUserAttributes) {
-      let e = LoginUserAttributesEvent.create(event.attributes as AttributesType, this.context)
-      AnalyticsCore.writeEventToDisk(e, this.context)
+    try {
+      let event: Record<string, Object> = JSON.parse(eventString)
+      let eventType: string = event.eventType as string
+      if (eventType == EventType.Custom) {
+        let e = HybridCustomEvent.create(
+          event.eventName as string,
+          event.attributes as AttributesType,
+          event.path as string,
+          event.query as string,
+          event.timestamp as number,
+          event.domain as string,
+          this.context
+        )
+        AnalyticsCore.writeEventToDisk(e, this.context)
+      } else if (eventType == EventType.Page) {
+        let e = HybridPageEvent.create(
+          event.title as string,
+          event.referralPage as string,
+          event.protocolType as string,
+          event.attributes as AttributesType,
+          event.path as string,
+          event.query as string,
+          event.timestamp as number,
+          event.domain as string,
+          this.context
+        )
+        AnalyticsCore.writeEventToDisk(e, this.context)
+      } else if (eventType == EventType.ViewClick || eventType == EventType.ViewChange) {
+        let e = HybridViewElementEvent.create(
+          event.textValue as string,
+          event.xpath as string,
+          event.xcontent as string,
+          event.index as number,
+          event.hyperlink as string,
+          event.attributes as AttributesType,
+          event.path as string,
+          event.query as string,
+          event.timestamp as number,
+          event.domain as string,
+          eventType,
+          this.context
+        )
+        AnalyticsCore.writeEventToDisk(e, this.context)
+      } else if (eventType == EventType.LoginUserAttributes) {
+        let e = LoginUserAttributesEvent.create(event.attributes as AttributesType, this.context)
+        AnalyticsCore.writeEventToDisk(e, this.context)
+      }
+    } catch (e) {
+      LogUtil.error("Failed to dispatch event. code = " + e.code + ", message = " + e.message)
     }
   }
 

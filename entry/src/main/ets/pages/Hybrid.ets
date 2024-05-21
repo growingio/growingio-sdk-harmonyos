@@ -8,7 +8,7 @@ struct Hybrid {
 
   build() {
     Column() {
-      Web({ src: $rawfile('hybrid.html'), controller: this.controller})
+      Web({ src: $rawfile('newDemo.html'), controller: this.controller})
         .javaScriptAccess(true)
         .domStorageAccess(true)
         .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
