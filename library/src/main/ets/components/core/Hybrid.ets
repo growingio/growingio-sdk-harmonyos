@@ -26,7 +26,7 @@ export default class Hybrid {
   ]
   controller: webview.WebviewController
   context: GrowingContext
-  hybridConfiguration: string
+  configuration: string
 
   constructor(
     controller: webview.WebviewController,
@@ -34,7 +34,7 @@ export default class Hybrid {
   ) {
     this.controller = controller
     this.context = context
-    this.hybridConfiguration = JSON.stringify({
+    this.configuration = JSON.stringify({
       "projectId": context.config.accountId,
       "dataSourceId": context.config.dataSourceId,
       "appPackage": AppInfo.domain,
@@ -52,7 +52,7 @@ export default class Hybrid {
   }
 
   getConfiguration(): string {
-    return this.hybridConfiguration
+    return this.configuration
   }
 
   dispatchEvent(eventString: string) {
