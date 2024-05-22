@@ -8,8 +8,8 @@ GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社�
 
 ## SDK 简介
 **GrowingIO OpenHarmony/HarmonyOS SDK** 自动采集用户访问事件，并支持手动调用相应埋点 APIs 采集埋点事件。
-- 支持 HarmonyOS 3.1.0
-- 支持 OpenHarmony API Level 9、API Level 10
+- 支持 HarmonyOS 3.1.0 - HarmonyOS NEXT
+- 支持 OpenHarmony API Level 9 - 12
 
 ## 集成文档
 ### 通过 ohpm 集成
@@ -24,24 +24,36 @@ ohpm install ./GrowingAnalytics.har
 ```
 
 ### 初始化
-在 Ability 的 onCreate 方法中初始化 SDK (Stage 模型)：
+在 AbilityStage 的 onCreate 方法中初始化 SDK (Stage 模型)：
 ```typescript
+import AbilityStage from '@ohos.app.ability.AbilityStage'
+import type Want from '@ohos.app.ability.Want'
 import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 
-async startAnalytics() {
-  let config = new GrowingConfig(
-    'Your AccountId',
-    'Your DataSourceId',
-    'Your UrlScheme',
-    'Your DataCollectionServerHost<Optional>'
-  )
-  await GrowingAnalytics.start(this.context, config)
-}
+// Entry类型的module对应配置的srcEntry
+export default class MyAbilityStage extends AbilityStage {
+  onCreate(): void {
+    // 应用的HAP在首次加载的时，为该Module初始化操作
+    this.startAnalytics()
+  }
+  onAcceptWant(want: Want): string {
+    // 仅specified模式下触发
+    return 'MyAbilityStage'
+  }
 
-onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-  this.startAnalytics()
+  async startAnalytics() {
+    let config = new GrowingConfig(
+      'Your AccountId',
+      'Your DataSourceId',
+      'Your UrlScheme',
+      'Your DataCollectionServerHost<Optional>'
+    )
+    await GrowingAnalytics.start(this.context, config)
+  }
 }
 ```
+
+> 注意：如若需要，可在用户同意隐私协议之后，再进行初始化 SDK
 > 其中 accountId/dataSourceId/urlScheme 为必填项，dataCollectionServerHost 为可选项，若不清楚请联系您的专属项目经理或技术支持
 
 其他初始化配置项见下表，在 start 方法调用前通过`config.<配置项> = 对应值`进行配置：
@@ -268,19 +280,23 @@ GrowingAnalytics.setLoginUserAttributes({
 let deviceId = GrowingAnalytics.getDeviceId()
 ```
 
-#### 埋点事件通用属性
+#### 事件通用属性
 
 `static setGeneralProps(props: { [key: string]: string | number | boolean | string[] | number[] | boolean[] })`
 
-为所有自定义埋点事件设置通用属性，多次调用，相同字段的新值将覆盖旧值；需在分析云平台事件管理界面关联事件属性
+为所有事件设置通用属性，多次调用，相同字段的新值将覆盖旧值；需在分析云平台事件管理界面关联事件属性
 
 `static removeGeneralProps(keys: string[])`
 
-移除指定字段的埋点事件通用属性
+移除指定字段的事件通用属性
 
 `static clearGeneralProps()`
 
-移除所有埋点事件通用属性
+移除所有事件通用属性
+
+`static setDynamicGeneralProps(generator: () => { [key: string]: string | number | boolean | string[] | number[] | boolean[] })`
+
+设置动态通用属性
 
 ##### 参数说明
 
@@ -291,6 +307,7 @@ let deviceId = GrowingAnalytics.getDeviceId()
 ##### 示例
 
 ```typescript
+// 设置通用属性
 GrowingAnalytics.setGeneralProps({
   'prop1': 10,
   'prop2': 'name',
@@ -298,20 +315,165 @@ GrowingAnalytics.setGeneralProps({
   'prop4': ['a', 'b', 'c'],
   'name': 'banana'
 })
+// 清除指定字段的通用属性
 GrowingAnalytics.removeGeneralProps(['prop1', 'prop2', 'prop3'])
+// 清除通用属性
 GrowingAnalytics.clearGeneralProps()
+// 设置动态通用属性
+GrowingAnalytics.setDynamicGeneralProps(() => {
+  return {'dynamicProp' : Util.formatDate(new Date()) }
+})
+// 清除动态通用属性
+GrowingAnalytics.setDynamicGeneralProps(() => ({}))
 ```
 
-## 约束与限制
+### Hybrid 打通
 
-在下述版本验证通过：
+```typescript
+static createHybridProxy(controller: webview.WebviewController): {
+object: object;
+name: string;
+methodList: Array<string>;
+controller: WebviewController;
+} | undefined
+```
 
-- DevEco Studio: 4.0.0.600, SDK: API 10 Release(4.0.10.13)
-- DevEco Studio: 3.1.0.501, SDK: API 9 Release(3.2.13.5)
+在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)：
+```typescript
+let url = 'https://www.example.com'
+Web({ src: url, controller: this.controller})
+  .javaScriptAccess(true)
+  .domStorageAccess(true)
+  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+```
+
+对应的 H5 页面需要集成 Web JS SDK 以及 App 内嵌页打通插件才能生效
+
+### 多实例采集
+
+#### 初始化多实例
+
+```typescript
+let config = new GrowingConfig(
+'SubTracker AccountId',
+'SubTracker DataSourceId',
+'SubTracker UrlScheme',
+'SubTracker DataCollectionServerHost<Optional>'
+)
+GrowingAnalytics.startSubTracker(trackerId, config)
+```
+
+初始化配置中，`accountId/dataSourceId/dataCollectionServerHost` 都可与主实例不同，具体如下表格：
+
+| 配置项                   | 子实例是否能单独配置 |
+| ------------------------ | -------------------- |
+| accountId                | 是                   |
+| dataSourceId             | 是                   |
+| urlScheme                | 是                   |
+| dataCollectionServerHost | 是                   |
+| debugEnabled             | 否，以主实例为准     |
+| sessionInterval          | 是                   |
+| dataUploadInterval       | 是                   |
+| dataCollectionEnabled    | 是                   |
+| idMappingEnabled         | 是                   |
+
+**注意：初始化子实例前必须先初始化主实例**
+
+#### 兼容 APIs
+
+子实例可单独调用以下接口，其逻辑与其他实例相互隔离
+```typescript
+export interface GrowingAnalyticsInterface {
+   setDataCollectionEnabled(enabled: boolean)
+   setLoginUserId(userId: string, userKey: string)
+   cleanLoginUserId()
+
+   setLoginUserAttributes(attributes: AttributesType)
+   track(eventName: string, attributes: AttributesType, sendTo?: string[])
+   trackTimerStart(eventName: string): Promise<string>
+   trackTimerPause(timerId: string)
+   trackTimerResume(timerId: string)
+   trackTimerEnd(timerId: string, attributes: AttributesType)
+   removeTimer(timerId: string)
+   clearTrackTimer()
+}
+```
+
+假设子实例的 `trackerId` 为 `subTrackerId_01`，调用方式如下：
+```typescript
+// 获取子实例
+let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
+if (!subTracker) {
+  return
+}
+
+// 数据采集开关
+subTracker.setDataCollectionEnabled(true)
+
+// 登录用户ID
+subTracker.setLoginUserId('user')
+subTracker.setLoginUserId('user', 'harmony')
+subTracker.cleanLoginUserId()
+
+// 设置埋点事件
+subTracker.track('buyProduct1')
+subTracker.track('buyProduct2', {
+  'name': 'apple',
+  'money': 1000,
+  'num': 100,
+  'from': ['sichuan', 'guizhou', 'hunan']
+})
+
+// 事件计时器
+let timerId = await subTracker.trackTimerStart('eventName')
+subTracker.trackTimerPause(timerId)
+subTracker.trackTimerResume(timerId)
+subTracker.trackTimerEnd(timerId)
+subTracker.trackTimerEnd(timerId, {
+  'property': 'value',
+  'property2': 100
+})
+subTracker.removeTimer(timerId)
+subTracker.clearTrackTimer()
+
+// 设置登录用户属性
+subTracker.setLoginUserAttributes({
+  'name': 'ben',
+  'age': 30
+})
+```
+
+#### SendTo
+
+可使用 sendTo 功能将主实例或子实例的自定义事件转发到其他子实例：
+```typescript
+// 主实例track转发
+GrowingAnalytics.track('buyProduct1', {}, ['subTrackerId_01', 'subTrackerId_02'])
+GrowingAnalytics.track('buyProduct2', {
+  'name': 'apple',
+  'money': 1000,
+  'num': 100,
+  'from': ['sichuan', 'guizhou', 'hunan']
+}, ['subTrackerId_01', 'subTrackerId_02'])
+
+// 子实例track转发
+let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
+if (!subTracker) {
+  return
+}
+subTracker.track('buyProduct1', {}, ['subTrackerId_02'])
+subTracker.track('buyProduct2', {
+  'name': 'apple',
+  'money': 1000,
+  'num': 100,
+  'from': ['sichuan', 'guizhou', 'hunan']
+}, ['subTrackerId_02'])
+```
+> 当前仅 track 接口支持 sendTo 转发
 
 ## License
 ```
-Copyright (C) 2023 Beijing Yishu Technology Co., Ltd.
+Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
