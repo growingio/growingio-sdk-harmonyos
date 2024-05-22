@@ -51,11 +51,11 @@ export default class Hybrid {
     }
   }
 
-  getConfiguration(): string {
+  getConfiguration = (): string => {
     return this.configuration
   }
 
-  dispatchEvent(eventString: string) {
+  dispatchEvent = (eventString: string): void => {
     try {
       let event: Record<string, Object> = JSON.parse(eventString)
       let eventType: string = event.eventType as string
@@ -108,27 +108,27 @@ export default class Hybrid {
     }
   }
 
-  getDomTree() {
+  getDomTree = (): void => {
     LogUtil.info("%c [GrowingIO]：圈选获取节点信息失败！请集成 gioHybridCircle 插件后重试！", "color: #F59E0B;")
   }
 
-  onDomChanged() {
+  onDomChanged = (): void => {
 
   }
 
-  setNativeUserId(userId: string) {
+  setNativeUserId = (userId: string): void => {
     UserIdentifier.setLoginUserId(userId, '', this.context)
   }
 
-  setNativeUserIdAndUserKey(userId: string, userKey: string) {
+  setNativeUserIdAndUserKey = (userId: string, userKey: string): void => {
     UserIdentifier.setLoginUserId(userId, userKey, this.context)
   }
 
-  clearNativeUserId() {
+  clearNativeUserId = (): void => {
     UserIdentifier.setLoginUserId('', '', this.context)
   }
 
-  clearNativeUserIdAndUserKey() {
+  clearNativeUserIdAndUserKey = (): void => {
     UserIdentifier.setLoginUserId('', '', this.context)
   }
 }
