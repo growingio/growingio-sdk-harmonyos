@@ -47,6 +47,11 @@
       var vConsole = new window.VConsole();
     </script>
 
+    <script>
+      // 低版本下会由于hostname获取为空而不初始化SDK，提示：当前SDK不允许在本地环境初始化!
+      window._gr_ignore_local_rule = true;
+    </script>
+
     <script type="text/javascript">
       !(function (e, n, t, s, c) {
         var o;

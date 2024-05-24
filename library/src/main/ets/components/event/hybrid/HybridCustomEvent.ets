@@ -36,12 +36,12 @@ export default class HybridCustomEvent extends Event implements HybridEvent {
     context: GrowingContext
   ): HybridCustomEvent {
     let event = new HybridCustomEvent()
-    event.eventName = eventName
+    event.eventName = eventName ?? ''
     event.attributes = attributes
     event.path = path
     event.query = query
-    event.timestamp = timestamp
-    event.domain = domain
+    event.timestamp = Number(timestamp ?? 0)
+    event.domain = String(domain ?? '')
     event.eventType = EventType.Custom
     return EventBuilder.build(event, context)
   }

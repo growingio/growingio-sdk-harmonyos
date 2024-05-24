@@ -54,7 +54,7 @@ export default class EventBuilder {
     event.networkState = DeviceInfo.networkState
 
     // app info
-    event.domain = event.domain.length > 0 ? event.domain : AppInfo.domain
+    event.domain = event.domain || AppInfo.domain
     event.appChannel = AppInfo.appChannel
     event.appName = AppInfo.appName
     event.appVersion = AppInfo.appVersion

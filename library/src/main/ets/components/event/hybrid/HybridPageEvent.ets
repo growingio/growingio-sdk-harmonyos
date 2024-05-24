@@ -46,8 +46,8 @@ export default class HybridPageEvent extends Event implements HybridEvent {
     event.attributes = attributes
     event.path = path
     event.query = query
-    event.timestamp = timestamp
-    event.domain = domain
+    event.timestamp = Number(timestamp ?? 0)
+    event.domain = String(domain ?? '')
     event.eventType = EventType.Page
     return EventBuilder.build(event, context)
   }
