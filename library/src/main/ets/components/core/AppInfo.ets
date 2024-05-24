@@ -23,11 +23,13 @@ export default class AppInfo {
   static appVersion: string = ''
   static appChannel: string | undefined = undefined
 
-  static async initAppInfo() {
+  static async initAppInfo(context: Context) {
     let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
     let bundleInfo = await bundleManager.getBundleInfoForSelf(bundleFlags)
+
     AppInfo.domain = bundleInfo.name
-    AppInfo.appName = bundleInfo.name // TODO
+    let r_id = bundleInfo.appInfo.labelResource.id
+    AppInfo.appName = context.resourceManager.getStringSync(r_id)
     AppInfo.appVersion = bundleInfo.versionName
     // AppInfo.appChannel = '应用市场'
   }

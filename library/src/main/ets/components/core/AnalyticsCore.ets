@@ -62,7 +62,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     AnalyticsCore.setAbilityLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
     await Promise.all<Promise<void>>([
-      AppInfo.initAppInfo(),
+      AppInfo.initAppInfo(context),
       DeviceInfo.initDeviceInfo(),
       UserIdentifier.initUser(gContext),
       EventBuilder.initEventBuilder(),
