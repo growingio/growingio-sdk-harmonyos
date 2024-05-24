@@ -18,7 +18,9 @@
 import deviceInfo from '@ohos.deviceInfo'
 import display from '@ohos.display'
 import I18n from '@ohos.i18n'
+import connection from '@ohos.net.connection'
 import util from '@ohos.util'
+// import radio from '@ohos.telephony.radio'
 
 import { PREFERENCE_DEVICE_ID } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -36,6 +38,7 @@ export default class DeviceInfo {
   static language: string = ''
   static timezoneOffset: string = ''
   static networkState: string = ''
+  static netConnection = connection.createNetConnection()
 
   static async initDeviceInfo() {
     DeviceInfo.platform = 'HarmonyOS'
@@ -50,7 +53,54 @@ export default class DeviceInfo {
     DeviceInfo.deviceType = deviceInfo.deviceType
     DeviceInfo.language = I18n.System.getSystemLanguage()
     DeviceInfo.timezoneOffset = new Date().getTimezoneOffset() + ''
-    DeviceInfo.networkState = 'WIFI' //TODO
+
+    DeviceInfo.networkState = 'UNKNOWN'
+    DeviceInfo.netConnection.register((e) => {
+      if (e) {
+        LogUtil.info('NetCapability listener register failed.')
+        DeviceInfo.networkState = 'WIFI'
+      }
+    })
+    DeviceInfo.netConnection.on("netLost", (data) => {
+      LogUtil.info('NetCapability change to NotReachable')
+      DeviceInfo.networkState = 'UNKNOWN'
+    })
+    DeviceInfo.netConnection.on("netUnavailable", (data) => {
+      LogUtil.info('NetCapability change to NotReachable')
+      DeviceInfo.networkState = 'UNKNOWN'
+    })
+    DeviceInfo.netConnection.on("netCapabilitiesChange", (data) => {
+      if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_CELLULAR) {
+        LogUtil.info('NetCapability change to 5G')
+        DeviceInfo.networkState = '5G'
+        // radio.getPrimarySlotId().then((slotId) => {
+        //   let infos: Array<radio.SignalInformation> = radio.getSignalInformationSync(slotId)
+        //   if (infos.length > 0) {
+        //     let signalInfo = infos[0]
+        //     let networkType = signalInfo.signalType
+        //     if (networkType == radio.NetworkType.NETWORK_TYPE_UNKNOWN) {
+        //       DeviceInfo.networkState = 'UNKNOWN'
+        //     } else if (networkType == radio.NetworkType.NETWORK_TYPE_GSM ||
+        //       networkType == radio.NetworkType.NETWORK_TYPE_CDMA) {
+        //       DeviceInfo.networkState = '2G'
+        //     } else if (networkType == radio.NetworkType.NETWORK_TYPE_WCDMA ||
+        //       networkType == radio.NetworkType.NETWORK_TYPE_TDSCDMA) {
+        //       DeviceInfo.networkState = '3G'
+        //     } else if (networkType == radio.NetworkType.NETWORK_TYPE_LTE) {
+        //       DeviceInfo.networkState = '4G'
+        //     } else if (networkType == radio.NetworkType.NETWORK_TYPE_NR) {
+        //       DeviceInfo.networkState = '5G'
+        //     }
+        //   }
+        // })
+      } else if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_WIFI) {
+        LogUtil.info('NetCapability change to WiFi')
+        DeviceInfo.networkState = 'WIFI'
+      } else if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_ETHERNET) {
+        LogUtil.info('NetCapability change to Ethernet')
+        DeviceInfo.networkState = 'WIFI' //Ethernet
+      }
+    })
 
     let deviceId = await SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
     LogUtil.info('DeviceId from preferences is ' + deviceId)
