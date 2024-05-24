@@ -49,9 +49,9 @@ export default abstract class Event {
   // appInfo
   domain: string = ''
   appState: string = ''
-  appChannel: string = ''
   appName: string = ''
   appVersion: string = ''
+  appChannel: string | undefined = undefined
 
   toSerialize(): string {
     return JSON.stringify(this)

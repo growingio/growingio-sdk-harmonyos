@@ -22,20 +22,20 @@ export class LogUtil {
     if (!this.debugEnabled) {
       return
     }
-    console.info('[GrowingAnalytics] ' + message, args)
+    console.info('[GrowingAnalytics] ' + message, ...args)
   }
 
   static error(message: string, ...args: any[]) {
     if (!this.debugEnabled) {
       return
     }
-    console.error('[GrowingAnalytics] ' + message, args)
+    console.error('[GrowingAnalytics] ' + message, ...args)
   }
 
   static warn(message: string, ...args: any[]) {
     if (!this.debugEnabled) {
       return
     }
-    console.warn('[GrowingAnalytics] ' + message, args)
+    console.warn('[GrowingAnalytics] ' + message, ...args)
   }
 }
