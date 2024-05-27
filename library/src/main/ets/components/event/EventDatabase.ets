@@ -50,7 +50,7 @@ export default class EventDatabase {
       await store.executeSql(SQL_CREATE_TABLE)
       EventDatabase.store = store
     } catch (e) {
-      LogUtil.error("Failed to create database. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to create database. code = " + e.code + ", message = " + e.message)
     }
 
     await EventDatabase.cleanExpiredEventIfNeeded()
@@ -73,9 +73,9 @@ export default class EventDatabase {
 
     try {
       await EventDatabase.store.insert(EventDatabase.tableName, valueBucket)
-      LogUtil.info('Write event to disk = ' + event.data)
+      LogUtil.info(() => 'Write event to disk = ' + JSON.stringify(JSON.parse(event.data), null, 4))
     } catch (e) {
-      LogUtil.error("Failed to write event to disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to write event to disk. code = " + e.code + ", message = " + e.message)
     }
   }
 
@@ -106,7 +106,7 @@ export default class EventDatabase {
       }
       r.close()
     } catch (e) {
-      LogUtil.error("Failed to get event from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to get event from disk. code = " + e.code + ", message = " + e.message)
     }
 
     return events
@@ -125,7 +125,7 @@ export default class EventDatabase {
           predicates.equalTo('EVENT_UUID', event.uuid)
           await EventDatabase.store.delete(predicates)
         } catch (e) {
-          LogUtil.error("Failed to remove event from disk. code = " + e.code + ", message = " + e.message)
+          LogUtil.error(() => "Failed to remove event from disk. code = " + e.code + ", message = " + e.message)
         }
       }
     }
@@ -145,7 +145,7 @@ export default class EventDatabase {
       count = r.rowCount
       r.close()
     } catch (e) {
-      LogUtil.error("Failed to get event count from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to get event count from disk. code = " + e.code + ", message = " + e.message)
     }
 
     return count
@@ -163,7 +163,7 @@ export default class EventDatabase {
       predicates.lessThanOrEqualTo('CREATE_AT', daysAgo)
       await EventDatabase.store.delete(predicates)
     } catch (e) {
-      LogUtil.error("Failed to clean expired event from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to clean expired event from disk. code = " + e.code + ", message = " + e.message)
     }
   }
 }

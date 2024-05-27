@@ -47,7 +47,7 @@ export default class UserIdentifier {
     let userKey = (userInfo[PREFERENCE_USER_KEY] as string | undefined) ?? ''
     let user = new UserIdentifier(userId, userKey)
     UserIdentifier.users.set(context.trackerId, user)
-    LogUtil.info('UserId from preferences is ' + userId + ', userKey from preferences is ' + userKey)
+    LogUtil.info(() => 'UserId from preferences is ' + userId + ', userKey from preferences is ' + userKey)
   }
 
   static initMultiUser(context: GrowingContext) {
@@ -57,7 +57,7 @@ export default class UserIdentifier {
     let userKey = (userInfo[PREFERENCE_USER_KEY + '_' + context.trackerId] as string | undefined) ?? ''
     let user = new UserIdentifier(userId, userKey)
     UserIdentifier.users.set(context.trackerId, user)
-    LogUtil.info('UserId from preferences is ' + userId + ', userKey from preferences is ' + userKey)
+    LogUtil.info(() => 'UserId from preferences is ' + userId + ', userKey from preferences is ' + userKey)
   }
 
   static getUser(context: GrowingContext) {
@@ -78,7 +78,7 @@ export default class UserIdentifier {
     let user = UserIdentifier.users.get(context.trackerId)
     if (user) {
       if (userId == null || userId.length == 0) {
-        LogUtil.info('Clear loginUserId')
+        LogUtil.info(() => 'Clear loginUserId')
         user.userId = ''
         user.userKey = ''
         user.saveToPreferences(context)
@@ -88,11 +88,12 @@ export default class UserIdentifier {
         return
       }
 
-      LogUtil.info('LoginUserId did changed, userId from '
-      + ((user.userId == null || user.userId.length == 0) ? 'undefined' : user.userId)
-      + ' to ' + userId + ', userKey from '
-      + ((user.userKey == null || user.userKey.length == 0) ? 'undefined' : user.userKey)
-      + ' to ' + userKey)
+      const message = '' + 'LoginUserId did changed, userId from '
+        + ((user.userId == null || user.userId.length == 0) ? 'undefined' : user.userId)
+        + ' to ' + userId + ', userKey from '
+        + ((user.userKey == null || user.userKey.length == 0) ? 'undefined' : user.userKey)
+        + ' to ' + userKey
+      LogUtil.info(() => message)
 
       user.userId = userId
       user.userKey = userKey

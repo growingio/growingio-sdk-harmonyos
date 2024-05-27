@@ -46,7 +46,7 @@ export default class Session {
   }
 
   static onForeground() {
-    LogUtil.info('Session state set to foreground')
+    LogUtil.info(() => 'Session state set to foreground')
     Session.sessionState = SessionState.Foreground
     Session.sessions.forEach(session => {
       if (session.latestOnBackgroundTime == 0) {
@@ -55,14 +55,14 @@ export default class Session {
 
       let context = GrowingContext.getContext(session.trackerId)!
       if (Date.now() - session.latestOnBackgroundTime >= context.config.sessionInterval * 1000) {
-        LogUtil.info('current session is outdated, trackerId = ' + context.trackerId)
+        LogUtil.info(() => 'current session is outdated, trackerId = ' + context.trackerId)
         Session.refreshSession(context)
       }
     })
   }
 
   static onBackground() {
-    LogUtil.info('Session state set to background')
+    LogUtil.info(() => 'Session state set to background')
     Session.sessionState = SessionState.Background
     Session.sessions.forEach(session => {
       session.latestOnBackgroundTime = Date.now()
@@ -70,7 +70,7 @@ export default class Session {
   }
 
   static refreshSession(context: GrowingContext) {
-    LogUtil.info('Refresh Session for tracker = ' + context.trackerId)
+    LogUtil.info(() => 'Refresh Session for tracker = ' + context.trackerId)
     let session: Session | undefined = undefined
     for (let s of Session.sessions) {
       if (s.trackerId == context.trackerId) {
@@ -97,9 +97,9 @@ export default class Session {
   }
 
   static generateVisit(context: GrowingContext) {
-    LogUtil.info('Generate Visit for tracker = ' + context.trackerId)
+    LogUtil.info(() => 'Generate Visit for tracker = ' + context.trackerId)
     if (!context.config.dataCollectionEnabled) {
-      LogUtil.info('Failed to Generate Visit, dataCollectionEnabled is false')
+      LogUtil.info(() => 'Failed to Generate Visit, dataCollectionEnabled is false')
       return
     }
     let e = VisitEvent.create(context)

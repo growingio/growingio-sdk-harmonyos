@@ -55,11 +55,11 @@ export default class EventSender {
       }
     }, (e, v) => {
       if (e) {
-        LogUtil.info('Request Failure, error: ' + JSON.stringify(e))
+        LogUtil.info(() => 'Request Failure, error: ' + JSON.stringify(e))
         EventSender.isUploading = false
       } else {
-        LogUtil.info('Request Success, Url = ' + url)
-        LogUtil.info('Send event = ' + serialize)
+        LogUtil.info(() => 'Request Success, Url = ' + url)
+        LogUtil.info(() => 'Send event = ' + serialize)
 
         EventDatabase.removeEvents(events).then(() => {
           EventSender.isUploading = false

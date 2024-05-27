@@ -18,24 +18,24 @@
 export class LogUtil {
   static debugEnabled: boolean = false
 
-  static info(message: string, ...args: any[]) {
+  static info(message: () => string) {
     if (!this.debugEnabled) {
       return
     }
-    console.info('[GrowingAnalytics] ' + message, ...args)
+    console.info('[GrowingAnalytics] ' + message())
   }
 
-  static error(message: string, ...args: any[]) {
+  static error(message: () => string) {
     if (!this.debugEnabled) {
       return
     }
-    console.error('[GrowingAnalytics] ' + message, ...args)
+    console.error('[GrowingAnalytics] ' + message())
   }
 
-  static warn(message: string, ...args: any[]) {
+  static warn(message: () => string) {
     if (!this.debugEnabled) {
       return
     }
-    console.warn('[GrowingAnalytics] ' + message, ...args)
+    console.warn('[GrowingAnalytics] ' + message())
   }
 }

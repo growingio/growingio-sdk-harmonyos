@@ -56,7 +56,7 @@ export default class EventTimer {
     let timerId = eventName + '_' + util.generateRandomUUID(false)
 
     EventTimer.timers.set(timerId, timer)
-    LogUtil.info('Track timer start, eventName: ' + eventName + ', timerId: ' + timerId)
+    LogUtil.info(() => 'Track timer start, eventName: ' + eventName + ', timerId: ' + timerId)
     return timerId
   }
 
@@ -69,7 +69,7 @@ export default class EventTimer {
     timer.startTime = 0
     let currentTime = await systemUptime.getRealTime(false)
     timer.duration = EventTimer.durationFrom(startTime, currentTime)
-    LogUtil.info('Track timer pause, timerId is ' + timerId)
+    LogUtil.info(() => 'Track timer pause, timerId is ' + timerId)
   }
 
   static async trackTimerResume(timerId: string) {
@@ -79,7 +79,7 @@ export default class EventTimer {
     }
     let currentTime = await systemUptime.getRealTime(false)
     timer.startTime = currentTime
-    LogUtil.info('Track timer resume, timerId is ' + timerId)
+    LogUtil.info(() => 'Track timer resume, timerId is ' + timerId)
   }
 
   static async trackTimerEnd(timerId: string,
@@ -91,8 +91,9 @@ export default class EventTimer {
       return
     }
     if (timer.trackerId != context.trackerId) {
-      LogUtil.warn("Track timer end failed, this timer's trackerId (" + timer.trackerId
-      +") is not equal to current tracker's trackerId(" + context.trackerId + ")")
+      const message = "Track timer end failed, this timer's trackerId (" + timer.trackerId
+        +") is not equal to current tracker's trackerId(" + context.trackerId + ")"
+      LogUtil.warn(() => message)
       return
     }
     let eventName = timer.eventName
@@ -105,17 +106,17 @@ export default class EventTimer {
     attributes[Event_DURATION] = (duration / 1000.0).toFixed(3) + ''
     let e = CustomEvent.create(eventName, attributes, context)
     AnalyticsCore.writeEventToDisk(e, context)
-    LogUtil.info('Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
+    LogUtil.info(() => 'Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
     + JSON.stringify(attributes))
   }
 
   static removeTimer(timerId: string) {
-    LogUtil.info('Track timer remove, timerId is ' + timerId)
+    LogUtil.info(() => 'Track timer remove, timerId is ' + timerId)
     EventTimer.timers.delete(timerId)
   }
 
   static clearTrackTimer(context: GrowingContext) {
-    LogUtil.info('Track timer all delete')
+    LogUtil.info(() => 'Track timer all delete')
     let timersToDelete: string[] = []
     EventTimer.timers.forEach((timer, timerId) => {
       if (timer.trackerId == context.trackerId) {
@@ -128,7 +129,7 @@ export default class EventTimer {
   }
 
   static async handleAllTimersPause() {
-    LogUtil.info('Track timer all pause with appState is background')
+    LogUtil.info(() => 'Track timer all pause with appState is background')
     for (let timer of EventTimer.timers.values()) {
       if (timer.isPaused()) {
         return
@@ -140,7 +141,7 @@ export default class EventTimer {
   }
 
   static async handleAllTimersResume() {
-    LogUtil.info('Track timer all resume with appState is foreground')
+    LogUtil.info(() => 'Track timer all resume with appState is foreground')
     for (let timer of EventTimer.timers.values()) {
       if (timer.isPaused()) {
         return

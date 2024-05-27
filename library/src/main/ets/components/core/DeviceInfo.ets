@@ -57,21 +57,21 @@ export default class DeviceInfo {
     DeviceInfo.networkState = 'UNKNOWN'
     DeviceInfo.netConnection.register((e) => {
       if (e) {
-        LogUtil.info('NetCapability listener register failed.')
+        LogUtil.info(() => 'NetCapability listener register failed.')
         DeviceInfo.networkState = 'WIFI'
       }
     })
     DeviceInfo.netConnection.on("netLost", (data) => {
-      LogUtil.info('NetCapability change to NotReachable')
+      LogUtil.info(() => 'NetCapability change to NotReachable')
       DeviceInfo.networkState = 'UNKNOWN'
     })
     DeviceInfo.netConnection.on("netUnavailable", (data) => {
-      LogUtil.info('NetCapability change to NotReachable')
+      LogUtil.info(() => 'NetCapability change to NotReachable')
       DeviceInfo.networkState = 'UNKNOWN'
     })
     DeviceInfo.netConnection.on("netCapabilitiesChange", (data) => {
       if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_CELLULAR) {
-        LogUtil.info('NetCapability change to 5G')
+        LogUtil.info(() => 'NetCapability change to 5G')
         DeviceInfo.networkState = '5G'
         // radio.getPrimarySlotId().then((slotId) => {
         //   let infos: Array<radio.SignalInformation> = radio.getSignalInformationSync(slotId)
@@ -94,16 +94,16 @@ export default class DeviceInfo {
         //   }
         // })
       } else if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_WIFI) {
-        LogUtil.info('NetCapability change to WiFi')
+        LogUtil.info(() => 'NetCapability change to WiFi')
         DeviceInfo.networkState = 'WIFI'
       } else if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_ETHERNET) {
-        LogUtil.info('NetCapability change to Ethernet')
+        LogUtil.info(() => 'NetCapability change to Ethernet')
         DeviceInfo.networkState = 'WIFI' //Ethernet
       }
     })
 
     let deviceId = await SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
-    LogUtil.info('DeviceId from preferences is ' + deviceId)
+    LogUtil.info(() => 'DeviceId from preferences is ' + deviceId)
     if (deviceId == '') {
       deviceId = util.generateRandomUUID(false)
       await SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)

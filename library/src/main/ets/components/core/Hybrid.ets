@@ -104,12 +104,12 @@ export default class Hybrid {
         AnalyticsCore.writeEventToDisk(e, this.context)
       }
     } catch (e) {
-      LogUtil.error("Failed to dispatch event. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to dispatch event. code = " + e.code + ", message = " + e.message)
     }
   }
 
   getDomTree = (): void => {
-    LogUtil.info("%c [GrowingIO]：圈选获取节点信息失败！请集成 gioHybridCircle 插件后重试！", "color: #F59E0B;")
+    LogUtil.info(() => "圈选获取节点信息失败！请集成 gioHybridCircle 插件后重试！")
   }
 
   onDomChanged = (): void => {
