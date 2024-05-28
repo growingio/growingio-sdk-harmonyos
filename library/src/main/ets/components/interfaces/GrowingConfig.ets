@@ -20,7 +20,6 @@ export class GrowingConfig {
   dataSourceId: string
   dataCollectionServerHost: string
   urlScheme: string
-
   debugEnabled: boolean = false
   sessionInterval: number = 30
   dataUploadInterval: number = 15

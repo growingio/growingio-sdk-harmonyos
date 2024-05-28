@@ -24,7 +24,6 @@ export default class HybridPageEvent extends Event implements HybridEvent {
   title: string | undefined = undefined
   referralPage: string | undefined = undefined
   protocolType: string | undefined = undefined
-
   path: string | undefined = undefined
   query: string | undefined = undefined
 

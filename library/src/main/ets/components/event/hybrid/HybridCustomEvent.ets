@@ -22,7 +22,6 @@ import GrowingContext from '../../core/Context'
 
 export default class HybridCustomEvent extends Event implements HybridEvent {
   eventName: string = ''
-
   path: string | undefined = undefined
   query: string | undefined = undefined
 

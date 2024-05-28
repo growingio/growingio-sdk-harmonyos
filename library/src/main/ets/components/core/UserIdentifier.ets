@@ -25,7 +25,6 @@ export default class UserIdentifier {
   userId: string
   userKey: string
   private latestNonnullUserId: string
-
   static users: Map<string, UserIdentifier> = new Map()
   static userInfo: object
 

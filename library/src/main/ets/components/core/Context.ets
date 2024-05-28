@@ -1,6 +1,6 @@
 /**
  * @license
-* Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
+ * Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import { GrowingConfig } from '../interfaces/GrowingConfig'
 export default class GrowingContext {
   trackerId: string
   config: GrowingConfig
-
   static contexts: Map<string, GrowingContext> = new Map()
   static defaultContext: GrowingContext | undefined = undefined
 

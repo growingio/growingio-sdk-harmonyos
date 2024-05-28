@@ -45,7 +45,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static core: AnalyticsCore | undefined = undefined
   static trackers: Array<AnalyticsCore> = []
   static location: Location
-
   context: GrowingContext
 
   constructor(context: GrowingContext) {
@@ -70,7 +69,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     ])
 
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
-    + 'GrowingIO version: ' + SDK_VERSION)
+      + 'GrowingIO version: ' + SDK_VERSION)
 
     let delay = config.dataUploadInterval * 1000
     setInterval(() => {
@@ -181,7 +180,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   ) {
     let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
-    LogUtil.info(() => 'Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes))
+    LogUtil.info(() => 'Track custom event with eventName: ' + eventName + ', attributes: ' +
+    JSON.stringify(attributes))
 
     if (sendTo && sendTo.length > 0) {
       AnalyticsCore.sendTo(sendTo, eventName, attributes)
@@ -199,7 +199,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
         let e = CustomEvent.create(eventName, Util.cloneObject(attributes), tracker.context)
         AnalyticsCore.writeEventToDisk(e, tracker.context)
         LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
-        + ', attributes: ' + JSON.stringify(attributes))
+          + ', attributes: ' + JSON.stringify(attributes))
       }
     })
   }

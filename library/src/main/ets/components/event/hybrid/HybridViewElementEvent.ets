@@ -26,7 +26,6 @@ export default class HybridViewElementEvent extends Event implements HybridEvent
   xcontent: string | undefined = undefined
   index: number | undefined = undefined
   hyperlink: string | undefined = undefined
-
   path: string | undefined = undefined
   query: string | undefined = undefined
 

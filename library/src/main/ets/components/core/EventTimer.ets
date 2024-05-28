@@ -26,7 +26,6 @@ import { LogUtil } from '../utils/LogUtil'
 
 export default class EventTimer {
   static timers: Map<string, EventTimer> = new Map()
-
   eventName: string
   startTime: number
   duration: number
@@ -44,8 +43,9 @@ export default class EventTimer {
     this.trackerId = trackerId
   }
 
-  static async trackTimerStart(eventName: string,
-                               context: GrowingContext
+  static async trackTimerStart(
+    eventName: string,
+    context: GrowingContext
   ): Promise<string> {
     if (!context.config.dataCollectionEnabled) {
       return ''
@@ -82,9 +82,10 @@ export default class EventTimer {
     LogUtil.info(() => 'Track timer resume, timerId is ' + timerId)
   }
 
-  static async trackTimerEnd(timerId: string,
-                             attributes: AttributesType = {},
-                             context: GrowingContext
+  static async trackTimerEnd(
+    timerId: string,
+    attributes: AttributesType = {},
+    context: GrowingContext
   ) {
     let timer: EventTimer | undefined = EventTimer.timers.get(timerId)
     if (!timer) {
@@ -92,7 +93,7 @@ export default class EventTimer {
     }
     if (timer.trackerId != context.trackerId) {
       const message = "Track timer end failed, this timer's trackerId (" + timer.trackerId
-        +") is not equal to current tracker's trackerId(" + context.trackerId + ")"
+        + ") is not equal to current tracker's trackerId(" + context.trackerId + ")"
       LogUtil.warn(() => message)
       return
     }
@@ -107,7 +108,7 @@ export default class EventTimer {
     let e = CustomEvent.create(eventName, attributes, context)
     AnalyticsCore.writeEventToDisk(e, context)
     LogUtil.info(() => 'Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
-    + JSON.stringify(attributes))
+      + JSON.stringify(attributes))
   }
 
   static removeTimer(timerId: string) {

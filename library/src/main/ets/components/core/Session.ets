@@ -31,7 +31,6 @@ export default class Session {
   sessionId: string
   trackerId: string
   latestOnBackgroundTime: number
-
   static sessionState: SessionState = SessionState.Foreground
   static sessions: Array<Session> = []
 
