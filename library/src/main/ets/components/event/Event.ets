@@ -40,7 +40,6 @@ export default abstract class Event {
   platformVersion: string = ''
   screenHeight: number = 0
   screenWidth: number = 0
-  orientation: string = ''
   deviceBrand: string = ''
   deviceModel: string = ''
   deviceType: string = ''
