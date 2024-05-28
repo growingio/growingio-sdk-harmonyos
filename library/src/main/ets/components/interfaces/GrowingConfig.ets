@@ -24,7 +24,7 @@ export class GrowingConfig {
   sessionInterval: number = 30
   dataUploadInterval: number = 15
   dataCollectionEnabled: boolean = true
-  idMappingEnabled: boolean = true
+  idMappingEnabled: boolean = false
   encryptEnabled: boolean = false
   trackerId: string = ''
 
