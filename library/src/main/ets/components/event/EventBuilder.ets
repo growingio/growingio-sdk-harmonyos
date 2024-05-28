@@ -46,6 +46,7 @@ export default class EventBuilder {
     event.platformVersion = DeviceInfo.platformVersion
     event.screenHeight = DeviceInfo.screenHeight
     event.screenWidth = DeviceInfo.screenWidth
+    event.orientation = DeviceInfo.orientation
     event.deviceBrand = DeviceInfo.deviceBrand
     event.deviceModel = DeviceInfo.deviceModel
     event.deviceType = DeviceInfo.deviceType
