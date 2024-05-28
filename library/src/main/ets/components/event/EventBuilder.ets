@@ -67,8 +67,12 @@ export default class EventBuilder {
     let user = UserIdentifier.getUser(context)!
     let userId = user.userId
     event.userId = userId.length > 0 ? userId : undefined
-    let userKey = user.userKey
-    event.userKey = userKey.length > 0 ? userKey : undefined
+    if (context.config.idMappingEnabled) {
+      let userKey = user.userKey
+      event.userKey = userKey.length > 0 ? userKey : undefined
+    } else {
+      event.userKey = undefined
+    }
 
     let attributes = GrowingGeneralProps.getGeneralProps()
     if (event.attributes) {
