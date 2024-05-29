@@ -19,7 +19,7 @@ import relationalStore from '@ohos.data.relationalStore'
 
 import EventPersistence from './EventPersistence'
 import GrowingContext from '../core/Context'
-import { DATABASE_EXPIRATION_TIME, DATABASE_NAME } from '../utils/Constants'
+import { DATABASE_NAME } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
 export default class EventDatabase {
@@ -156,7 +156,8 @@ export default class EventDatabase {
       return
     }
 
-    let daysAgo = Date.now() - DATABASE_EXPIRATION_TIME
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    let daysAgo = Date.now() - context.config._dataValidityPeriod
 
     try {
       let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)

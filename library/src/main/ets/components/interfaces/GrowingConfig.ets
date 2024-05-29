@@ -16,8 +16,8 @@
  */
 
 class RequestOptions {
-  _connectTimeout: number = 30000
-  _readTimeout: number = 30000
+  _connectTimeout: number = 30 * 1000
+  _readTimeout: number = 30 * 1000
 
   set connectTimeout(timeout: number) {
     timeout = Math.max(1, Math.min(timeout, 60)) * 1000
@@ -39,8 +39,8 @@ class RequestOptions {
 
   copy(): RequestOptions {
     let options = new RequestOptions()
-    options.connectTimeout = this.connectTimeout
-    options.readTimeout = this.readTimeout
+    options._connectTimeout = this._connectTimeout
+    options._readTimeout = this._readTimeout
     return options
   }
 }
@@ -51,12 +51,13 @@ export class GrowingConfig {
   dataCollectionServerHost: string
   urlScheme: string
   debugEnabled: boolean = false
-  _sessionInterval: number = 30000
-  _dataUploadInterval: number = 15000
+  _sessionInterval: number = 30 * 1000
+  _dataUploadInterval: number = 15 * 1000
   dataCollectionEnabled: boolean = true
   idMappingEnabled: boolean = false
   encryptEnabled: boolean = false
   requestOptions: RequestOptions = new RequestOptions()
+  _dataValidityPeriod: number = 7 * 86400000
   trackerId: string = ''
 
   constructor(
@@ -93,6 +94,15 @@ export class GrowingConfig {
     return this._dataUploadInterval / 1000
   }
 
+  set dataValidityPeriod(days: number) {
+    days = Math.max(3, Math.min(days, 30))
+    this._dataValidityPeriod = days * 86400000
+  }
+
+  get dataValidityPeriod(): number {
+    return this._dataValidityPeriod / 86400000
+  }
+
   copy(): GrowingConfig {
     let config = new GrowingConfig(
       this.accountId,
@@ -101,12 +111,13 @@ export class GrowingConfig {
       this.dataCollectionServerHost)
 
     config.debugEnabled = this.debugEnabled
-    config.sessionInterval = this.sessionInterval
-    config.dataUploadInterval = this.dataUploadInterval
+    config._sessionInterval = this._sessionInterval
+    config._dataUploadInterval = this._dataUploadInterval
     config.dataCollectionEnabled = this.dataCollectionEnabled
     config.idMappingEnabled = this.idMappingEnabled
     config.encryptEnabled = this.encryptEnabled
     config.requestOptions = this.requestOptions.copy()
+    config._dataValidityPeriod = this._dataValidityPeriod
     config.trackerId = this.trackerId
 
     return config
