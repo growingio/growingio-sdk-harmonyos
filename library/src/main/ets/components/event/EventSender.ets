@@ -45,8 +45,8 @@ export default class EventSender {
 
     request.request(url, {
       method: http.RequestMethod.POST,
-      connectTimeout: 30000,
-      readTimeout: 30000,
+      connectTimeout: context.config.requestOptions._connectTimeout,
+      readTimeout: context.config.requestOptions._readTimeout,
       extraData: '[' + serialize + ']',
       header: {
         "Content-Type": "application/json",

@@ -29,6 +29,8 @@ export default class EntryAbilityStage extends AbilityStage {
     config.sessionInterval = 30
     config.dataUploadInterval = 15
     config.idMappingEnabled = true
+    config.requestOptions.connectTimeout = 10
+    config.requestOptions.readTimeout = 10
     await GrowingAnalytics.start(this.context, config)
   }
 }

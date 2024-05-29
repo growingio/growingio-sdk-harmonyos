@@ -53,7 +53,7 @@ export default class Session {
       }
 
       let context = GrowingContext.getContext(session.trackerId)!
-      if (Date.now() - session.latestOnBackgroundTime >= context.config.sessionInterval * 1000) {
+      if (Date.now() - session.latestOnBackgroundTime >= context.config._sessionInterval) {
         LogUtil.info(() => 'current session is outdated, trackerId = ' + context.trackerId)
         Session.refreshSession(context)
       }

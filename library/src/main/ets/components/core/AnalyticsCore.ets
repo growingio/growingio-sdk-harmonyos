@@ -71,7 +71,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
       + 'GrowingIO version: ' + SDK_VERSION)
 
-    let delay = config.dataUploadInterval * 1000
+    let delay = config._dataUploadInterval
     setInterval(() => {
       EventSender.sendEvent(gContext)
     }, delay)
@@ -89,7 +89,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     UserIdentifier.initMultiUser(context)
 
-    let delay = config.dataUploadInterval * 1000
+    let delay = config._dataUploadInterval
     setInterval(() => {
       EventSender.sendEvent(context)
     }, delay)
