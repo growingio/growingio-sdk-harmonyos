@@ -55,7 +55,8 @@ export class GrowingConfig {
   _dataUploadInterval: number = 15 * 1000
   dataCollectionEnabled: boolean = true
   idMappingEnabled: boolean = false
-  encryptEnabled: boolean = false
+  encryptEnabled: boolean = true
+  compressEnabled: boolean = true
   requestOptions: RequestOptions = new RequestOptions()
   _dataValidityPeriod: number = 7 * 86400000
   trackerId: string = ''
@@ -116,6 +117,7 @@ export class GrowingConfig {
     config.dataCollectionEnabled = this.dataCollectionEnabled
     config.idMappingEnabled = this.idMappingEnabled
     config.encryptEnabled = this.encryptEnabled
+    config.compressEnabled = this.compressEnabled
     config.requestOptions = this.requestOptions.copy()
     config._dataValidityPeriod = this._dataValidityPeriod
     config.trackerId = this.trackerId

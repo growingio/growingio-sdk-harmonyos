@@ -16,7 +16,6 @@
  */
 
 import http from '@ohos.net.http'
-import buffer from '@ohos.buffer'
 
 import EventDatabase from './EventDatabase'
 import GrowingContext from '../core/Context'
@@ -43,7 +42,7 @@ export default class EventSender {
 
     EventSender.isUploading = true
 
-    let serialize: string | Object | ArrayBuffer = '[' + events.map(event => String(event.data)).join(',') + ']'
+    let serialize: string | ArrayBuffer = '[' + events.map(event => String(event.data)).join(',') + ']'
     let curTime = Date.now()
     let header: Record<string, string> = {
       "Content-Type": "application/json",
@@ -51,8 +50,13 @@ export default class EventSender {
       "X-Timestamp": curTime + ''
     }
 
+    if (context.config.compressEnabled) {
+      serialize = Util.compress(serialize as string)
+      header['X-Compress-Codec'] = '2'
+    }
+
     if (context.config.encryptEnabled) {
-      serialize = EventSender.encrypt(serialize as string, curTime)
+      serialize = Util.encrypt(serialize, curTime)
       header['X-Crypt-Codec'] = '1'
     }
 
@@ -84,19 +88,6 @@ export default class EventSender {
       }
       request.destroy()
     })
-  }
-
-  static encrypt(serialize: string, time: number): ArrayBuffer {
-    let hint = Util.getHintFromTime(time)
-    let buf: ArrayBuffer = buffer.from(serialize, 'utf-8').buffer
-
-    let original = new Uint8Array(buf)
-    let encrypted = new Uint8Array(buf.byteLength)
-    for (let i = 0; i < original.length; i++) {
-      encrypted[i] = original[i] ^ hint[i % hint.length]
-    }
-
-    return buffer.from(encrypted).buffer
   }
 
   static url(context: GrowingContext, time: number) {
