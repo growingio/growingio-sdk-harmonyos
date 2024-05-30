@@ -72,6 +72,8 @@ export default class MyAbilityStage extends AbilityStage {
 | requestOptions.connectTimeout | number   | 30     | 事件请求尝试建立连接的最大等待时间，默认为 30 秒             |
 | requestOptions.readTimeout    | number   | 30     | 事件请求读取服务器响应的最大等待时间，默认为 30 秒           |
 | dataValidityPeriod            | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                    |
+| encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示           |
+| compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                            |
 
 ### 数据采集 API
 
@@ -382,6 +384,8 @@ GrowingAnalytics.startSubTracker(trackerId, config)
 | requestOptions.connectTimeout | 是                   |
 | requestOptions.readTimeout    | 是                   |
 | dataValidityPeriod            | 否，以主实例为准     |
+| encryptEnabled                | 是                   |
+| compressEnabled               | 是                   |
 
 **注意：初始化子实例前必须先初始化主实例**
 
