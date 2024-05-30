@@ -36,4 +36,11 @@ export default class Util {
     })
     return Object.keys(result).length > 0 ? result : undefined
   }
+
+  static getHintFromTime(time: number): Uint8Array {
+    let hexString: string = time.toString(16)
+    let lastByteHex: string = hexString.slice(-2)
+    let lastByte: number = parseInt(lastByteHex, 16)
+    return new Uint8Array([lastByte])
+  }
 }

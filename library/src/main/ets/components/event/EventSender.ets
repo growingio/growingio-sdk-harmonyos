@@ -16,11 +16,13 @@
  */
 
 import http from '@ohos.net.http'
+import buffer from '@ohos.buffer'
 
 import EventDatabase from './EventDatabase'
 import GrowingContext from '../core/Context'
 import { REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
+import Util from '../utils/Util'
 
 export default class EventSender {
   static isUploading: boolean = false
@@ -38,21 +40,31 @@ export default class EventSender {
     if (events.length == 0) {
       return
     }
+
     EventSender.isUploading = true
-    let serialize = events.map(event => String(event.data)).join(',')
+
+    let serialize: string | Object | ArrayBuffer = '[' + events.map(event => String(event.data)).join(',') + ']'
+    let curTime = Date.now()
+    let header: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "X-Timestamp": curTime + ''
+    }
+
+    if (context.config.encryptEnabled) {
+      serialize = EventSender.encrypt(serialize as string, curTime)
+      header['X-Crypt-Codec'] = '1'
+    }
+
     let request = http.createHttp()
-    let url = EventSender.url(context)
+    let url = EventSender.url(context, curTime)
 
     request.request(url, {
       method: http.RequestMethod.POST,
       connectTimeout: context.config.requestOptions._connectTimeout,
       readTimeout: context.config.requestOptions._readTimeout,
-      extraData: '[' + serialize + ']',
-      header: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-Timestamp": Date.now() + ''
-      }
+      extraData: serialize,
+      header: header
     }, (e, v) => {
       if (e) {
         LogUtil.info(() => 'Request Failure, error: ' + JSON.stringify(e))
@@ -74,10 +86,23 @@ export default class EventSender {
     })
   }
 
-  static url(context: GrowingContext) {
+  static encrypt(serialize: string, time: number): ArrayBuffer {
+    let hint = Util.getHintFromTime(time)
+    let buf: ArrayBuffer = buffer.from(serialize, 'utf-8').buffer
+
+    let original = new Uint8Array(buf)
+    let encrypted = new Uint8Array(buf.byteLength)
+    for (let i = 0; i < original.length; i++) {
+      encrypted[i] = original[i] ^ hint[i % hint.length]
+    }
+
+    return buffer.from(encrypted).buffer
+  }
+
+  static url(context: GrowingContext, time: number) {
     let config = context.config
     let serverHost = config.dataCollectionServerHost
     let accountId = config.accountId
-    return serverHost + '/v3/projects/' + accountId + '/collect?stm=' + Date.now()
+    return serverHost + '/v3/projects/' + accountId + '/collect?stm=' + time
   }
 }
