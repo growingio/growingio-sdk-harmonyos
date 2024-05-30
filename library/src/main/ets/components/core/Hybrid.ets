@@ -57,6 +57,8 @@ export default class Hybrid {
 
   dispatchEvent = (eventString: string): void => {
     try {
+      LogUtil.info(() => "[Hybrid] dispatchEvent: " + JSON.stringify(JSON.parse(eventString), null, 4))
+
       let event: Record<string, Object> = JSON.parse(eventString)
       let eventType: string = event.eventType as string
       if (eventType == EventType.Custom) {
@@ -113,22 +115,26 @@ export default class Hybrid {
   }
 
   onDomChanged = (): void => {
-
+    // LogUtil.info(() => "[Hybrid] onDomChanged")
   }
 
   setNativeUserId = (userId: string): void => {
+    LogUtil.info(() => "[Hybrid] setNativeUserId: " + userId)
     UserIdentifier.setLoginUserId(userId, '', this.context)
   }
 
   setNativeUserIdAndUserKey = (userId: string, userKey: string): void => {
+    LogUtil.info(() => "[Hybrid] setNativeUserId: " + userId + "and userKey: " + userKey)
     UserIdentifier.setLoginUserId(userId, userKey, this.context)
   }
 
   clearNativeUserId = (): void => {
+    LogUtil.info(() => "[Hybrid] clearNativeUserId")
     UserIdentifier.setLoginUserId('', '', this.context)
   }
 
   clearNativeUserIdAndUserKey = (): void => {
+    LogUtil.info(() => "[Hybrid] clearNativeUserIdAndUserKey")
     UserIdentifier.setLoginUserId('', '', this.context)
   }
 }
