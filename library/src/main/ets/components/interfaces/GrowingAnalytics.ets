@@ -25,6 +25,7 @@ import Session from '../core/Session'
 import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
 import PropertyPlugin, { PropertyPluginInterface } from '../core/PropertyPlugin'
 
+export { EventType as GrowingEventType } from '../event/Event'
 export { PropertyPluginInterface as GrowingPropPlugin, EventFilter as GrowingPropPluginEventFilter } from '../core/PropertyPlugin'
 export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
 

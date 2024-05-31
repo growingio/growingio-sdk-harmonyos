@@ -19,6 +19,7 @@ export {
   GrowingAnalytics,
   GrowingAttrType,
   GrowingAnalyticsInterface,
+  GrowingEventType,
   GrowingPropPlugin,
   GrowingPropPluginEventFilter
 } from './src/main/ets/components/interfaces/GrowingAnalytics'
