@@ -27,10 +27,11 @@ import GrowingContext from './Context'
 import DeviceInfo from './DeviceInfo'
 import EventTimer from './EventTimer'
 import Hybrid from './Hybrid'
+import PropertyPlugin from './PropertyPlugin'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import CustomEvent from '../event/CustomEvent'
-import Event, { EventType } from '../event/Event'
+import Event, { EventScene, EventType } from '../event/Event'
 import EventBuilder from '../event/EventBuilder'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
@@ -231,10 +232,16 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     EventTimer.clearTrackTimer(this.context)
   }
 
-  static async writeEventToDisk<T extends Event>(event: T, context: GrowingContext) {
+  static async writeEventToDisk<T extends Event>(
+    event: T,
+    context: GrowingContext,
+    eventScene: EventScene = EventScene.Native
+  ) {
     if (!context.config.dataCollectionEnabled) {
       return
     }
+
+    PropertyPlugin.execute(event, eventScene, context)
     let pst = EventPersistence.fromEvent(event, context)
     await EventDatabase.writeEvent(pst)
     if (pst.eventType == EventType.Visit) {

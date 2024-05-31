@@ -1,4 +1,4 @@
-import { GrowingAnalytics } from '@growingio/analytics'
+import { GrowingAnalytics, GrowingAttrType, GrowingPropPlugin, GrowingPropPluginEventFilter } from '@growingio/analytics'
 import Util from '../Util'
 
 @Entry
@@ -21,22 +21,36 @@ struct Index {
       .onChange((isOn: boolean) => {
         this.setDataCollectionEnabled(isOn)
       }).margin({ top: 15 })
-      Button('setLoginUserId')
-        .onClick(() => {
-          this.setLoginUserId()
-        }).margin({ top: 15 })
-      Button('cleanLoginUserId')
-        .onClick(() => {
-          this.cleanLoginUserId()
-        }).margin({ top: 15 })
-      Button('setLocation')
-        .onClick(() => {
-          this.setLocation()
-        }).margin({ top: 15 })
-      Button('cleanLocation')
-        .onClick(() => {
-          this.cleanLocation()
-        }).margin({ top: 15 })
+      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+        Button('setLoginUserId')
+          .onClick(() => {
+            this.setLoginUserId()
+          }).margin({ top: 15 })
+        Button('cleanLoginUserId')
+          .onClick(() => {
+            this.cleanLoginUserId()
+          }).margin({ top: 15 })
+      }
+      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+        Button('setLocation')
+          .onClick(() => {
+            this.setLocation()
+          }).margin({ top: 15 })
+        Button('cleanLocation')
+          .onClick(() => {
+            this.cleanLocation()
+          }).margin({ top: 15 })
+      }
+      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+        Button('setPropertyPlugin1')
+          .onClick(() => {
+            this.setPropertyPlugin1()
+          }).margin({ top: 15 })
+        Button('setPropertyPlugin2')
+          .onClick(() => {
+            this.setPropertyPlugin2()
+          }).margin({ top: 15 })
+      }
       Button('loginUserAttributes')
         .onClick(() => {
           this.loginUserAttributes()
@@ -93,10 +107,52 @@ struct Index {
     GrowingAnalytics.cleanLocation()
   }
 
+  setPropertyPlugin1() {
+    GrowingAnalytics.setEventPropertyPlugin(new PropertyPlugin1())
+  }
+
+  setPropertyPlugin2() {
+    GrowingAnalytics.setEventPropertyPlugin(new PropertyPlugin2())
+  }
+
   loginUserAttributes() {
     GrowingAnalytics.setLoginUserAttributes({
       'name': 'ben',
       'age': 30
     })
+  }
+}
+
+class PropertyPlugin1 implements GrowingPropPlugin {
+  attributes(attributes: GrowingAttrType | undefined): GrowingAttrType | undefined {
+    if (attributes) {
+      attributes['plugin1'] = 'value1'
+    }
+    return attributes
+  }
+
+  priority(): number {
+    return 1
+  }
+
+  isMatchedWithFilter(filter: GrowingPropPluginEventFilter): boolean {
+    return true
+  }
+}
+
+class PropertyPlugin2 implements GrowingPropPlugin {
+  attributes(attributes: GrowingAttrType | undefined): GrowingAttrType | undefined {
+    if (attributes) {
+      attributes['plugin2'] = 'value2'
+    }
+    return attributes
+  }
+
+  priority(): number {
+    return 2
+  }
+
+  isMatchedWithFilter(filter: GrowingPropPluginEventFilter): boolean {
+    return true
   }
 }

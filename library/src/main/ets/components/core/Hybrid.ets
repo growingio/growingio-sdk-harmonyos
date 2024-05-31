@@ -4,7 +4,7 @@ import AnalyticsCore from './AnalyticsCore'
 import AppInfo from './AppInfo'
 import GrowingContext from './Context'
 import UserIdentifier from './UserIdentifier'
-import { EventType } from '../event/Event'
+import { EventScene, EventType } from '../event/Event'
 import HybridCustomEvent from '../event/hybrid/HybridCustomEvent'
 import HybridPageEvent from '../event/hybrid/HybridPageEvent'
 import HybridViewElementEvent from '../event/hybrid/HybridViewElementEvent'
@@ -71,7 +71,7 @@ export default class Hybrid {
           event.domain as string,
           this.context
         )
-        AnalyticsCore.writeEventToDisk(e, this.context)
+        AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
       } else if (eventType == EventType.Page) {
         let e = HybridPageEvent.create(
           event.title as string,
@@ -84,7 +84,7 @@ export default class Hybrid {
           event.domain as string,
           this.context
         )
-        AnalyticsCore.writeEventToDisk(e, this.context)
+        AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
       } else if (eventType == EventType.ViewClick || eventType == EventType.ViewChange) {
         let e = HybridViewElementEvent.create(
           event.textValue as string,
@@ -100,10 +100,10 @@ export default class Hybrid {
           eventType,
           this.context
         )
-        AnalyticsCore.writeEventToDisk(e, this.context)
+        AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
       } else if (eventType == EventType.LoginUserAttributes) {
         let e = LoginUserAttributesEvent.create(event.attributes as AttributesType, this.context)
-        AnalyticsCore.writeEventToDisk(e, this.context)
+        AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
       }
     } catch (e) {
       LogUtil.error(() => "Failed to dispatch event. code = " + e.code + ", message = " + e.message)

@@ -66,3 +66,9 @@ export enum EventType {
   ViewClick = 'VIEW_CLICK',
   ViewChange = 'VIEW_CHANGE',
 }
+
+export enum EventScene {
+  Native = 0,
+  Hybrid,
+  Flutter
+}

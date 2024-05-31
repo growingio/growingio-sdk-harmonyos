@@ -23,7 +23,9 @@ import GrowingContext from '../core/Context'
 import GeneralProps from '../core/GeneralProps'
 import Session from '../core/Session'
 import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
+import PropertyPlugin, { PropertyPluginInterface } from '../core/PropertyPlugin'
 
+export { PropertyPluginInterface as GrowingPropPlugin, EventFilter as GrowingPropPluginEventFilter } from '../core/PropertyPlugin'
 export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
 
 export interface GrowingAnalyticsInterface {
@@ -199,6 +201,10 @@ export class GrowingAnalytics {
 
   static setDynamicGeneralProps(generator: () => AttributesType) {
     GeneralProps.setDynamicGeneralProps(generator)
+  }
+
+  static setEventPropertyPlugin(plugin: PropertyPluginInterface) {
+    PropertyPlugin.setPlugin(plugin)
   }
 
   static setLocation(
