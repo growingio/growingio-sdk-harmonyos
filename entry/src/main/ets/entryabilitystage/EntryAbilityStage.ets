@@ -22,7 +22,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // })
     // GrowingAnalytics.setDynamicGeneralProps(() => ({}))
 
-    // ---------------- NewSaaS/CDP ----------------
+    // ---------------- NewSaaS ----------------
 
     let config = new GrowingConfig().NewSaaS(
       '0a1b4118dd954ec3bcc69da5138bdb96',
@@ -36,6 +36,22 @@ export default class EntryAbilityStage extends AbilityStage {
     config.requestOptions.connectTimeout = 10
     config.requestOptions.readTimeout = 10
     await GrowingAnalytics.start(this.context, config)
+
+    // ---------------- CDP ----------------
+
+    // let config = new GrowingConfig().CDP(
+    //   '0a1b4118dd954ec3bcc69da5138bdb96',
+    //   'ab555003531e0fd1',
+    //   'growing.bf30ad277eaae1aa',
+    //   'https://cdp-api.growing.com'
+    // )
+    // config.debugEnabled = true
+    // config.sessionInterval = 30
+    // config.dataUploadInterval = 15
+    // config.idMappingEnabled = true
+    // config.requestOptions.connectTimeout = 10
+    // config.requestOptions.readTimeout = 10
+    // await GrowingAnalytics.start(this.context, config)
 
     // ---------------- SaaS ----------------
 
