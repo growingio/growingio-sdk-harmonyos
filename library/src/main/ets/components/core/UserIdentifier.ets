@@ -139,6 +139,10 @@ export default class UserIdentifier {
     // A=>B
     if (oldUserId && oldUserId.length > 0 && oldUserId != userId) {
       Session.refreshSession(context)
+    } else if (context.config.mode == ConfigMode.CDP) {
+      if (oldUserId == null || oldUserId.length == 0) {
+        Session.generateVisit(context)
+      }
     }
   }
 }

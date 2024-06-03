@@ -60,6 +60,8 @@ export default abstract class Event {
     let mode = context.config.mode
     if (mode == ConfigMode.SaaS) {
       return Util.toSerializeByMeasurementProtocolV2(this)
+    } else if (mode == ConfigMode.CDP) {
+      return Util.toSerializeByMeasurementProtocolV3(this)
     } else {
       return JSON.stringify(this)
     }

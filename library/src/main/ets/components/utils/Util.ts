@@ -170,4 +170,10 @@ export default class Util {
     }
     return ''
   }
+
+  static toSerializeByMeasurementProtocolV3(event: any): string {
+    let modified = { ...event, gioId: '', globalSequenceId: 0}
+    delete modified.timezoneOffset
+    return JSON.stringify(modified)
+  }
 }

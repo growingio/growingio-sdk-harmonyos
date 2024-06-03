@@ -158,7 +158,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     LogUtil.info(() => 'Set dataCollectionEnabled: ' + enabled)
     config.dataCollectionEnabled = enabled
     if (enabled) {
-      Session.refreshSession(this.context)
+      if (config.mode == ConfigMode.CDP) {
+        Session.generateVisit(this.context)
+      } else {
+        Session.refreshSession(this.context)
+      }
     } else {
       EventTimer.clearTrackTimer(this.context)
     }
@@ -278,8 +282,25 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     latitude: number,
     longitude: number
   ) {
+    // mode CDP
+    let needSendVisit: boolean = false
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (context) {
+      if (context.config.mode == ConfigMode.CDP) {
+        if ((AnalyticsCore.location.latitude == 0 && Math.abs(latitude) > 0)
+          || (AnalyticsCore.location.longitude == 0 && Math.abs(longitude) > 0)) {
+          needSendVisit = true
+        }
+      }
+    }
+
     AnalyticsCore.location.latitude = latitude
     AnalyticsCore.location.longitude = longitude
+
+    // mode CDP
+    if (needSendVisit) {
+      Session.generateVisit(context)
+    }
   }
 
   static cleanLocation() {
