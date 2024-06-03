@@ -25,7 +25,7 @@ export default class PropertyPlugin {
 
   static setPlugin(plugin: PropertyPluginInterface) {
     PropertyPlugin.plugins.push(plugin)
-    PropertyPlugin.plugins.sort((a, b) => b.priority() - a.priority())
+    PropertyPlugin.plugins.sort((a, b) => a.priority() - b.priority())
   }
 
   static execute<T extends Event>(event: T, eventScene: EventScene, context: GrowingContext) {

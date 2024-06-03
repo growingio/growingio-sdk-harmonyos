@@ -333,6 +333,72 @@ GrowingAnalytics.setDynamicGeneralProps(() => {
 GrowingAnalytics.setDynamicGeneralProps(() => ({}))
 ```
 
+#### 事件属性插件
+
+`static setEventPropertyPlugin(plugin: GrowingPropPlugin)`
+设置继承 GrowingPropPlugin 基类的属性插件，可以在事件入库之前对事件属性进行增加、删除
+
+GrowingPropPlugin 接口介绍：
+`attributes(attributes: AttributesType | undefined): AttributesType | undefined`
+attributes 为当前的事件属性，需要返回自定义的属性内容
+
+`isMatchedWithFilter(filter: GrowingPropPluginEventFilter): boolean`
+EventFilter 提供 `name(): string`、`type(): string`、`time(): number`、`isFromHybrid(): boolean`、`trackerId(): string` 接口，用于指定属性插件的作用范围
+
+`priority(): number`
+属性插件优先级，高优先级的属性插件返回的同名属性将覆盖低优先级的属性
+
+##### 示例
+
+```typescript
+// 在适当时机调用 
+GrowingAnalytics.setEventPropertyPlugin(new MyPropertyPlugin())
+
+// MyPropertyPlugin属性插件代码示例
+class MyPropertyPlugin implements GrowingPropPlugin {
+  attributes(attributes: GrowingAttrType | undefined): GrowingAttrType | undefined {
+    if (attributes) {
+      attributes['plugin1'] = 'value1'
+    }
+    return attributes
+  }
+
+  isMatchedWithFilter(filter: GrowingPropPluginEventFilter): boolean {
+    // 不处理eventName为impossible的CUSTOM事件
+    if (filter.name() == 'impossible') {
+      return false
+    }
+
+    // 不处理VISIT事件
+    if (filter.type() == GrowingEventType.Visit) {
+      return false
+    }
+
+    // 不处理2月29日触发的事件
+    let date = new Date(filter.time())
+    if (date.getUTCMonth() == 1 && date.getUTCDate() == 29) {
+      return false
+    }
+
+    // 不处理来自hybrid的事件
+    if (filter.isFromHybrid()) {
+      return false
+    }
+
+    // 不处理来自子实例subTracker_01的事件
+    if (filter.trackerId() == 'subTracker_01') {
+      return false
+    }
+
+    return true
+  }
+
+  priority(): number {
+    return 10
+  }
+}
+```
+
 ### Hybrid 打通
 
 ```typescript

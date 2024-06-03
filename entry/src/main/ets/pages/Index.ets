@@ -131,7 +131,7 @@ struct Index {
 class PropertyPlugin1 implements GrowingPropPlugin {
   attributes(attributes: GrowingAttrType | undefined): GrowingAttrType | undefined {
     if (attributes) {
-      attributes['plugin1'] = 'value1'
+      attributes['pluginKey'] = '11111'
     }
     return attributes
   }
@@ -174,7 +174,7 @@ class PropertyPlugin1 implements GrowingPropPlugin {
 class PropertyPlugin2 implements GrowingPropPlugin {
   attributes(attributes: GrowingAttrType | undefined): GrowingAttrType | undefined {
     if (attributes) {
-      attributes['plugin2'] = 'value2'
+      attributes['pluginKey'] = '22222'
     }
     return attributes
   }
