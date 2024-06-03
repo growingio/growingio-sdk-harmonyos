@@ -31,7 +31,7 @@ export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProx
 
 export interface GrowingAnalyticsInterface {
    setDataCollectionEnabled(enabled: boolean): void
-   setLoginUserId(userId: string, userKey: string): void
+   setLoginUserId(userId: string, userKey?: string): void
    cleanLoginUserId(): void
 
    setLoginUserAttributes(attributes: AttributesType): void
@@ -103,7 +103,7 @@ export class GrowingAnalytics {
 
   static setLoginUserId(
     userId: string,
-    userKey: string = ''
+    userKey?: string
   ) {
     if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return

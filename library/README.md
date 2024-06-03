@@ -99,7 +99,7 @@ GrowingAnalytics.setDataCollectionEnabled(true)
 
 #### 设置登录用户 ID
 
-`static setLoginUserId(userId: string, userKey: string = '')`
+`static setLoginUserId(userId: string, userKey?: string)`
 
 当用户登录之后调用，设置登录用户 ID 和用户 Key
 如果您的 App 每次用户升级版本时无需重新登录的话，为防止用户本地缓存被清除导致的无法被识别为登录用户，建议在用户每次升级 App 版本后初次访问时重新调用 setLoginUserId 方法
@@ -395,7 +395,7 @@ GrowingAnalytics.startSubTracker(trackerId, config)
 ```typescript
 export interface GrowingAnalyticsInterface {
    setDataCollectionEnabled(enabled: boolean)
-   setLoginUserId(userId: string, userKey: string)
+   setLoginUserId(userId: string, userKey?: string)
    cleanLoginUserId()
 
    setLoginUserAttributes(attributes: AttributesType)

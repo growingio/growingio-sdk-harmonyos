@@ -21,7 +21,7 @@ import window from '@ohos.window'
 import webview from '@ohos.web.webview'
 
 import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
-import { GrowingConfig } from '../interfaces/GrowingConfig'
+import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
 import AppInfo from './AppInfo'
 import GrowingContext from './Context'
 import DeviceInfo from './DeviceInfo'
@@ -37,6 +37,9 @@ import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
+import CustomEventSender from '../event/saas/SaaSCSTMEventSender'
+import PVEventSender from '../event/saas/SaaSPVEventSender'
+import FakePageEvent from '../event/saas/FakePageEvent'
 import { AttributesType, JavaScriptProxyType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
@@ -73,9 +76,13 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       + 'GrowingIO version: ' + SDK_VERSION)
 
     let delay = config._dataUploadInterval
-    setInterval(() => {
+    let runner = config.mode == ConfigMode.SaaS ? () => {
+      CustomEventSender.sendEvent(gContext)
+      PVEventSender.sendEvent(gContext)
+    } : () => {
       EventSender.sendEvent(gContext)
-    }, delay)
+    }
+    setInterval(runner, delay)
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
@@ -91,9 +98,13 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     UserIdentifier.initMultiUser(context)
 
     let delay = config._dataUploadInterval
-    setInterval(() => {
+    let runner = config.mode == ConfigMode.SaaS ? () => {
+      CustomEventSender.sendEvent(context)
+      PVEventSender.sendEvent(context)
+    } : () => {
       EventSender.sendEvent(context)
-    }, delay)
+    }
+    setInterval(runner, delay)
 
     return true
   }
@@ -155,8 +166,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
   setLoginUserId(
     userId: string,
-    userKey: string = ''
+    userKey?: string
   ) {
+    if (!userKey) {
+      userKey = ''
+    }
     UserIdentifier.setLoginUserId(userId, userKey, this.context)
   }
 
@@ -179,8 +193,15 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     attributes: AttributesType = {},
     sendTo?: string[]
   ) {
-    let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
-    AnalyticsCore.writeEventToDisk(e, this.context)
+    if (this.context.config.mode == ConfigMode.SaaS) {
+      let p = FakePageEvent.create(this.context)
+      AnalyticsCore.writeEventToDisk(p, this.context)
+      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context, p)
+      AnalyticsCore.writeEventToDisk(e, this.context)
+    } else {
+      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
+      AnalyticsCore.writeEventToDisk(e, this.context)
+    }
     LogUtil.info(() => 'Track custom event with eventName: ' + eventName + ', attributes: ' +
     JSON.stringify(attributes))
 
@@ -245,7 +266,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     let pst = EventPersistence.fromEvent(event, context)
     await EventDatabase.writeEvent(pst)
     if (pst.eventType == EventType.Visit) {
-      await EventSender.sendEvent(context)
+      if (context.config.mode == ConfigMode.SaaS) {
+        await PVEventSender.sendEvent(context)
+      } else {
+        await EventSender.sendEvent(context)
+      }
     }
   }
 

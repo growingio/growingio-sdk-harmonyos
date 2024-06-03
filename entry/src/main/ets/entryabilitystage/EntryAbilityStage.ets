@@ -22,8 +22,12 @@ export default class EntryAbilityStage extends AbilityStage {
     // })
     // GrowingAnalytics.setDynamicGeneralProps(() => ({}))
 
-    let config = new GrowingConfig(
-      '0a1b4118dd954ec3bcc69da5138bdb96', 'ab555003531e0fd1', 'growing.bf30ad277eaae1aa'
+    // ---------------- NewSaaS/CDP ----------------
+
+    let config = new GrowingConfig().NewSaaS(
+      '0a1b4118dd954ec3bcc69da5138bdb96',
+      'ab555003531e0fd1',
+      'growing.bf30ad277eaae1aa'
     )
     config.debugEnabled = true
     config.sessionInterval = 30
@@ -32,5 +36,18 @@ export default class EntryAbilityStage extends AbilityStage {
     config.requestOptions.connectTimeout = 10
     config.requestOptions.readTimeout = 10
     await GrowingAnalytics.start(this.context, config)
+
+    // ---------------- SaaS ----------------
+
+    // let config = new GrowingConfig().SaaS(
+    //   '0a1b4118dd954ec3bcc69da5138bdb96',
+    //   'growing.bf30ad277eaae1aa'
+    // )
+    // config.debugEnabled = true
+    // config.sessionInterval = 30
+    // config.dataUploadInterval = 15
+    // config.requestOptions.connectTimeout = 10
+    // config.requestOptions.readTimeout = 10
+    // await GrowingAnalytics.start(this.context, config)
   }
 }

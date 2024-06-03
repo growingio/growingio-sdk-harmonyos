@@ -79,7 +79,12 @@ export default class EventDatabase {
     }
   }
 
-  static async getEventsByCount(count: number, size: number, context: GrowingContext): Promise<EventPersistence[]> {
+  static async getEventsByCount(
+    count: number,
+    size: number,
+    context: GrowingContext,
+    eventTypes?: string[]
+  ): Promise<EventPersistence[]> {
     let events: EventPersistence[] = []
 
     if (!EventDatabase.store) {
@@ -88,6 +93,9 @@ export default class EventDatabase {
 
     try {
       let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
+      if (eventTypes && eventTypes.length > 0) {
+        predicates.in('TYPE', eventTypes)
+      }
       predicates.orderByAsc('CREATE_AT')
       predicates.equalTo('ACCOUNT_ID', context.config.accountId)
       predicates.equalTo('DATASOURCE_ID', context.config.dataSourceId)
@@ -131,7 +139,7 @@ export default class EventDatabase {
     }
   }
 
-  static async countOfEvents(context: GrowingContext): Promise<number> {
+  static async countOfEvents(context: GrowingContext, eventTypes?: string[]): Promise<number> {
     if (!EventDatabase.store) {
       return 0
     }
@@ -139,6 +147,9 @@ export default class EventDatabase {
     let count = 0
     try {
       let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
+      if (eventTypes && eventTypes.length > 0) {
+        predicates.in('TYPE', eventTypes)
+      }
       predicates.equalTo('ACCOUNT_ID', context.config.accountId)
       predicates.equalTo('DATASOURCE_ID', context.config.dataSourceId)
       let r = await EventDatabase.store.query(predicates)

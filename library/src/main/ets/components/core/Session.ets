@@ -20,7 +20,9 @@ import util from '@ohos.util'
 import AnalyticsCore from './AnalyticsCore'
 import GrowingContext from './Context'
 import VisitEvent from '../event/VisitEvent'
+import FakePageEvent from '../event/saas/FakePageEvent'
 import { LogUtil } from '../utils/LogUtil'
+import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export enum SessionState {
   Foreground,
@@ -103,5 +105,10 @@ export default class Session {
     }
     let e = VisitEvent.create(context)
     AnalyticsCore.writeEventToDisk(e, context)
+
+    if (context.config.mode == ConfigMode.SaaS) {
+      let p = FakePageEvent.create(context)
+      AnalyticsCore.writeEventToDisk(p, context)
+    }
   }
 }

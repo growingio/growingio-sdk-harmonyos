@@ -99,4 +99,75 @@ export default class Util {
 
     return buffer.from(encrypted).buffer
   }
+
+  static toSerializeByMeasurementProtocolV2(event: any): string {
+    let basic = {
+      esid: event.eventSequenceId,
+      gesid: 0,
+      u: event.deviceId,
+      s: event.sessionId,
+      d: event.domain,
+      tm: event.timestamp,
+      cs1: event.userId
+    }
+
+    let eventType = event.eventType as string
+    if (eventType == 'CUSTOM') {
+      let custom = {
+        ...basic,
+        t: 'cstm',
+        n: event.eventName,
+        var: event.attributes,
+        p: event.path,
+        ptm: event.pageShowTimestamp
+      }
+
+      return JSON.stringify(custom)
+
+    } else if (eventType == 'PAGE') {
+      let page = {
+        ...basic,
+        t: 'page',
+        p: event.path,
+        ptm: event.pageShowTimestamp,
+        o: 'portrait',
+        tl: ''
+      }
+
+      return JSON.stringify(page)
+
+    } else if (eventType == 'LOGIN_USER_ATTRIBUTES') {
+      let ppl = {
+        ...basic,
+        t: 'ppl',
+        var: event.attributes
+      }
+
+      return JSON.stringify(ppl)
+
+    } else if (eventType == 'VISIT') {
+      let vst = {
+        ...basic,
+        t: 'vst',
+        av: event.sdkVersion,
+        sh: event.screenHeight,
+        sw: event.screenWidth,
+        db: event.deviceBrand,
+        dm: event.deviceModel,
+        ph: 1,
+        os: event.platform,
+        osv: event.platformVersion,
+        cv: event.appVersion,
+        sn: event.appName,
+        v: event.urlScheme,
+        l: event.language,
+        lat: event.latitude,
+        lng: event.longitude,
+        fv: '{}'
+      }
+
+      return JSON.stringify(vst)
+    }
+    return ''
+  }
 }

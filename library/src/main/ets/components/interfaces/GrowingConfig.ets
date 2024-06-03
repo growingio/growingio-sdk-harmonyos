@@ -45,11 +45,18 @@ class RequestOptions {
   }
 }
 
+export enum ConfigMode {
+  NewSaaS = 0,
+  SaaS,
+  CDP
+}
+
 export class GrowingConfig {
-  accountId: string
-  dataSourceId: string
-  dataCollectionServerHost: string
-  urlScheme: string
+  mode: ConfigMode = ConfigMode.NewSaaS
+  accountId: string = ''
+  dataSourceId: string = ''
+  dataCollectionServerHost: string = ''
+  urlScheme: string = ''
   debugEnabled: boolean = false
   _sessionInterval: number = 30 * 1000
   _dataUploadInterval: number = 15 * 1000
@@ -61,17 +68,7 @@ export class GrowingConfig {
   _dataValidityPeriod: number = 7 * 86400000
   trackerId: string = ''
 
-  constructor(
-    accountId: string,
-    dataSourceId: string,
-    urlScheme: string,
-    dataCollectionServerHost: string = 'https://napi.growingio.com'
-  ) {
-    this.accountId = accountId
-    this.dataSourceId = dataSourceId
-    this.urlScheme = urlScheme
-    this.dataCollectionServerHost = dataCollectionServerHost
-  }
+  constructor() {}
 
   set sessionInterval(interval: number) {
     if (interval <= 0) {
@@ -104,13 +101,71 @@ export class GrowingConfig {
     return this._dataValidityPeriod / 86400000
   }
 
-  copy(): GrowingConfig {
-    let config = new GrowingConfig(
-      this.accountId,
-      this.dataSourceId,
-      this.urlScheme,
-      this.dataCollectionServerHost)
+  SaaS(
+    accountId: string,
+    urlScheme: string,
+    dataCollectionServerHost: string = 'https://api.growingio.com'
+  ): GrowingConfig {
+    this.mode = ConfigMode.SaaS
+    this.accountId = accountId
+    this.urlScheme = urlScheme
+    this.dataCollectionServerHost = dataCollectionServerHost
+    return this
+  }
 
+  NewSaaS(
+    accountId: string,
+    dataSourceId: string,
+    urlScheme: string,
+    dataCollectionServerHost: string = 'https://napi.growingio.com'
+  ): GrowingConfig {
+    this.mode = ConfigMode.NewSaaS
+    this.accountId = accountId
+    this.dataSourceId = dataSourceId
+    this.urlScheme = urlScheme
+    this.dataCollectionServerHost = dataCollectionServerHost
+    return this
+  }
+
+  CDP(
+    accountId: string,
+    dataSourceId: string,
+    urlScheme: string,
+    dataCollectionServerHost: string
+  ): GrowingConfig {
+    this.mode = ConfigMode.CDP
+    this.accountId = accountId
+    this.dataSourceId = dataSourceId
+    this.urlScheme = urlScheme
+    this.dataCollectionServerHost = dataCollectionServerHost
+    return this
+  }
+
+  copy(): GrowingConfig {
+    if (!(typeof this.accountId === 'string') || this.accountId.trim() === '') {
+      throw new Error('[GrowingAnalytics] 请在初始化配置中传入 accountId')
+    }
+
+    if (this.mode === ConfigMode.NewSaaS || this.mode === ConfigMode.CDP) {
+      if (!(typeof this.dataSourceId === 'string') || this.dataSourceId.trim() === '') {
+        throw new Error('[GrowingAnalytics] 请在初始化配置中传入 dataSourceId')
+      }
+    }
+
+    if (!(typeof this.urlScheme === 'string') || this.urlScheme.trim() === '') {
+      throw new Error('[GrowingAnalytics] 请在初始化配置中传入 urlScheme')
+    }
+
+    if (!(typeof this.dataCollectionServerHost === 'string') || this.dataCollectionServerHost.trim() === '') {
+      throw new Error('[GrowingAnalytics] 请在初始化配置中传入 dataCollectionServerHost')
+    }
+
+    let config = new GrowingConfig()
+    config.mode = this.mode
+    config.accountId = this.accountId
+    config.dataSourceId = this.dataSourceId
+    config.urlScheme = this.urlScheme
+    config.dataCollectionServerHost = this.dataCollectionServerHost
     config.debugEnabled = this.debugEnabled
     config._sessionInterval = this._sessionInterval
     config._dataUploadInterval = this._dataUploadInterval

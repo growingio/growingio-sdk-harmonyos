@@ -20,6 +20,7 @@ import { PREFERENCE_USER_ID, PREFERENCE_USER_IDENTIFIER, PREFERENCE_USER_KEY } f
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import GrowingContext from './Context'
+import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export default class UserIdentifier {
   userId: string
@@ -46,7 +47,14 @@ export default class UserIdentifier {
     let userKey = (userInfo[PREFERENCE_USER_KEY] as string | undefined) ?? ''
     let user = new UserIdentifier(userId, userKey)
     UserIdentifier.users.set(context.trackerId, user)
-    LogUtil.info(() => 'UserId from preferences is ' + userId + ', userKey from preferences is ' + userKey)
+
+    let message = 'UserId from preferences is ' + userId
+    if (context.config.mode == ConfigMode.NewSaaS || context.config.mode == ConfigMode.CDP) {
+      if (context.config.idMappingEnabled == true) {
+        message += ', userKey from preferences is ' + userKey
+      }
+    }
+    LogUtil.info(() => message)
   }
 
   static initMultiUser(context: GrowingContext) {
@@ -56,7 +64,14 @@ export default class UserIdentifier {
     let userKey = (userInfo[PREFERENCE_USER_KEY + '_' + context.trackerId] as string | undefined) ?? ''
     let user = new UserIdentifier(userId, userKey)
     UserIdentifier.users.set(context.trackerId, user)
-    LogUtil.info(() => 'UserId from preferences is ' + userId + ', userKey from preferences is ' + userKey)
+
+    let message = 'UserId for ' + context.trackerId + ' from preferences is ' + userId
+    if (context.config.mode == ConfigMode.NewSaaS || context.config.mode == ConfigMode.CDP) {
+      if (context.config.idMappingEnabled == true) {
+        message += ', userKey from preferences is ' + userKey
+      }
+    }
+    LogUtil.info(() => message)
   }
 
   static getUser(context: GrowingContext) {
@@ -87,11 +102,16 @@ export default class UserIdentifier {
         return
       }
 
-      const message = '' + 'LoginUserId did changed, userId from '
+      let message = 'LoginUserId for ' + context.trackerId + ' did changed, userId from '
         + ((user.userId == null || user.userId.length == 0) ? 'undefined' : user.userId)
-        + ' to ' + userId + ', userKey from '
-        + ((user.userKey == null || user.userKey.length == 0) ? 'undefined' : user.userKey)
-        + ' to ' + userKey
+        + ' to ' + userId
+      if (context.config.mode == ConfigMode.NewSaaS || context.config.mode == ConfigMode.CDP) {
+        if (context.config.idMappingEnabled == true) {
+          message += ', userKey from '
+            + ((user.userKey == null || user.userKey.length == 0) ? 'undefined' : user.userKey)
+            + ' to ' + userKey
+        }
+      }
       LogUtil.info(() => message)
 
       user.userId = userId

@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import GrowingContext from '../core/Context'
+import { ConfigMode } from '../interfaces/GrowingConfig'
+import Util from '../utils/Util'
 import { AttributesType } from '../utils/Constants'
 export { AttributesType } from '../utils/Constants'
 
@@ -53,8 +56,13 @@ export default abstract class Event {
   appVersion: string = ''
   appChannel: string | undefined = undefined
 
-  toSerialize(): string {
-    return JSON.stringify(this)
+  toSerialize(context: GrowingContext): string {
+    let mode = context.config.mode
+    if (mode == ConfigMode.SaaS) {
+      return Util.toSerializeByMeasurementProtocolV2(this)
+    } else {
+      return JSON.stringify(this)
+    }
   }
 }
 
