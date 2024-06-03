@@ -43,11 +43,11 @@ export default class MyAbilityStage extends AbilityStage {
   }
 
   async startAnalytics() {
-    let config = new GrowingConfig().NewSaaS(
+    let config = new GrowingConfig().CDP(
       'Your AccountId',
       'Your DataSourceId',
       'Your UrlScheme',
-      'Your DataCollectionServerHost<Optional>'
+      'Your DataCollectionServerHost'
     )
     await GrowingAnalytics.start(this.context, config)
   }
@@ -55,7 +55,7 @@ export default class MyAbilityStage extends AbilityStage {
 ```
 
 > 注意：如若需要，可在用户同意隐私协议之后，再进行初始化 SDK
-> 其中 accountId/dataSourceId/urlScheme 为必填项，dataCollectionServerHost 为可选项，若不清楚请联系您的专属项目经理或技术支持
+> 其中 accountId/dataSourceId/urlScheme/dataCollectionServerHost 为必填项，若不清楚请联系您的专属项目经理或技术支持
 
 其他初始化配置项见下表，在 start 方法调用前通过`config.<配置项> = 对应值`进行配置：
 
@@ -64,7 +64,7 @@ export default class MyAbilityStage extends AbilityStage {
 | accountId                     | string   | -      | 项目 ID (AccountID)，每个应用对应唯一值                      |
 | dataSourceId                  | string   | -      | 应用的 DataSourceId，唯一值                                  |
 | urlScheme                     | string   | -      | 自定义 URL Scheme                                            |
-| dataCollectionServerHost      | string   | -      | 服务端部署后的 ServerHost，默认值为 https://napi.growingio.com |
+| dataCollectionServerHost      | string   | -      | 服务端部署后的 ServerHost                                    |
 | debugEnabled                  | boolean  | false  | 调试模式，开启后会输出 SDK 日志，在线上环境请关闭            |
 | sessionInterval               | number   | 30     | 设置会话后台留存时长，指当前会话在应用进入后台后的最大留存时间，默认为 30 秒。另外，其他情况下也会重新生成一个新的会话，如设置用户 ID 等核心信息，重新打开数据收集等 |
 | dataUploadInterval            | number   | 15     | 数据发送的间隔，默认为 15 秒。SDK 会先将事件存入数据库中，然后以每隔默认时间 15 秒向服务器发送事件包 |
@@ -354,133 +354,6 @@ Web({ src: url, controller: this.controller})
 ```
 
 对应的 H5 页面需要集成 Web JS SDK 以及 App 内嵌页打通插件才能生效
-
-### 多实例采集
-
-#### 初始化多实例
-
-```typescript
-let config = new GrowingConfig(
-'SubTracker AccountId',
-'SubTracker DataSourceId',
-'SubTracker UrlScheme',
-'SubTracker DataCollectionServerHost<Optional>'
-)
-GrowingAnalytics.startSubTracker(trackerId, config)
-```
-
-初始化配置中，`accountId/dataSourceId/dataCollectionServerHost` 都可与主实例不同，具体如下表格：
-
-| 配置项                        | 子实例是否能单独配置 |
-| ----------------------------- | -------------------- |
-| accountId                     | 是                   |
-| dataSourceId                  | 是                   |
-| urlScheme                     | 是                   |
-| dataCollectionServerHost      | 是                   |
-| debugEnabled                  | 否，以主实例为准     |
-| sessionInterval               | 是                   |
-| dataUploadInterval            | 是                   |
-| dataCollectionEnabled         | 是                   |
-| idMappingEnabled              | 是                   |
-| requestOptions.connectTimeout | 是                   |
-| requestOptions.readTimeout    | 是                   |
-| dataValidityPeriod            | 否，以主实例为准     |
-| encryptEnabled                | 是                   |
-| compressEnabled               | 是                   |
-
-**注意：初始化子实例前必须先初始化主实例**
-
-#### 兼容 APIs
-
-子实例可单独调用以下接口，其逻辑与其他实例相互隔离
-```typescript
-export interface GrowingAnalyticsInterface {
-   setDataCollectionEnabled(enabled: boolean)
-   setLoginUserId(userId: string, userKey?: string)
-   cleanLoginUserId()
-
-   setLoginUserAttributes(attributes: AttributesType)
-   track(eventName: string, attributes: AttributesType, sendTo?: string[])
-   trackTimerStart(eventName: string): Promise<string>
-   trackTimerPause(timerId: string)
-   trackTimerResume(timerId: string)
-   trackTimerEnd(timerId: string, attributes: AttributesType)
-   removeTimer(timerId: string)
-   clearTrackTimer()
-}
-```
-
-假设子实例的 `trackerId` 为 `subTrackerId_01`，调用方式如下：
-```typescript
-// 获取子实例
-let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
-if (!subTracker) {
-  return
-}
-
-// 数据采集开关
-subTracker.setDataCollectionEnabled(true)
-
-// 登录用户ID
-subTracker.setLoginUserId('user')
-subTracker.setLoginUserId('user', 'harmony')
-subTracker.cleanLoginUserId()
-
-// 设置埋点事件
-subTracker.track('buyProduct1')
-subTracker.track('buyProduct2', {
-  'name': 'apple',
-  'money': 1000,
-  'num': 100,
-  'from': ['sichuan', 'guizhou', 'hunan']
-})
-
-// 事件计时器
-let timerId = await subTracker.trackTimerStart('eventName')
-subTracker.trackTimerPause(timerId)
-subTracker.trackTimerResume(timerId)
-subTracker.trackTimerEnd(timerId)
-subTracker.trackTimerEnd(timerId, {
-  'property': 'value',
-  'property2': 100
-})
-subTracker.removeTimer(timerId)
-subTracker.clearTrackTimer()
-
-// 设置登录用户属性
-subTracker.setLoginUserAttributes({
-  'name': 'ben',
-  'age': 30
-})
-```
-
-#### SendTo
-
-可使用 sendTo 功能将主实例或子实例的自定义事件转发到其他子实例：
-```typescript
-// 主实例track转发
-GrowingAnalytics.track('buyProduct1', {}, ['subTrackerId_01', 'subTrackerId_02'])
-GrowingAnalytics.track('buyProduct2', {
-  'name': 'apple',
-  'money': 1000,
-  'num': 100,
-  'from': ['sichuan', 'guizhou', 'hunan']
-}, ['subTrackerId_01', 'subTrackerId_02'])
-
-// 子实例track转发
-let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
-if (!subTracker) {
-  return
-}
-subTracker.track('buyProduct1', {}, ['subTrackerId_02'])
-subTracker.track('buyProduct2', {
-  'name': 'apple',
-  'money': 1000,
-  'num': 100,
-  'from': ['sichuan', 'guizhou', 'hunan']
-}, ['subTrackerId_02'])
-```
-> 当前仅 track 接口支持 sendTo 转发
 
 ## License
 ```

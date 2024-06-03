@@ -26,7 +26,7 @@ import HybridCustomEvent from '../event/hybrid/HybridCustomEvent'
 import HybridPageEvent from '../event/hybrid/HybridPageEvent'
 import HybridViewElementEvent from '../event/hybrid/HybridViewElementEvent'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
-import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
+import { AttributesType, JavaScriptProxyType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
 export default class Hybrid {
@@ -55,6 +55,9 @@ export default class Hybrid {
       "projectId": context.config.accountId,
       "dataSourceId": context.config.dataSourceId,
       "appPackage": AppInfo.domain,
+      "appId": context.config.urlScheme,
+      "nativeSdkVersion": SDK_VERSION,
+      "nativeSdkVersionCode": 1
     })
   }
 
