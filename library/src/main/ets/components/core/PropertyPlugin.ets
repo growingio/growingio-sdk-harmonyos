@@ -32,7 +32,7 @@ export default class PropertyPlugin {
     let filter = new EventFilterImpl(event, eventScene, context)
     for (let plugin of PropertyPlugin.plugins) {
       if (!plugin.isMatchedWithFilter(filter)) {
-        break
+        continue
       }
       let attributes = plugin.attributes(event.attributes)
       event.attributes = Util.serializableAttributes(attributes)
