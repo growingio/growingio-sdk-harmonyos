@@ -5,6 +5,7 @@ import {
   GrowingPropPlugin,
   GrowingPropPluginEventFilter } from '@growingio/analytics'
 import Util from '../Util'
+import Util_TS from '../Util_TS'
 
 @Entry
 @Component

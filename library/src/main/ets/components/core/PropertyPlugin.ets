@@ -35,7 +35,7 @@ export default class PropertyPlugin {
         continue
       }
       let attributes = plugin.attributes(event.attributes)
-      event.attributes = Util.serializableAttributes(attributes)
+      event.attributes = Util.serializableAttributes(attributes ?? {})
     }
   }
 }
