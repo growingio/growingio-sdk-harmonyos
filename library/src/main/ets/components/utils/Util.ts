@@ -63,6 +63,11 @@ export default class Util {
     return new Uint8Array([lastByte])
   }
 
+  static sizeOfEventString(serialize: string): number {
+    let buf: ArrayBuffer = buffer.from(serialize, 'utf-8').buffer
+    return buf.byteLength
+  }
+
   static compress(serialize: string): ArrayBuffer {
     if (typeof serialize != 'string') {
       throw new TypeError('[GrowingAnalytics] Argument compressed must be type of string')

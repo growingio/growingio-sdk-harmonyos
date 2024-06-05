@@ -21,6 +21,7 @@ import EventPersistence from './EventPersistence'
 import GrowingContext from '../core/Context'
 import { DATABASE_NAME } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
+import Util from '../utils/Util'
 
 export default class EventDatabase {
   static store: relationalStore.RdbStore
@@ -110,7 +111,7 @@ export default class EventDatabase {
         const dataSourceId = r.getString(r.getColumnIndex('DATASOURCE_ID'))
         let e = EventPersistence.fromDatabase(uuid, data, eventType, sdkVersion, accountId, dataSourceId)
         events.push(e)
-        eventsSize += data.length
+        eventsSize += Util.sizeOfEventString(String(data))
       }
       r.close()
     } catch (e) {
