@@ -67,7 +67,7 @@ export class GrowingAnalytics {
     if (success) {
       Session.refreshSession(GrowingContext.getContext(trackerId)!)
     } else {
-      console.error('[GrowingAnalytics] Do not start tracker with same trackerId')
+      console.error('[GrowingAnalytics] Do not start tracker with same trackerId/accountId/dataSourceId')
     }
   }
 

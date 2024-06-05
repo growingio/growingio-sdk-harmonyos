@@ -85,7 +85,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
-    if (GrowingContext.getContext(trackerId)) {
+    if (GrowingContext.hasSimilarContext(trackerId, config)) {
       return false
     }
 

@@ -28,6 +28,23 @@ export default class GrowingContext {
     this.config = config
   }
 
+  static hasSimilarContext(trackerId: string, configuration: GrowingConfig): boolean {
+    let hasSimilarContext = false
+    for (let context of GrowingContext.contexts.values()) {
+      if (context.trackerId == trackerId) {
+        hasSimilarContext = true
+        break
+      }
+      let config: GrowingConfig = context.config
+      if (config.accountId == configuration.accountId &&
+        config.dataSourceId == configuration.dataSourceId) {
+        hasSimilarContext = true
+        break
+      }
+    }
+    return hasSimilarContext
+  }
+
   static getContext(trackerId: string): GrowingContext | undefined {
     return GrowingContext.contexts.get(trackerId)
   }
