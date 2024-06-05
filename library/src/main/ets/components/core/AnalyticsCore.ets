@@ -27,7 +27,6 @@ import GrowingContext from './Context'
 import DeviceInfo from './DeviceInfo'
 import EventTimer from './EventTimer'
 import Hybrid from './Hybrid'
-import PropertyPlugin from './PropertyPlugin'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import CustomEvent from '../event/CustomEvent'
@@ -266,7 +265,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       return
     }
 
-    PropertyPlugin.execute(event, eventScene, context)
     let pst = EventPersistence.fromEvent(event, context)
     await EventDatabase.writeEvent(pst)
     if (pst.eventType == EventType.Visit) {
