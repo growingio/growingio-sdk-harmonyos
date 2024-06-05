@@ -59,7 +59,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     let gContext = GrowingContext.getDefaultContext() as GrowingContext
     let core = new AnalyticsCore(gContext)
     AnalyticsCore.core = core
-    AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
     AnalyticsCore.location = new Location()
     AnalyticsCore.setAbilityLifecycleCallback(context)
@@ -147,38 +146,24 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
-    try {
-      return Hybrid.createHybridProxy(controller, this.context)
-    } catch (e) {
-      LogUtil.error(() => "Failed to call createHybridProxy. code = " + e.code + ", message = " + e.message)
-      return {
-        object: this,
-        name: '',
-        methodList: [],
-        controller: controller
-      }
-    }
+    return Hybrid.createHybridProxy(controller, this.context)
   }
 
   setDataCollectionEnabled(enabled: boolean) {
-    try {
-      let config = this.context.config
-      if (config.dataCollectionEnabled == enabled) {
-        return
-      }
-      LogUtil.info(() => 'Set dataCollectionEnabled: ' + enabled)
-      config.dataCollectionEnabled = enabled
-      if (enabled) {
-        if (config.mode == ConfigMode.CDP) {
-          Session.generateVisit(this.context)
-        } else {
-          Session.refreshSession(this.context)
-        }
+    let config = this.context.config
+    if (config.dataCollectionEnabled == enabled) {
+      return
+    }
+    LogUtil.info(() => 'Set dataCollectionEnabled: ' + enabled)
+    config.dataCollectionEnabled = enabled
+    if (enabled) {
+      if (config.mode == ConfigMode.CDP) {
+        Session.generateVisit(this.context)
       } else {
-        EventTimer.clearTrackTimer(this.context)
+        Session.refreshSession(this.context)
       }
-    } catch (e) {
-      LogUtil.error(() => "Failed to call setDataCollectionEnabled. code = " + e.code + ", message = " + e.message)
+    } else {
+      EventTimer.clearTrackTimer(this.context)
     }
   }
 
@@ -186,41 +171,24 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     userId: string,
     userKey?: string
   ) {
-    try {
-      if (!userKey) {
-        userKey = ''
-      }
-      UserIdentifier.setLoginUserId(userId, userKey, this.context)
-    } catch (e) {
-      LogUtil.error(() => "Failed to call setLoginUserId. code = " + e.code + ", message = " + e.message)
+    if (!userKey) {
+      userKey = ''
     }
+    UserIdentifier.setLoginUserId(userId, userKey, this.context)
   }
 
   cleanLoginUserId() {
-    try {
-      UserIdentifier.setLoginUserId('', '', this.context)
-    } catch (e) {
-      LogUtil.error(() => "Failed to call cleanLoginUserId. code = " + e.code + ", message = " + e.message)
-    }
+    UserIdentifier.setLoginUserId('', '', this.context)
   }
 
   setLoginUserAttributes(attributes: AttributesType) {
-    try {
-      let e = LoginUserAttributesEvent.create(Util.cloneObject(attributes), this.context)
-      AnalyticsCore.writeEventToDisk(e, this.context)
-      LogUtil.info(() => 'Set loginUserAttributes: ' + JSON.stringify(attributes))
-    } catch (e) {
-      LogUtil.error(() => "Failed to call setLoginUserAttributes. code = " + e.code + ", message = " + e.message)
-    }
+    let e = LoginUserAttributesEvent.create(Util.cloneObject(attributes), this.context)
+    AnalyticsCore.writeEventToDisk(e, this.context)
+    LogUtil.info(() => 'Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
 
   getDeviceId(): string {
-    try {
-      return DeviceInfo.deviceId
-    } catch (e) {
-      LogUtil.error(() => "Failed to call getDeviceId. code = " + e.code + ", message = " + e.message)
-      return ''
-    }
+    return DeviceInfo.deviceId
   }
 
   track(
@@ -228,24 +196,20 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     attributes: AttributesType = {},
     sendTo?: string[]
   ) {
-    try {
-      if (this.context.config.mode == ConfigMode.SaaS) {
-        let p = FakePageEvent.create(this.context)
-        AnalyticsCore.writeEventToDisk(p, this.context)
-        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context, p)
-        AnalyticsCore.writeEventToDisk(e, this.context)
-      } else {
-        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
-        AnalyticsCore.writeEventToDisk(e, this.context)
-      }
-      LogUtil.info(() => 'Track custom event with eventName: ' + eventName + ', attributes: ' +
-      JSON.stringify(attributes))
+    if (this.context.config.mode == ConfigMode.SaaS) {
+      let p = FakePageEvent.create(this.context)
+      AnalyticsCore.writeEventToDisk(p, this.context)
+      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context, p)
+      AnalyticsCore.writeEventToDisk(e, this.context)
+    } else {
+      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
+      AnalyticsCore.writeEventToDisk(e, this.context)
+    }
+    LogUtil.info(() => 'Track custom event with eventName: ' + eventName + ', attributes: ' +
+    JSON.stringify(attributes))
 
-      if (sendTo && sendTo.length > 0) {
-        AnalyticsCore.sendTo(sendTo, eventName, attributes)
-      }
-    } catch (e) {
-      LogUtil.error(() => "Failed to call track. code = " + e.code + ", message = " + e.message)
+    if (sendTo && sendTo.length > 0) {
+      AnalyticsCore.sendTo(sendTo, eventName, attributes)
     }
   }
 
@@ -254,71 +218,42 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     eventName: string,
     attributes: AttributesType = {}
   ) {
-    try {
-      trackers.forEach(trackerId => {
-        let tracker = AnalyticsCore.tracker(trackerId)
-        if (tracker) {
-          let e = CustomEvent.create(eventName, Util.cloneObject(attributes), tracker.context)
-          AnalyticsCore.writeEventToDisk(e, tracker.context)
-          LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
-            + ', attributes: ' + JSON.stringify(attributes))
-        }
-      })
-    } catch (e) {
-      LogUtil.error(() => "Failed to call sendTo. code = " + e.code + ", message = " + e.message)
-    }
+    trackers.forEach(trackerId => {
+      let tracker = AnalyticsCore.tracker(trackerId)
+      if (tracker) {
+        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), tracker.context)
+        AnalyticsCore.writeEventToDisk(e, tracker.context)
+        LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
+          + ', attributes: ' + JSON.stringify(attributes))
+      }
+    })
   }
 
   async trackTimerStart(eventName: string): Promise<string> {
-    try {
-      return await EventTimer.trackTimerStart(eventName, this.context)
-    } catch (e) {
-      LogUtil.error(() => "Failed to call trackTimerStart. code = " + e.code + ", message = " + e.message)
-      return ''
-    }
+    return await EventTimer.trackTimerStart(eventName, this.context)
   }
 
   async trackTimerPause(timerId: string) {
-    try {
-      await EventTimer.trackTimerPause(timerId)
-    } catch (e) {
-      LogUtil.error(() => "Failed to call trackTimerPause. code = " + e.code + ", message = " + e.message)
-    }
+    await EventTimer.trackTimerPause(timerId)
   }
 
   async trackTimerResume(timerId: string) {
-    try {
-      await EventTimer.trackTimerResume(timerId)
-    } catch (e) {
-      LogUtil.error(() => "Failed to call trackTimerResume. code = " + e.code + ", message = " + e.message)
-    }
+    await EventTimer.trackTimerResume(timerId)
   }
 
   async trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {}
   ) {
-    try {
-      await EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context)
-    } catch (e) {
-      LogUtil.error(() => "Failed to call trackTimerEnd. code = " + e.code + ", message = " + e.message)
-    }
+    await EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context)
   }
 
   removeTimer(timerId: string) {
-    try {
-      EventTimer.removeTimer(timerId)
-    } catch (e) {
-      LogUtil.error(() => "Failed to call removeTimer. code = " + e.code + ", message = " + e.message)
-    }
+    EventTimer.removeTimer(timerId)
   }
 
   clearTrackTimer() {
-    try {
-      EventTimer.clearTrackTimer(this.context)
-    } catch (e) {
-      LogUtil.error(() => "Failed to call clearTrackTimer. code = " + e.code + ", message = " + e.message)
-    }
+    EventTimer.clearTrackTimer(this.context)
   }
 
   static async writeEventToDisk<T extends Event>(
@@ -326,22 +261,18 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     context: GrowingContext,
     eventScene: EventScene = EventScene.Native
   ) {
-    try {
-      if (!context.config.dataCollectionEnabled) {
-        return
-      }
+    if (!context.config.dataCollectionEnabled) {
+      return
+    }
 
-      let pst = EventPersistence.fromEvent(event, context)
-      await EventDatabase.writeEvent(pst)
-      if (pst.eventType == EventType.Visit) {
-        if (context.config.mode == ConfigMode.SaaS) {
-          await PVEventSender.sendEvent(context)
-        } else {
-          await EventSender.sendEvent(context)
-        }
+    let pst = EventPersistence.fromEvent(event, context)
+    await EventDatabase.writeEvent(pst)
+    if (pst.eventType == EventType.Visit) {
+      if (context.config.mode == ConfigMode.SaaS) {
+        await PVEventSender.sendEvent(context)
+      } else {
+        await EventSender.sendEvent(context)
       }
-    } catch (e) {
-      LogUtil.error(() => "Failed to call writeEventToDisk. code = " + e.code + ", message = " + e.message)
     }
   }
 
@@ -349,38 +280,30 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     latitude: number,
     longitude: number
   ) {
-    try {
-      // mode CDP
-      let needSendVisit: boolean = false
-      let context = GrowingContext.getDefaultContext() as GrowingContext
-      if (context) {
-        if (context.config.mode == ConfigMode.CDP) {
-          if ((AnalyticsCore.location.latitude == 0 && Math.abs(latitude) > 0)
-            || (AnalyticsCore.location.longitude == 0 && Math.abs(longitude) > 0)) {
-            needSendVisit = true
-          }
+    // mode CDP
+    let needSendVisit: boolean = false
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (context) {
+      if (context.config.mode == ConfigMode.CDP) {
+        if ((AnalyticsCore.location.latitude == 0 && Math.abs(latitude) > 0)
+          || (AnalyticsCore.location.longitude == 0 && Math.abs(longitude) > 0)) {
+          needSendVisit = true
         }
       }
+    }
 
-      AnalyticsCore.location.latitude = latitude
-      AnalyticsCore.location.longitude = longitude
+    AnalyticsCore.location.latitude = latitude
+    AnalyticsCore.location.longitude = longitude
 
-      // mode CDP
-      if (needSendVisit) {
-        Session.generateVisit(context)
-      }
-    } catch (e) {
-      LogUtil.error(() => "Failed to call setLocation. code = " + e.code + ", message = " + e.message)
+    // mode CDP
+    if (needSendVisit) {
+      Session.generateVisit(context)
     }
   }
 
   static cleanLocation() {
-    try {
-      AnalyticsCore.location.latitude = 0
-      AnalyticsCore.location.longitude = 0
-    } catch (e) {
-      LogUtil.error(() => "Failed to call cleanLocation. code = " + e.code + ", message = " + e.message)
-    }
+    AnalyticsCore.location.latitude = 0
+    AnalyticsCore.location.longitude = 0
   }
 }
 
