@@ -59,6 +59,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     let gContext = GrowingContext.getDefaultContext() as GrowingContext
     let core = new AnalyticsCore(gContext)
     AnalyticsCore.core = core
+    AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
     AnalyticsCore.location = new Location()
     AnalyticsCore.setAbilityLifecycleCallback(context)

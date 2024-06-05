@@ -67,12 +67,15 @@ export class GrowingAnalytics {
     if (success) {
       Session.refreshSession(GrowingContext.getContext(trackerId)!)
     } else {
-      console.error('[GrowingAnalytics] Do not start tracker with same trackerId/accountId/dataSourceId')
+      console.error('[GrowingAnalytics] Do not start tracker with same trackerId/dataSourceId')
     }
   }
 
   static tracker(trackerId: string): GrowingAnalyticsInterface | undefined {
     let tracker = AnalyticsCore.tracker(trackerId)
+    if (!tracker) {
+      console.error('[GrowingAnalytics] Please start a subTracker the trackerId first')
+    }
     return tracker
   }
 
