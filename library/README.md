@@ -414,6 +414,7 @@ export interface GrowingAnalyticsInterface {
 ```typescript
 // 获取子实例
 let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
+// 调用子实例方法之前需判断是否为undefined，否则将造成应用崩溃
 if (!subTracker) {
   return
 }
@@ -469,6 +470,7 @@ GrowingAnalytics.track('buyProduct2', {
 
 // 子实例track转发
 let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
+// 调用子实例方法之前需判断是否为undefined，否则将造成应用崩溃
 if (!subTracker) {
   return
 }
