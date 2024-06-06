@@ -81,10 +81,7 @@ export class GrowingAnalytics {
   }
 
   static createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return undefined
-    }
-    return AnalyticsCore.core!.createHybridProxy(controller)
+    return AnalyticsCore.core.createHybridProxy(controller)
   }
 
   static isInitializedSuccessfully(trackerId?: string): boolean {
@@ -92,41 +89,26 @@ export class GrowingAnalytics {
   }
 
   static setDataCollectionEnabled(enabled: boolean) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.setDataCollectionEnabled(enabled)
+    AnalyticsCore.core.setDataCollectionEnabled(enabled)
   }
 
   static setLoginUserId(
     userId: string,
     userKey?: string
   ) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.setLoginUserId(userId, userKey)
+    AnalyticsCore.core.setLoginUserId(userId, userKey)
   }
 
   static cleanLoginUserId() {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.setLoginUserId('')
+    AnalyticsCore.core.setLoginUserId('')
   }
 
   static setLoginUserAttributes(attributes: AttributesType) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.setLoginUserAttributes(attributes)
+    AnalyticsCore.core.setLoginUserAttributes(attributes)
   }
 
   static getDeviceId(): string {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return ''
-    }
-    return AnalyticsCore.core!.getDeviceId()
+    return AnalyticsCore.core.getDeviceId()
   }
 
   static track(
@@ -134,31 +116,19 @@ export class GrowingAnalytics {
     attributes: AttributesType = {},
     sendTo?: string[]
   ) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.track(eventName, attributes, sendTo)
+    AnalyticsCore.core.track(eventName, attributes, sendTo)
   }
 
   static async trackTimerStart(eventName: string): Promise<string> {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return ''
-    }
-    return await AnalyticsCore.core!.trackTimerStart(eventName)
+    return await AnalyticsCore.core.trackTimerStart(eventName)
   }
 
   static async trackTimerPause(timerId: string) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    await AnalyticsCore.core!.trackTimerPause(timerId)
+    await AnalyticsCore.core.trackTimerPause(timerId)
   }
 
   static async trackTimerResume(timerId: string) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    await AnalyticsCore.core!.trackTimerResume(timerId)
+    await AnalyticsCore.core.trackTimerResume(timerId)
   }
 
   static async trackTimerEnd(
@@ -166,24 +136,15 @@ export class GrowingAnalytics {
     attributes: AttributesType = {},
     sendTo?: string[]
   ) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    await AnalyticsCore.core!.trackTimerEnd(timerId, attributes, sendTo)
+    await AnalyticsCore.core.trackTimerEnd(timerId, attributes, sendTo)
   }
 
   static removeTimer(timerId: string) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.removeTimer(timerId)
+    AnalyticsCore.core.removeTimer(timerId)
   }
 
   static clearTrackTimer() {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
-    AnalyticsCore.core!.clearTrackTimer()
+    AnalyticsCore.core.clearTrackTimer()
   }
 
   static setGeneralProps(props: AttributesType) {
@@ -206,16 +167,10 @@ export class GrowingAnalytics {
     latitude: number,
     longitude: number
   ) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
     AnalyticsCore.setLocation(latitude, longitude)
   }
 
   static cleanLocation() {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      return
-    }
     AnalyticsCore.setLocation(0, 0)
   }
 }

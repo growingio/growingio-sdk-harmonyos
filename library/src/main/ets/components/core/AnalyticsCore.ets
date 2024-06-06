@@ -46,7 +46,7 @@ import Util from '../utils/Util'
 import DummyTracker from './DummyTracker'
 
 export default class AnalyticsCore implements GrowingAnalyticsInterface {
-  static core: AnalyticsCore | undefined = undefined
+  static core: AnalyticsCore | DummyTracker = new DummyTracker()
   static trackers: Array<AnalyticsCore> = []
   static dummyTracker: DummyTracker = new DummyTracker()
   static location: Location
