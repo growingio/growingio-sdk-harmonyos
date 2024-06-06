@@ -210,15 +210,18 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     JSON.stringify(attributes))
 
     if (sendTo && sendTo.length > 0) {
-      AnalyticsCore.sendTo(sendTo, eventName, attributes)
+      AnalyticsCore.sendTo(this.context.trackerId, sendTo, eventName, attributes)
     }
   }
 
   static sendTo(
+    curTrackerId: string,
     trackers: string[],
     eventName: string,
     attributes: AttributesType = {}
   ) {
+    trackers = trackers.filter( trackerId => trackerId != curTrackerId)
+    trackers = Array.from(new Set(trackers))
     trackers.forEach(trackerId => {
       let tracker = AnalyticsCore.tracker(trackerId)
       if (tracker) {

@@ -121,7 +121,7 @@ export default class EventTimer {
       + JSON.stringify(attributes))
 
     if (sendTo && sendTo.length > 0) {
-      AnalyticsCore.sendTo(sendTo, eventName, attributes)
+      AnalyticsCore.sendTo(context.trackerId, sendTo, eventName, attributes)
     }
   }
 
