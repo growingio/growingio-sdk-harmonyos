@@ -37,9 +37,10 @@ export default class DummyTracker implements GrowingAnalyticsInterface {
   removeTimer(timerId: string): void {}
   clearTrackTimer(): void {}
 
-  // Main tracker only
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {
     return undefined
   }
+
+  // Main tracker only
   getDeviceId(): string { return '' }
 }

@@ -41,6 +41,8 @@ export interface GrowingAnalyticsInterface {
   trackTimerEnd(timerId: string, attributes: AttributesType, sendTo?: string[]): void
   removeTimer(timerId: string): void
   clearTrackTimer(): void
+
+  createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined
 }
 
 export class GrowingAnalytics {

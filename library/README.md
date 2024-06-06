@@ -457,6 +457,9 @@ subTracker.setLoginUserAttributes({
   'name': 'ben',
   'age': 30
 })
+
+// Hybrid 打通
+subTracker.createHybridProxy(this.controller)
 ```
 
 #### SendTo
