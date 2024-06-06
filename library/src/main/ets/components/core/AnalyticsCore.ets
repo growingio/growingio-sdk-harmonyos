@@ -45,11 +45,16 @@ import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 import DummyTracker from './DummyTracker'
 
+class Location {
+  latitude: number = 0
+  longitude: number = 0
+}
+
 export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static core: AnalyticsCore | DummyTracker = new DummyTracker()
   static trackers: Array<AnalyticsCore> = []
   static dummyTracker: DummyTracker = new DummyTracker()
-  static location: Location
+  static location: Location = new Location()
   context: GrowingContext
 
   constructor(context: GrowingContext) {
@@ -63,7 +68,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     AnalyticsCore.core = core
     AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
-    AnalyticsCore.location = new Location()
     AnalyticsCore.setAbilityLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
     await Promise.all<Promise<void>>([
@@ -316,9 +320,4 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     AnalyticsCore.location.latitude = 0
     AnalyticsCore.location.longitude = 0
   }
-}
-
-class Location {
-  latitude: number = 0
-  longitude: number = 0
 }
