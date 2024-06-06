@@ -75,7 +75,7 @@ export class GrowingAnalytics {
   static tracker(trackerId: string): GrowingAnalyticsInterface {
     let tracker = AnalyticsCore.tracker(trackerId)
     if (!tracker.isInitializedSuccessfully()) {
-      console.error('[GrowingAnalytics] Please start a subTracker with the trackerId '+ trackerId + ' first')
+      console.error('[GrowingAnalytics] Please start a subTracker with the trackerId ' + trackerId + ' first')
     }
     return tracker
   }
