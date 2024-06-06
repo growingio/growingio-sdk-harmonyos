@@ -395,27 +395,30 @@ GrowingAnalytics.startSubTracker(trackerId, config)
 子实例可单独调用以下接口，其逻辑与其他实例相互隔离
 ```typescript
 export interface GrowingAnalyticsInterface {
-   setDataCollectionEnabled(enabled: boolean)
-   setLoginUserId(userId: string, userKey?: string)
-   cleanLoginUserId()
-
-   setLoginUserAttributes(attributes: AttributesType)
-   track(eventName: string, attributes: AttributesType, sendTo?: string[])
-   trackTimerStart(eventName: string): Promise<string>
-   trackTimerPause(timerId: string)
-   trackTimerResume(timerId: string)
-   trackTimerEnd(timerId: string, attributes: AttributesType)
-   removeTimer(timerId: string)
-   clearTrackTimer()
+  isInitializedSuccessfully(): boolean
+  setDataCollectionEnabled(enabled: boolean): void
+  setLoginUserId(userId: string, userKey?: string): void
+  cleanLoginUserId(): void
+  
+  setLoginUserAttributes(attributes: AttributesType): void
+  track(eventName: string, attributes: AttributesType, sendTo?: string[]): void
+  trackTimerStart(eventName: string): Promise<string>
+  trackTimerPause(timerId: string): void
+  trackTimerResume(timerId: string): void
+  trackTimerEnd(timerId: string, attributes: AttributesType, sendTo?: string[]): void
+  removeTimer(timerId: string): void
+  clearTrackTimer(): void
 }
 ```
 
 假设子实例的 `trackerId` 为 `subTrackerId_01`，调用方式如下：
 ```typescript
-// 获取子实例
+// 获取子实例，需要先初始化该子实例，否则下述接口将无法生效
 let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
-// 调用子实例方法之前需判断是否为undefined，否则将造成应用崩溃
-if (!subTracker) {
+
+// 返回是否初始化成功
+let success = subTracker.isInitializedSuccessfully()
+if (!success) {
   return
 }
 
@@ -441,7 +444,8 @@ let timerId = await subTracker.trackTimerStart('eventName')
 subTracker.trackTimerPause(timerId)
 subTracker.trackTimerResume(timerId)
 subTracker.trackTimerEnd(timerId)
-subTracker.trackTimerEnd(timerId, {
+let timerId2 = await subTracker.trackTimerStart('eventName2')
+subTracker.trackTimerEnd(timerId2, {
   'property': 'value',
   'property2': 100
 })
@@ -468,12 +472,17 @@ GrowingAnalytics.track('buyProduct2', {
   'from': ['sichuan', 'guizhou', 'hunan']
 }, ['subTrackerId_01', 'subTrackerId_02'])
 
+// 主实例事件计时器转发
+let timerId = await GrowingAnalytics.trackTimerStart('eventName')
+GrowingAnalytics.trackTimerEnd(timerId, {}, ['subTrackerId_01', 'subTrackerId_02'])
+let timerId2 = await GrowingAnalytics.trackTimerStart('eventName2')
+GrowingAnalytics.trackTimerEnd(timerId2, {
+  'property': 'value',
+  'property2': 100
+}, ['subTrackerId_01', 'subTrackerId_02'])
+
 // 子实例track转发
 let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
-// 调用子实例方法之前需判断是否为undefined，否则将造成应用崩溃
-if (!subTracker) {
-  return
-}
 subTracker.track('buyProduct1', {}, ['subTrackerId_02'])
 subTracker.track('buyProduct2', {
   'name': 'apple',
@@ -481,8 +490,17 @@ subTracker.track('buyProduct2', {
   'num': 100,
   'from': ['sichuan', 'guizhou', 'hunan']
 }, ['subTrackerId_02'])
+
+// 子实例事件计时器转发
+let timerId = await subTracker.trackTimerStart('eventName')
+subTracker.trackTimerEnd(timerId, {}, ['subTrackerId_02'])
+let timerId2 = await subTracker.trackTimerStart('eventName2')
+subTracker.trackTimerEnd(timerId2, {
+  'property': 'value',
+  'property2': 100
+}, ['subTrackerId_02'])
 ```
-> 当前仅 track 接口支持 sendTo 转发
+> 当前仅 track 和 trackTimerEnd 接口支持 sendTo 转发
 
 ## License
 ```

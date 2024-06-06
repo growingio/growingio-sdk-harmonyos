@@ -27,18 +27,19 @@ import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
 export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
 
 export interface GrowingAnalyticsInterface {
-   setDataCollectionEnabled(enabled: boolean): void
-   setLoginUserId(userId: string, userKey?: string): void
-   cleanLoginUserId(): void
+  isInitializedSuccessfully(): boolean
+  setDataCollectionEnabled(enabled: boolean): void
+  setLoginUserId(userId: string, userKey?: string): void
+  cleanLoginUserId(): void
 
-   setLoginUserAttributes(attributes: AttributesType): void
-   track(eventName: string, attributes: AttributesType, sendTo?: string[]): void
-   trackTimerStart(eventName: string): Promise<string>
-   trackTimerPause(timerId: string): void
-   trackTimerResume(timerId: string): void
-   trackTimerEnd(timerId: string, attributes: AttributesType): void
-   removeTimer(timerId: string): void
-   clearTrackTimer(): void
+  setLoginUserAttributes(attributes: AttributesType): void
+  track(eventName: string, attributes: AttributesType, sendTo?: string[]): void
+  trackTimerStart(eventName: string): Promise<string>
+  trackTimerPause(timerId: string): void
+  trackTimerResume(timerId: string): void
+  trackTimerEnd(timerId: string, attributes: AttributesType, sendTo?: string[]): void
+  removeTimer(timerId: string): void
+  clearTrackTimer(): void
 }
 
 export class GrowingAnalytics {
@@ -71,10 +72,10 @@ export class GrowingAnalytics {
     }
   }
 
-  static tracker(trackerId: string): GrowingAnalyticsInterface | undefined {
+  static tracker(trackerId: string): GrowingAnalyticsInterface {
     let tracker = AnalyticsCore.tracker(trackerId)
-    if (!tracker) {
-      console.error('[GrowingAnalytics] Please start a subTracker the trackerId first')
+    if (!tracker.isInitializedSuccessfully()) {
+      console.error('[GrowingAnalytics] Please start a subTracker with the trackerId '+ trackerId + ' first')
     }
     return tracker
   }
@@ -87,11 +88,7 @@ export class GrowingAnalytics {
   }
 
   static isInitializedSuccessfully(trackerId?: string): boolean {
-    if (trackerId && trackerId.length > 0) {
-      return AnalyticsCore.tracker(trackerId) != undefined
-    } else {
-      return AnalyticsCore.core != undefined
-    }
+    return AnalyticsCore.tracker(trackerId ?? '').isInitializedSuccessfully()
   }
 
   static setDataCollectionEnabled(enabled: boolean) {
@@ -166,12 +163,13 @@ export class GrowingAnalytics {
 
   static async trackTimerEnd(
     timerId: string,
-    attributes: AttributesType = {}
+    attributes: AttributesType = {},
+    sendTo?: string[]
   ) {
     if (!GrowingAnalytics.isInitializedSuccessfully()) {
       return
     }
-    await AnalyticsCore.core!.trackTimerEnd(timerId, attributes)
+    await AnalyticsCore.core!.trackTimerEnd(timerId, attributes, sendTo)
   }
 
   static removeTimer(timerId: string) {

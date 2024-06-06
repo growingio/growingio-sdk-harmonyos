@@ -43,10 +43,12 @@ import { AttributesType, JavaScriptProxyType, SDK_VERSION } from '../utils/Const
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
+import DummyTracker from './DummyTracker'
 
 export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static core: AnalyticsCore | undefined = undefined
   static trackers: Array<AnalyticsCore> = []
+  static dummyTracker: DummyTracker = new DummyTracker()
   static location: Location
   context: GrowingContext
 
@@ -109,13 +111,13 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     return true
   }
 
-  static tracker(trackerId: string): AnalyticsCore | undefined {
+  static tracker(trackerId: string): AnalyticsCore | DummyTracker {
     for (let tracker of AnalyticsCore.trackers) {
       if (tracker.context.trackerId == trackerId) {
         return tracker
       }
     }
-    return undefined
+    return AnalyticsCore.dummyTracker
   }
 
   static setAbilityLifecycleCallback(context: Context) {
@@ -148,6 +150,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
     return Hybrid.createHybridProxy(controller, this.context)
+  }
+
+  isInitializedSuccessfully(): boolean {
+    return true
   }
 
   setDataCollectionEnabled(enabled: boolean) {
@@ -220,13 +226,13 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     eventName: string,
     attributes: AttributesType = {}
   ) {
-    trackers = trackers.filter( trackerId => trackerId != curTrackerId)
+    trackers = trackers.filter( trackerId => trackerId != curTrackerId )
     trackers = Array.from(new Set(trackers))
     trackers.forEach(trackerId => {
       let tracker = AnalyticsCore.tracker(trackerId)
-      if (tracker) {
-        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), tracker.context)
-        AnalyticsCore.writeEventToDisk(e, tracker.context)
+      if (tracker.isInitializedSuccessfully()) {
+        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), (tracker as AnalyticsCore).context)
+        AnalyticsCore.writeEventToDisk(e, (tracker as AnalyticsCore).context)
         LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
           + ', attributes: ' + JSON.stringify(attributes))
       }
