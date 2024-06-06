@@ -23,6 +23,7 @@ import GrowingContext from '../core/Context'
 import GeneralProps from '../core/GeneralProps'
 import Session from '../core/Session'
 import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
+import { LogUtil } from '../utils/LogUtil'
 
 export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
 
@@ -45,11 +46,11 @@ export interface GrowingAnalyticsInterface {
 export class GrowingAnalytics {
   static async start(context: Context, configuration: GrowingConfig): Promise<void> {
     if (GrowingAnalytics.isInitializedSuccessfully()) {
-      console.warn('[GrowingAnalytics] Do not initialize GrowingAnalytics repeatedly')
+      LogUtil.warn(() => '[GrowingAnalytics] Do not initialize GrowingAnalytics repeatedly')
       return
     }
     if (!context.stageMode) {
-      console.error('[GrowingAnalytics] Only support stageMode(HarmonyOS 3.1+, API 9+)')
+      LogUtil.error(() => '[GrowingAnalytics] Only support stageMode')
       return
     }
     let config = configuration.copy()
@@ -59,7 +60,7 @@ export class GrowingAnalytics {
 
   static startSubTracker(trackerId: string, configuration: GrowingConfig) {
     if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      console.error('[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
+      LogUtil.error(() => '[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
       return
     }
 
@@ -68,14 +69,14 @@ export class GrowingAnalytics {
     if (success) {
       Session.refreshSession(GrowingContext.getContext(trackerId)!)
     } else {
-      console.error('[GrowingAnalytics] Do not start tracker with same trackerId/dataSourceId')
+      LogUtil.error(() => '[GrowingAnalytics] Do not start tracker with same trackerId/dataSourceId')
     }
   }
 
   static tracker(trackerId: string): GrowingAnalyticsInterface {
     let tracker = AnalyticsCore.tracker(trackerId)
     if (!tracker.isInitializedSuccessfully()) {
-      console.error('[GrowingAnalytics] Please start a subTracker with the trackerId ' + trackerId + ' first')
+      LogUtil.error(() => '[GrowingAnalytics] Please start a subTracker with the trackerId ' + trackerId + ' first')
     }
     return tracker
   }
@@ -85,7 +86,11 @@ export class GrowingAnalytics {
   }
 
   static isInitializedSuccessfully(trackerId?: string): boolean {
-    return AnalyticsCore.tracker(trackerId ?? '').isInitializedSuccessfully()
+    if (trackerId) {
+      return AnalyticsCore.tracker(trackerId).isInitializedSuccessfully()
+    } else {
+      return AnalyticsCore.core.isInitializedSuccessfully()
+    }
   }
 
   static setDataCollectionEnabled(enabled: boolean) {

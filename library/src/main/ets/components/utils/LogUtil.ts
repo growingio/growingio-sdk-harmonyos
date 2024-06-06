@@ -26,16 +26,10 @@ export class LogUtil {
   }
 
   static error(message: () => string) {
-    if (!this.debugEnabled) {
-      return
-    }
     console.error('[GrowingAnalytics] ' + message())
   }
 
   static warn(message: () => string) {
-    if (!this.debugEnabled) {
-      return
-    }
     console.warn('[GrowingAnalytics] ' + message())
   }
 }
