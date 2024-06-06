@@ -87,7 +87,8 @@ export default class EventTimer {
   static async trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {},
-    context: GrowingContext
+    context: GrowingContext,
+    sendTo?: string[]
   ) {
     let timer: EventTimer | undefined = EventTimer.timers.get(timerId)
     if (!timer) {
@@ -118,6 +119,10 @@ export default class EventTimer {
     }
     LogUtil.info(() => 'Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
       + JSON.stringify(attributes))
+
+    if (sendTo && sendTo.length > 0) {
+      AnalyticsCore.sendTo(sendTo, eventName, attributes)
+    }
   }
 
   static removeTimer(timerId: string) {

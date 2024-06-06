@@ -244,9 +244,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
   async trackTimerEnd(
     timerId: string,
-    attributes: AttributesType = {}
+    attributes: AttributesType = {},
+    sendTo?: string[]
   ) {
-    await EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context)
+    await EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context, sendTo)
   }
 
   removeTimer(timerId: string) {
