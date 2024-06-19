@@ -51,6 +51,8 @@ export default class Session {
     Session.sessionState = SessionState.Foreground
     Session.sessions.forEach(session => {
       if (session.latestOnBackgroundTime == 0) {
+        // 1.首次初始化
+        // 2.上一次sessionState为foreground
         return
       }
 
@@ -59,6 +61,7 @@ export default class Session {
         LogUtil.info(() => 'current session is outdated, trackerId = ' + context.trackerId)
         Session.refreshSession(context)
       }
+      session.latestOnBackgroundTime = 0
     })
   }
 
