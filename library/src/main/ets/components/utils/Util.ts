@@ -134,7 +134,6 @@ export default class Util {
         ...basic,
         t: 'page',
         p: event.path,
-        ptm: event.pageShowTimestamp,
         o: 'portrait',
         tl: ''
       }
