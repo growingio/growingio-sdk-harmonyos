@@ -17,7 +17,7 @@
 
 import webview from '@ohos.web.webview'
 
-import AnalyticsCore from './AnalyticsCore'
+import AnalyticsCore, { SDK_VERSION } from './AnalyticsCore'
 import AppInfo from './AppInfo'
 import GrowingContext from './Context'
 import UserIdentifier from './UserIdentifier'
@@ -26,7 +26,7 @@ import HybridCustomEvent from '../event/hybrid/HybridCustomEvent'
 import HybridPageEvent from '../event/hybrid/HybridPageEvent'
 import HybridViewElementEvent from '../event/hybrid/HybridViewElementEvent'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
-import { AttributesType, JavaScriptProxyType, SDK_VERSION } from '../utils/Constants'
+import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
 export default class Hybrid {

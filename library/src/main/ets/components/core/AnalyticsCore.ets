@@ -39,16 +39,19 @@ import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import CustomEventSender from '../event/saas/SaaSCSTMEventSender'
 import PVEventSender from '../event/saas/SaaSPVEventSender'
 import FakePageEvent from '../event/saas/FakePageEvent'
-import { AttributesType, JavaScriptProxyType, SDK_VERSION } from '../utils/Constants'
+import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 import DummyTracker from './DummyTracker'
+import BuildProfile from '../../../../../BuildProfile'
 
 class Location {
   latitude: number = 0
   longitude: number = 0
 }
+
+export const SDK_VERSION: string = BuildProfile.HAR_VERSION
 
 export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static core: AnalyticsCore | DummyTracker = new DummyTracker()
