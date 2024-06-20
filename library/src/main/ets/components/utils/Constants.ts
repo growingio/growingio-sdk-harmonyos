@@ -31,7 +31,7 @@ export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
 
 export const Event_DURATION = "event_duration"
 
-export const SDK_VERSION = "1.1.0"
+export const SDK_VERSION = "1.1.0-rc.0"
 
 export type ValueType = string | number | boolean | string[] | number[] | boolean[]
 export type AttributesType = { [key: string]: ValueType }
