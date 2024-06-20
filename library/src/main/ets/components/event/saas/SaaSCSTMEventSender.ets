@@ -76,21 +76,28 @@ export default class CustomEventSender {
       extraData: serialize,
       header: header
     }, (e, v) => {
-      if (e) {
-        LogUtil.info(() => 'Request Failure, error: ' + JSON.stringify(e))
-        CustomEventSender.isUploading = false
-      } else {
-        LogUtil.info(() => 'Request Success, Url = ' + url)
-        LogUtil.info(() => 'Send event = ' + serialize)
+      if (v) {
+        if (v.responseCode >= 200 && v.responseCode < 400) {
+          LogUtil.info(() => 'Request Success, Url = ' + url)
+          LogUtil.info(() => 'Send event = ' + serialize)
 
-        EventDatabase.removeEvents(events).then(() => {
-          CustomEventSender.isUploading = false
-          EventDatabase.countOfEvents(context, [EventType.Custom, EventType.LoginUserAttributes]).then(count => {
-            if (count > REQUEST_MAX_EVENT_COUNT) {
-              CustomEventSender.sendEvent(context)
-            }
+          EventDatabase.removeEvents(events).then(() => {
+            CustomEventSender.isUploading = false
+            EventDatabase.countOfEvents(context, [EventType.Custom, EventType.LoginUserAttributes]).then(count => {
+              if (count > REQUEST_MAX_EVENT_COUNT) {
+                CustomEventSender.sendEvent(context)
+              }
+            })
           })
-        })
+        } else {
+          LogUtil.info(() => 'Request Failure, responseCode: ' + String(v.responseCode))
+          CustomEventSender.isUploading = false
+        }
+      } else {
+        if (e) {
+          LogUtil.info(() => 'Request Failure, error: ' + JSON.stringify(e))
+        }
+        CustomEventSender.isUploading = false
       }
       request.destroy()
     })

@@ -76,21 +76,28 @@ export default class PVEventSender {
       extraData: serialize,
       header: header
     }, (e, v) => {
-      if (e) {
-        LogUtil.info(() => 'Request Failure, error: ' + JSON.stringify(e))
-        PVEventSender.isUploading = false
-      } else {
-        LogUtil.info(() => 'Request Success, Url = ' + url)
-        LogUtil.info(() => 'Send event = ' + serialize)
+      if (v) {
+        if (v.responseCode >= 200 && v.responseCode < 400) {
+          LogUtil.info(() => 'Request Success, Url = ' + url)
+          LogUtil.info(() => 'Send event = ' + serialize)
 
-        EventDatabase.removeEvents(events).then(() => {
-          PVEventSender.isUploading = false
-          EventDatabase.countOfEvents(context, [EventType.Visit, EventType.Page]).then(count => {
-            if (count > REQUEST_MAX_EVENT_COUNT) {
-              PVEventSender.sendEvent(context)
-            }
+          EventDatabase.removeEvents(events).then(() => {
+            PVEventSender.isUploading = false
+            EventDatabase.countOfEvents(context, [EventType.Visit, EventType.Page]).then(count => {
+              if (count > REQUEST_MAX_EVENT_COUNT) {
+                PVEventSender.sendEvent(context)
+              }
+            })
           })
-        })
+        } else {
+          LogUtil.info(() => 'Request Failure, responseCode: ' + String(v.responseCode))
+          PVEventSender.isUploading = false
+        }
+      } else {
+        if (e) {
+          LogUtil.info(() => 'Request Failure, error: ' + JSON.stringify(e))
+        }
+        PVEventSender.isUploading = false
       }
       request.destroy()
     })
