@@ -1,7 +1,5 @@
-import { GrowingAnalytics } from '@growingio/analytics'
-import AppContext from '@ohos.app.ability.common'
-import Want from '@ohos.app.ability.Want'
-import router from '@ohos.router'
+import { GrowingAnalytics, GrowingAttrType } from '@growingio/analytics'
+import Util from '../Util'
 
 @Entry
 @Component
@@ -19,58 +17,53 @@ struct Index {
         Text('setDataCollectionEnabled')
           .fontColor('#182431')
           .fontSize(16)
-      }.height(40).selectedColor(Color.Green)
+      }.height(40).selectedColor('rgba(0, 125, 255, 0.20)')
       .onChange((isOn: boolean) => {
         this.setDataCollectionEnabled(isOn)
       }).margin({ top: 15 })
-      Button('setLoginUserId')
-        .onClick(() => {
-          this.setLoginUserId()
-        }).margin({ top: 15 })
-      Button('cleanLoginUserId')
-        .onClick(() => {
-          this.cleanLoginUserId()
-        }).margin({ top: 15 })
-      Button('setLocation')
-        .onClick(() => {
-          this.setLocation()
-        }).margin({ top: 15 })
-      Button('cleanLocation')
-        .onClick(() => {
-          this.cleanLocation()
-        }).margin({ top: 15 })
-      Button('track')
-        .onClick(() => {
-          this.track()
-        }).margin({ top: 15 })
+      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+        Button('setLoginUserId')
+          .onClick(() => {
+            this.setLoginUserId()
+          }).margin({ top: 15 })
+        Button('cleanLoginUserId')
+          .onClick(() => {
+            this.cleanLoginUserId()
+          }).margin({ top: 15 })
+      }
+      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+        Button('setLocation')
+          .onClick(() => {
+            this.setLocation()
+          }).margin({ top: 15 })
+        Button('cleanLocation')
+          .onClick(() => {
+            this.cleanLocation()
+          }).margin({ top: 15 })
+      }
       Button('loginUserAttributes')
         .onClick(() => {
           this.loginUserAttributes()
         }).margin({ top: 15 })
-      Button('setGeneralProps')
+      Button('track')
         .onClick(() => {
-          this.setGeneralProps()
+          Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track')
         }).margin({ top: 15 })
-      Button('removeGeneralProps')
+      Button('generalProps')
         .onClick(() => {
-          this.removeGeneralProps()
-        }).margin({ top: 15 })
-      Button('clearGeneralProps')
-        .onClick(() => {
-          this.clearGeneralProps()
+          Util.startAbility(getContext(this), 'GeneralPropsAbility', 'pages/GeneralProps')
         }).margin({ top: 15 })
       Button('trackTimer')
         .onClick(() => {
-          let context = getContext(this) as AppContext.UIAbilityContext
-          const want: Want = {
-            bundleName: getContext(context).applicationInfo.name,
-            abilityName: 'TrackTimerAbility',
-          };
-          try {
-            context.startAbility(want)
-          } catch (error) {
-          }
-          // router.pushUrl({url: 'pages/TrackTimer'})
+          Util.startAbility(getContext(this), 'TrackTimerAbility', 'pages/TrackTimer')
+        }).margin({ top: 15 })
+      Button('subTracker')
+        .onClick(() => {
+          Util.startAbility(getContext(this), 'SubTrackerAbility', 'pages/SubTracker')
+        }).margin({ top: 15 })
+      Button('hybrid')
+        .onClick(() => {
+          Util.startAbility(getContext(this), 'HybridAbility', 'pages/Hybrid')
         }).margin({ top: 15 })
     }
     .width('100%')
@@ -86,13 +79,7 @@ struct Index {
   }
 
   setLoginUserId() {
-    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
-    let userId = ''
-
-    for (let i = 0; i < 10; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length)
-      userId += characters.charAt(randomIndex)
-    }
+    let userId = Util.getRandomString()
     GrowingAnalytics.setLoginUserId(userId, 'harmony')
   }
 
@@ -110,37 +97,10 @@ struct Index {
     GrowingAnalytics.cleanLocation()
   }
 
-  track() {
-    GrowingAnalytics.track('buyProduct', {
-      'name': 'apple',
-      'money': 1000,
-      'num': 100,
-      'from': ['sichuan', 'guizhou', 'hunan']
-    })
-  }
-
   loginUserAttributes() {
     GrowingAnalytics.setLoginUserAttributes({
       'name': 'ben',
       'age': 30
     })
-  }
-
-  setGeneralProps() {
-    GrowingAnalytics.setGeneralProps({
-      'prop1': 10,
-      'prop2': 'kkk',
-      'prop3': [1, 2, 3],
-      'prop4': ['a', 'b', 'c'],
-      'name': 'banana'
-    })
-  }
-
-  removeGeneralProps() {
-    GrowingAnalytics.removeGeneralProps(['prop1', 'prop2', 'prop3'])
-  }
-
-  clearGeneralProps() {
-    GrowingAnalytics.clearGeneralProps()
   }
 }

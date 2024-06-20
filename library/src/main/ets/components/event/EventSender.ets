@@ -18,16 +18,16 @@
 import http from '@ohos.net.http'
 
 import EventDatabase from './EventDatabase'
-import AnalyticsCore from '../core/AnalyticsCore'
-import { DATABASE_MAX_BATCH_SIZE } from '../utils/Constants'
+import GrowingContext from '../core/Context'
+import { REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
+import Util from '../utils/Util'
 
 export default class EventSender {
   static isUploading: boolean = false
 
-  static async sendEvent() {
-    let config = (AnalyticsCore.core as AnalyticsCore).config
-    if (!config.dataCollectionEnabled) {
+  static async sendEvent(context: GrowingContext) {
+    if (!context.config.dataCollectionEnabled) {
       return
     }
 
@@ -35,50 +35,72 @@ export default class EventSender {
       return
     }
 
-    let events = await EventDatabase.getEventsByCount(DATABASE_MAX_BATCH_SIZE)
+    let events = await EventDatabase.getEventsByCount(REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE, context)
     if (events.length == 0) {
       return
     }
+
     EventSender.isUploading = true
-    let serialize = events.map(event => String(event.data)).join(',')
+
+    let serialize: string | ArrayBuffer = '[' + events.map(event => String(event.data)).join(',') + ']'
+    let curTime = Date.now()
+    let header: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "X-Timestamp": curTime + ''
+    }
+
+    if (context.config.compressEnabled) {
+      serialize = Util.compress(serialize as string)
+      header['X-Compress-Codec'] = '2'
+    }
+
+    if (context.config.encryptEnabled) {
+      serialize = Util.encrypt(serialize, curTime)
+      header['X-Crypt-Codec'] = '1'
+    }
+
     let request = http.createHttp()
-    let url = EventSender.url()
+    let url = EventSender.url(context, curTime)
 
     request.request(url, {
       method: http.RequestMethod.POST,
-      connectTimeout: 30000,
-      readTimeout: 30000,
-      extraData: '[' + serialize + ']',
-      header: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-Timestamp": Date.now() + ''
-      }
+      connectTimeout: context.config.requestOptions._connectTimeout,
+      readTimeout: context.config.requestOptions._readTimeout,
+      extraData: serialize,
+      header: header
     }, (e, v) => {
-      if (e) {
-        LogUtil.info('Request Failure, error: ' + JSON.stringify(e))
-        EventSender.isUploading = false
-      } else {
-        LogUtil.info('Request Success, Url = ' + url)
-        LogUtil.info('Send event = ' + serialize)
+      if (v) {
+        if (v.responseCode >= 200 && v.responseCode < 400) {
+          LogUtil.info(() => 'Request Success, Url = ' + url)
+          LogUtil.info(() => 'Send event = ' + serialize)
 
-        EventDatabase.removeEvents(events).then(() => {
-          EventSender.isUploading = false
-          EventDatabase.countOfEvents().then(count => {
-            if (count > DATABASE_MAX_BATCH_SIZE) {
-              EventSender.sendEvent()
-            }
+          EventDatabase.removeEvents(events).then(() => {
+            EventSender.isUploading = false
+            EventDatabase.countOfEvents(context).then(count => {
+              if (count > REQUEST_MAX_EVENT_COUNT) {
+                EventSender.sendEvent(context)
+              }
+            })
           })
-        })
+        } else {
+          LogUtil.info(() => 'Request Failure, responseCode: ' + String(v.responseCode))
+          EventSender.isUploading = false
+        }
+      } else {
+        if (e) {
+          LogUtil.info(() => 'Request Failure, error: ' + JSON.stringify(e))
+        }
+        EventSender.isUploading = false
       }
       request.destroy()
     })
   }
 
-  static url() {
-    let config = (AnalyticsCore.core as AnalyticsCore).config
+  static url(context: GrowingContext, time: number) {
+    let config = context.config
     let serverHost = config.dataCollectionServerHost
     let accountId = config.accountId
-    return serverHost + '/v3/projects/' + accountId + '/collect?stm=' + Date.now()
+    return serverHost + '/v3/projects/' + accountId + '/collect?stm=' + time
   }
 }

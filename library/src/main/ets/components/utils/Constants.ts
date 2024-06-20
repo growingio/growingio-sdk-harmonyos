@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import webview from '@ohos.web.webview'
+
 export const PREFERENCE_NAME = 'growing_analytics_sp'
 export const PREFERENCE_USER_ID = "growing_user_id"
 export const PREFERENCE_USER_KEY = "growing_user_key"
@@ -23,12 +25,19 @@ export const PREFERENCE_DEVICE_ID = "growing_device_id"
 export const PREFERENCE_EVENT_SEQUENCE_ID = "growing_event_sequence_id"
 
 export const DATABASE_NAME = 'growing_analytics_database'
-export const DATABASE_MAX_BATCH_SIZE = 500
-export const DATABASE_EXPIRATION_TIME = 86400000 * 7
+
+export const REQUEST_MAX_EVENT_COUNT = 500
+export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
 
 export const Event_DURATION = "event_duration"
 
-export const SDK_VERSION = "1.0.0"
+export const SDK_VERSION = "1.1.0-rc.0"
 
 export type ValueType = string | number | boolean | string[] | number[] | boolean[]
 export type AttributesType = { [key: string]: ValueType }
+export type JavaScriptProxyType = {
+  object: object;
+  name: string;
+  methodList: Array<string>;
+  controller: webview.WebviewController;
+}

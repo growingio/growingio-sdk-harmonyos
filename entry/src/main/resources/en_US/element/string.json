@@ -23,6 +23,38 @@
     {
       "name": "TrackTimerAbility_label",
       "value": "label"
+    },
+    {
+      "name": "SubTrackerAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "SubTrackerAbility_label",
+      "value": "label"
+    },
+    {
+      "name": "GeneralPropsAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "GeneralPropsAbility_label",
+      "value": "label"
+    },
+    {
+      "name": "TrackAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "TrackAbility_label",
+      "value": "label"
+    },
+    {
+      "name": "HybridAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "HybridAbility_label",
+      "value": "label"
     }
   ]
 }

@@ -17,17 +17,33 @@
 
 import Event, { EventType, AttributesType } from './Event'
 import EventBuilder from './EventBuilder'
-import Util from '../utils/Util'
+import GrowingContext from '../core/Context'
+import FakePageEvent from './saas/FakePageEvent'
 
 export default class CustomEvent extends Event {
   eventName: string = ''
-  attributes: AttributesType | undefined = undefined
 
-  static create(eventName: string, attributes: AttributesType): CustomEvent {
+  // mode SaaS
+  path: string | undefined = undefined
+  pageShowTimestamp: number | undefined = undefined
+
+  static create(
+    eventName: string,
+    attributes: AttributesType,
+    context: GrowingContext,
+    page?: FakePageEvent
+  ): CustomEvent {
     let event = new CustomEvent()
     event.eventName = eventName
-    event.attributes = Util.convertAttributes(attributes)
+    event.attributes = attributes
     event.eventType = EventType.Custom
-    return EventBuilder.build(event)
+
+    if (page) {
+      // mode SaaS
+      event.path = page.path ?? ''
+      event.pageShowTimestamp = page.pageShowTimestamp ?? 0
+    }
+
+    return EventBuilder.build(event, context)
   }
 }

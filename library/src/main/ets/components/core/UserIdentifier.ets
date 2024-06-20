@@ -15,30 +15,71 @@
  * limitations under the License.
  */
 
-import AnalyticsCore from './AnalyticsCore'
 import Session from './Session'
 import { PREFERENCE_USER_ID, PREFERENCE_USER_IDENTIFIER, PREFERENCE_USER_KEY } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
-import Util from '../utils/Util'
+import GrowingContext from './Context'
+import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export default class UserIdentifier {
-  static curUserId: string
-  static curUserKey: string
-  private static latestNonnullUserId: string
+  userId: string
+  userKey: string
+  private latestNonnullUserId: string
+  static users: Map<string, UserIdentifier> = new Map()
+  static userInfo: object
 
-  static async initUser() {
-    let userInfoString = await SharedPreferences.getValue(PREFERENCE_USER_IDENTIFIER, '{}') as string
-    let userInfo = JSON.parse(userInfoString) as object
-    UserIdentifier.curUserId = userInfo[PREFERENCE_USER_ID] ?? ''
-    UserIdentifier.curUserKey = userInfo[PREFERENCE_USER_KEY] ?? ''
-    UserIdentifier.latestNonnullUserId = UserIdentifier.curUserId
-    LogUtil.info('UserId from preferences is ' + UserIdentifier.curUserId + ', userKey from preferences is ' + UserIdentifier.curUserKey)
+  constructor(
+    userId: string,
+    userKey: string,
+  ) {
+    this.userId = userId
+    this.userKey = userKey
+    this.latestNonnullUserId = userId
   }
 
-  static setLoginUserId(userId: string, userKey: string = '') {
-    let core = AnalyticsCore.core as AnalyticsCore
-    if (core.config.idMappingEnabled == false) {
+  static async initUser(context: GrowingContext) {
+    let userInfoString = await SharedPreferences.getValue(PREFERENCE_USER_IDENTIFIER, '{}') as string
+    let userInfo = JSON.parse(userInfoString) as object
+    UserIdentifier.userInfo = userInfo
+
+    let userId = (userInfo[PREFERENCE_USER_ID] as string | undefined) ?? ''
+    let userKey = (userInfo[PREFERENCE_USER_KEY] as string | undefined) ?? ''
+    let user = new UserIdentifier(userId, userKey)
+    UserIdentifier.users.set(context.trackerId, user)
+
+    let message = 'UserId from preferences is ' + userId
+    if (context.config.mode == ConfigMode.NewSaaS || context.config.mode == ConfigMode.CDP) {
+      if (context.config.idMappingEnabled == true) {
+        message += ', userKey from preferences is ' + userKey
+      }
+    }
+    LogUtil.info(() => message)
+  }
+
+  static initMultiUser(context: GrowingContext) {
+    let userInfo = UserIdentifier.userInfo
+
+    let userId = (userInfo[PREFERENCE_USER_ID + '_' + context.trackerId] as string | undefined) ?? ''
+    let userKey = (userInfo[PREFERENCE_USER_KEY + '_' + context.trackerId] as string | undefined) ?? ''
+    let user = new UserIdentifier(userId, userKey)
+    UserIdentifier.users.set(context.trackerId, user)
+
+    let message = 'UserId for ' + context.trackerId + ' from preferences is ' + userId
+    if (context.config.mode == ConfigMode.NewSaaS || context.config.mode == ConfigMode.CDP) {
+      if (context.config.idMappingEnabled == true) {
+        message += ', userKey from preferences is ' + userKey
+      }
+    }
+    LogUtil.info(() => message)
+  }
+
+  static getUser(context: GrowingContext) {
+    return UserIdentifier.users.get(context.trackerId)
+  }
+
+  static setLoginUserId(userId: string, userKey: string = '', context: GrowingContext) {
+    if (context.config.idMappingEnabled == false) {
       userKey = ''
     }
     if (userId && userId.length > 1000) {
@@ -47,42 +88,61 @@ export default class UserIdentifier {
     if (userKey && userKey.length > 1000) {
       return
     }
-    if (userId == null || userId.length == 0) {
-      LogUtil.info('Clear loginUserId')
-      UserIdentifier.curUserId = ''
-      UserIdentifier.curUserKey = ''
-      UserIdentifier.saveToPreferences()
-      return
-    }
-    if (userId === UserIdentifier.curUserId && userKey === UserIdentifier.curUserKey) {
-      return
-    }
 
-    LogUtil.info('LoginUserId did changed, userId from '
-    + ((UserIdentifier.curUserId == null || UserIdentifier.curUserId.length == 0) ? 'undefined' : UserIdentifier.curUserId)
-    + ' to ' + userId + ', userKey from '
-    + ((UserIdentifier.curUserKey == null || UserIdentifier.curUserKey.length == 0) ? 'undefined' : UserIdentifier.curUserKey)
-    + ' to ' + userKey)
+    let user = UserIdentifier.users.get(context.trackerId)
+    if (user) {
+      if (userId == null || userId.length == 0) {
+        LogUtil.info(() => 'Clear loginUserId')
+        user.userId = ''
+        user.userKey = ''
+        user.saveToPreferences(context)
+        return
+      }
+      if (userId === user.userId && userKey === user.userKey) {
+        return
+      }
 
-    UserIdentifier.curUserId = userId
-    UserIdentifier.curUserKey = userKey
-    UserIdentifier.saveToPreferences()
-    UserIdentifier.userIdDidChanged(userId)
+      let message = 'LoginUserId for ' + context.trackerId + ' did changed, userId from '
+        + ((user.userId == null || user.userId.length == 0) ? 'undefined' : user.userId)
+        + ' to ' + userId
+      if (context.config.mode == ConfigMode.NewSaaS || context.config.mode == ConfigMode.CDP) {
+        if (context.config.idMappingEnabled == true) {
+          message += ', userKey from '
+            + ((user.userKey == null || user.userKey.length == 0) ? 'undefined' : user.userKey)
+            + ' to ' + userKey
+        }
+      }
+      LogUtil.info(() => message)
+
+      user.userId = userId
+      user.userKey = userKey
+      user.saveToPreferences(context)
+      user.userIdDidChanged(userId, context)
+    }
   }
 
-  static saveToPreferences() {
-    let u = new Map<string, string>()
-    u.set(PREFERENCE_USER_ID, String(UserIdentifier.curUserId))
-    u.set(PREFERENCE_USER_KEY, String(UserIdentifier.curUserKey))
-    SharedPreferences.put(PREFERENCE_USER_IDENTIFIER, JSON.stringify(Util.mapToObject(u)))
+  async saveToPreferences(context: GrowingContext) {
+    let userInfo = UserIdentifier.userInfo
+    if (GrowingContext.isDefaultContext(context)) {
+      userInfo[PREFERENCE_USER_ID] = String(this.userId)
+      userInfo[PREFERENCE_USER_KEY] = String(this.userKey)
+    } else {
+      userInfo[PREFERENCE_USER_ID + '_' + context.trackerId] = String(this.userId)
+      userInfo[PREFERENCE_USER_KEY + '_' + context.trackerId] = String(this.userKey)
+    }
+    SharedPreferences.put(PREFERENCE_USER_IDENTIFIER, JSON.stringify(userInfo))
   }
 
-  static userIdDidChanged(userId: string) {
-    let oldUserId = UserIdentifier.latestNonnullUserId
-    UserIdentifier.latestNonnullUserId = userId
+  userIdDidChanged(userId: string, context: GrowingContext) {
+    let oldUserId = this.latestNonnullUserId
+    this.latestNonnullUserId = userId
     // A=>B
     if (oldUserId && oldUserId.length > 0 && oldUserId != userId) {
-      Session.refreshSession()
+      Session.refreshSession(context)
+    } else if (context.config.mode == ConfigMode.CDP) {
+      if (oldUserId == null || oldUserId.length == 0) {
+        Session.generateVisit(context)
+      }
     }
   }
 }

@@ -19,10 +19,13 @@ import Event from './Event'
 import AnalyticsCore from '../core/AnalyticsCore'
 import AppInfo from '../core/AppInfo'
 import DeviceInfo from '../core/DeviceInfo'
+import GrowingContext from '../core/Context'
+import GrowingGeneralProps from '../core/GeneralProps'
 import Session, { SessionState } from '../core/Session'
 import UserIdentifier from '../core/UserIdentifier'
 import { SDK_VERSION, PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 import SharedPreferences from '../utils/SharedPreferences'
+import Util from '../utils/Util'
 
 export default class EventBuilder {
   private static _eventSequenceId: number
@@ -31,10 +34,10 @@ export default class EventBuilder {
     EventBuilder._eventSequenceId = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
   }
 
-  static build<T extends Event>(event: T): T {
-    event.sessionId = Session.sessionId
+  static build<T extends Event>(event: T, context: GrowingContext): T {
+    event.sessionId = Session.getSessionId(context)!
     event.appState = Session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
-    event.timestamp = Date.now()
+    event.timestamp = event.timestamp > 0 ? event.timestamp : Date.now()
     event.sdkVersion = SDK_VERSION
 
     // device info
@@ -51,21 +54,31 @@ export default class EventBuilder {
     event.networkState = DeviceInfo.networkState
 
     // app info
-    event.domain = AppInfo.domain
+    event.domain = event.domain || AppInfo.domain
     event.appChannel = AppInfo.appChannel
     event.appName = AppInfo.appName
     event.appVersion = AppInfo.appVersion
 
-    let core = AnalyticsCore.core as AnalyticsCore
-    event.dataSourceId = core.config.dataSourceId
-    event.urlScheme = core.config.urlScheme
-    event.latitude = Math.abs(core.location.latitude) > 0 ? core.location.latitude : undefined
-    event.longitude = Math.abs(core.location.longitude) > 0 ? core.location.longitude : undefined
+    event.dataSourceId = context.config.dataSourceId
+    event.urlScheme = context.config.urlScheme
+    event.latitude = Math.abs(AnalyticsCore.location.latitude) > 0 ? AnalyticsCore.location.latitude : undefined
+    event.longitude = Math.abs(AnalyticsCore.location.longitude) > 0 ? AnalyticsCore.location.longitude : undefined
 
-    let userId = UserIdentifier.curUserId
+    let user = UserIdentifier.getUser(context)!
+    let userId = user.userId
     event.userId = userId.length > 0 ? userId : undefined
-    let userKey = UserIdentifier.curUserKey
-    event.userKey = userKey.length > 0 ? userKey : undefined
+    if (context.config.idMappingEnabled) {
+      let userKey = user.userKey
+      event.userKey = userKey.length > 0 ? userKey : undefined
+    } else {
+      event.userKey = undefined
+    }
+
+    let attributes = GrowingGeneralProps.getGeneralProps()
+    if (event.attributes) {
+      attributes = Util.concatObject(attributes, event.attributes)
+    }
+    event.attributes = Util.serializableAttributes(attributes)
 
     EventBuilder.updateEventSequenceId()
     event.eventSequenceId = EventBuilder._eventSequenceId

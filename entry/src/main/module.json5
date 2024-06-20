@@ -2,11 +2,13 @@
   "module": {
     "name": "entry",
     "type": "entry",
+    "srcEntry": "./ets/entryabilitystage/EntryAbilityStage.ets",
     "description": "$string:module_desc",
     "mainElement": "EntryAbility",
     "deviceTypes": [
       "phone",
-      "tablet"
+      "tablet",
+      "2in1"
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
@@ -14,11 +16,11 @@
     "abilities": [
       {
         "name": "EntryAbility",
-        "srcEntry": "./ets/entryability/EntryAbility.ts",
+        "srcEntry": "./ets/entryability/EntryAbility.ets",
         "description": "$string:EntryAbility_desc",
-        "icon": "$media:icon",
+        "icon": "$media:layered_image",
         "label": "$string:EntryAbility_label",
-        "startWindowIcon": "$media:icon",
+        "startWindowIcon": "$media:startIcon",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
         "skills": [
@@ -34,48 +36,50 @@
       },
       {
         "name": "TrackTimerAbility",
-        "srcEntry": "./ets/tracktimerability/TrackTimerAbility.ts",
+        "srcEntry": "./ets/tracktimerability/TrackTimerAbility.ets",
         "description": "$string:TrackTimerAbility_desc",
-        "icon": "$media:icon",
+        "icon": "$media:layered_image",
         "label": "$string:TrackTimerAbility_label",
-        "startWindowIcon": "$media:icon",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background"
+      },
+      {
+        "name": "SubTrackerAbility",
+        "srcEntry": "./ets/subtrackerability/SubTrackerAbility.ets",
+        "description": "$string:SubTrackerAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:SubTrackerAbility_label",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background"
+      },
+      {
+        "name": "GeneralPropsAbility",
+        "srcEntry": "./ets/generalpropsability/GeneralPropsAbility.ets",
+        "description": "$string:GeneralPropsAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:GeneralPropsAbility_label",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background"
+      },
+      {
+        "name": "TrackAbility",
+        "srcEntry": "./ets/trackability/TrackAbility.ets",
+        "description": "$string:TrackAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:TrackAbility_label",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background"
+      },
+      {
+        "name": "HybridAbility",
+        "srcEntry": "./ets/hybridability/HybridAbility.ets",
+        "description": "$string:HybridAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:HybridAbility_label",
+        "startWindowIcon": "$media:startIcon",
         "startWindowBackground": "$color:start_window_background"
       }
     ],
-    "requestPermissions": [
-      {
-        "name": "ohos.permission.GET_NETWORK_INFO",
-        "reason": "$string:network_permission",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility",
-            "TrackTimerAbility"
-          ],
-          "when": "always"
-        }
-      },
-      {
-        "name": "ohos.permission.SET_NETWORK_INFO",
-        "reason": "$string:network_permission",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility",
-            "TrackTimerAbility"
-          ],
-          "when": "always"
-        }
-      },
-      {
-        "name": "ohos.permission.INTERNET",
-        "reason": "$string:network_permission",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility",
-            "TrackTimerAbility"
-          ],
-          "when": "always"
-        }
-      }
-    ]
+    "requestPermissions": []
   }
 }

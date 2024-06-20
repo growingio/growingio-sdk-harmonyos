@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="data:image/ico;base64,aWNv">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>GrowingIO Hybrid In App</title>
+
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+      // VConsole will be exported to `window.VConsole` by default.
+      var vConsole = new window.VConsole();
+    </script>
+
+    <script>
+      // 低版本下会由于hostname获取为空而不初始化SDK，提示：当前SDK不允许在本地环境初始化!
+      window._gr_ignore_local_rule = true;
+    </script>
+    
+    <!-- GrowingIO Analytics WebJS SDK version 4 -->
+    <!-- Copyright 2015-2023 GrowingIO, Inc. More info available at http://www.growingio.com -->
+    <script type="text/javascript">
+      !(function (e, n, t, s, c) {
+        var o;
+        e[s] =
+          e[s] ||
+          function () {
+            (e[s].q = e[s].q || []).push(arguments);
+          };
+        (c = c || 'vds'),
+          (e._gio_local_vds = c),
+          (e[c] = null !== (o = e[c]) && void 0 !== o ? o : {}),
+          (e[c].namespace = s);
+        var d = n.createElement('script');
+        var i = n.getElementsByTagName('script')[0];
+        (d.async = !0), (d.src = t), i.parentNode.insertBefore(d, i);
+      })(window, document, 'https://assets.giocdn.com/sdk/webjs/gdp-full.js', 'gdp');
+
+      gdp('init', '0a1b4118dd954ec3bcc69da5138bdb96', '654321', {
+        version: '9.9.9',
+      });
+    </script>
+    
+    <script>
+        function getWebViewJavascriptBridgeConfiguration() {
+            return GrowingWebViewJavascriptBridge.configuration = JSON.parse(window.GrowingWebViewJavascriptBridge.getConfiguration());
+        }
+
+        function sendMockVisitEvent() {
+            let event = {
+                "eventType": "VISIT",
+                "appVersion": "1.0.0",
+                "dataSourceId": "87b895fe7505e4b3",
+                "deviceId": "7aced60f-a286-4c5c-8765-6c03ba0bcf90",
+                "domain": "127.0.0.1:5500",
+                "language": "en",
+                "path": "/demos/demo1.html",
+                "platform": "web",
+                "query": "name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "referralPage": "http://127.0.0.1:5500/demos/demo1.html?name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "screenHeight": 982,
+                "screenWidth": 1512,
+                "sdkVersion": "4.2.0",
+                "sessionId": "5d5076ae-c0ad-4e36-9ea2-1fc2cf1721ea",
+                "timestamp": 1716260282510,
+                "timezoneOffset": -480,
+                "title": "Web SDK Demo1",
+                "userId": "myUserId-1716260282510",
+                "eventSequenceId": 56
+            };
+            sendMockEvent(event);
+        }
+
+        function sendMockCustomEvent() {
+            let event = {
+                "eventType": "CUSTOM",
+                "eventName": "testcstm_num",
+                "appVersion": "1.0.0",
+                "dataSourceId": "87b895fe7505e4b3",
+                "deviceId": "7aced60f-a286-4c5c-8765-6c03ba0bcf90",
+                "domain": "127.0.0.1:5500",
+                "language": "en",
+                "path": "/demos/demo1.html",
+                "platform": "web",
+                "query": "name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "referralPage": "http://127.0.0.1:5500/demos/demo1.html?name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "screenHeight": 982,
+                "screenWidth": 1512,
+                "sdkVersion": "4.2.0",
+                "sessionId": "5d5076ae-c0ad-4e36-9ea2-1fc2cf1721ea",
+                "timestamp": 1716261728268,
+                "timezoneOffset": -480,
+                "title": "Web SDK Demo1",
+                "userId": "myUserId-1716260282510",
+                "eventSequenceId": 63
+            };
+            sendMockEvent(event);
+        }
+        
+        function sendMockCustomEventWithAttributes() {
+            let event = {
+                "eventType": "CUSTOM",
+                "eventName": "testcstm_num",
+                "appVersion": "1.0.0",
+                "dataSourceId": "87b895fe7505e4b3",
+                "deviceId": "7aced60f-a286-4c5c-8765-6c03ba0bcf90",
+                "domain": "127.0.0.1:5500",
+                "language": "en",
+                "path": "/demos/demo1.html",
+                "platform": "web",
+                "query": "name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "referralPage": "http://127.0.0.1:5500/demos/demo1.html?name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "screenHeight": 982,
+                "screenWidth": 1512,
+                "sdkVersion": "4.2.0",
+                "sessionId": "5d5076ae-c0ad-4e36-9ea2-1fc2cf1721ea",
+                "timestamp": 1716261728268,
+                "timezoneOffset": -480,
+                "title": "Web SDK Demo1",
+                "userId": "myUserId-1716260282510",
+                "eventSequenceId": 63,
+                "attributes": {
+                    "name": "华为P50Pro",
+                    "price": "6488"
+                }
+            };
+            sendMockEvent(event);
+        }
+
+        function sendMockLoginUserAttributesEvent() {
+            let event = {
+                "eventType": "LOGIN_USER_ATTRIBUTES",
+                "appVersion": "1.0.0",
+                "dataSourceId": "87b895fe7505e4b3",
+                "deviceId": "7aced60f-a286-4c5c-8765-6c03ba0bcf90",
+                "domain": "127.0.0.1:5500",
+                "language": "en",
+                "path": "/demos/demo1.html",
+                "platform": "web",
+                "query": "name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "referralPage": "http://127.0.0.1:5500/demos/demo1.html?name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "screenHeight": 982,
+                "screenWidth": 1512,
+                "sdkVersion": "4.2.0",
+                "sessionId": "5d5076ae-c0ad-4e36-9ea2-1fc2cf1721ea",
+                "timestamp": 1716261823965,
+                "title": "Web SDK Demo1",
+                "userId": "myUserId-1716260282510",
+                "attributes": {
+                    "name": "Kate",
+                    "age": "18",
+                    "phone": "13512341234"
+                }
+            };
+            sendMockEvent(event);
+        }
+
+        function sendMockPageEvent() {
+            let event = {
+                "eventType": "PAGE",
+                "appVersion": "1.0.0",
+                "dataSourceId": "87b895fe7505e4b3",
+                "deviceId": "7aced60f-a286-4c5c-8765-6c03ba0bcf90",
+                "domain": "127.0.0.1:5500",
+                "language": "en",
+                "path": "/demos/demo1.html",
+                "platform": "web",
+                "referralPage": "http://127.0.0.1:5500/demos/",
+                "screenHeight": 982,
+                "screenWidth": 1512,
+                "sdkVersion": "4.2.0",
+                "sessionId": "5d5076ae-c0ad-4e36-9ea2-1fc2cf1721ea",
+                "timestamp": 1716261946057,
+                "timezoneOffset": -480,
+                "title": "Web SDK Demo1",
+                "userId": "myUserId-1716260282510",
+                "protocolType": "http",
+                "eventSequenceId": 72
+            };
+            sendMockEvent(event);
+        }
+
+        function sendMockPageEventWithQuery() {
+            let event = {
+                "eventType": "PAGE",
+                "appVersion": "1.0.0",
+                "dataSourceId": "87b895fe7505e4b3",
+                "deviceId": "7aced60f-a286-4c5c-8765-6c03ba0bcf90",
+                "domain": "127.0.0.1:5500",
+                "language": "en",
+                "path": "/demos/demo1.html",
+                "platform": "web",
+                "query": "name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "referralPage": "http://127.0.0.1:5500/demos/demo1.html?name=&name=&selection=Job+Inquiry&userrole=BOSS",
+                "screenHeight": 982,
+                "screenWidth": 1512,
+                "sdkVersion": "4.2.0",
+                "sessionId": "a3eef88c-2efa-47bb-9f05-ab178a35d9ec",
+                "timestamp": 1716260196800,
+                "timezoneOffset": -480,
+                "title": "Web SDK Demo1",
+                "userId": "ZhangSan",
+                "protocolType": "http",
+                "eventSequenceId": 53
+            };
+            sendMockEvent(event);
+        }
+
+        function sendMockPageEventWithAttributes() {
+            let event = {
+                "eventType": "PAGE",
+                "appVersion": "1.0.0",
+                "dataSourceId": "87b895fe7505e4b3",
+                "deviceId": "7aced60f-a286-4c5c-8765-6c03ba0bcf90",
+                "domain": "127.0.0.1:5500",
+                "language": "en",
+                "path": "/demos/demo1.html",
+                "platform": "web",
+                "referralPage": "http://127.0.0.1:5500/demos/",
+                "screenHeight": 982,
+                "screenWidth": 1512,
+                "sdkVersion": "4.2.0",
+                "sessionId": "5d5076ae-c0ad-4e36-9ea2-1fc2cf1721ea",
+                "timestamp": 1716261946057,
+                "timezoneOffset": -480,
+                "title": "Web SDK Demo1",
+                "userId": "myUserId-1716260282510",
+                "protocolType": "http",
+                "eventSequenceId": 72,
+                "attributes": {
+                    "key1": "value1",
+                    "key2": "value2",
+                    "key3": "",
+                    "key4": null,
+                    "key5": undefined
+                }
+            };
+            sendMockEvent(event);
+        }
+
+        function sendMockViewChangeEvent() {
+            let event = {
+                "eventType": "VIEW_CHANGE",
+                "xpath": "/form/div/input",
+                "xcontent": "/-/.flex.mb-4/#name.name",
+                "appVersion": "1.0.0",
+                "dataSourceId": "87b895fe7505e4b3",
+                "deviceId": "7aced60f-a286-4c5c-8765-6c03ba0bcf90",
+                "domain": "127.0.0.1:5500",
+                "language": "en",
+                "path": "/demos/demo1.html",
+                "platform": "web",
+                "referralPage": "http://127.0.0.1:5500/demos/",
+                "screenHeight": 982,
+                "screenWidth": 1512,
+                "sdkVersion": "4.2.0",
+                "sessionId": "5d5076ae-c0ad-4e36-9ea2-1fc2cf1721ea",
+                "timestamp": 1716262024376,
+                "timezoneOffset": -480,
+                "title": "Web SDK Demo1",
+                "userId": "myUserId-1716260282510",
+                "eventSequenceId": 75
+            };
+            sendMockEvent(event);
+        }
+
+        function sendMockEvent(event) {
+            GrowingWebViewJavascriptBridge.dispatchEvent(JSON.stringify(event));
+        }
+
+        function mockSetUserId(name) {
+            GrowingWebViewJavascriptBridge.setNativeUserId(name);
+        }
+
+        function mockClearUserId() {
+            GrowingWebViewJavascriptBridge.clearNativeUserId();
+        }
+        
+        function mockSetUserIdAndUserKey(userId, userKey) {
+            GrowingWebViewJavascriptBridge.setNativeUserIdAndUserKey(userId, userKey);
+        }
+        
+        function mockClearUserIdAndUserKey() {
+            GrowingWebViewJavascriptBridge.clearNativeUserIdAndUserKey();
+        }
+
+        function mockDomChanged() {
+            GrowingWebViewJavascriptBridge.onDomChanged();
+        }
+    </script>
+</head>
+
+<body>
+    <div class='main'>
+        <div class='title' id="mark">
+            <h2>autotrack hybrid</h2>
+            <div>
+                <div class='title'>
+                    <h3>这仅仅是一个测试页面</h3>
+                    <button class="button" onclick="javascript:sendMockVisitEvent()" type="button">
+                        sendMockVisitEvent
+                    </button>
+                    <button class="button" onclick="javascript:sendMockCustomEvent()" type="button">
+                        sendMockCustomEvent
+                    </button>
+                    <button class="button" onclick="javascript:sendMockCustomEventWithAttributes()" type="button">
+                        sendMockCustomEventWithAttributes
+                    </button>
+                    <button class="button" onclick="javascript:sendMockLoginUserAttributesEvent()" type="button">
+                        sendMockLoginUserAttributesEvent
+                    </button>
+                    <button class="button" onclick="javascript:sendMockPageEvent()" type="button">
+                        sendMockPageEvent
+                    </button>
+                    <button class="button" onclick="javascript:sendMockPageEventWithQuery()" type="button">
+                        sendMockPageEventWithQuery
+                    </button>
+                    <button class="button" onclick="javascript:sendMockPageEventWithAttributes()" type="button">
+                        sendMockPageEventWithAttributes
+                    </button>
+                    <button class="button" onclick="javascript:sendMockViewChangeEvent()" type="button">
+                        sendMockViewChangeEvent
+                    </button>
+                    <button class="button" onclick="javascript:mockSetUserId('name')" type="button">
+                        mockSetUserId('name')
+                    </button>
+                    <button class="button" onclick="javascript:mockClearUserId()" type="button">
+                        mockClearUserId
+                    </button>
+                    <button class="button" onclick="javascript:mockSetUserIdAndUserKey('name', 'key')" type="button">
+                        mockSetUserIdAndUserKey('name', 'key')
+                    </button>
+                    <button class="button" onclick="javascript:mockClearUserIdAndUserKey()" type="button">
+                        mockClearUserIdAndUserKey
+                    </button>
+                    <button class="button" onclick="javascript:mockDomChanged()" type="button">
+                        mockDomChanged
+                    </button>
+                </div>
+            </div>
+</body>
+<footer>
+</footer>
+
+</html>

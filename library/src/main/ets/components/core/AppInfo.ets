@@ -19,16 +19,18 @@ import bundleManager from '@ohos.bundle.bundleManager'
 
 export default class AppInfo {
   static domain: string = ''
-  static appChannel: string = ''
   static appName: string = ''
   static appVersion: string = ''
+  static appChannel: string | undefined = undefined
 
-  static async initAppInfo() {
+  static async initAppInfo(context: Context) {
     let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
     let bundleInfo = await bundleManager.getBundleInfoForSelf(bundleFlags)
+
     AppInfo.domain = bundleInfo.name
-    AppInfo.appChannel = 'Harmony'
-    AppInfo.appName = bundleInfo.name // TODO
+    let r_id = bundleInfo.appInfo.labelResource.id
+    AppInfo.appName = context.resourceManager.getStringSync(r_id)
     AppInfo.appVersion = bundleInfo.versionName
+    // AppInfo.appChannel = '应用市场'
   }
 }

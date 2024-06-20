@@ -17,11 +17,12 @@
 
 import Event, { EventType } from './Event'
 import EventBuilder from './EventBuilder'
+import GrowingContext from '../core/Context'
 
 export default class VisitEvent extends Event {
-  static create(): VisitEvent {
+  static create(context: GrowingContext): VisitEvent {
     let event = new VisitEvent()
     event.eventType = EventType.Visit
-    return EventBuilder.build(event)
+    return EventBuilder.build(event, context)
   }
 }

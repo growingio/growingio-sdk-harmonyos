@@ -15,159 +15,169 @@
  * limitations under the License.
  */
 
-import AnalyticsCore from '../core/AnalyticsCore'
+import webview from '@ohos.web.webview'
+
 import { GrowingConfig } from './GrowingConfig'
+import AnalyticsCore from '../core/AnalyticsCore'
+import GrowingContext from '../core/Context'
+import GeneralProps from '../core/GeneralProps'
 import Session from '../core/Session'
-import { AttributesType } from '../utils/Constants'
-export { AttributesType as GrowingAttrType } from '../utils/Constants'
+import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
+import { LogUtil } from '../utils/LogUtil'
+
+export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
+
+export interface GrowingAnalyticsInterface {
+  isInitializedSuccessfully(): boolean
+  setDataCollectionEnabled(enabled: boolean): void
+  setLoginUserId(userId: string, userKey?: string): void
+  cleanLoginUserId(): void
+
+  setLoginUserAttributes(attributes: AttributesType): void
+  track(eventName: string, attributes: AttributesType, sendTo?: string[]): void
+  trackTimerStart(eventName: string): Promise<string>
+  trackTimerPause(timerId: string): void
+  trackTimerResume(timerId: string): void
+  trackTimerEnd(timerId: string, attributes: AttributesType, sendTo?: string[]): void
+  removeTimer(timerId: string): void
+  clearTrackTimer(): void
+
+  createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined
+}
 
 export class GrowingAnalytics {
   static async start(context: Context, configuration: GrowingConfig): Promise<void> {
-    if (AnalyticsCore.core) {
-      console.warn('[GrowingAnalytics] Do not initialize GrowingAnalytics repeatedly')
+    if (GrowingAnalytics.isInitializedSuccessfully()) {
+      LogUtil.warn(() => '[GrowingAnalytics] Do not initialize GrowingAnalytics repeatedly')
       return
     }
     if (!context.stageMode) {
-      console.error('[GrowingAnalytics] Only support stageMode(HarmonyOS 3.1+, API 9+)')
+      LogUtil.error(() => '[GrowingAnalytics] Only support stageMode')
       return
     }
     let config = configuration.copy()
     await AnalyticsCore.startCore(context, config)
-    Session.refreshSession()
+    Session.refreshSession(GrowingContext.getDefaultContext()!)
   }
 
-  static isInitializedSuccessfully(): boolean {
-    return AnalyticsCore.core != undefined
+  static startSubTracker(trackerId: string, configuration: GrowingConfig) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
+      LogUtil.error(() => '[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
+      return
+    }
+
+    let config = configuration.copy()
+    let success = AnalyticsCore.startSubTracker(trackerId, config)
+    if (success) {
+      Session.refreshSession(GrowingContext.getContext(trackerId)!)
+    } else {
+      LogUtil.error(() => '[GrowingAnalytics] Do not start tracker with same trackerId/dataSourceId')
+    }
+  }
+
+  static tracker(trackerId: string): GrowingAnalyticsInterface {
+    let tracker = AnalyticsCore.tracker(trackerId)
+    if (!tracker.isInitializedSuccessfully()) {
+      LogUtil.error(() => '[GrowingAnalytics] Please start a subTracker with the trackerId ' + trackerId + ' first')
+    }
+    return tracker
+  }
+
+  static createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {
+    return AnalyticsCore.core.createHybridProxy(controller)
+  }
+
+  static isInitializedSuccessfully(trackerId?: string): boolean {
+    if (trackerId) {
+      return AnalyticsCore.tracker(trackerId).isInitializedSuccessfully()
+    } else {
+      return AnalyticsCore.core.isInitializedSuccessfully()
+    }
   }
 
   static setDataCollectionEnabled(enabled: boolean) {
-    if (!AnalyticsCore.core) {
-      return
-    }
     AnalyticsCore.core.setDataCollectionEnabled(enabled)
   }
 
   static setLoginUserId(
     userId: string,
-    userKey: string = ''
+    userKey?: string
   ) {
-    if (!AnalyticsCore.core) {
-      return
-    }
     AnalyticsCore.core.setLoginUserId(userId, userKey)
   }
 
   static cleanLoginUserId() {
-    if (!AnalyticsCore.core) {
-      return
-    }
     AnalyticsCore.core.setLoginUserId('')
+  }
+
+  static setLoginUserAttributes(attributes: AttributesType) {
+    AnalyticsCore.core.setLoginUserAttributes(attributes)
+  }
+
+  static getDeviceId(): string {
+    return AnalyticsCore.core.getDeviceId()
+  }
+
+  static track(
+    eventName: string,
+    attributes: AttributesType = {},
+    sendTo?: string[]
+  ) {
+    AnalyticsCore.core.track(eventName, attributes, sendTo)
+  }
+
+  static async trackTimerStart(eventName: string): Promise<string> {
+    return await AnalyticsCore.core.trackTimerStart(eventName)
+  }
+
+  static async trackTimerPause(timerId: string) {
+    await AnalyticsCore.core.trackTimerPause(timerId)
+  }
+
+  static async trackTimerResume(timerId: string) {
+    await AnalyticsCore.core.trackTimerResume(timerId)
+  }
+
+  static async trackTimerEnd(
+    timerId: string,
+    attributes: AttributesType = {},
+    sendTo?: string[]
+  ) {
+    await AnalyticsCore.core.trackTimerEnd(timerId, attributes, sendTo)
+  }
+
+  static removeTimer(timerId: string) {
+    AnalyticsCore.core.removeTimer(timerId)
+  }
+
+  static clearTrackTimer() {
+    AnalyticsCore.core.clearTrackTimer()
+  }
+
+  static setGeneralProps(props: AttributesType) {
+    GeneralProps.setGeneralProps(props)
+  }
+
+  static removeGeneralProps(keys: string[]) {
+    GeneralProps.removeGeneralProps(keys)
+  }
+
+  static clearGeneralProps() {
+    GeneralProps.clearGeneralProps()
+  }
+
+  static setDynamicGeneralProps(generator: () => AttributesType) {
+    GeneralProps.setDynamicGeneralProps(generator)
   }
 
   static setLocation(
     latitude: number,
     longitude: number
   ) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.setLocation(latitude, longitude)
+    AnalyticsCore.setLocation(latitude, longitude)
   }
 
   static cleanLocation() {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.setLocation(0, 0)
-  }
-
-  static setLoginUserAttributes(attributes: AttributesType) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.setLoginUserAttributes(attributes)
-  }
-
-  static getDeviceId(): string {
-    if (!AnalyticsCore.core) {
-      return ''
-    }
-    return AnalyticsCore.core.getDeviceId()
-  }
-
-  static track(
-    eventName: string,
-    attributes: AttributesType = {}
-  ) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.track(eventName, attributes)
-  }
-
-  static async trackTimerStart(eventName: string): Promise<string> {
-    if (!AnalyticsCore.core) {
-      return ''
-    }
-    return await AnalyticsCore.core.trackTimerStart(eventName)
-  }
-
-  static async trackTimerPause(timerId: string) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    await AnalyticsCore.core.trackTimerPause(timerId)
-  }
-
-  static async trackTimerResume(timerId: string) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    await AnalyticsCore.core.trackTimerResume(timerId)
-  }
-
-  static async trackTimerEnd(
-    timerId: string,
-    attributes: AttributesType = {}
-  ) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    await AnalyticsCore.core.trackTimerEnd(timerId, attributes)
-  }
-
-  static removeTimer(timerId: string) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.removeTimer(timerId)
-  }
-
-  static clearTrackTimer() {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.clearTrackTimer()
-  }
-
-  static setGeneralProps(props: AttributesType) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.setGeneralProps(props)
-  }
-
-  static removeGeneralProps(keys: string[]) {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.removeGeneralProps(keys)
-  }
-
-  static clearGeneralProps() {
-    if (!AnalyticsCore.core) {
-      return
-    }
-    AnalyticsCore.core.clearGeneralProps()
+    AnalyticsCore.setLocation(0, 0)
   }
 }

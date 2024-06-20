@@ -28,7 +28,7 @@ export default class SharedPreferences {
     try {
       SharedPreferences.preferences = await preferences.getPreferences(appContext, PREFERENCE_NAME)
     } catch (e) {
-      LogUtil.error("Failed to get preferences. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to get preferences. code = " + e.code + ", message = " + e.message)
     }
   }
 
@@ -49,7 +49,7 @@ export default class SharedPreferences {
       let result = await SharedPreferences.preferences.get(key, defValue)
       value = result as preferences.ValueType
     } catch (e) {
-      LogUtil.error("Failed to get value of " + key + ". code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to get value of " + key + ". code = " + e.code + ", message = " + e.message)
     }
     return value
   }

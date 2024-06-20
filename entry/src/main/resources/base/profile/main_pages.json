@@ -1,6 +1,10 @@
 {
   "src": [
     "pages/Index",
-    "pages/TrackTimer"
+    "pages/TrackTimer",
+    "pages/SubTracker",
+    "pages/GeneralProps",
+    "pages/Track",
+    "pages/Hybrid"
   ]
 }

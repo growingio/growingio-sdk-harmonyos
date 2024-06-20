@@ -21,23 +21,36 @@ import Util from '../utils/Util'
 
 export default class GeneralProps {
   private static _internalProps: AttributesType = {}
+  private static _dynamicGeneralPropsGenerator: () => AttributesType = () => {
+    return {}
+  }
 
   static setGeneralProps(props: AttributesType) {
-    LogUtil.info('Set generalProps: ' + JSON.stringify(props))
+    LogUtil.info(() => 'Set generalProps: ' + JSON.stringify(props))
     GeneralProps._internalProps = Util.concatObject(GeneralProps._internalProps, props)
+    LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
   }
 
   static removeGeneralProps(keys: string[]) {
-    LogUtil.info('Remove generalProps by keys: ' + keys)
+    LogUtil.info(() => 'Remove generalProps by keys: ' + keys)
     Util.removeKeysForObject(keys, GeneralProps._internalProps)
+    LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
   }
 
   static clearGeneralProps() {
-    LogUtil.info('Clear generalProps')
+    LogUtil.info(() => 'Clear generalProps')
     GeneralProps._internalProps = {}
   }
 
+  static setDynamicGeneralProps(generator: () => AttributesType) {
+    LogUtil.info(() => 'Set dynamicGeneralProps')
+    GeneralProps._dynamicGeneralPropsGenerator = generator
+  }
+
   static getGeneralProps(): AttributesType {
-    return Util.cloneObject(GeneralProps._internalProps)
+    let dynamicProps = GeneralProps._dynamicGeneralPropsGenerator()
+    let props = Util.cloneObject(GeneralProps._internalProps)
+    let properties = Util.concatObject(props, dynamicProps)
+    return properties
   }
 }

@@ -8,8 +8,9 @@ GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社�
 
 ## SDK 简介
 **GrowingIO OpenHarmony/HarmonyOS SDK** 自动采集用户访问事件，并支持手动调用相应埋点 APIs 采集埋点事件。
-- 支持 HarmonyOS 3.1.0
-- 支持 OpenHarmony API Level 9、API Level 10
+
+- 支持 HarmonyOS 4.0.0 - HarmonyOS NEXT
+- 支持 OpenHarmony API Level 10 - 12
 
 ## 集成文档
 ### 通过 ohpm 集成
@@ -24,39 +25,56 @@ ohpm install ./GrowingAnalytics.har
 ```
 
 ### 初始化
-在 Ability 的 onCreate 方法中初始化 SDK (Stage 模型)：
+在 AbilityStage 的 onCreate 方法中初始化 SDK (Stage 模型)：
 ```typescript
+import AbilityStage from '@ohos.app.ability.AbilityStage'
+import type Want from '@ohos.app.ability.Want'
 import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 
-async startAnalytics() {
-  let config = new GrowingConfig(
-    'Your AccountId',
-    'Your DataSourceId',
-    'Your UrlScheme',
-    'Your DataCollectionServerHost<Optional>'
-  )
-  await GrowingAnalytics.start(this.context, config)
-}
+// Entry类型的module对应配置的srcEntry
+export default class MyAbilityStage extends AbilityStage {
+  onCreate(): void {
+    // 应用的HAP在首次加载的时，为该Module初始化操作
+    this.startAnalytics()
+  }
+  onAcceptWant(want: Want): string {
+    // 仅specified模式下触发
+    return 'MyAbilityStage'
+  }
 
-onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-  this.startAnalytics()
+  async startAnalytics() {
+    let config = new GrowingConfig().NewSaaS(
+      'Your AccountId',
+      'Your DataSourceId',
+      'Your UrlScheme',
+      'Your DataCollectionServerHost<Optional>'
+    )
+    await GrowingAnalytics.start(this.context, config)
+  }
 }
 ```
+
+> 注意：如若需要，可在用户同意隐私协议之后，再进行初始化 SDK
 > 其中 accountId/dataSourceId/urlScheme 为必填项，dataCollectionServerHost 为可选项，若不清楚请联系您的专属项目经理或技术支持
 
 其他初始化配置项见下表，在 start 方法调用前通过`config.<配置项> = 对应值`进行配置：
 
-| 配置项                   | 参数类型 | 默认值 | 说明                                                         |
-| ------------------------ | -------- | ------ | ------------------------------------------------------------ |
-| accountId                | string   | -      | 项目 ID (AccountID)，每个应用对应唯一值                      |
-| dataSourceId             | string   | -      | 应用的 DataSourceId，唯一值                                  |
-| urlScheme                | string   | -      | 自定义 URL Scheme                                            |
-| dataCollectionServerHost | string   | -      | 服务端部署后的 ServerHost，默认值为 https://napi.growingio.com |
-| debugEnabled             | boolean  | false  | 调试模式，开启后会输出 SDK 日志，在线上环境请关闭            |
-| sessionInterval          | number   | 30     | 设置会话后台留存时长，指当前会话在应用进入后台后的最大留存时间，默认为 30 秒。另外，其他情况下也会重新生成一个新的会话，如设置用户 ID 等核心信息，重新打开数据收集等 |
-| dataUploadInterval       | number   | 15     | 数据发送的间隔，默认为 15 秒。SDK 会先将事件存入数据库中，然后以每隔默认时间 15 秒向服务器发送事件包 |
-| dataCollectionEnabled    | boolean  | true   | 数据收集，当数据收集关闭时，SDK 将不会再产生事件和上报事件   |
-| idMappingEnabled         | boolean  | false  | 是否开启多用户身份上报                                       |
+| 配置项                        | 参数类型 | 默认值 | 说明                                                         |
+| ----------------------------- | -------- | ------ | ------------------------------------------------------------ |
+| accountId                     | string   | -      | 项目 ID (AccountID)，每个应用对应唯一值                      |
+| dataSourceId                  | string   | -      | 应用的 DataSourceId，唯一值                                  |
+| urlScheme                     | string   | -      | 自定义 URL Scheme                                            |
+| dataCollectionServerHost      | string   | -      | 服务端部署后的 ServerHost，默认值为 https://napi.growingio.com |
+| debugEnabled                  | boolean  | false  | 调试模式，开启后会输出 SDK 日志，在线上环境请关闭            |
+| sessionInterval               | number   | 30     | 设置会话后台留存时长，指当前会话在应用进入后台后的最大留存时间，默认为 30 秒。另外，其他情况下也会重新生成一个新的会话，如设置用户 ID 等核心信息，重新打开数据收集等 |
+| dataUploadInterval            | number   | 15     | 数据发送的间隔，默认为 15 秒。SDK 会先将事件存入数据库中，然后以每隔默认时间 15 秒向服务器发送事件包 |
+| dataCollectionEnabled         | boolean  | true   | 数据收集，当数据收集关闭时，SDK 将不会再产生事件和上报事件   |
+| idMappingEnabled              | boolean  | false  | 是否开启多用户身份上报                                       |
+| requestOptions.connectTimeout | number   | 30     | 事件请求尝试建立连接的最大等待时间，默认为 30 秒             |
+| requestOptions.readTimeout    | number   | 30     | 事件请求读取服务器响应的最大等待时间，默认为 30 秒           |
+| dataValidityPeriod            | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                    |
+| encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示           |
+| compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                            |
 
 ### 数据采集 API
 
@@ -82,7 +100,7 @@ GrowingAnalytics.setDataCollectionEnabled(true)
 
 #### 设置登录用户 ID
 
-`static setLoginUserId(userId: string, userKey: string = '')`
+`static setLoginUserId(userId: string, userKey?: string)`
 
 当用户登录之后调用，设置登录用户 ID 和用户 Key
 如果您的 App 每次用户升级版本时无需重新登录的话，为防止用户本地缓存被清除导致的无法被识别为登录用户，建议在用户每次升级 App 版本后初次访问时重新调用 setLoginUserId 方法
@@ -268,19 +286,23 @@ GrowingAnalytics.setLoginUserAttributes({
 let deviceId = GrowingAnalytics.getDeviceId()
 ```
 
-#### 埋点事件通用属性
+#### 事件通用属性
 
 `static setGeneralProps(props: { [key: string]: string | number | boolean | string[] | number[] | boolean[] })`
 
-为所有自定义埋点事件设置通用属性，多次调用，相同字段的新值将覆盖旧值；需在分析云平台事件管理界面关联事件属性
+为所有事件设置通用属性，多次调用，相同字段的新值将覆盖旧值；需在分析云平台事件管理界面关联事件属性
 
 `static removeGeneralProps(keys: string[])`
 
-移除指定字段的埋点事件通用属性
+移除指定字段的事件通用属性
 
 `static clearGeneralProps()`
 
-移除所有埋点事件通用属性
+移除所有事件通用属性
+
+`static setDynamicGeneralProps(generator: () => { [key: string]: string | number | boolean | string[] | number[] | boolean[] })`
+
+设置动态通用属性
 
 ##### 参数说明
 
@@ -291,6 +313,7 @@ let deviceId = GrowingAnalytics.getDeviceId()
 ##### 示例
 
 ```typescript
+// 设置通用属性
 GrowingAnalytics.setGeneralProps({
   'prop1': 10,
   'prop2': 'name',
@@ -298,20 +321,193 @@ GrowingAnalytics.setGeneralProps({
   'prop4': ['a', 'b', 'c'],
   'name': 'banana'
 })
+// 清除指定字段的通用属性
 GrowingAnalytics.removeGeneralProps(['prop1', 'prop2', 'prop3'])
+// 清除通用属性
 GrowingAnalytics.clearGeneralProps()
+// 设置动态通用属性
+GrowingAnalytics.setDynamicGeneralProps(() => {
+  return {'dynamicProp' : Util.formatDate(new Date()) }
+})
+// 清除动态通用属性
+GrowingAnalytics.setDynamicGeneralProps(() => ({}))
 ```
 
-## 约束与限制
+### Hybrid 打通
 
-在下述版本验证通过：
+```typescript
+static createHybridProxy(controller: webview.WebviewController): {
+object: object;
+name: string;
+methodList: Array<string>;
+controller: WebviewController;
+} | undefined
+```
 
-- DevEco Studio: 4.0.0.600, SDK: API 10 Release(4.0.10.13)
-- DevEco Studio: 3.1.0.501, SDK: API 9 Release(3.2.13.5)
+在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)：
+```typescript
+let url = 'https://www.example.com'
+Web({ src: url, controller: this.controller})
+  .javaScriptAccess(true)
+  .domStorageAccess(true)
+  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+```
+
+对应的 H5 页面需要集成 Web JS SDK 以及 App 内嵌页打通插件才能生效
+
+### 多实例采集
+
+#### 初始化多实例
+
+```typescript
+let config = new GrowingConfig(
+'SubTracker AccountId',
+'SubTracker DataSourceId',
+'SubTracker UrlScheme',
+'SubTracker DataCollectionServerHost<Optional>'
+)
+GrowingAnalytics.startSubTracker(trackerId, config)
+```
+
+初始化配置中，`accountId/dataSourceId/dataCollectionServerHost` 都可与主实例不同，具体如下表格：
+
+| 配置项                        | 子实例是否能单独配置 |
+| ----------------------------- | -------------------- |
+| accountId                     | 是                   |
+| dataSourceId                  | 是                   |
+| urlScheme                     | 是                   |
+| dataCollectionServerHost      | 是                   |
+| debugEnabled                  | 否，以主实例为准     |
+| sessionInterval               | 是                   |
+| dataUploadInterval            | 是                   |
+| dataCollectionEnabled         | 是                   |
+| idMappingEnabled              | 是                   |
+| requestOptions.connectTimeout | 是                   |
+| requestOptions.readTimeout    | 是                   |
+| dataValidityPeriod            | 否，以主实例为准     |
+| encryptEnabled                | 是                   |
+| compressEnabled               | 是                   |
+
+**注意：初始化子实例前必须先初始化主实例**
+
+#### 兼容 APIs
+
+子实例可单独调用以下接口，其逻辑与其他实例相互隔离
+```typescript
+export interface GrowingAnalyticsInterface {
+  isInitializedSuccessfully(): boolean
+  setDataCollectionEnabled(enabled: boolean): void
+  setLoginUserId(userId: string, userKey?: string): void
+  cleanLoginUserId(): void
+  
+  setLoginUserAttributes(attributes: AttributesType): void
+  track(eventName: string, attributes: AttributesType, sendTo?: string[]): void
+  trackTimerStart(eventName: string): Promise<string>
+  trackTimerPause(timerId: string): void
+  trackTimerResume(timerId: string): void
+  trackTimerEnd(timerId: string, attributes: AttributesType, sendTo?: string[]): void
+  removeTimer(timerId: string): void
+  clearTrackTimer(): void
+}
+```
+
+假设子实例的 `trackerId` 为 `subTrackerId_01`，调用方式如下：
+```typescript
+// 获取子实例，需要先初始化该子实例，否则下述接口将无法生效
+let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
+
+// 返回是否初始化成功
+let success = subTracker.isInitializedSuccessfully()
+if (!success) {
+  return
+}
+
+// 数据采集开关
+subTracker.setDataCollectionEnabled(true)
+
+// 登录用户ID
+subTracker.setLoginUserId('user')
+subTracker.setLoginUserId('user', 'harmony')
+subTracker.cleanLoginUserId()
+
+// 设置埋点事件
+subTracker.track('buyProduct1')
+subTracker.track('buyProduct2', {
+  'name': 'apple',
+  'money': 1000,
+  'num': 100,
+  'from': ['sichuan', 'guizhou', 'hunan']
+})
+
+// 事件计时器
+let timerId = await subTracker.trackTimerStart('eventName')
+subTracker.trackTimerPause(timerId)
+subTracker.trackTimerResume(timerId)
+subTracker.trackTimerEnd(timerId)
+let timerId2 = await subTracker.trackTimerStart('eventName2')
+subTracker.trackTimerEnd(timerId2, {
+  'property': 'value',
+  'property2': 100
+})
+subTracker.removeTimer(timerId)
+subTracker.clearTrackTimer()
+
+// 设置登录用户属性
+subTracker.setLoginUserAttributes({
+  'name': 'ben',
+  'age': 30
+})
+
+// Hybrid 打通
+subTracker.createHybridProxy(this.controller)
+```
+
+#### SendTo
+
+可使用 sendTo 功能将主实例或子实例的自定义事件转发到其他子实例：
+```typescript
+// 主实例track转发
+GrowingAnalytics.track('buyProduct1', {}, ['subTrackerId_01', 'subTrackerId_02'])
+GrowingAnalytics.track('buyProduct2', {
+  'name': 'apple',
+  'money': 1000,
+  'num': 100,
+  'from': ['sichuan', 'guizhou', 'hunan']
+}, ['subTrackerId_01', 'subTrackerId_02'])
+
+// 主实例事件计时器转发
+let timerId = await GrowingAnalytics.trackTimerStart('eventName')
+GrowingAnalytics.trackTimerEnd(timerId, {}, ['subTrackerId_01', 'subTrackerId_02'])
+let timerId2 = await GrowingAnalytics.trackTimerStart('eventName2')
+GrowingAnalytics.trackTimerEnd(timerId2, {
+  'property': 'value',
+  'property2': 100
+}, ['subTrackerId_01', 'subTrackerId_02'])
+
+// 子实例track转发
+let subTracker = GrowingAnalytics.tracker('subTrackerId_01')
+subTracker.track('buyProduct1', {}, ['subTrackerId_02'])
+subTracker.track('buyProduct2', {
+  'name': 'apple',
+  'money': 1000,
+  'num': 100,
+  'from': ['sichuan', 'guizhou', 'hunan']
+}, ['subTrackerId_02'])
+
+// 子实例事件计时器转发
+let timerId = await subTracker.trackTimerStart('eventName')
+subTracker.trackTimerEnd(timerId, {}, ['subTrackerId_02'])
+let timerId2 = await subTracker.trackTimerStart('eventName2')
+subTracker.trackTimerEnd(timerId2, {
+  'property': 'value',
+  'property2': 100
+}, ['subTrackerId_02'])
+```
+> 当前仅 track 和 trackTimerEnd 接口支持 sendTo 转发
 
 ## License
 ```
-Copyright (C) 2023 Beijing Yishu Technology Co., Ltd.
+Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

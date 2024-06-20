@@ -18,11 +18,14 @@
 import relationalStore from '@ohos.data.relationalStore'
 
 import EventPersistence from './EventPersistence'
-import { DATABASE_EXPIRATION_TIME, DATABASE_NAME } from '../utils/Constants'
+import GrowingContext from '../core/Context'
+import { DATABASE_NAME } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
+import Util from '../utils/Util'
 
 export default class EventDatabase {
   static store: relationalStore.RdbStore
+  static tableName: string = 'EVENTS'
 
   static async initDatabase(context: Context) {
     const config: relationalStore.StoreConfig = {
@@ -30,13 +33,16 @@ export default class EventDatabase {
       securityLevel: relationalStore.SecurityLevel.S1
     }
 
-    const SQL_CREATE_TABLE = 'CREATE TABLE IF NOT EXISTS EVENT ('
-    + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
-    + 'EVENT_UUID TEXT NOT NULL, '
-    + 'DATA TEXT NOT NULL, '
-    + 'TYPE TEXT NOT NULL, '
-    + 'CREATE_AT INTEGER NOT NULL, '
-    + 'SDK_VERSION TEXT NOT NULL)'
+    const SQL_CREATE_TABLE = 'CREATE TABLE IF NOT EXISTS '
+      + EventDatabase.tableName + '('
+      + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
+      + 'EVENT_UUID TEXT NOT NULL, '
+      + 'DATA TEXT NOT NULL, '
+      + 'TYPE TEXT NOT NULL, '
+      + 'CREATE_AT INTEGER NOT NULL, '
+      + 'ACCOUNT_ID TEXT NOT NULL, '
+      + 'DATASOURCE_ID TEXT NOT NULL, '
+      + 'SDK_VERSION TEXT NOT NULL)'
 
     let appContext = context.getApplicationContext()
 
@@ -45,7 +51,7 @@ export default class EventDatabase {
       await store.executeSql(SQL_CREATE_TABLE)
       EventDatabase.store = store
     } catch (e) {
-      LogUtil.error("Failed to create database. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to create database. code = " + e.code + ", message = " + e.message)
     }
 
     await EventDatabase.cleanExpiredEventIfNeeded()
@@ -61,18 +67,25 @@ export default class EventDatabase {
       'DATA': event.data,
       'TYPE': event.eventType,
       'CREATE_AT': Date.now(),
-      'SDK_VERSION': event.sdkVersion
+      'SDK_VERSION': event.sdkVersion,
+      'ACCOUNT_ID': event.accountId,
+      'DATASOURCE_ID': event.dataSourceId
     }
 
     try {
-      await EventDatabase.store.insert('EVENT', valueBucket)
-      LogUtil.info('Write event to disk = ' + event.data)
+      await EventDatabase.store.insert(EventDatabase.tableName, valueBucket)
+      LogUtil.info(() => 'Write event to disk = ' + JSON.stringify(JSON.parse(event.data), null, 4))
     } catch (e) {
-      LogUtil.error("Failed to write event to disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to write event to disk. code = " + e.code + ", message = " + e.message)
     }
   }
 
-  static async getEventsByCount(count: number): Promise<EventPersistence[]> {
+  static async getEventsByCount(
+    count: number,
+    size: number,
+    context: GrowingContext,
+    eventTypes?: string[]
+  ): Promise<EventPersistence[]> {
     let events: EventPersistence[] = []
 
     if (!EventDatabase.store) {
@@ -80,20 +93,29 @@ export default class EventDatabase {
     }
 
     try {
-      let predicates = new relationalStore.RdbPredicates('EVENT')
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
+      if (eventTypes && eventTypes.length > 0) {
+        predicates.in('TYPE', eventTypes)
+      }
       predicates.orderByAsc('CREATE_AT')
-      let r = await EventDatabase.store.query(predicates, ['EVENT_UUID', 'DATA', 'TYPE', 'SDK_VERSION'])
-      while (r.goToNextRow() && events.length < count) {
+      predicates.equalTo('ACCOUNT_ID', context.config.accountId)
+      predicates.equalTo('DATASOURCE_ID', context.config.dataSourceId)
+      let eventsSize = 0
+      let r = await EventDatabase.store.query(predicates)
+      while (r.goToNextRow() && events.length < count && eventsSize < size) {
         const uuid = r.getString(r.getColumnIndex('EVENT_UUID'))
         const data = r.getString(r.getColumnIndex('DATA'))
         const eventType = r.getString(r.getColumnIndex('TYPE'))
         const sdkVersion = r.getString(r.getColumnIndex('SDK_VERSION'))
-        let e = EventPersistence.fromDatabase(uuid, data, eventType, sdkVersion)
+        const accountId = r.getString(r.getColumnIndex('ACCOUNT_ID'))
+        const dataSourceId = r.getString(r.getColumnIndex('DATASOURCE_ID'))
+        let e = EventPersistence.fromDatabase(uuid, data, eventType, sdkVersion, accountId, dataSourceId)
         events.push(e)
+        eventsSize += Util.sizeOfEventString(String(data))
       }
       r.close()
     } catch (e) {
-      LogUtil.error("Failed to get event from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to get event from disk. code = " + e.code + ", message = " + e.message)
     }
 
     return events
@@ -108,31 +130,34 @@ export default class EventDatabase {
       let event = events.shift()
       if (event) {
         try {
-          let predicates = new relationalStore.RdbPredicates('EVENT')
+          let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
           predicates.equalTo('EVENT_UUID', event.uuid)
           await EventDatabase.store.delete(predicates)
         } catch (e) {
-          LogUtil.error("Failed to remove event from disk. code = " + e.code + ", message = " + e.message)
+          LogUtil.error(() => "Failed to remove event from disk. code = " + e.code + ", message = " + e.message)
         }
       }
     }
   }
 
-  static async countOfEvents(): Promise<number> {
+  static async countOfEvents(context: GrowingContext, eventTypes?: string[]): Promise<number> {
     if (!EventDatabase.store) {
       return 0
     }
 
-    const SQL_GET_COUNT = 'SELECT COUNT(*) FROM EVENT'
     let count = 0
-
     try {
-      let r = await EventDatabase.store.querySql(SQL_GET_COUNT)
-      r.goToFirstRow()
-      count = r.getLong(r.getColumnIndex('COUNT(*)'))
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
+      if (eventTypes && eventTypes.length > 0) {
+        predicates.in('TYPE', eventTypes)
+      }
+      predicates.equalTo('ACCOUNT_ID', context.config.accountId)
+      predicates.equalTo('DATASOURCE_ID', context.config.dataSourceId)
+      let r = await EventDatabase.store.query(predicates)
+      count = r.rowCount
       r.close()
     } catch (e) {
-      LogUtil.error("Failed to get event count from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to get event count from disk. code = " + e.code + ", message = " + e.message)
     }
 
     return count
@@ -143,14 +168,15 @@ export default class EventDatabase {
       return
     }
 
-    let daysAgo = Date.now() - DATABASE_EXPIRATION_TIME
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    let daysAgo = Date.now() - context.config._dataValidityPeriod
 
     try {
-      let predicates = new relationalStore.RdbPredicates('EVENT')
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
       predicates.lessThanOrEqualTo('CREATE_AT', daysAgo)
       await EventDatabase.store.delete(predicates)
     } catch (e) {
-      LogUtil.error("Failed to clean expired event from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to clean expired event from disk. code = " + e.code + ", message = " + e.message)
     }
   }
 }

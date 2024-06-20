@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import GrowingContext from '../core/Context'
+import { ConfigMode } from '../interfaces/GrowingConfig'
+import Util from '../utils/Util'
+import { AttributesType } from '../utils/Constants'
 export { AttributesType } from '../utils/Constants'
 
 export default abstract class Event {
@@ -29,6 +33,7 @@ export default abstract class Event {
   sdkVersion: string = ''
   dataSourceId: string = ''
   urlScheme: string = ''
+  attributes: AttributesType | undefined = undefined
 
   eventType: EventType = EventType.Visit
 
@@ -47,17 +52,33 @@ export default abstract class Event {
   // appInfo
   domain: string = ''
   appState: string = ''
-  appChannel: string = ''
   appName: string = ''
   appVersion: string = ''
+  appChannel: string | undefined = undefined
 
-  toSerialize(): string {
-    return JSON.stringify(this)
+  toSerialize(context: GrowingContext): string {
+    let mode = context.config.mode
+    if (mode == ConfigMode.SaaS) {
+      return Util.toSerializeByMeasurementProtocolV2(this)
+    } else if (mode == ConfigMode.CDP) {
+      return Util.toSerializeByMeasurementProtocolV3(this)
+    } else {
+      return JSON.stringify(this)
+    }
   }
 }
 
 export enum EventType {
   Visit = 'VISIT',
   Custom = 'CUSTOM',
-  LoginUserAttributes = 'LOGIN_USER_ATTRIBUTES'
+  LoginUserAttributes = 'LOGIN_USER_ATTRIBUTES',
+  Page = 'PAGE',
+  ViewClick = 'VIEW_CLICK',
+  ViewChange = 'VIEW_CHANGE',
+}
+
+export enum EventScene {
+  Native = 0,
+  Hybrid,
+  Flutter
 }

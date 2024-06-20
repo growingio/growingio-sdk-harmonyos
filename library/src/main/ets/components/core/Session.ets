@@ -18,8 +18,11 @@
 import util from '@ohos.util'
 
 import AnalyticsCore from './AnalyticsCore'
+import GrowingContext from './Context'
 import VisitEvent from '../event/VisitEvent'
+import FakePageEvent from '../event/saas/FakePageEvent'
 import { LogUtil } from '../utils/LogUtil'
+import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export enum SessionState {
   Foreground,
@@ -27,47 +30,88 @@ export enum SessionState {
 }
 
 export default class Session {
-  static sessionId: string
+  sessionId: string
+  trackerId: string
+  latestOnBackgroundTime: number
   static sessionState: SessionState = SessionState.Foreground
-  private static _latestOnBackgroundTime: number = 0
+  static sessions: Array<Session> = []
+
+  constructor(
+    sessionId: string,
+    trackerId: string,
+    latestOnBackgroundTime: number = 0
+  ) {
+    this.sessionId = sessionId
+    this.trackerId = trackerId
+    this.latestOnBackgroundTime = latestOnBackgroundTime
+  }
 
   static onForeground() {
-    LogUtil.info('Session state set to foreground')
+    LogUtil.info(() => 'Session state set to foreground')
     Session.sessionState = SessionState.Foreground
-    if (Session._latestOnBackgroundTime == 0) {
-      return
-    }
-    let core = AnalyticsCore.core
-    if (core) {
-      let config = core.config
-      if (Date.now() - Session._latestOnBackgroundTime >= config.sessionInterval * 1000) {
-        LogUtil.info('Latest session is outdated')
-        Session.refreshSession()
+    Session.sessions.forEach(session => {
+      if (session.latestOnBackgroundTime == 0) {
+        // 1.首次初始化
+        // 2.上一次sessionState为foreground
+        return
       }
-    }
+
+      let context = GrowingContext.getContext(session.trackerId)!
+      if (Date.now() - session.latestOnBackgroundTime >= context.config._sessionInterval) {
+        LogUtil.info(() => 'current session is outdated, trackerId = ' + context.trackerId)
+        Session.refreshSession(context)
+      }
+      session.latestOnBackgroundTime = 0
+    })
   }
 
   static onBackground() {
-    LogUtil.info('Session state set to background')
+    LogUtil.info(() => 'Session state set to background')
     Session.sessionState = SessionState.Background
-    Session._latestOnBackgroundTime = Date.now()
+    Session.sessions.forEach(session => {
+      session.latestOnBackgroundTime = Date.now()
+    })
   }
 
-  static refreshSession() {
-    LogUtil.info('Refresh Session')
-    Session.sessionId = util.generateRandomUUID(false)
-    Session.generateVisit()
+  static refreshSession(context: GrowingContext) {
+    LogUtil.info(() => 'Refresh Session for tracker = ' + context.trackerId)
+    let session: Session | undefined = undefined
+    for (let s of Session.sessions) {
+      if (s.trackerId == context.trackerId) {
+        session = s
+        break
+      }
+    }
+    if (session) {
+      session.sessionId = util.generateRandomUUID(false)
+    } else {
+      session = new Session(util.generateRandomUUID(false), context.trackerId)
+      Session.sessions.push(session)
+    }
+    Session.generateVisit(context)
   }
 
-  static generateVisit() {
-    LogUtil.info('Generate Visit')
-    let core = AnalyticsCore.core as AnalyticsCore
-    let config = core.config
-    if (!config.dataCollectionEnabled) {
-      LogUtil.info('Failed to Generate Visit, dataCollectionEnabled is false')
+  static getSessionId(context: GrowingContext): string | undefined {
+    for (let session of Session.sessions) {
+      if (session.trackerId == context.trackerId) {
+        return session.sessionId
+      }
+    }
+    return undefined
+  }
+
+  static generateVisit(context: GrowingContext) {
+    LogUtil.info(() => 'Generate Visit for tracker = ' + context.trackerId)
+    if (!context.config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to Generate Visit, dataCollectionEnabled is false')
       return
     }
-    let e = VisitEvent.create()
-    core.writeEventToDisk(e)
+    let e = VisitEvent.create(context)
+    AnalyticsCore.writeEventToDisk(e, context)
+
+    if (context.config.mode == ConfigMode.SaaS) {
+      let p = FakePageEvent.create(context)
+      AnalyticsCore.writeEventToDisk(p, context)
+    }
   }
 }

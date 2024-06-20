@@ -18,58 +18,110 @@
 import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
+import webview from '@ohos.web.webview'
 
-import { GrowingConfig } from '../interfaces/GrowingConfig'
+import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
+import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
 import AppInfo from './AppInfo'
+import GrowingContext from './Context'
 import DeviceInfo from './DeviceInfo'
 import EventTimer from './EventTimer'
-import GeneralProps from './GeneralProps'
+import Hybrid from './Hybrid'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import CustomEvent from '../event/CustomEvent'
-import Event, { EventType } from '../event/Event'
+import Event, { EventScene, EventType } from '../event/Event'
 import EventBuilder from '../event/EventBuilder'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
-import { AttributesType, SDK_VERSION } from '../utils/Constants'
+import CustomEventSender from '../event/saas/SaaSCSTMEventSender'
+import PVEventSender from '../event/saas/SaaSPVEventSender'
+import FakePageEvent from '../event/saas/FakePageEvent'
+import { AttributesType, JavaScriptProxyType, SDK_VERSION } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
+import DummyTracker from './DummyTracker'
 
-export default class AnalyticsCore {
-  static core: AnalyticsCore | undefined = undefined
+class Location {
+  latitude: number = 0
+  longitude: number = 0
+}
 
-  config: GrowingConfig
-  location: Location
+export default class AnalyticsCore implements GrowingAnalyticsInterface {
+  static core: AnalyticsCore | DummyTracker = new DummyTracker()
+  static trackers: Array<AnalyticsCore> = []
+  static dummyTracker: DummyTracker = new DummyTracker()
+  static location: Location = new Location()
+  context: GrowingContext
 
-  constructor(config: GrowingConfig) {
-    this.config = config
-    this.location = new Location()
+  constructor(context: GrowingContext) {
+    this.context = context
   }
 
   static async startCore(context: Context, config: GrowingConfig) {
-    let core = new AnalyticsCore(config)
+    GrowingContext.setDefaultContext(config)
+    let gContext = GrowingContext.getDefaultContext() as GrowingContext
+    let core = new AnalyticsCore(gContext)
     AnalyticsCore.core = core
+    AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
     AnalyticsCore.setAbilityLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
     await Promise.all<Promise<void>>([
-      AppInfo.initAppInfo(),
+      AppInfo.initAppInfo(context),
       DeviceInfo.initDeviceInfo(),
-      UserIdentifier.initUser(),
+      UserIdentifier.initUser(gContext),
       EventBuilder.initEventBuilder(),
       EventDatabase.initDatabase(context)
     ])
 
-    LogUtil.info('Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
-    + 'GrowingIO version: ' + SDK_VERSION)
+    LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
+      + 'GrowingIO version: ' + SDK_VERSION)
 
-    let delay = config.dataUploadInterval * 1000
-    setInterval(() => {
-      EventSender.sendEvent()
-    }, delay)
+    let delay = config._dataUploadInterval
+    let runner = config.mode == ConfigMode.SaaS ? () => {
+      CustomEventSender.sendEvent(gContext)
+      PVEventSender.sendEvent(gContext)
+    } : () => {
+      EventSender.sendEvent(gContext)
+    }
+    setInterval(runner, delay)
+  }
+
+  static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
+    if (GrowingContext.hasSimilarContext(trackerId, config)) {
+      return false
+    }
+
+    GrowingContext.setContext(trackerId, config)
+    let context = GrowingContext.getContext(trackerId) as GrowingContext
+    let core = new AnalyticsCore(context)
+    AnalyticsCore.trackers.push(core)
+
+    UserIdentifier.initMultiUser(context)
+
+    let delay = config._dataUploadInterval
+    let runner = config.mode == ConfigMode.SaaS ? () => {
+      CustomEventSender.sendEvent(context)
+      PVEventSender.sendEvent(context)
+    } : () => {
+      EventSender.sendEvent(context)
+    }
+    setInterval(runner, delay)
+
+    return true
+  }
+
+  static tracker(trackerId: string): AnalyticsCore | DummyTracker {
+    for (let tracker of AnalyticsCore.trackers) {
+      if (tracker.context.trackerId == trackerId) {
+        return tracker
+      }
+    }
+    return AnalyticsCore.dummyTracker
   }
 
   static setAbilityLifecycleCallback(context: Context) {
@@ -100,60 +152,99 @@ export default class AnalyticsCore {
     context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
   }
 
+  createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
+    return Hybrid.createHybridProxy(controller, this.context)
+  }
+
+  isInitializedSuccessfully(): boolean {
+    return true
+  }
+
   setDataCollectionEnabled(enabled: boolean) {
-    let config = this.config
+    let config = this.context.config
     if (config.dataCollectionEnabled == enabled) {
       return
     }
-    LogUtil.info('Set dataCollectionEnabled: ' + enabled)
+    LogUtil.info(() => 'Set dataCollectionEnabled: ' + enabled)
     config.dataCollectionEnabled = enabled
     if (enabled) {
-      Session.refreshSession()
+      if (config.mode == ConfigMode.CDP) {
+        Session.generateVisit(this.context)
+      } else {
+        Session.refreshSession(this.context)
+      }
     } else {
-      EventTimer.clearTrackTimer()
+      EventTimer.clearTrackTimer(this.context)
     }
   }
 
   setLoginUserId(
     userId: string,
-    userKey: string = ''
+    userKey?: string
   ) {
-    UserIdentifier.setLoginUserId(userId, userKey)
+    if (!userKey) {
+      userKey = ''
+    }
+    UserIdentifier.setLoginUserId(userId, userKey, this.context)
   }
 
-  setLocation(
-    latitude: number,
-    longitude: number
-  ) {
-    this.location.latitude = latitude
-    this.location.longitude = longitude
+  cleanLoginUserId() {
+    UserIdentifier.setLoginUserId('', '', this.context)
   }
 
-  setLoginUserAttributes(
-    attributes: AttributesType
-  ) {
-    let e = LoginUserAttributesEvent.create(attributes)
-    this.writeEventToDisk(e)
-    LogUtil.info('Set loginUserAttributes: ' + JSON.stringify(attributes))
+  setLoginUserAttributes(attributes: AttributesType) {
+    let e = LoginUserAttributesEvent.create(Util.cloneObject(attributes), this.context)
+    AnalyticsCore.writeEventToDisk(e, this.context)
+    LogUtil.info(() => 'Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
 
-  getDeviceId() {
+  getDeviceId(): string {
     return DeviceInfo.deviceId
   }
 
   track(
     eventName: string,
+    attributes: AttributesType = {},
+    sendTo?: string[]
+  ) {
+    if (this.context.config.mode == ConfigMode.SaaS) {
+      let p = FakePageEvent.create(this.context)
+      AnalyticsCore.writeEventToDisk(p, this.context)
+      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context, p)
+      AnalyticsCore.writeEventToDisk(e, this.context)
+    } else {
+      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
+      AnalyticsCore.writeEventToDisk(e, this.context)
+    }
+    LogUtil.info(() => 'Track custom event with eventName: ' + eventName + ', attributes: ' +
+    JSON.stringify(attributes))
+
+    if (sendTo && sendTo.length > 0) {
+      AnalyticsCore.sendTo(this.context.trackerId, sendTo, eventName, attributes)
+    }
+  }
+
+  static sendTo(
+    curTrackerId: string,
+    trackers: string[],
+    eventName: string,
     attributes: AttributesType = {}
   ) {
-    let generalProps = GeneralProps.getGeneralProps()
-    let e = CustomEvent.create(eventName, Util.concatObject(generalProps, attributes))
-    this.writeEventToDisk(e)
-    LogUtil.info('Track custom event with eventName: ' + eventName + ', attributes: ' + JSON.stringify(attributes)
-    + ', current generalProps: ' + JSON.stringify(generalProps))
+    trackers = trackers.filter( trackerId => trackerId != curTrackerId )
+    trackers = Array.from(new Set(trackers))
+    trackers.forEach(trackerId => {
+      let tracker = AnalyticsCore.tracker(trackerId)
+      if (tracker.isInitializedSuccessfully()) {
+        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), (tracker as AnalyticsCore).context)
+        AnalyticsCore.writeEventToDisk(e, (tracker as AnalyticsCore).context)
+        LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
+          + ', attributes: ' + JSON.stringify(attributes))
+      }
+    })
   }
 
   async trackTimerStart(eventName: string): Promise<string> {
-    return await EventTimer.trackTimerStart(eventName)
+    return await EventTimer.trackTimerStart(eventName, this.context)
   }
 
   async trackTimerPause(timerId: string) {
@@ -166,9 +257,10 @@ export default class AnalyticsCore {
 
   async trackTimerEnd(
     timerId: string,
-    attributes: AttributesType = {}
+    attributes: AttributesType = {},
+    sendTo?: string[]
   ) {
-    await EventTimer.trackTimerEnd(timerId, attributes)
+    await EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context, sendTo)
   }
 
   removeTimer(timerId: string) {
@@ -176,34 +268,56 @@ export default class AnalyticsCore {
   }
 
   clearTrackTimer() {
-    EventTimer.clearTrackTimer()
+    EventTimer.clearTrackTimer(this.context)
   }
 
-  setGeneralProps(props: AttributesType) {
-    GeneralProps.setGeneralProps(props)
-  }
-
-  removeGeneralProps(keys: string[]) {
-    GeneralProps.removeGeneralProps(keys)
-  }
-
-  clearGeneralProps() {
-    GeneralProps.clearGeneralProps()
-  }
-
-  async writeEventToDisk<T extends Event>(event: T) {
-    if (!this.config.dataCollectionEnabled) {
+  static async writeEventToDisk<T extends Event>(
+    event: T,
+    context: GrowingContext,
+    eventScene: EventScene = EventScene.Native
+  ) {
+    if (!context.config.dataCollectionEnabled) {
       return
     }
-    let pst = EventPersistence.fromEvent(event)
+
+    let pst = EventPersistence.fromEvent(event, context)
     await EventDatabase.writeEvent(pst)
     if (pst.eventType == EventType.Visit) {
-      await EventSender.sendEvent()
+      if (context.config.mode == ConfigMode.SaaS) {
+        await PVEventSender.sendEvent(context)
+      } else {
+        await EventSender.sendEvent(context)
+      }
     }
   }
-}
 
-class Location {
-  latitude: number = 0
-  longitude: number = 0
+  static setLocation(
+    latitude: number,
+    longitude: number
+  ) {
+    // mode CDP
+    let needSendVisit: boolean = false
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (context) {
+      if (context.config.mode == ConfigMode.CDP) {
+        if ((AnalyticsCore.location.latitude == 0 && Math.abs(latitude) > 0)
+          || (AnalyticsCore.location.longitude == 0 && Math.abs(longitude) > 0)) {
+          needSendVisit = true
+        }
+      }
+    }
+
+    AnalyticsCore.location.latitude = latitude
+    AnalyticsCore.location.longitude = longitude
+
+    // mode CDP
+    if (needSendVisit) {
+      Session.generateVisit(context)
+    }
+  }
+
+  static cleanLocation() {
+    AnalyticsCore.location.latitude = 0
+    AnalyticsCore.location.longitude = 0
+  }
 }

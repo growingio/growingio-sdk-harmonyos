@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="divport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" />
+    <title>new demo title</title>
+    <link rel="shortcut icon" href="./assets/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="./assets/global.css" />
+    <link rel="stylesheet" href="./assets/on_off_switch.css" type="text/css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen"
+      href="https://cdn.staticfile.org/ionicons/2.0.1/css/ionicons.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"
+    />
+    <style>
+      #slider {
+        margin: 10px;
+      }
+    </style>
+    <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <!-- <script src="./assets/vconsole.min.js"></script> -->
+    <!-- <script
+      src="http://www.growingio.com/errortest.js"
+      crossorigin="anonymous"
+    ></script> -->
+    <script src="../dist/plugins/gioEventAutoTracking.js"></script>
+    <!-- <script src="../dist/plugins/gioCompress.js"></script>
+    <script src="../dist/plugins/gioImpressionTracking.js"></script>
+    <script src="../dist/plugins/gioEmbeddedAdapter.js"></script>
+    <script src="../dist/plugins/gioHybridAdapter.js"></script>
+    <script src="../dist/plugins/gioWebCircle.js"></script>
+    <script src="../dist/plugins/gioHybridCircle.js"></script>
+    <script src="../dist/performance/gioPerformance.js"></script> -->
+    <!-- <script src="../dist/plugins/gioEventAutoTracking.js"></script>
+    <script src="../dist/extra/gio1xHybridAdapter.js"></script>
+    <script src="../dist/plugins/gioHybridAdapter.js"></script> -->
+
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+      // VConsole will be exported to `window.VConsole` by default.
+      var vConsole = new window.VConsole();
+    </script>
+
+    <script>
+      // 低版本下会由于hostname获取为空而不初始化SDK，提示：当前SDK不允许在本地环境初始化!
+      window._gr_ignore_local_rule = true;
+    </script>
+
+    <script type="text/javascript">
+      !(function (e, n, t, s, c) {
+        var o;
+        e[s] =
+          e[s] ||
+          function () {
+            (e[s].q = e[s].q || []).push(arguments);
+          };
+        (c = c || 'vds'),
+          (e._gio_local_vds = c),
+          (e[c] = null !== (o = e[c]) && void 0 !== o ? o : {}),
+          (e[c].namespace = s);
+        var d = n.createElement('script');
+        var i = n.getElementsByTagName('script')[0];
+        (d.async = !0), (d.src = t), i.parentNode.insertBefore(d, i);
+      })(window, document, 'https://assets.giocdn.com/sdk/webjs/gdp-full.js', 'gdp');
+
+      gdp('init', '0a1b4118dd954ec3bcc69da5138bdb96', '654321', {
+        version: '9.9.9',
+      });
+    </script>
+
+    <script type="text/javascript">
+      function gioSetUserId() {
+        gdp('setUserId', 'ZhangSan');
+        console.log(gdp('getPlugins'));
+      }
+      function gioChangeUserId() {
+        gdp('setUserId', 'myUserId-' + Date.now());
+      }
+      function gioSetUserIdAndUserKey() {
+        gdp(
+          'setUserId',
+          'ZhangSan',
+          'Gio_Name!@#$%^&*()_+-=[]{}\|;:",.<>/?`~AaZa'
+        );
+      }
+      function gioChangeUserIdAndUserKey() {
+        gdp('setUserId', 'myUserId-' + Date.now(), 'myUserKey' + Date.now());
+      }
+      function gioClearUserIdAndUserKey() {
+        gdp('clearUserId');
+      }
+      function gioSetUserAttributes() {
+        gdp('setUserAttributes', {
+          name: 'Kate',
+          age: 18,
+          phone: 13512341234
+        });
+      }
+      function gioGetDeviceId() {
+        console.log(gdp('getDeviceId'));
+      }
+      function gioChangeQuery() {
+        history.pushState(
+          null,
+          null,
+          // location.pathname + '?mytm=' + Date.now() + '&myUserId=' + Date.now()
+          location.pathname +
+            '?/#/firstname=123&lastname=123/#/abc/defe?a=1&b=2?c=3'
+        );
+      }
+      function gioChangeHash() {
+        history.pushState(null, null, location.pathname + '#' + Date.now());
+      }
+      function gioMinipInfo() {
+        location.href =
+          location.pathname +
+          '?mytm=??' +
+          Date.now() +
+          '&myUserId=' +
+          Date.now() +
+          '&gioappid=wxd703bebcd9364ca7&giocs1=zhangsan&gioplatform=MinP&gioprojectid=91eaf9b283361032&gios=138f8ce6-a003-4ef8-99d6-ba41eb5ce653&giou=openId-123456&giodatacollect=true&giodatasourceid=81a6e08ab78a809e&gioid=zhangsan&giouserkey=&gioappChannel=scn%3A1001&giodeviceBrand=devtools&giodeviceModel=iPhone%206%2F7%2F8&giodeviceType=devtools&gionetworkState=wifi&gioplatformVersion=Weixin%208.0.5&giolanguage=zh_CN&gioscreenHeight=1334&gioscreenWidth=750&giooperatingSystem=devtools';
+      }
+      function gioToggleAutoTrack() {
+        gdp('setOption', 'autotrack', !gdp('getOption', 'autotrack'));
+      }
+      function gioNormalBtn() {}
+      function gioExtraBtn() {}
+      function gioToggleDataCollect() {
+        gdp('setOption', 'dataCollect', !gdp('getOption', 'dataCollect'));
+      }
+      function gioSetGeneralProps() {
+        let index = 0;
+        gdp('setGeneralProps', {
+          myname: 'Mick',
+          age: 18,
+          index_var: function () {
+            return index++;
+          }
+        });
+      }
+      function gioClearGeneralProps() {
+        gdp('clearGeneralProps', ['age', 'index_var']);
+      }
+      function gioIllegalTrack() {
+        gdp('track', null, null);
+        gdp('track', '', null);
+        gdp('track', '', {});
+        gdp('track', 'test-imp', {
+          'testcstm-no-var-1': 'hjh',
+          'testcstm-no-var-2': '19'
+        });
+        gdp('track', { 'testcstm-no-var-1': 'hjh', 'testcstm-no-var-2': '19' });
+      }
+      function gioLegalTrack() {
+        gdp('track', 'testcstm_var', {
+          'var-1': 12,
+          'var-2': 'var-2-value',
+          13: 13,
+          '': 'var-4-value',
+          'var-5': ''
+        });
+        gdp('track', 'testcstm_num', 10, {});
+        gdp('track', 'testcstm_no_var');
+        gdp(
+          'track',
+          'varkey',
+          {
+            app_web_var_1: 'app_web_var_1_xm'
+          },
+          { id: 'var_id', key: 'var_Key' }
+        );
+        gdp(
+          'track',
+          'varkey',
+          {},
+          {
+            id: 'var_id_1',
+            key: 'var_Key_1',
+            attributes: {
+              app_var: 'item_attr_1'
+            }
+          }
+        );
+        gdp('track', 'listAttr', {
+          list_attr1: ['aaabbb', 8769.012, 0, -1333, '我是中文', null],
+          list_attr2: arrayAttrs()
+        });
+      }
+
+      function arrayAttrs() {
+        let a = [];
+        for (i = 0; i < 100; i++) {
+          a.push('0123456789');
+        }
+        console.log(a, 'aaaa');
+        return a;
+      }
+
+      var timerId;
+      var timerId2;
+      function trackTimerStart() {
+        // var i=0;
+        // for (i; i<20; i++){
+        //   gdp('trackTimerStart', 'event1'+i, function(tid)  {
+        //     timerId = tid;
+        //     console.log(timerId, 'timerId');
+        //   });
+        // }
+        gdp('trackTimerStart', 'event1', function (tid) {
+          timerId = tid;
+          console.log(timerId, 'timerId');
+        });
+        gdp('trackTimerStart', 'event2_register_success', function (tid) {
+          timerId2 = tid;
+          console.log(timerId2, 'timerId2');
+        });
+      }
+
+      function trackTimerPause() {
+        gdp('trackTimerPause', timerId);
+      }
+      function trackTimerResume() {
+        gdp('trackTimerResume', timerId);
+      }
+      function trackTimerEnd() {
+        gdp('trackTimerEnd', timerId, { name: 'Cindy', age: 18 });
+        gdp('trackTimerEnd', timerId2, {
+          prod_list: ['我是中文测试数据～～！！？？【】；、', null, , 0]
+        });
+      }
+      function removeTimer() {
+        gdp('removeTimer', timerId);
+      }
+      function clearTrackTimer() {
+        gdp('clearTrackTimer');
+      }
+      function getAllTimer() {
+        gdp('getAllTrackerTimer');
+      }
+
+      function gioHandleError1() {
+        console.log(gioObject.a);
+      }
+      function gioHandleError2() {
+        throw new Error('my custom error');
+      }
+      // async function gioHandleError3() {
+      //   const gioInfo = function() {
+      //     ggg();
+      //     console.log('gioHandleError3');
+      //   };
+      //   await gioInfo();
+      // }
+      // function gioHandleError4() {
+      //   new Promise(function(resolve, reject) {
+      //     console.log('gioHandleError4');
+      //     reject(new Error('gioHandleError4 Error'));
+      //   });
+      // }
+      function gioHandleXHR() {
+        var xhr = new XMLHttpRequest();
+        xhr.open(
+          'GET',
+          'http://apis.juhe.cn/fapig/calendar/day.php?date=2021-05-09&key=63040e517e9b972116d5c5814f28782c'
+        );
+        xhr.setRequestHeader(
+          'Content-Type',
+          'application/x-www-form-urlencoded'
+        );
+        xhr.send();
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState == 4 && xhr.status == 200) {
+            console.log(xhr.responseText);
+          } else {
+            console.log(xhr.statusText);
+          }
+        };
+
+        var xhr2 = new XMLHttpRequest();
+        xhr2.open(
+          'POST',
+          'http://apis.juhe.cn/fapig/calendar/day.php?date=2021-05-09'
+        );
+        xhr2.setRequestHeader(
+          'Content-Type',
+          'application/x-www-form-urlencoded'
+        );
+        var data = new FormData();
+        data.append('name', 'Cyndi');
+        data.append('age', '18');
+        xhr2.send('name=Cyndi');
+        xhr2.onreadystatechange = function () {
+          if (xhr.readyState == 4 && xhr.status == 200) {
+            console.log(xhr.responseText);
+          } else {
+            console.log(xhr.statusText);
+          }
+        };
+      }
+      function gioHandleFetch() {
+        // fetch(
+        //   'http://v.cehe.cn/todayOnhistory/queryEvent.php?key=bb930191a775c236534119bdc6df760f&date=1/1'
+        // ).then(function(response)  {
+        //   console.log(response);
+        // });
+        // fetch(
+        //   'http://v.fenkai.cn/todayOnhistory/queryEvent.php?key=bb930191a775c236534119bdc6df760f&date=1/1'
+        // ).then(function(response)  {
+        //   console.log(response);
+        // });
+        // fetch(
+        //   'http://v.heshang.cn/todayOnhistory/queryEvent.php?key=bb930191a775c236534119bdc6df760f&date=1/1'
+        // ).then(function(response)  {
+        //   console.log(response);
+        // });
+        // fetch(
+        //   'http://v.xiangxia.cn/todayOnhistory/queryEvent.php?key=bb930191a775c236534119bdc6df760f&date=1/1'
+        // ).then(function(response)  {
+        //   console.log(response);
+        // });
+      }
+
+      function gioAddImpAttr() {
+        const impNode = document.getElementById('imp_0');
+        impNode.setAttribute('data-gio-imp-track', 'myNewTrack');
+        impNode.setAttribute(
+          'data-gio-imp-attrs',
+          JSON.stringify({ name: 'Cindy', age: 18 })
+        );
+      }
+    </script>
+
+    <!-- <img src="http://www.growingio.com/image/errortest.png" />
+    <link href="http://www.growingio.com/errortest.css" rel="stylesheet" /> -->
+    <style>
+      .imp-container .head-text {
+        border-left: 4px solid rgb(79, 70, 229);
+        padding-left: 2rem;
+        margin: 2rem 0;
+        font-weight: 500;
+        color: rgb(79, 70, 229);
+      }
+
+      img {
+        width: 30rem;
+      }
+    </style>
+  </head>
+
+  <body class="pl-8 pr-8">
+    <!-- <iframe src="http://test1.gio.com:5501/demos/demo2.html"></iframe> -->
+    <!-- <iframe src="http://10.10.20.24:5501/demos/demo2.html"></iframe> -->
+    <!-- 无埋点相关 -->
+    <div class="lending">无埋点相关</div>
+    <h4>------不支持的文本标签------</h4>
+    <div class="flex">
+      <text data-growing-container>测试text标签</text>
+    </div>
+    <!-- <div class="flex"> -->
+    <textarea class="text" data-growing-track>
+textarea不触发无埋点事件
+    </textarea>
+    <!-- </div> -->
+    <br />
+    <button title="'woshititle">
+      button节点文本
+      <!-- <span class="text" style="color: blue"
+        >测试button内部文本span节点12345678901234567890
+        <strong>strong节点</strong>
+      </span>
+      <br /> -->
+      <strong>测试button内部文本strong节点</strong>
+      <!-- <i>测试button内部文本i节点</i> -->
+      <!-- p,h不是文本节点？ -->
+      <p>测试button内部文本p节点</p>
+      <h5>测试button内部文本h节点</h5>
+    </button>
+    <h4>------支持的标签------</h4>
+    <h5>------a和button向上层查找5层找父容器------</h5>
+    <button><a class="btn"> button内a标签</a></button>
+    <br><br>
+    <div class="flex">
+      <a class="btn" href="http://release-messages.growingio.cn/push/cdp.html">a标签内href</a>
+    </div>
+    <!-- 备注后无埋点报错 -->
+    <!-- <button id="btn1">
+      button标签  -->
+      <div class="div1" data-growing-container>
+        <div>
+          <div>
+            <div>
+              <div>
+                <div>
+                <a>button内a标签</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <!-- </div> -->
+    </button>
+    <button id="btn2" class="cls" name="btn_name" title="'btn_title">有name属性的button标签，textValue优先取属性name</button>
+
+    <div class="btn1" onclick="onBtnClick()">
+      <i class="icon ion-star">图标</i>
+    </div>
+    <div data-growing-container class="btn1" onclick="onBtnClick()">
+      <i class="icon ion-star">
+        <span> 图标内span文本，上层div设为容器 </span></i
+      >
+    </div>
+    <div>
+        <!-- src="http://release-messages.growingio.cn/push/cdp/photo/pop1.jpeg#aaa/bbb?a=1" -->
+      <img
+        src="https://www.leezon.net/uploads/news/20200314160120629500.gif"
+        alt="Smiley face"
+        name="Doraemon"
+      />
+      <svg width="100" height="100" background="black">
+        <use xlink:href="#icon-circle"></use>
+        <circle
+          cx="50"
+          cy="50"
+          r="40"
+          stroke="green"
+          stroke-width="4"
+          fill="yellow"
+        />
+      </svg>
+      <svg
+        width="100%"
+        height="100%"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+      >
+        <style>
+          .classA {
+            fill: red;
+          }
+        </style>
+        <defs>
+          <g id="Port">
+            <circle style="fill: inherit" r="10" />
+          </g>
+        </defs>
+        <text y="15">black</text>
+        <use x="50" y="10" xlink:href="#Port" />
+        <text y="35">red</text>
+        <use x="50" y="30" xlink:href="#Port" class="classA" />
+        <text y="55">blue</text>
+        <use x="50" y="50" xlink:href="#Port" style="fill: blue" />
+      </svg>
+      <!-- https://blog.csdn.net/u012020854/article/details/102942051 -->
+    </div>
+    <div>
+      <div class="testswitch">
+        <input class="testswitch-checkbox" id="onoffswitch" type="checkbox" />
+        <label class="testswitch-label" for="onoffswitch">
+          <span class="testswitch-inner" data-on="ON" data-off="OFF"></span>
+          <span class="testswitch-switch"></span>
+        </label>
+      </div>
+      <br />
+      <br />
+      <div id="slider"></div>
+    </div>
+    <script>
+      $(document).ready(function () {
+        $('#onoffswitch').on('click', function () {
+          clickSwitch();
+        });
+
+        var clickSwitch = function () {
+          if ($('#onoffswitch').is(':checked')) {
+            console.log('在ON的状态下');
+          } else {
+            console.log('在OFF的状态下');
+          }
+        };
+      });
+      $('#slider').slider();
+    </script>
+
+    <div class="flex mb-4" data-growing-ignore> 忽略的节点：
+      <button id="autotrack" class="btn" onclick="gioToggleAutoTrack()">
+        开启/关闭无埋点
+      </button>
+      <p>测试button内部文本p节点</p>
+    </div>
+    <h5>------textValue取值优先级------</h5>
+    <div>无属性节点</div>
+    <div title="aaaa">有属性title</div>
+    <div data-growing-title="额外的上报信息">gio title标记</div>
+    <br />
+    <h5>------表单------</h5>
+    <form
+      action="demo_form.php"
+      class="basic-grey"
+      style="margin-top: 0px; margin-botton: 0px"
+      data-growing-container
+    >
+      <div class="search-input-wrap clearfix">
+        <div class="form-input-wrap f-l">
+          <form action="" class="input-kw-form">
+            Search：<input
+              type="search"
+              autocomplete="off"
+              name="baike-search"
+              placeholder="请输入关键词"
+              class="input-kw"
+            />
+          <i class="iconfont if-message"></i>
+          <i class="iconfont if-close"></i>
+        </div>
+        <i class="search-cancel f-l">取消</i>
+      </div>
+      First name:
+      <input type="text" name="fname" /><br />
+      Last name:
+      <input
+        data-growing-track
+        type="text"
+        name="lname"
+        class="inpt"
+        id="ln"
+      /><br />
+      Password: <input data-growing-track type="password" name="pwd" /><br />
+
+      <input type="button" name="inptBtn" /> input type=button<br />
+      <input type="submit" value="提交" />input type=button
+      <h4>-----table------</h4>
+      <table border="1px" cellspacing="0">
+        <thead>
+          信息表
+        </thead>
+        <tbody>
+          <colgroup span="2" width="200px"></colgroup>
+          <colgroup span="1" width="400px"></colgroup>
+          <tr height="40px">
+            <!--行，height设置行的高度-->
+            <th colspan="7">信息表</th>
+            <!--th:是单元格，且单元格中的文本加粗并居中；colspan 把列合并-->
+          </tr>
+          <tr height="40px">
+            <td rowspan="4" align="center">登录信息</td>
+            <!--居中-->
+            <td colspan="2">
+              <ul>
+                <li>Coffee</li>
+                <li>Tea</li>
+                <li><span>Milk</span></li>
+              </ul>
+            </td>
+          </tr>
+          <tr height="40px">
+            <td align="right">用户名：</td>
+            <!--靠右-->
+            <td>
+              <input type="text" name="login" id="" />
+              <!--input定义输入框，type中定义文本类型，name中自定义-->
+            </td>
+          </tr>
+          <tr height="40px">
+            <td align="right">密码：</td>
+            <td>
+              <input type="password" name="pwd" id="" />
+            </td>
+          </tr>
+          <tr height="40px">
+            <td colspan="2" align="center">
+              <input type="submit" value="提交" />
+              <!--（提交）按钮类型，value中定义按钮上的字-->
+              <button type="reset">重置</butto>
+              <!-- <input type="reset" value="重置" /> -->
+              <!--（重置）按钮类型，value中定义按钮上的字-->
+            </td>
+          </tr>
+        </tbody>
+        <tfoot></tfoot>
+      </table>
+    </form>
+    <br>
+    <form
+      method="get"
+      class="basic-grey"
+      style="margin-top: 0px; margin-botton: 0px">
+      <div class="flex mb-4">
+        <label>文本框：</label>
+        <input
+          id="name"
+          name="name"
+          placeholder="输入内容，切换光标发送change事件"
+          type="text"
+        />
+      </div>
+      <div class="flex mb-4">
+        <label>文本框：</label>
+        <input
+          id="name"
+          name="name"
+          placeholder="输入内容，发送带文本内容的change事件"
+          type="text"
+          data-growing-track
+        />
+      </div>
+      <div class="flex mb-4">
+        <label>下拉框：</label>
+        <select name="selection">
+          <option value="Job Inquiry">选择下拉框发送 change事件 1</option>
+          <option value="General Question">选择下拉框发送 change事件 2</option>
+          <option selected>选择下拉框发送 change事件 3</option>
+        </select>
+      </div>
+      <div class="flex mb-4">
+        <label>radio单选框：</label>
+        <input type="radio" name="userrole" checked="checked" />BOSS
+        <input type="radio" name="userrole" value="HR" id="hr" class="ml-4" />
+        <label for="hr">HR</label>
+        <label
+          ><input
+            type="radio"
+            name="userrole"
+            value="PM_input"
+            class="ml-4"
+          />PM</label
+        >
+        <input
+          type="radio"
+          name="userrole"
+          value="SRE_ipt_value"
+          class="ml-4"
+        />SRE
+      </div>
+
+      <div class="flex mb-4">
+        <label>checkbox多选框：</label>
+        <input type="checkbox" name="userrole" checked="checked" />BOSS
+        <input
+          type="checkbox"
+          name="userrole"
+          value="HR"
+          id="checkbox_hr"
+          class="ml-4"
+        />
+        <label for="checkbox_hr">HR</label>
+        <label
+          ><input
+            type="checkbox"
+            name="userrole"
+            value="PM_input"
+            class="ml-4"
+          />PM</label
+        >
+        <input
+          type="checkbox"
+          name="userrole"
+          value="SRE_ipt_value"
+          class="ml-4"
+        />SRE
+      </div>
+      <div class="flex mb-4">
+        <button class="btn">表单提交</button>
+      </div>
+    </form>
+    <h4>-----伪列表------</h4>
+    <div>
+      <div>
+        <label>ibiao</label>
+      </div>
+    </div>
+    <!-- <a> -->
+    <div>
+      <!-- <div>
+        <div>
+          <div>
+            <div> -->
+      <div class="flex mb-4">
+        <label>文本1</label>
+      </div>
+      <div class="flex mb-4">
+        <label>文本2</label>
+      </div>
+      <div class="flex mb-4">
+        <label>文本3</label>
+      </div>
+      <!-- </div>
+          </div>
+        </div>
+      </div> -->
+    </div>
+    <!-- </a> -->
+    <h4>-----列表li和自定义index------</h4>
+    <a ontouchstart()>
+      <ol>
+        <li>Coffee</li>
+        <li data-growing-index="5">Tea</li>
+        <li>Milk</li>
+      </ol>
+    </a>
+    <div>
+      <ul>
+        <li>Coffee</li>
+        <li>Tea</li>
+        <li><span>Milk</span></li>
+      </ul>
+    </div>
+    <h5>-----列表dl------</h5>
+    <div>
+      <dl>
+        dl标签1
+        <dt>Coffee</dt>
+        <dd>- black hot drink</dd>
+        <dt>Milk</dt>
+        <dd>- white cold drink</dd>
+      </dl>
+      <dl>
+        dl标签2
+        <dt>Coffee</dt>
+        <dd>- black hot drink</dd>
+        <dt>Milk</dt>
+        <dd>- white cold drink</dd>
+      </dl>
+    </div>
+    <h4>--------------------</h4>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioNormalBtn()">普通按钮，无额外信息</button>
+    </div>
+    <div class="flex mb-4">
+      <button
+        class="btn"
+        onclick="gioExtraBtn()"
+        data-growing-index="1"
+        data-growing-title="我有额外的内容"
+      >
+        带额外信息的按钮
+      </button>
+    </div>
+    <div class="flex mb-4">
+      <button
+        class="btn"
+        onclick="gioExtraBtn()"
+        data-growing-index="2"
+        data-growing-title="我有额外的内容"
+        data-growing-ignore
+      >
+        带额外信息的按钮，并设置了data-growing-ignore
+      </button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" data-growing-index="0">data-index="0"</button>&nbsp;
+      <button class="btn" data-growing-index="1">data-index="1"</button>&nbsp;
+      <button class="btn" data-growing-index="null">data-index="null"</button>
+    </div>
+
+    <!-- 用户相关 -->
+    <div class="lending">用户相关</div> 
+    <div class="flex">
+      <button class="btn" onclick="gioSetUserId()">设置UserId</button>
+    </div>
+    <div class="flex">
+      <button class="btn" onclick="gioChangeUserId()">更换UserId</button>
+    </div>
+    <div class="flex">
+      <button class="btn" onclick="gioSetUserIdAndUserKey()">
+        设置UserId和UserKey
+      </button>
+    </div>
+    <div class="flex">
+      <button class="btn" onclick="gioChangeUserIdAndUserKey()">
+        更换UserId和UserKey
+      </button>
+    </div>
+    <div class="flex">
+      <button class="btn" onclick="gioClearUserIdAndUserKey()">
+        清除UserId和UserKey
+      </button>
+    </div>
+    <div class="flex">
+      <button class="btn" onclick="gioSetUserAttributes()">设置用户属性</button>
+    </div>
+    <div class="flex">
+      <button class="btn" onclick="gioGetDeviceId()">获取访问用户Id</button>
+    </div>
+    <div class="lending">Page相关</div>
+    <div class="flex">
+      <button class="btn" onclick="gioChangeQuery()">修改页面参数</button>
+    </div>
+    <div class="flex">
+      <button class="btn" onclick="gioChangeHash()">修改页面hash</button>
+    </div>
+    
+    <!-- 埋点相关 -->
+    <div class="lending">埋点相关</div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioSetGeneralProps()">设置通用属性</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioClearGeneralProps()">移除通用属性</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioToggleDataCollect()">
+        开启/关闭数据采集
+      </button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioIllegalTrack()">
+        点击触发5个不合法埋点
+      </button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioLegalTrack()">点击触发6个合法埋点</button>
+    </div>
+    <!-- 计时埋点相关 -->
+    <div class="lending">计时埋点相关</div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="trackTimerStart()">
+        点击初始化事件计时
+      </button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="trackTimerPause()">点击暂停计时器</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="trackTimerResume()">点击恢复计时器</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="trackTimerEnd()">点击停止计时器</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="removeTimer()">点击移除计时器</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="clearTrackTimer()">
+        点击移除所有计时器
+      </button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="getAllTimer()">获取所有timer</button>
+    </div>
+    <!-- 性能相关 -->
+    <div class="lending">性能相关</div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioHandleError1()">普通异常错误1</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioHandleError2()">普通异常错误2</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioHandleError3()">普通异常错误3</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioHandleError4()">异步异常错误4</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioHandleXHR()">xhr接口调用</button>
+    </div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioHandleFetch()">fetch接口调用</button>
+    </div>
+    <div class="flex mb-24">↑↑↑上划页面至底部触发 imp ↑↑↑</div>
+    <!-- 半自动曝光相关 -->
+    <div class="lending">半自动曝光相关</div>
+    <div class="flex mb-4">
+      <button class="btn" onclick="gioAddImpAttr()">点击添加曝光属性</button>
+    </div>
+    <div id="idtest" class="imp-container">
+      <div class="head-text">imp动态设置测试：</div>
+      <div id="imp_0">这是一个动态设置的IMP</div>
+      <div class="head-text">imp测试一：</div>
+      <div
+        data-gio-imp-track="imp_cat_var"
+        data-gio-track-name="cat_picture"
+        data-gio-track-time="20210601"
+        id="imp_1"
+      >
+        <img
+          src="http://release-messages.growingio.cn/push/cdp/photo/pop1.jpeg#aaaaa/bbbb?c=3"
+        />
+      </div>
+      <div class="head-text">imp测试二：</div>
+      <div
+        data-gio-imp-track="imp_huawei_var"
+        data-gio-imp-attrs='{ "name": "华为P50Pro", "price": "6488" }'
+        id="imp_2"
+      >
+        <div>
+          【12期免息】华为P50 Pro 4G全网通搭载HarmonyOS
+          2麒麟9000华为手机华为官方旗舰店正品p50pro
+        </div>
+        <div>价格¥ 6488.00-7488.00</div>
+        <div>月销量3000+ 累计评价6428 送天猫积分648起</div>
+      </div>
+      <div class="head-text">imp测试三：</div>
+      <div
+        data-gio-imp-track="imp_text_var"
+        data-gio-imp-attrs="invalid_attrs"
+        id="imp_3"
+      >
+        <div>
+          测试文字展示：GrowingIO
+          是国内领先的一站式数据增长引擎整体方案服务商,以数据智能分析为核心,通过构建客户数据平台,打造增长营销闭环,帮助企业提升数据驱动能力,赋能商业决策、实现业务增长。
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
