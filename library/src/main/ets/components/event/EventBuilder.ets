@@ -16,14 +16,14 @@
  */
 
 import Event from './Event'
-import AnalyticsCore from '../core/AnalyticsCore'
+import AnalyticsCore, { SDK_VERSION } from '../core/AnalyticsCore'
 import AppInfo from '../core/AppInfo'
 import DeviceInfo from '../core/DeviceInfo'
 import GrowingContext from '../core/Context'
 import GrowingGeneralProps from '../core/GeneralProps'
 import Session, { SessionState } from '../core/Session'
 import UserIdentifier from '../core/UserIdentifier'
-import { SDK_VERSION, PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
+import { PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 
