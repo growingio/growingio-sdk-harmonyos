@@ -1,4 +1,4 @@
-# [1.1.0-rc.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/1.1.0-rc.0) (2024-06-20)
+# [1.1.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/1.1.0) (2024-06-21)
 
 ### Features
 
