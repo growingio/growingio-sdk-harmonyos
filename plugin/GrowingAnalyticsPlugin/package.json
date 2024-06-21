@@ -1,0 +1,22 @@
+{
+  "name": "growing_auto_track_plugin",
+  "version": "1.1.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc && node lib/index.js",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@ohos/hvigor": "file:../../dependencies/hvigor-4.3.0.tgz",
+    "@ohos/hvigor-ohos-plugin": "file:../../dependencies/hvigor-ohos-plugin-4.3.0.tgz",
+    "@types/node": "^20.12.12"
+  },
+  "dependencies": {
+    "handlebars": "^4.7.8",
+    "typescript": "^5.4.5"
+  }
+}
