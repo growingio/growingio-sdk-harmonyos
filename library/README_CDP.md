@@ -290,7 +290,7 @@ let deviceId = GrowingAnalytics.getDeviceId()
 
 `static setGeneralProps(props: { [key: string]: string | number | boolean | string[] | number[] | boolean[] })`
 
-为所有事件设置通用属性，多次调用，相同字段的新值将覆盖旧值；需在分析云平台事件管理界面关联事件属性
+为所有事件设置通用属性，多次调用，相同字段的新值将覆盖旧值；；需在分析云平台事件管理界面进行事件属性的创建并设置为全局属性
 
 `static removeGeneralProps(keys: string[])`
 
