@@ -13,7 +13,7 @@ GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社�
 - 支持 OpenHarmony API Level 10 - 12
 
 ## 集成文档
-### 通过 ohpm 集成
+### 通过 ohpm 中心仓集成
 ```c
 ohpm install @growingio/analytics
 ```
