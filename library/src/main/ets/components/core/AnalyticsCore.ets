@@ -44,14 +44,14 @@ import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 import DummyTracker from './DummyTracker'
-import BuildProfile from '../../../../../BuildProfile'
+import { HAR_VERSION } from '../../../../../BuildProfile'
 
 class Location {
   latitude: number = 0
   longitude: number = 0
 }
 
-export const SDK_VERSION: string = BuildProfile.HAR_VERSION
+export const SDK_VERSION: string = HAR_VERSION
 
 export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static core: AnalyticsCore | DummyTracker = new DummyTracker()
