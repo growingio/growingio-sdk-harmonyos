@@ -1,6 +1,7 @@
 import { GrowingAnalytics, GrowingAnalyticsInterface, GrowingAttrType } from '@growingio/analytics'
 import AppContext from '@ohos.app.ability.common'
 import Util from '../Util'
+import router from '@ohos.router'
 
 type ValueType = string | number | boolean | string[] | number[] | boolean[]
 let storage: LocalStorage = LocalStorage.getShared()
@@ -8,15 +9,18 @@ let storage: LocalStorage = LocalStorage.getShared()
 @Entry(storage)
 @Component
 struct Track {
-  @LocalStorageProp('trackerId') trackerId: string = ''
+  @LocalStorageProp('trackerId') trackerIdFromStorage: string = ''
+  @State trackerIdFromRouterParams: string = router.getParams()
+    ? ((router.getParams() as Record<string, Object>)['trackerId'] as string)
+    : ''
   @State eventName: string = Util.getRandomString()
   @State attributesK: string[] = []
   @State attributesV: ValueType[] = []
 
   build() {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
-      if (this.trackerId && this.trackerId.length > 0) {
-        Text('trackerId = ' + this.trackerId)
+      if (this.getTrackerId().length > 0) {
+        Text('trackerId = ' + this.getTrackerId())
       }
       TextInput({placeholder: 'enter eventName please', text: this.eventName})
         .onChange(v => {
@@ -53,12 +57,22 @@ struct Track {
         }).margin({ top: 15 })
       Button('Back')
         .onClick(() => {
-          let context = getContext(this) as AppContext.UIAbilityContext
-          context.terminateSelf()
+          // let context = getContext(this) as AppContext.UIAbilityContext
+          // context.terminateSelf()
+          router.back()
         }).margin({ top: 15 })
     }
     .width('100%')
     .height('100%')
+  }
+
+  getTrackerId(): string {
+    if (this.trackerIdFromStorage && this.trackerIdFromStorage.length > 0) {
+      return this.trackerIdFromStorage
+    } else if (this.trackerIdFromRouterParams && this.trackerIdFromRouterParams.length > 0) {
+      return this.trackerIdFromRouterParams
+    }
+    return ''
   }
 
   track() {
@@ -74,7 +88,8 @@ struct Track {
       attributes[k] = value
     })
 
-    if (this.trackerId && this.trackerId.length > 0) {
+    let trackerId = this.getTrackerId()
+    if (trackerId && trackerId.length > 0) {
       this.subTracker().track(this.eventName, attributes)
     } else {
       GrowingAnalytics.track(this.eventName, attributes)
@@ -91,6 +106,6 @@ struct Track {
   }
 
   subTracker(): GrowingAnalyticsInterface {
-    return GrowingAnalytics.tracker(this.trackerId) as GrowingAnalyticsInterface
+    return GrowingAnalytics.tracker(this.getTrackerId()) as GrowingAnalyticsInterface
   }
 }

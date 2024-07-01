@@ -1,19 +1,23 @@
 import { GrowingAnalytics, GrowingAnalyticsInterface } from '@growingio/analytics'
 import AppContext from '@ohos.app.ability.common'
+import router from '@ohos.router'
 
 let storage: LocalStorage = LocalStorage.getShared()
 
 @Entry(storage)
 @Component
 struct TrackTimer {
-  @LocalStorageProp('trackerId') trackerId: string = ''
+  @LocalStorageProp('trackerId') trackerIdFromStorage: string = ''
+  @State trackerIdFromRouterParams: string = router.getParams()
+    ? ((router.getParams() as Record<string, Object>)['trackerId'] as string)
+    : ''
   @State timerIds: string[] = []
   @State curTimerId: string = ''
 
   build() {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
-      if (this.trackerId && this.trackerId.length > 0) {
-        Text('trackerId = ' + this.trackerId)
+      if (this.getTrackerId().length > 0) {
+        Text('trackerId = ' + this.getTrackerId())
       }
       Button('trackTimerStart')
         .onClick(async () => {
@@ -62,16 +66,27 @@ struct TrackTimer {
       .height('50%')
       Button('Back')
         .onClick(() => {
-          let context = getContext(this) as AppContext.UIAbilityContext
-          context.terminateSelf()
+          // let context = getContext(this) as AppContext.UIAbilityContext
+          // context.terminateSelf()
+          router.back()
         }).margin({ top: 15 })
     }
     .width('100%')
     .height('100%')
   }
 
+  getTrackerId(): string {
+    if (this.trackerIdFromStorage && this.trackerIdFromStorage.length > 0) {
+      return this.trackerIdFromStorage
+    } else if (this.trackerIdFromRouterParams && this.trackerIdFromRouterParams.length > 0) {
+      return this.trackerIdFromRouterParams
+    }
+    return ''
+  }
+
   async trackTimerStart() {
-    if (this.trackerId && this.trackerId.length > 0) {
+    let trackerId = this.getTrackerId()
+    if (trackerId && trackerId.length > 0) {
       return await this.subTracker().trackTimerStart("timer")
     } else {
       return await GrowingAnalytics.trackTimerStart("timer")
@@ -79,7 +94,8 @@ struct TrackTimer {
   }
 
   trackTimerPause() {
-    if (this.trackerId && this.trackerId.length > 0) {
+    let trackerId = this.getTrackerId()
+    if (trackerId && trackerId.length > 0) {
       this.subTracker().trackTimerPause(this.curTimerId)
     } else {
       GrowingAnalytics.trackTimerPause(this.curTimerId)
@@ -87,7 +103,8 @@ struct TrackTimer {
   }
 
   trackTimerResume() {
-    if (this.trackerId && this.trackerId.length > 0) {
+    let trackerId = this.getTrackerId()
+    if (trackerId && trackerId.length > 0) {
       this.subTracker().trackTimerResume(this.curTimerId)
     } else {
       GrowingAnalytics.trackTimerResume(this.curTimerId)
@@ -95,7 +112,8 @@ struct TrackTimer {
   }
 
   trackTimerEnd() {
-    if (this.trackerId && this.trackerId.length > 0) {
+    let trackerId = this.getTrackerId()
+    if (trackerId && trackerId.length > 0) {
       this.subTracker().trackTimerEnd(this.curTimerId, {"key": "value"})
     } else {
       GrowingAnalytics.trackTimerEnd(this.curTimerId, {"key": "value"})
@@ -109,7 +127,8 @@ struct TrackTimer {
   }
 
   removeTimer() {
-    if (this.trackerId && this.trackerId.length > 0) {
+    let trackerId = this.getTrackerId()
+    if (trackerId && trackerId.length > 0) {
       this.subTracker().removeTimer(this.curTimerId)
     } else {
       GrowingAnalytics.removeTimer(this.curTimerId)
@@ -123,7 +142,8 @@ struct TrackTimer {
   }
 
   clearTrackTimer() {
-    if (this.trackerId && this.trackerId.length > 0) {
+    let trackerId = this.getTrackerId()
+    if (trackerId && trackerId.length > 0) {
       this.subTracker().clearTrackTimer()
     } else {
       GrowingAnalytics.clearTrackTimer()
@@ -133,6 +153,6 @@ struct TrackTimer {
   }
 
   subTracker(): GrowingAnalyticsInterface {
-    return GrowingAnalytics.tracker(this.trackerId) as GrowingAnalyticsInterface
+    return GrowingAnalytics.tracker(this.getTrackerId()) as GrowingAnalyticsInterface
   }
 }
