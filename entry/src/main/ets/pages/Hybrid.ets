@@ -1,5 +1,6 @@
 import web_webview from '@ohos.web.webview'
 import { GrowingAnalytics } from '@growingio/analytics'
+import router from '@ohos.router'
 
 @Entry
 @Component
@@ -35,6 +36,13 @@ struct Hybrid {
         .javaScriptAccess(true)
         .domStorageAccess(true)
         .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+        .height('90%')
+      Button('Back')
+        .onClick(() => {
+          // let context = getContext(this) as AppContext.UIAbilityContext
+          // context.terminateSelf()
+          router.back()
+        }).margin({ top: 15 })
     }
     .height('100%')
     .width('100%')

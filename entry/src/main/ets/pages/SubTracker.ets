@@ -78,7 +78,7 @@ struct SubTracker {
       .height('50%')
       Button('Back')
         .onClick(() => {
-          let context = getContext(this) as AppContext.UIAbilityContext
+          // let context = getContext(this) as AppContext.UIAbilityContext
           // context.terminateSelf()
           router.back()
         }).margin({ top: 15 })
