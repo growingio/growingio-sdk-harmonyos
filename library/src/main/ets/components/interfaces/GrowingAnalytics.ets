@@ -35,7 +35,7 @@ export interface GrowingAnalyticsInterface {
 
   setLoginUserAttributes(attributes: AttributesType): void
   track(eventName: string, attributes: AttributesType, sendTo?: string[]): void
-  trackTimerStart(eventName: string): Promise<string>
+  trackTimerStart(eventName: string): string
   trackTimerPause(timerId: string): void
   trackTimerResume(timerId: string): void
   trackTimerEnd(timerId: string, attributes: AttributesType, sendTo?: string[]): void
@@ -126,24 +126,24 @@ export class GrowingAnalytics {
     AnalyticsCore.core.track(eventName, attributes, sendTo)
   }
 
-  static async trackTimerStart(eventName: string): Promise<string> {
-    return await AnalyticsCore.core.trackTimerStart(eventName)
+  static trackTimerStart(eventName: string): string {
+    return AnalyticsCore.core.trackTimerStart(eventName)
   }
 
-  static async trackTimerPause(timerId: string) {
-    await AnalyticsCore.core.trackTimerPause(timerId)
+  static trackTimerPause(timerId: string) {
+    AnalyticsCore.core.trackTimerPause(timerId)
   }
 
-  static async trackTimerResume(timerId: string) {
-    await AnalyticsCore.core.trackTimerResume(timerId)
+  static trackTimerResume(timerId: string) {
+    AnalyticsCore.core.trackTimerResume(timerId)
   }
 
-  static async trackTimerEnd(
+  static trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {},
     sendTo?: string[]
   ) {
-    await AnalyticsCore.core.trackTimerEnd(timerId, attributes, sendTo)
+    AnalyticsCore.core.trackTimerEnd(timerId, attributes, sendTo)
   }
 
   static removeTimer(timerId: string) {

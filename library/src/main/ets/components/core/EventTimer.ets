@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import systemUptime from '@ohos.systemDateTime'
+import systemDatetime from '@ohos.systemDateTime'
 import util from '@ohos.util'
 
 import AnalyticsCore from './AnalyticsCore'
@@ -45,15 +45,15 @@ export default class EventTimer {
     this.trackerId = trackerId
   }
 
-  static async trackTimerStart(
+  static trackTimerStart(
     eventName: string,
     context: GrowingContext
-  ): Promise<string> {
+  ): string {
     if (!context.config.dataCollectionEnabled) {
       return ''
     }
 
-    let currentTime = await systemUptime.getRealTime(false)
+    let currentTime = systemDatetime.getUptime(systemDatetime.TimeType.STARTUP, false)
     let timer = new EventTimer(eventName, currentTime, 0, context.trackerId)
     let timerId = eventName + '_' + util.generateRandomUUID(false)
 
@@ -62,29 +62,29 @@ export default class EventTimer {
     return timerId
   }
 
-  static async trackTimerPause(timerId: string) {
+  static trackTimerPause(timerId: string) {
     let timer: EventTimer | undefined = EventTimer.timers.get(timerId)
     if (!timer || timer.isPaused()) {
       return
     }
     let startTime = timer.startTime
     timer.startTime = 0
-    let currentTime = await systemUptime.getRealTime(false)
+    let currentTime = systemDatetime.getUptime(systemDatetime.TimeType.STARTUP, false)
     timer.duration = EventTimer.durationFrom(startTime, currentTime)
     LogUtil.info(() => 'Track timer pause, timerId is ' + timerId)
   }
 
-  static async trackTimerResume(timerId: string) {
+  static trackTimerResume(timerId: string) {
     let timer: EventTimer | undefined = EventTimer.timers.get(timerId)
     if (!timer || !timer.isPaused()) {
       return
     }
-    let currentTime = await systemUptime.getRealTime(false)
+    let currentTime = systemDatetime.getUptime(systemDatetime.TimeType.STARTUP, false)
     timer.startTime = currentTime
     LogUtil.info(() => 'Track timer resume, timerId is ' + timerId)
   }
 
-  static async trackTimerEnd(
+  static trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {},
     context: GrowingContext,
@@ -105,7 +105,7 @@ export default class EventTimer {
     let duration = timer.duration
     EventTimer.timers.delete(timerId)
 
-    let currentTime = await systemUptime.getRealTime(false)
+    let currentTime = systemDatetime.getUptime(systemDatetime.TimeType.STARTUP, false)
     duration = EventTimer.durationFrom(startTime, currentTime) + duration
     attributes[Event_DURATION] = (duration / 1000.0).toFixed(3) + ''
     if (context.config.mode == ConfigMode.SaaS) {
@@ -143,25 +143,25 @@ export default class EventTimer {
     }
   }
 
-  static async handleAllTimersPause() {
+  static handleAllTimersPause() {
     LogUtil.info(() => 'Track timer all pause with appState is background')
     for (let timer of EventTimer.timers.values()) {
       if (timer.isPaused()) {
         return
       }
-      let currentTime = await systemUptime.getRealTime(false)
+      let currentTime = systemDatetime.getUptime(systemDatetime.TimeType.STARTUP, false)
       timer.duration = EventTimer.durationFrom(timer.startTime, currentTime)
       timer.startTime = currentTime
     }
   }
 
-  static async handleAllTimersResume() {
+  static handleAllTimersResume() {
     LogUtil.info(() => 'Track timer all resume with appState is foreground')
     for (let timer of EventTimer.timers.values()) {
       if (timer.isPaused()) {
         return
       }
-      let currentTime = await systemUptime.getRealTime(false)
+      let currentTime = systemDatetime.getUptime(systemDatetime.TimeType.STARTUP, false)
       timer.startTime = currentTime
     }
   }
