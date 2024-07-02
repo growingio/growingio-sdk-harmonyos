@@ -83,6 +83,10 @@ export class GrowingAnalytics {
     return tracker
   }
 
+  static autotrackPage(context: Object /* UIAbilityContext | UIContext */) {
+    AnalyticsCore.core.autotrackPage(context)
+  }
+
   static createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {
     return AnalyticsCore.core.createHybridProxy(controller)
   }
