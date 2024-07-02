@@ -29,6 +29,7 @@ import EventTimer from './EventTimer'
 import Hybrid from './Hybrid'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
+import AutotrackPage from '../autotrack/AutotrackPage'
 import CustomEvent from '../event/CustomEvent'
 import Event, { EventScene, EventType } from '../event/Event'
 import EventBuilder from '../event/EventBuilder'
@@ -59,6 +60,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static dummyTracker: DummyTracker = new DummyTracker()
   static location: Location = new Location()
   context: GrowingContext
+  _isInitializedSuccessfully: boolean = false
 
   constructor(context: GrowingContext) {
     this.context = context
@@ -81,9 +83,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       EventDatabase.initDatabase(context)
     ])
 
-    LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
-      + 'GrowingIO version: ' + SDK_VERSION)
-
     let delay = config._dataUploadInterval
     let runner = config.mode == ConfigMode.SaaS ? () => {
       CustomEventSender.sendEvent(gContext)
@@ -92,6 +91,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       EventSender.sendEvent(gContext)
     }
     setInterval(runner, delay)
+
+    core._isInitializedSuccessfully = true
+    LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
+      + 'GrowingIO version: ' + SDK_VERSION)
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
@@ -115,6 +118,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     }
     setInterval(runner, delay)
 
+    core._isInitializedSuccessfully = true
     return true
   }
 
@@ -155,12 +159,16 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
   }
 
+  autotrackPage(context: Object /* UIAbilityContext | UIContext */) {
+    AutotrackPage.initAutotrackPage(context)
+  }
+
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
     return Hybrid.createHybridProxy(controller, this.context)
   }
 
   isInitializedSuccessfully(): boolean {
-    return true
+    return this._isInitializedSuccessfully
   }
 
   setDataCollectionEnabled(enabled: boolean) {

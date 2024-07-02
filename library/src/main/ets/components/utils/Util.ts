@@ -180,4 +180,17 @@ export default class Util {
     delete modified.timezoneOffset
     return JSON.stringify(modified)
   }
+
+  //arkui_ace_engine: js_ui_observer.cpp - bool IsUIAbilityContext(napi_env env, napi_value context)
+  static isUIAbilityContext(context: any): boolean {
+    let abilityInfo = context.abilityInfo
+    if (abilityInfo == null || abilityInfo == undefined) {
+      return false
+    }
+    let name = abilityInfo.name
+    if (name == null || name == undefined) {
+      return false
+    }
+    return true
+  }
 }

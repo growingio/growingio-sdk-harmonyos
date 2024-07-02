@@ -16,13 +16,15 @@
  */
 
 import util from '@ohos.util'
+import emitter from '@ohos.events.emitter'
 
 import AnalyticsCore from './AnalyticsCore'
 import GrowingContext from './Context'
 import VisitEvent from '../event/VisitEvent'
 import FakePageEvent from '../event/saas/FakePageEvent'
-import { LogUtil } from '../utils/LogUtil'
 import { ConfigMode } from '../interfaces/GrowingConfig'
+import { EMIT_EVENT_VISIT_DID_SEND } from '../utils/Constants'
+import { LogUtil } from '../utils/LogUtil'
 
 export enum SessionState {
   Foreground,
@@ -108,10 +110,21 @@ export default class Session {
     }
     let e = VisitEvent.create(context)
     AnalyticsCore.writeEventToDisk(e, context)
+    Session.emitVisitDidSend(e.timestamp)
 
     if (context.config.mode == ConfigMode.SaaS) {
       let p = FakePageEvent.create(context)
       AnalyticsCore.writeEventToDisk(p, context)
     }
+  }
+
+  static emitVisitDidSend(timestamp: number) {
+    emitter.emit({
+      eventId: EMIT_EVENT_VISIT_DID_SEND
+    }, {
+      data: {
+        "timestamp": timestamp
+      }
+    })
   }
 }

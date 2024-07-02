@@ -39,3 +39,5 @@ export type JavaScriptProxyType = {
   methodList: Array<string>;
   controller: webview.WebviewController;
 }
+
+export const EMIT_EVENT_VISIT_DID_SEND = 1
