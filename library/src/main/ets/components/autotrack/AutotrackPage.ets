@@ -24,11 +24,10 @@ import GrowingContext from '../core/Context'
 import { EventScene } from '../event/Event'
 import PageEvent from '../event/PageEvent'
 import { AttributesType, EMIT_EVENT_VISIT_DID_SEND } from '../utils/Constants'
-import { LogUtil } from '../utils/LogUtil'
 import Util from '../utils/Util'
 
 export default class AutotrackPage {
-  static pagesCache: Map<string, Array<PageEvent>> =  new Map()
+  static pagesCache: Map<string, Array<PageInfo>> = new Map()
 
   static initAutotrackPage(context: Object) {
     if (deviceInfo.sdkApiVersion >= 12) {
@@ -42,9 +41,21 @@ export default class AutotrackPage {
   }
 
   static onNavDestinationUpdate(info: NavDestinationInfo) {
-    if (info) {
-      LogUtil.info(() => 'info.navigationId = ' + info.navigationId + ', info.navDestinationId = ' + info.navDestinationId + ', info.name = ' + info.name)
+    if (!info) {
+      return
     }
+    if (info.state != uiObserver.NavDestinationState.ON_SHOWN) {
+      return
+    }
+
+    let name = info.name.toString()
+    let path = name
+    let title = name
+    if (title.includes('/')) {
+      title = title.substring(title.lastIndexOf("/") + 1)
+    }
+
+    AutotrackPage.generatePage(path, title, {})
   }
 
   static onRouterPageUpdate(info: uiObserver.RouterPageInfo) {
@@ -57,12 +68,11 @@ export default class AutotrackPage {
     }
 
     let c = info.context as gUIAbilityContext
-    let bundleName = c.abilityInfo.bundleName
     let moduleName = c.abilityInfo.moduleName
-    let path = bundleName +  '/' + moduleName + '/' + info.path
+    let path = moduleName + '/' + info.name
     let title = info.name
-    if (info.name.includes('/')) {
-      title = info.name.substring(title.lastIndexOf("/") + 1)
+    if (title.includes('/')) {
+      title = title.substring(title.lastIndexOf("/") + 1)
     }
 
     AutotrackPage.generatePage(path, title, {})
@@ -70,16 +80,17 @@ export default class AutotrackPage {
 
   static generatePage(path: string, title: string, attributes: AttributesType) {
     let context = GrowingContext.getDefaultContext() as GrowingContext
-    let e = PageEvent.create(
-      path,
-      title,
-      attributes,
-      context
-    )
     if (AnalyticsCore.core.isInitializedSuccessfully()) {
+      let e = PageEvent.create(
+        path,
+        title,
+        attributes,
+        context
+      )
       AnalyticsCore.writeEventToDisk(e, context, EventScene.Native)
     } else {
-      AutotrackPage.cachePage(e)
+      let pageInfo = new PageInfo(path, title, attributes)
+      AutotrackPage.cachePage(pageInfo)
     }
   }
 
@@ -88,25 +99,47 @@ export default class AutotrackPage {
     let pages = AutotrackPage.pagesCache.get(context.trackerId)
     if (pages) {
       for (let page of pages) {
+        let e = PageEvent.create(
+          page.path,
+          page.title,
+          page.attributes,
+          context
+        )
         let params = data.data
         if (params != undefined) {
-          page.timestamp = params['timestamp']
+          e.timestamp = params['timestamp']
         }
-        AnalyticsCore.writeEventToDisk(page, context, EventScene.Native)
+        AnalyticsCore.writeEventToDisk(e, context, EventScene.Native)
       }
       AutotrackPage.pagesCache.set(context.trackerId, [])
     }
   }
 
-  static cachePage(e: PageEvent) {
+  static cachePage(page: PageInfo) {
     let context = GrowingContext.getDefaultContext() as GrowingContext
     let pages = AutotrackPage.pagesCache.get(context.trackerId)
     if (pages) {
-      pages.push(e)
+      pages.push(page)
       AutotrackPage.pagesCache.set(context.trackerId, pages)
     } else {
-      AutotrackPage.pagesCache.set(context.trackerId, [e])
+      AutotrackPage.pagesCache.set(context.trackerId, [page])
     }
+  }
+}
+
+class PageInfo {
+  path: string
+  title: string
+  attributes: AttributesType
+
+  constructor(
+    path: string,
+    title: string,
+    attributes: AttributesType
+  ) {
+    this.path = path
+    this.title = title
+    this.attributes = attributes
   }
 }
 

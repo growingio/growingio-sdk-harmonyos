@@ -506,6 +506,35 @@ subTracker.trackTimerEnd(timerId2, {
 ```
 > 当前仅 track 和 trackTimerEnd 接口支持 sendTo 转发
 
+### 无感采集
+
+`static autotrackPage(context: Object)`
+
+支持页面浏览事件自动埋点 (通过 `@ohos.arkui.observer` 无感监听，API 12+)，需要在 SDK 初始化的基础上手动开启无感采集
+
+#### 参数说明
+
+| 参数        | 参数类型 | 说明                                      |
+|:----------| :------- | :---------------------------------------- |
+| `context` | `UIAbilityContext | UIContexts` | 在Ability中调用this.context获取  |
+
+#### 示例
+
+在 EntryAbility 的 onCreate 方法中开启无感采集 (Stage 模型)：
+```typescript
+import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
+
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    if (GrowingAnalytics.isInitializedSuccessfully()) {
+      GrowingAnalytics.autotrackPage(this.context)
+    }
+  }
+}
+```
+
+> 此功能为实验性功能，后续将根据最新官方接口进行优化
+
 ## License
 ```
 Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
