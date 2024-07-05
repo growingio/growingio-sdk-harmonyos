@@ -20,6 +20,7 @@ import webview from '@ohos.web.webview'
 import { GrowingConfig } from './GrowingConfig'
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
+import Flutter from '../core/Flutter'
 import GeneralProps from '../core/GeneralProps'
 import Session from '../core/Session'
 import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
@@ -183,5 +184,27 @@ export class GrowingAnalytics {
 
   static cleanLocation() {
     AnalyticsCore.setLocation(0, 0)
+  }
+
+  static trackFlutterPage(argument: Map<string, Object>) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
+      LogUtil.error(() => '[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
+      return
+    }
+    if (argument == null || argument == undefined) {
+      return
+    }
+    Flutter.trackFlutterPage(argument)
+  }
+
+  static trackFlutterClickEvent(argument: Map<string, Object>) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
+      LogUtil.error(() => '[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
+      return
+    }
+    if (argument == null || argument == undefined) {
+      return
+    }
+    Flutter.trackFlutterClickEvent(argument)
   }
 }

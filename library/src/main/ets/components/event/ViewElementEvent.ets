@@ -37,11 +37,11 @@ export default class ViewElementEvent extends Event {
     context: GrowingContext
   ): ViewElementEvent {
     let event = new ViewElementEvent()
-    event.path = path
-    event.textValue = textValue
+    event.path = String(path ?? '')
+    event.textValue = textValue ?? undefined
     event.xpath = xpath
     event.xcontent = xcontent
-    event.index = index
+    event.index = index && index > 0 ? index : undefined
     event.attributes = attributes
     event.eventType = eventType
     return EventBuilder.build(event, context)
