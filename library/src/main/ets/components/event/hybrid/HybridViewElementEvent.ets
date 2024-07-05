@@ -47,7 +47,7 @@ export default class HybridViewElementEvent extends Event implements HybridEvent
     event.textValue = textValue
     event.xpath = xpath
     event.xcontent = xcontent
-    event.index = Number(index ?? -1)
+    event.index = index && index > 0 ? index : undefined
     event.hyperlink = hyperlink
     event.attributes = attributes
     event.path = path

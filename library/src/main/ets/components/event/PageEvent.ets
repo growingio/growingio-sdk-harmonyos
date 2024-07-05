@@ -31,7 +31,7 @@ export default class PageEvent extends Event {
   ): PageEvent {
     let event = new PageEvent()
     event.path = path
-    event.title = title
+    event.title = title ?? undefined
     event.attributes = attributes
     event.eventType = EventType.Page
     return EventBuilder.build(event, context)
