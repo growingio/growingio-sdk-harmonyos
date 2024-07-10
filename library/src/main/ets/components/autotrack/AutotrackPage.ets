@@ -49,7 +49,7 @@ export default class AutotrackPage {
     }
 
     let name = info.name.toString()
-    let path = name
+    let path = '/' + name
     let title = name
     if (title.includes('/')) {
       title = title.substring(title.lastIndexOf("/") + 1)
@@ -69,7 +69,7 @@ export default class AutotrackPage {
 
     let c = info.context as gUIAbilityContext
     let moduleName = c.abilityInfo.moduleName
-    let path = moduleName + '/' + info.name
+    let path = '/' + moduleName + '/' + info.name
     let title = info.name
     if (title.includes('/')) {
       title = title.substring(title.lastIndexOf("/") + 1)
