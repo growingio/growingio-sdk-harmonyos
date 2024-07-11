@@ -360,7 +360,7 @@ Web({ src: url, controller: this.controller})
 
 `static autotrackPage(context: Object)`
 
-支持页面浏览事件自动埋点 (通过 `@ohos.arkui.observer` 无感监听，API 12+)，需要在 SDK 初始化的基础上手动开启无感采集
+支持页面浏览事件自动埋点 (通过 `@ohos.arkui.observer` 无感监听组件导航 Navigation 和页面路由 Router 跳转，API 12+)，需要在 SDK 初始化的基础上手动开启无感采集
 
 #### 参数说明
 
