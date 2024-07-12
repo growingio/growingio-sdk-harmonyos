@@ -50,15 +50,13 @@ export default class GrowingContext {
   }
 
   static setContext(trackerId: string, configuration: GrowingConfig) {
-    let config = configuration.copy()
-    let context = new GrowingContext(trackerId, config)
+    let context = new GrowingContext(trackerId, configuration)
     GrowingContext.contexts.set(trackerId, context)
   }
 
   static setDefaultContext(configuration: GrowingConfig) {
     let trackerId = '__GrowingAnalyticsCore'
-    let config = configuration.copy()
-    let context = new GrowingContext(trackerId, config)
+    let context = new GrowingContext(trackerId, configuration)
     GrowingContext.defaultContext = context
     GrowingContext.contexts.set(trackerId, context)
   }
