@@ -160,6 +160,11 @@ export class GrowingConfig {
       throw new Error('[GrowingAnalytics] 请在初始化配置中传入 dataCollectionServerHost')
     }
 
+    let pattern = /^(https?:\/\/)((([a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,})|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/[^\s]*)?$/
+    if (!pattern.test(this.dataCollectionServerHost)) {
+      throw new Error('[GrowingAnalytics] 请在初始化配置中传入正确的 dataCollectionServerHost')
+    }
+
     let config = new GrowingConfig()
     config.mode = this.mode
     config.accountId = this.accountId
