@@ -21,6 +21,7 @@ import emitter from '@ohos.events.emitter'
 
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
+import Session, { SessionState } from '../core/Session'
 import { EventScene } from '../event/Event'
 import PageEvent from '../event/PageEvent'
 import { AttributesType, EMIT_EVENT_VISIT_DID_SEND } from '../utils/Constants'
@@ -79,6 +80,10 @@ export default class AutotrackPage {
   }
 
   static generatePage(path: string, title: string, attributes: AttributesType) {
+    if (Session.sessionState !== SessionState.Foreground) {
+      // 不在前台则不发送PAGE
+      return
+    }
     let context = GrowingContext.getDefaultContext() as GrowingContext
     if (AnalyticsCore.core.isInitializedSuccessfully()) {
       let e = PageEvent.create(
