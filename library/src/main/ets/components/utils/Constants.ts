@@ -40,4 +40,5 @@ export type JavaScriptProxyType = {
   controller: webview.WebviewController;
 }
 
-export const EMIT_EVENT_VISIT_DID_SEND = 1
+export const EMIT_EVENT_MAIN_TRACKER_INITIALIZE = 1
+export const EMIT_EVENT_SESSION_STATE_FOREGROUND = 2

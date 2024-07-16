@@ -71,6 +71,7 @@ export default class MyAbilityStage extends AbilityStage {
 | dataValidityPeriod            | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                    |
 | encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示           |
 | compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                            |
+| autotrackAllPages             | boolean  | false  | 是否开启页面浏览事件自动埋点 (通过 `@ohos.arkui.observer` 无感监听组件导航 Navigation 和页面路由 Router 跳转，需 API 12 及以上)<br>此功能为实验性功能，后续将根据最新官方接口进行优化 |
 
 ### 数据采集 API
 
@@ -342,35 +343,6 @@ Web({ src: url, controller: this.controller})
 ```
 
 对应的 H5 页面需要集成 Web JS SDK 以及 App 内嵌页打通插件才能生效
-
-### 无感采集
-
-`static autotrackPage(context: Object)`
-
-支持页面浏览事件自动埋点 (通过 `@ohos.arkui.observer` 无感监听组件导航 Navigation 和页面路由 Router 跳转，API 12+)，需要在 SDK 初始化的基础上手动开启无感采集
-
-#### 参数说明
-
-| 参数        | 参数类型 | 说明                                      |
-|:----------| :------- | :---------------------------------------- |
-| `context` | `UIAbilityContext | UIContexts` | 在Ability中调用this.context获取  |
-
-#### 示例
-
-在 EntryAbility 的 onCreate 方法中开启无感采集 (Stage 模型)：
-```typescript
-import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
-
-export default class EntryAbility extends UIAbility {
-  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-    if (GrowingAnalytics.isInitializedSuccessfully()) {
-      GrowingAnalytics.autotrackPage(this.context)
-    }
-  }
-}
-```
-
-> 此功能为实验性功能，后续将根据最新官方接口进行优化
 
 ## License
 ```

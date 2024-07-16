@@ -43,5 +43,4 @@ export default class DummyTracker implements GrowingAnalyticsInterface {
 
   // Main tracker only
   getDeviceId(): string { return '' }
-  autotrackPage(context: Object /* UIAbilityContext | UIContext */): void {}
 }
