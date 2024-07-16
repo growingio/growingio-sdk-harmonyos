@@ -24,28 +24,36 @@ import GrowingContext from '../core/Context'
 import Session, { SessionState } from '../core/Session'
 import { EventScene } from '../event/Event'
 import PageEvent from '../event/PageEvent'
-import { AttributesType, EMIT_EVENT_VISIT_DID_SEND } from '../utils/Constants'
+import {
+  AttributesType,
+  EMIT_EVENT_MAIN_TRACKER_INITIALIZE,
+  EMIT_EVENT_SESSION_STATE_FOREGROUND
+} from '../utils/Constants'
 import Util from '../utils/Util'
 
 export default class AutotrackPage {
-  static pagesCache: Map<string, Array<PageInfo>> = new Map()
+  static pagesCache: Array<PageInfo> = []
 
-  static initAutotrackPage(context: Object) {
-    if (deviceInfo.sdkApiVersion >= 12) {
-      uiObserver.on('navDestinationUpdate', AutotrackPage.onNavDestinationUpdate)
-
-      //实际上context要求传入的是UIAbilityContext，但由于UIAbilityContext未export无法编译，用UIContext绕过
-      uiObserver.on('routerPageUpdate', context as UIContext, AutotrackPage.onRouterPageUpdate)
-
-      emitter.on({eventId: EMIT_EVENT_VISIT_DID_SEND}, AutotrackPage.resendPageFromCache)
+  static initAutotrackPage(context: UIContext) {
+    if (deviceInfo.sdkApiVersion < 12) {
+      return
     }
+
+    uiObserver.on('navDestinationUpdate', AutotrackPage.onPageUpdate)
+    uiObserver.on('routerPageUpdate', context, AutotrackPage.onPageUpdate)
+    emitter.once({eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE}, AutotrackPage.resendPageFromCache)
+    emitter.on({eventId: EMIT_EVENT_SESSION_STATE_FOREGROUND}, AutotrackPage.resendPageFromCache)
   }
 
-  static onNavDestinationUpdate(info: NavDestinationInfo) {
+  static onPageUpdate(info: NavDestinationInfo | uiObserver.RouterPageInfo) {
     if (!info) {
       return
     }
-    if (info.state != uiObserver.NavDestinationState.ON_SHOWN) {
+    if (Util.isRouterPageInfo(info)) {
+      if ((info as uiObserver.RouterPageInfo).state != uiObserver.RouterPageState.ON_PAGE_SHOW) {
+        return
+      }
+    } else if ((info as NavDestinationInfo).state != uiObserver.NavDestinationState.ON_SHOWN) {
       return
     }
 
@@ -56,79 +64,40 @@ export default class AutotrackPage {
       title = title.substring(title.lastIndexOf("/") + 1)
     }
 
-    AutotrackPage.generatePage(path, title, {})
-  }
-
-  static onRouterPageUpdate(info: uiObserver.RouterPageInfo) {
-    if (!info || !Util.isUIAbilityContext(info.context)) {
-      return
-    }
-
-    if (info.state != uiObserver.RouterPageState.ON_PAGE_SHOW) {
-      return
-    }
-
-    let c = info.context as gUIAbilityContext
-    let moduleName = c.abilityInfo.moduleName
-    let path = '/' + moduleName + '/' + info.name
-    let title = info.name
-    if (title.includes('/')) {
-      title = title.substring(title.lastIndexOf("/") + 1)
-    }
-
-    AutotrackPage.generatePage(path, title, {})
-  }
-
-  static generatePage(path: string, title: string, attributes: AttributesType) {
-    if (Session.sessionState !== SessionState.Foreground) {
-      // 不在前台则不发送PAGE
-      return
-    }
     let context = GrowingContext.getDefaultContext() as GrowingContext
-    if (AnalyticsCore.core.isInitializedSuccessfully()) {
+    let pageInfo = new PageInfo(path, title, {}, context.trackerId)
+    AutotrackPage.generatePage(pageInfo)
+  }
+
+  static generatePage(pageInfo: PageInfo) {
+    let context = GrowingContext.getContext(pageInfo.trackerId)
+    if (context == undefined) {
+      return
+    }
+    if (AnalyticsCore.tracker(pageInfo.trackerId).isInitializedSuccessfully()
+      && Session.sessionState === SessionState.Foreground) {
       let e = PageEvent.create(
-        path,
-        title,
-        attributes,
+        pageInfo.path,
+        pageInfo.title,
+        pageInfo.attributes,
         context
       )
       AnalyticsCore.writeEventToDisk(e, context, EventScene.Native)
     } else {
-      let pageInfo = new PageInfo(path, title, attributes)
       AutotrackPage.cachePage(pageInfo)
     }
   }
 
-  static resendPageFromCache(data: emitter.EventData) {
-    let context = GrowingContext.getDefaultContext() as GrowingContext
-    let pages = AutotrackPage.pagesCache.get(context.trackerId)
-    if (pages) {
-      for (let page of pages) {
-        let e = PageEvent.create(
-          page.path,
-          page.title,
-          page.attributes,
-          context
-        )
-        let params = data.data
-        if (params != undefined) {
-          e.timestamp = params['timestamp']
-        }
-        AnalyticsCore.writeEventToDisk(e, context, EventScene.Native)
-      }
-      AutotrackPage.pagesCache.set(context.trackerId, [])
+  static resendPageFromCache() {
+    let pages = [...AutotrackPage.pagesCache]
+    AutotrackPage.pagesCache = []
+    for (let pageInfo of pages) {
+      AutotrackPage.generatePage(pageInfo)
     }
   }
 
-  static cachePage(page: PageInfo) {
-    let context = GrowingContext.getDefaultContext() as GrowingContext
-    let pages = AutotrackPage.pagesCache.get(context.trackerId)
-    if (pages) {
-      pages.push(page)
-      AutotrackPage.pagesCache.set(context.trackerId, pages)
-    } else {
-      AutotrackPage.pagesCache.set(context.trackerId, [page])
-    }
+  static cachePage(pageInfo: PageInfo) {
+    AutotrackPage.pagesCache.push(pageInfo)
   }
 }
 
@@ -136,23 +105,17 @@ class PageInfo {
   path: string
   title: string
   attributes: AttributesType
+  trackerId: string
 
   constructor(
     path: string,
     title: string,
-    attributes: AttributesType
+    attributes: AttributesType,
+    trackerId: string
   ) {
     this.path = path
     this.title = title
     this.attributes = attributes
+    this.trackerId = trackerId
   }
-}
-
-class gAbilityInfo {
-  bundleName: string = ''
-  moduleName: string = ''
-}
-
-class gUIAbilityContext {
-  abilityInfo: gAbilityInfo = new gAbilityInfo()
 }

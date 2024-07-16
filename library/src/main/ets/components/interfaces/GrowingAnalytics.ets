@@ -19,10 +19,8 @@ import webview from '@ohos.web.webview'
 
 import { GrowingConfig } from './GrowingConfig'
 import AnalyticsCore from '../core/AnalyticsCore'
-import GrowingContext from '../core/Context'
 import Flutter from '../core/Flutter'
 import GeneralProps from '../core/GeneralProps'
-import Session from '../core/Session'
 import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
@@ -58,7 +56,6 @@ export class GrowingAnalytics {
     }
     let config = configuration.copy()
     await AnalyticsCore.startCore(context, config)
-    Session.refreshSession(GrowingContext.getDefaultContext()!)
   }
 
   static startSubTracker(trackerId: string, configuration: GrowingConfig) {
@@ -69,9 +66,7 @@ export class GrowingAnalytics {
 
     let config = configuration.copy()
     let success = AnalyticsCore.startSubTracker(trackerId, config)
-    if (success) {
-      Session.refreshSession(GrowingContext.getContext(trackerId)!)
-    } else {
+    if (!success) {
       LogUtil.error(() => '[GrowingAnalytics] Do not start tracker with same trackerId/dataSourceId')
     }
   }
@@ -82,10 +77,6 @@ export class GrowingAnalytics {
       LogUtil.error(() => '[GrowingAnalytics] Please start a subTracker with the trackerId ' + trackerId + ' first')
     }
     return tracker
-  }
-
-  static autotrackPage(context: Object /* UIAbilityContext | UIContext */) {
-    AnalyticsCore.core.autotrackPage(context)
   }
 
   static createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {

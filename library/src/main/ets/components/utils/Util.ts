@@ -193,4 +193,8 @@ export default class Util {
     }
     return true
   }
+
+  static isRouterPageInfo(info: any): boolean {
+    return info && info.pageId && typeof info.pageId === 'string'
+  }
 }

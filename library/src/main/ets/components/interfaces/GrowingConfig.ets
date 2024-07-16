@@ -67,6 +67,7 @@ export class GrowingConfig {
   requestOptions: RequestOptions = new RequestOptions()
   _dataValidityPeriod: number = 7 * 86400000
   trackerId: string = ''
+  autotrackAllPages: boolean = false
 
   constructor() {}
 
@@ -181,6 +182,7 @@ export class GrowingConfig {
     config.requestOptions = this.requestOptions.copy()
     config._dataValidityPeriod = this._dataValidityPeriod
     config.trackerId = this.trackerId
+    config.autotrackAllPages = this.autotrackAllPages
 
     return config
   }

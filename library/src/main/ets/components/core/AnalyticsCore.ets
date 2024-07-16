@@ -17,6 +17,7 @@
 
 import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback'
 import UIAbility from '@ohos.app.ability.UIAbility'
+import emitter from '@ohos.events.emitter'
 import window from '@ohos.window'
 import webview from '@ohos.web.webview'
 
@@ -40,7 +41,7 @@ import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import CustomEventSender from '../event/saas/SaaSCSTMEventSender'
 import PVEventSender from '../event/saas/SaaSPVEventSender'
 import FakePageEvent from '../event/saas/FakePageEvent'
-import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
+import { AttributesType, EMIT_EVENT_MAIN_TRACKER_INITIALIZE, JavaScriptProxyType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
@@ -82,6 +83,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       EventBuilder.initEventBuilder(),
       EventDatabase.initDatabase(context)
     ])
+    Session.refreshSession(gContext)
 
     let delay = config._dataUploadInterval
     let runner = config.mode == ConfigMode.SaaS ? () => {
@@ -93,6 +95,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     setInterval(runner, delay)
 
     core._isInitializedSuccessfully = true
+    emitter.emit({
+      eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE
+    })
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
       + 'GrowingIO version: ' + SDK_VERSION)
   }
@@ -106,8 +111,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     let context = GrowingContext.getContext(trackerId) as GrowingContext
     let core = new AnalyticsCore(context)
     AnalyticsCore.trackers.push(core)
-
     UserIdentifier.initMultiUser(context)
+    Session.refreshSession(context)
 
     let delay = config._dataUploadInterval
     let runner = config.mode == ConfigMode.SaaS ? () => {
@@ -132,10 +137,16 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   static setAbilityLifecycleCallback(context: Context) {
+    let gContext = GrowingContext.getDefaultContext() as GrowingContext
     let abilityLifecycleCallback: AbilityLifecycleCallback = {
       onAbilityCreate(ability: UIAbility) {
       },
       onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
+        if (gContext.config.autotrackAllPages) {
+          windowStage.getMainWindow().then(window => {
+            AutotrackPage.initAutotrackPage(window.getUIContext())
+          })
+        }
       },
       onWindowStageActive(ability: UIAbility, windowStage: window.WindowStage) {
         Session.onForeground()
@@ -157,10 +168,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       }
     }
     context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
-  }
-
-  autotrackPage(context: Object /* UIAbilityContext | UIContext */) {
-    AutotrackPage.initAutotrackPage(context)
   }
 
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
