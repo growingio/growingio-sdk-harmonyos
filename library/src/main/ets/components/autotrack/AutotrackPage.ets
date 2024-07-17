@@ -66,10 +66,15 @@ export default class AutotrackPage {
 
     let context = GrowingContext.getDefaultContext() as GrowingContext
     let pageInfo = new PageInfo(path, title, {}, context.trackerId)
-    AutotrackPage.generatePage(pageInfo)
+    AutotrackPage.sendPage(pageInfo)
   }
 
-  static generatePage(pageInfo: PageInfo) {
+  static sendPage(pageInfo: PageInfo, eventScene: EventScene = EventScene.Native) {
+    AutotrackPage.resendPageFromCache()
+    AutotrackPage.generatePage(pageInfo, eventScene)
+  }
+
+  static generatePage(pageInfo: PageInfo, eventScene: EventScene = EventScene.Native) {
     let context = GrowingContext.getContext(pageInfo.trackerId)
     if (context == undefined) {
       return
@@ -82,7 +87,7 @@ export default class AutotrackPage {
         pageInfo.attributes,
         context
       )
-      AnalyticsCore.writeEventToDisk(e, context, EventScene.Native)
+      AnalyticsCore.writeEventToDisk(e, context, eventScene)
     } else {
       AutotrackPage.cachePage(pageInfo)
     }
@@ -101,7 +106,7 @@ export default class AutotrackPage {
   }
 }
 
-class PageInfo {
+export class PageInfo {
   path: string
   title: string
   attributes: AttributesType
