@@ -30,7 +30,7 @@ export default class DummyTracker implements GrowingAnalyticsInterface {
 
   setLoginUserAttributes(attributes: AttributesType): void {}
   track(eventName: string, attributes: AttributesType, sendTo?: string[]): void {}
-  trackTimerStart(eventName: string): string { return '' }
+  trackTimerStart(eventName: string): Promise<string> { return Promise.resolve('') }
   trackTimerPause(timerId: string): void {}
   trackTimerResume(timerId: string): void {}
   trackTimerEnd(timerId: string, attributes: AttributesType, sendTo?: string[]): void {}

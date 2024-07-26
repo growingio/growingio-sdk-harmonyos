@@ -183,19 +183,19 @@ GrowingAnalytics.track('buyProduct2', {
 
 #### 事件计时器
 
-`static trackTimerStart(eventName: string): string`
+`static async trackTimerStart(eventName: string): Promise<string>`
 
 初始化一个事件计时器，参数为计时事件的事件名称，返回值为该事件计时器唯一标识
 
-`static trackTimerPause(timerId: string)`
+`static async trackTimerPause(timerId: string)`
 
 暂停事件计时器，参数为 trackTimer 返回的唯一标识
 
-`static trackTimerResume(timerId: string)`
+`static async trackTimerResume(timerId: string)`
 
 恢复事件计时器，参数为 trackTimer 返回的唯一标识
 
-`static trackTimerEnd(timerId: string, attributes: { [key: string]: string | number | boolean | string[] | number[] | boolean[] } = {})`
+`static async trackTimerEnd(timerId: string, attributes: { [key: string]: string | number | boolean | string[] | number[] | boolean[] } = {})`
 
 停止事件计时器，参数为 trackTimer 返回的唯一标识。调用该接口会自动触发删除定时器。
 
@@ -220,7 +220,7 @@ GrowingAnalytics.track('buyProduct2', {
 ##### 示例
 
 ```typescript
-let timerId = GrowingAnalytics.trackTimerStart('eventName')
+let timerId = await GrowingAnalytics.trackTimerStart('eventName')
 GrowingAnalytics.trackTimerPause(timerId)
 GrowingAnalytics.trackTimerResume(timerId)
 GrowingAnalytics.trackTimerEnd(timerId)
