@@ -257,24 +257,24 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     })
   }
 
-  trackTimerStart(eventName: string): string {
-    return EventTimer.trackTimerStart(eventName, this.context)
+  async trackTimerStart(eventName: string): Promise<string> {
+    return await EventTimer.trackTimerStart(eventName, this.context)
   }
 
-  trackTimerPause(timerId: string) {
-    EventTimer.trackTimerPause(timerId)
+  async trackTimerPause(timerId: string) {
+    await EventTimer.trackTimerPause(timerId)
   }
 
-  trackTimerResume(timerId: string) {
-    EventTimer.trackTimerResume(timerId)
+  async trackTimerResume(timerId: string) {
+    await EventTimer.trackTimerResume(timerId)
   }
 
-  trackTimerEnd(
+  async trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {},
     sendTo?: string[]
   ) {
-    EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context, sendTo)
+    await EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context, sendTo)
   }
 
   removeTimer(timerId: string) {
