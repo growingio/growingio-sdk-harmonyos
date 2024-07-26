@@ -38,7 +38,7 @@ export default class ViewElementEvent extends Event {
   ): ViewElementEvent {
     let event = new ViewElementEvent()
     event.path = String(path ?? '')
-    event.textValue = textValue ?? undefined
+    event.textValue = textValue && textValue.length > 0 ? textValue : undefined
     event.xpath = xpath
     event.xcontent = xcontent
     event.index = index && index > 0 ? index : undefined
