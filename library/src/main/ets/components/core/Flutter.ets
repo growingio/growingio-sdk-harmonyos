@@ -21,6 +21,7 @@ import AutotrackPage, { PageInfo } from '../autotrack/AutotrackPage'
 import { EventScene, EventType } from '../event/Event'
 import ViewElementEvent from '../event/ViewElementEvent'
 import { AttributesType, ValueType } from '../utils/Constants'
+import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export default class Flutter {
   constructor() {}
@@ -44,24 +45,37 @@ export default class Flutter {
   }
 
   static trackFlutterClickEvent(argument: Map<string, Object>) {
-    let path = argument.get('path') as string
-    let textValue = argument.get('textValue') as string
-    let xpath = argument.get('xpath') as string
-    if (xpath == null || xpath == undefined || xpath.length == 0) {
-      return
-    }
-    let xcontent = argument.get('xcontent') as string
-    if (xcontent == null || xcontent == undefined || xcontent.length == 0) {
-      return
-    }
-    let index = argument.get('index') as number
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    let mode = context.config.mode
+
     let eventType = argument.get('eventType') as string
     if (eventType == null || eventType == undefined || eventType.length == 0) {
       return
     }
+
+    let path = argument.get('path') as string
+    if (mode == ConfigMode.CDP) {
+      if (path == null || path == undefined || path.length == 0) {
+        return
+      }
+    }
+
+    let xpath = argument.get('xpath') as string
+    if (xpath == null || xpath == undefined || xpath.length == 0) {
+      return
+    }
+
+    let xcontent = argument.get('xcontent') as string
+    if (mode == ConfigMode.NewSaaS) {
+      if (xcontent == null || xcontent == undefined || xcontent.length == 0) {
+        return
+      }
+    }
+
+    let textValue = argument.get('textValue') as string
+    let index = argument.get('index') as number
     let map = argument.get('attributes') as Map<string, ValueType>
     let attributes = Flutter.attributesFromMap(map)
-    let context = GrowingContext.getDefaultContext() as GrowingContext
     if (AnalyticsCore.core.isInitializedSuccessfully()) {
       let e = ViewElementEvent.create(
         path,
