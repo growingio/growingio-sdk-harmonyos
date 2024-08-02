@@ -34,6 +34,11 @@ export default class Flutter {
     let map = argument.get('attributes') as Map<string, ValueType>
     let attributes = Flutter.attributesFromMap(map)
     let context = GrowingContext.getDefaultContext() as GrowingContext
+    // 可能会出现在后台触发PAGE的场景(类似ANLSPI-20126)，走AutotrackPage内部缓存机制进行规避
+    // 与iOS不同在于：
+    // iOS上在特定条件下(Flutter应用在后台进行跳转)必定复现且该事件的前后台状态必定处于后台；HarmonyOS NEXT则是在同等条件下偶现
+    // 因此，为避免事件数据差异，处理方式也有所不同，iOS丢弃这些PAGE；HarmonyOS NEXT则将这些PAGE缓存于内存中，回到前台时生成
+    // 见：https://github.com/growingio/growingio-sdk-ios-autotracker/commit/1ae98f066d979c724aba9598f038e4781dac38d9
     let pageInfo = new PageInfo(path, title, attributes, context.trackerId)
     AutotrackPage.sendPage(pageInfo, EventScene.Flutter)
   }

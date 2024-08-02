@@ -75,7 +75,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
     AnalyticsCore.setAbilityLifecycleCallback(context)
-    AutotrackPage.initAutotrackPage()
     await SharedPreferences.initWithContext(context)
     await Promise.all<Promise<void>>([
       AppInfo.initAppInfo(context),
@@ -143,6 +142,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       onAbilityCreate(ability: UIAbility) {
       },
       onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
+        if (gContext.config.autotrackAllPages) {
+          windowStage.getMainWindow().then(window => {
+            AutotrackPage.initAutotrackPage(window.getUIContext())
+          })
+        }
       },
       onWindowStageActive(ability: UIAbility, windowStage: window.WindowStage) {
         Session.onForeground()
