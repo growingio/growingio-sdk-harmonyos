@@ -76,6 +76,7 @@ export default class MyAbilityStage extends AbilityStage {
 | dataValidityPeriod            | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                    |
 | encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示           |
 | compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                            |
+| autotrackAllPages             | boolean  | false  | 是否开启页面浏览事件自动埋点 (通过 `@ohos.arkui.observer` 无感监听组件导航 Navigation 和页面路由 Router 跳转，需 API 12 及以上)<br>此功能为实验性功能，后续将根据最新官方接口进行优化 |
 
 ### 数据采集 API
 
