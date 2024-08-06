@@ -142,7 +142,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       onAbilityCreate(ability: UIAbility) {
       },
       onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
-        if (gContext.config.autotrackAllPages) {
+        if (gContext.config.autotrackEnabled) {
           windowStage.getMainWindow().then(window => {
             AutotrackPage.initAutotrackPage(window.getUIContext())
           })

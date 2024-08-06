@@ -35,17 +35,21 @@ export default class AutotrackPage {
   static pagesCache: Array<PageInfo> = []
 
   static initAutotrackPage(context: UIContext) {
-    if (deviceInfo.sdkApiVersion < 12) {
-      return
+    if (deviceInfo.sdkApiVersion >= 12) {
+      uiObserver.on('navDestinationUpdate', AutotrackPage.onPageUpdate)
+      uiObserver.on('routerPageUpdate', context, AutotrackPage.onPageUpdate)
     }
 
-    uiObserver.on('navDestinationUpdate', AutotrackPage.onPageUpdate)
-    uiObserver.on('routerPageUpdate', context, AutotrackPage.onPageUpdate)
     emitter.once({eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE}, AutotrackPage.resendPageFromCache)
     emitter.on({eventId: EMIT_EVENT_SESSION_STATE_FOREGROUND}, AutotrackPage.resendPageFromCache)
   }
 
   static onPageUpdate(info: NavDestinationInfo | uiObserver.RouterPageInfo) {
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (!context.config.autotrackAllPages) {
+      return
+    }
+
     if (!info) {
       return
     }
@@ -64,7 +68,6 @@ export default class AutotrackPage {
       title = title.substring(title.lastIndexOf("/") + 1)
     }
 
-    let context = GrowingContext.getDefaultContext() as GrowingContext
     let pageInfo = new PageInfo(path, title, {}, context.trackerId)
     AutotrackPage.sendPage(pageInfo)
   }
