@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (C) 2023 Beijing Yishu Technology Co., Ltd.
+ * Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-export {
-  GrowingAnalytics,
-  GrowingAttrType,
-  GrowingAnalyticsInterface,
-  GrowingPluginsInterface
-} from './src/main/ets/components/interfaces/GrowingAnalytics'
-export { GrowingConfig } from './src/main/ets/components/interfaces/GrowingConfig'
+export const ENTRY_PADDING = 5
+export const ENTRY_MARGIN = 8
 
+export interface Position {
+  x: number
+  y: number
+}

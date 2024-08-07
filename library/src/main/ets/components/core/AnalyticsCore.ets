@@ -47,6 +47,7 @@ import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 import DummyTracker from './DummyTracker'
 import { HAR_VERSION } from '../../../../../BuildProfile'
+import Plugins from '../plugins/Plugins'
 
 class Location {
   latitude: number = 0
@@ -74,6 +75,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     AnalyticsCore.core = core
     AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
+    config.plugins.forEach(plugin => {
+      Plugins.registerPlugin(plugin)
+    })
     AnalyticsCore.setAbilityLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
     await Promise.all<Promise<void>>([
@@ -147,6 +151,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
             AutotrackPage.initAutotrackPage(window.getUIContext())
           })
         }
+
+        Plugins.onWindowStageCreate(ability, windowStage)
       },
       onWindowStageActive(ability: UIAbility, windowStage: window.WindowStage) {
         Session.onForeground()

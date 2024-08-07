@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { PluginsInterface } from '../plugins/Plugins'
+
 class RequestOptions {
   _connectTimeout: number = 30 * 1000
   _readTimeout: number = 30 * 1000
@@ -69,6 +71,7 @@ export class GrowingConfig {
   trackerId: string = ''
   autotrackEnabled: boolean = true
   autotrackAllPages: boolean = false
+  plugins: Array<PluginsInterface> = []
 
   constructor() {}
 
@@ -185,6 +188,7 @@ export class GrowingConfig {
     config.trackerId = this.trackerId
     config.autotrackEnabled = this.autotrackEnabled
     config.autotrackAllPages = this.autotrackAllPages
+    config.plugins = [...this.plugins]
 
     return config
   }

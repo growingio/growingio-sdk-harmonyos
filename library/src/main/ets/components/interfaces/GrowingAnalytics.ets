@@ -25,6 +25,7 @@ import { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProx
 import { LogUtil } from '../utils/LogUtil'
 
 export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
+export { PluginsInterface as GrowingPluginsInterface } from '../plugins/Plugins'
 
 export interface GrowingAnalyticsInterface {
   isInitializedSuccessfully(): boolean

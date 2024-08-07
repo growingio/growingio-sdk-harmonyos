@@ -34,6 +34,10 @@
     {
       "name": "library",
       "srcPath": "./library",
+    },
+    {
+      "name": "GrowingToolsKit",
+      "srcPath": "./GrowingToolsKit",
     }
   ]
 }
