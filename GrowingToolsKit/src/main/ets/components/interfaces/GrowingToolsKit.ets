@@ -18,7 +18,7 @@
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 import { routeName } from '../pages/EntryIcon'
-import { ENTRY_PADDING, Position } from '../utils/Constants'
+import { SUB_WINDOW_NAME, ENTRY_PADDING, Position } from '../utils/Constants'
 
 export class GrowingToolsKit {
   private _position: Position = { x: 0, y: 0 }
@@ -30,7 +30,7 @@ export class GrowingToolsKit {
 
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
     AppStorage.setOrCreate('windowStage', windowStage)
-    windowStage.createSubWindow("GrowingToolsKit").then(window => {
+    windowStage.createSubWindow(SUB_WINDOW_NAME).then(window => {
       let localStorage = new LocalStorage()
       localStorage.setOrCreate('position', this._position)
       window.loadContentByName(routeName, localStorage).then(() => {

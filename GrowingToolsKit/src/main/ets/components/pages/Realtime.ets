@@ -15,14 +15,11 @@
  * limitations under the License.
  */
 
-export const ENTRY_PADDING = 5
-export const ENTRY_MARGIN = 8
-export const SUB_WINDOW_NAME = 'GrowingToolsKit'
-
-export const EMIT_EVENT_MODULE_BUTTON_ON_CLICK = 1
-
-
-export interface Position {
-  x: number
-  y: number
+@Component
+export default struct Realtime {
+  build() {
+    NavDestination() {
+      Text('realtime')
+    }
+  }
 }

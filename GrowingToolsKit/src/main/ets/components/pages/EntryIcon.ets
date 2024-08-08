@@ -17,82 +17,128 @@
 
 import window from '@ohos.window'
 import display from '@ohos.display'
-import { ENTRY_MARGIN, ENTRY_PADDING, Position } from '../utils/Constants'
+import { SUB_WINDOW_NAME, ENTRY_MARGIN, ENTRY_PADDING, Position } from '../utils/Constants'
+import Home from './Home'
+import SdkInfo from './SdkInfo'
+import EventsList from './EventsList'
+import Realtime from './Realtime'
+import NetFlow from './NetFlow'
 
 export const routeName: string = "EntryIcon"
 @Entry({ routeName: routeName, storage: LocalStorage.getShared() })
 @Component
 struct EntryIcon {
+  @Provide('pathStack') pathStack: NavPathStack = new NavPathStack()
   @LocalStorageProp('position') windowPosition: Position = { x: 0, y: 0 }
-  window: window.Window = window.findWindow('GrowingToolsKit')
+  window: window.Window = window.findWindow(SUB_WINDOW_NAME)
   _entrySideLength: number = 0
   entrySideLength(): number {
-    if (this._entrySideLength > 0) {
-      return this._entrySideLength
+    if (this._entrySideLength == 0) {
+      this._entrySideLength = px2vp(this.window.getWindowProperties().windowRect.width)
     }
-    return px2vp(this.window.getWindowProperties().windowRect.width)
+    return this._entrySideLength
+  }
+
+  @Builder
+  pagesMap(name: string) {
+    if (name == 'Home') {
+      Home()
+    } else if (name == 'SdkInfo') {
+      SdkInfo()
+    } else if (name == 'EventsList') {
+      EventsList()
+    } else if (name == 'Realtime') {
+      Realtime()
+    } else if (name == 'NetFlow') {
+      NetFlow()
+    }
   }
 
   build() {
-    Button() {
-        Image($r('app.media.growingtk_logo'))
-          .backgroundColor('#FF9167')
-          .borderRadius(this.entrySideLength() / 2 - ENTRY_MARGIN)
-          .width(this.entrySideLength() - ENTRY_MARGIN * 2)
-          .height(this.entrySideLength() - ENTRY_MARGIN * 2)
-    }
-    .backgroundColor('#FC5F3A')
-    .borderRadius(this.entrySideLength() / 2)
-    .width(this.entrySideLength())
-    .height(this.entrySideLength())
-    .onClick(event => {
-
-    })
-    .gesture(
-      PanGesture(new PanGestureOptions({ direction: PanDirection.All }))
-        .onActionStart(event => {
-        })
-        .onActionUpdate(event => {
-          this.windowPosition.x += event.offsetX
-          this.windowPosition.y += event.offsetY
-
-          this.window.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
-        })
-        .onActionEnd(event => {
+    Navigation(this.pathStack) {
+        Button() {
+          Image($r('app.media.growingtk_logo'))
+            .backgroundColor('#FF9167')
+            .borderRadius(this.entrySideLength() / 2 - ENTRY_MARGIN)
+            .width(this.entrySideLength() - ENTRY_MARGIN * 2)
+            .height(this.entrySideLength() - ENTRY_MARGIN * 2)
+        }
+        .backgroundColor('#FC5F3A')
+        .borderRadius(this.entrySideLength() / 2)
+        .width(this.entrySideLength())
+        .height(this.entrySideLength())
+        .onClick(event => {
+          if (canIUse('SystemCapability.Window.SessionManager')) {
+            this.window.minimize()
+          }
           let screenWidth = display.getDefaultDisplaySync().width
           let screenHeight = display.getDefaultDisplaySync().height
-          let entryWidth = this.window.getWindowProperties().windowRect.width
-          let padding = vp2px(ENTRY_PADDING)
-
           let windowStage = AppStorage.get<window.WindowStage>('windowStage')
           let mainWindow = windowStage!.getMainWindowSync()
           let avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
           let avoidTop = Math.max(avoidArea.topRect.height, 126)
-          let avoidBottom = Math.max(avoidArea.bottomRect.height, 100)
 
-          let minY = avoidTop + padding
-          let maxY = screenHeight - avoidBottom - entryWidth - padding
-          if (this.windowPosition.y > maxY) {
-            this.windowPosition.y = maxY
-          } else if (this.windowPosition.y < minY) {
-            this.windowPosition.y = minY
-          }
-
-          let minX = padding
-          let maxX = screenWidth - entryWidth - padding
-          if (this.windowPosition.x > screenWidth / 2) {
-            this.windowPosition.x = maxX
-          } else {
-            this.windowPosition.x = minX
-          }
-
-          if (this.window) {
-            this.window.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
-          }
+          this.window.moveWindowTo(0, avoidTop)
+          let curSizeWidth = this.window.getWindowProperties().windowRect.width
+          let curSizeHeight = this.window.getWindowProperties().windowRect.height
+          this.window.resize(screenWidth, screenHeight - avoidTop).then(() => {
+            let destination = new NavPathInfo('Home', '', popInfo => {
+              this.window.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+              this.window.resize(curSizeWidth, curSizeHeight)
+            })
+            this.pathStack.pushDestination(destination, false).then(() => {
+              this.window.showWindow()
+            })
+          })
         })
-        .onActionCancel(() => {
+        .gesture(
+          PanGesture(new PanGestureOptions({ direction: PanDirection.All }))
+            .onActionStart(event => {
+            })
+            .onActionUpdate(event => {
+              this.windowPosition.x += event.offsetX
+              this.windowPosition.y += event.offsetY
 
-        })
-    )
+              this.window.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+            })
+            .onActionEnd(event => {
+              let screenWidth = display.getDefaultDisplaySync().width
+              let screenHeight = display.getDefaultDisplaySync().height
+              let entryWidth = this.window.getWindowProperties().windowRect.width
+              let padding = vp2px(ENTRY_PADDING)
+
+              let windowStage = AppStorage.get<window.WindowStage>('windowStage')
+              let mainWindow = windowStage!.getMainWindowSync()
+              let avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
+              let avoidTop = Math.max(avoidArea.topRect.height, 126)
+              let avoidBottom = Math.max(avoidArea.bottomRect.height, 100)
+
+              let minY = avoidTop + padding
+              let maxY = screenHeight - avoidBottom - entryWidth - padding
+              if (this.windowPosition.y > maxY) {
+                this.windowPosition.y = maxY
+              } else if (this.windowPosition.y < minY) {
+                this.windowPosition.y = minY
+              }
+
+              let minX = padding
+              let maxX = screenWidth - entryWidth - padding
+              if (this.windowPosition.x > (screenWidth - entryWidth) / 2) {
+                this.windowPosition.x = maxX
+              } else {
+                this.windowPosition.x = minX
+              }
+
+              if (this.window) {
+                this.window.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+              }
+            })
+            .onActionCancel(() => {
+
+            })
+        )
+      }
+    .hideTitleBar(true)
+    .navDestination(this.pagesMap)
   }
 }
