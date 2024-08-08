@@ -23,12 +23,13 @@ import SdkInfo from './SdkInfo'
 import EventsList from './EventsList'
 import Realtime from './Realtime'
 import NetFlow from './NetFlow'
+import NavStackManager from '../core/NavStackManager'
 
 export const routeName: string = "EntryIcon"
 @Entry({ routeName: routeName, storage: LocalStorage.getShared() })
 @Component
 struct EntryIcon {
-  @Provide('pathStack') pathStack: NavPathStack = new NavPathStack()
+  pageStack: NavPathStack = NavStackManager.pageStack
   @LocalStorageProp('position') windowPosition: Position = { x: 0, y: 0 }
   window: window.Window = window.findWindow(SUB_WINDOW_NAME)
   _entrySideLength: number = 0
@@ -55,7 +56,7 @@ struct EntryIcon {
   }
 
   build() {
-    Navigation(this.pathStack) {
+    Navigation(this.pageStack) {
         Button() {
           Image($r('app.media.growingtk_logo'))
             .backgroundColor('#FF9167')
@@ -86,7 +87,7 @@ struct EntryIcon {
               this.window.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
               this.window.resize(curSizeWidth, curSizeHeight)
             })
-            this.pathStack.pushDestination(destination, false).then(() => {
+            this.pageStack.pushDestination(destination, false).then(() => {
               this.window.showWindow()
             })
           })

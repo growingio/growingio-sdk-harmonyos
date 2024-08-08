@@ -16,74 +16,54 @@
  */
 
 import window from '@ohos.window'
-import emitter from '@ohos.events.emitter'
 import ModuleButton from '../views/ModuleButton'
-import { EMIT_EVENT_MODULE_BUTTON_ON_CLICK, SUB_WINDOW_NAME } from '../utils/Constants'
-
-enum ModuleType {
-  sdkInfo,
-  eventsList,
-  realtime,
-  netFlow
-}
+import NavStackManager from '../core/NavStackManager'
+import { SUB_WINDOW_NAME } from '../utils/Constants'
 
 @Component
 export default struct Home {
-  @Consume('pathStack') pathStack: NavPathStack
+  pageStack: NavPathStack = NavStackManager.pageStack
   window: window.Window = window.findWindow(SUB_WINDOW_NAME)
-
-  aboutToAppear(): void {
-    emitter.on({eventId: EMIT_EVENT_MODULE_BUTTON_ON_CLICK}, this.moduleOnClick)
-  }
-
-  aboutToDisappear(): void {
-    emitter.off(EMIT_EVENT_MODULE_BUTTON_ON_CLICK)
-  }
 
   build() {
     NavDestination() {
       Column() {
         Blank(10)
         Flex({justifyContent: FlexAlign.SpaceEvenly}) {
-          ModuleButton({ name: 'SDK信息', image: 'app.media.growingtk_sdkInfo', type: ModuleType.sdkInfo })
-          ModuleButton({ name: '事件库', image: 'app.media.growingtk_eventsList', type: ModuleType.eventsList })
-          ModuleButton({ name: '实时事件', image: 'app.media.growingtk_realtime', type: ModuleType.realtime })
-          ModuleButton({ name: '网络记录', image: 'app.media.growingtk_netFlow', type: ModuleType.netFlow })
+          ModuleButton({ name: 'SDK信息', image: 'app.media.growingtk_sdkInfo' })
+            .onTouch(event => {
+              if (event.type ==  TouchType.Up) {
+                let destination = new NavPathInfo('SdkInfo', '')
+                this.pageStack.pushDestination(destination)
+              }
+            })
+          ModuleButton({ name: '事件库', image: 'app.media.growingtk_eventsList' })
+            .onTouch(event => {
+              if (event.type ==  TouchType.Up) {
+                let destination = new NavPathInfo('EventsList', '')
+                this.pageStack.pushDestination(destination)
+              }
+            })
+          ModuleButton({ name: '实时事件', image: 'app.media.growingtk_realtime' })
+            .onTouch(event => {
+              if (event.type ==  TouchType.Up) {
+                let destination = new NavPathInfo('Realtime', '')
+                this.pageStack.pushDestination(destination)
+              }
+            })
+          ModuleButton({ name: '网络记录', image: 'app.media.growingtk_netFlow' })
+            .onTouch(event => {
+              if (event.type ==  TouchType.Up) {
+                let destination = new NavPathInfo('NetFlow', '')
+                this.pageStack.pushDestination(destination)
+              }
+            })
         }
       }
     }
     .onBackPressed(() => {
-      this.pathStack.pop('', false)
+      this.pageStack.pop('', false)
       return true
     })
-  }
-
-  moduleOnClick = (eventData: emitter.EventData) => {
-    let data = eventData.data!
-    let type = data['type'] as ModuleType
-    switch (type) {
-      case ModuleType.sdkInfo: {
-        let destination = new NavPathInfo('SdkInfo', '')
-        this.pathStack.pushDestination(destination)
-      }
-      break
-      case ModuleType.eventsList: {
-        let destination = new NavPathInfo('EventsList', '')
-        this.pathStack.pushDestination(destination)
-      }
-        break
-      case ModuleType.realtime: {
-        let destination = new NavPathInfo('Realtime', '')
-        this.pathStack.pushDestination(destination)
-      }
-        break
-      case ModuleType.netFlow: {
-        let destination = new NavPathInfo('NetFlow', '')
-        this.pathStack.pushDestination(destination)
-      }
-        break
-      default:
-        break
-    }
   }
 }

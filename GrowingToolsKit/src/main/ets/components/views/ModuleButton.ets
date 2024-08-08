@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 
-import emitter from '@ohos.events.emitter'
-import { EMIT_EVENT_MODULE_BUTTON_ON_CLICK } from '../utils/Constants'
-
 @Component
 export default struct ModuleButton {
   entrySideLength: number = 50
@@ -26,7 +23,6 @@ export default struct ModuleButton {
 
   @Require @Prop name: string
   @Require @Prop image: string
-  @Require @Prop type: number
 
   build() {
     Button() {
@@ -49,12 +45,5 @@ export default struct ModuleButton {
     .stateEffect(false)
     .width(this.buttonSideLength)
     .height(this.buttonSideLength)
-    .onClick(event => {
-      emitter.emit({
-        eventId: EMIT_EVENT_MODULE_BUTTON_ON_CLICK
-      }, {
-        data: {'type': this.type}
-      })
-    })
   }
 }
