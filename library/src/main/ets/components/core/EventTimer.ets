@@ -109,14 +109,10 @@ export default class EventTimer {
     duration = EventTimer.durationFrom(startTime, currentTime) + duration
     attributes[Event_DURATION] = (duration / 1000.0).toFixed(3) + ''
     if (context.config.mode == ConfigMode.SaaS) {
-      let p = FakePageEvent.create(context)
-      AnalyticsCore.writeEventToDisk(p, context)
-      let e = CustomEvent.create(eventName, attributes, context, p)
-      AnalyticsCore.writeEventToDisk(e, context)
-    } else {
-      let e = CustomEvent.create(eventName, attributes, context)
-      AnalyticsCore.writeEventToDisk(e, context)
+      FakePageEvent.sendFakePageIfNeeded(context)
     }
+    let e = CustomEvent.create(eventName, attributes, context)
+    AnalyticsCore.writeEventToDisk(e, context)
     LogUtil.info(() => 'Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
       + JSON.stringify(attributes))
 

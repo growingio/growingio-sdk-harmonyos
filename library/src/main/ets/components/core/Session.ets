@@ -116,8 +116,7 @@ export default class Session {
     AnalyticsCore.writeEventToDisk(e, context)
 
     if (context.config.mode == ConfigMode.SaaS) {
-      let p = FakePageEvent.create(context)
-      AnalyticsCore.writeEventToDisk(p, context)
+      FakePageEvent.sendFakePageIfNeeded(context)
     }
   }
 }

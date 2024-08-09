@@ -18,10 +18,24 @@
 import Event, { EventType, AttributesType } from './Event'
 import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
+import { ConfigMode } from '../interfaces/GrowingConfig'
 
-export default class PageEvent extends Event {
+export interface Page {
+  path: string | undefined
+  title: string | undefined
+  timestamp: number
+
+  // mode SaaS
+  referralPage: string | undefined
+}
+
+export default class PageEvent extends Event implements Page {
   path: string | undefined = undefined
   title: string | undefined = undefined
+
+  // mode SaaS
+  static lastPage: Page | undefined = undefined
+  referralPage: string | undefined = undefined
 
   static create(
     path: string,
@@ -34,6 +48,14 @@ export default class PageEvent extends Event {
     event.title = title ?? undefined
     event.attributes = attributes
     event.eventType = EventType.Page
+
+    if (context.config.mode == ConfigMode.SaaS) {
+      if (PageEvent.lastPage) {
+        event.referralPage = PageEvent.lastPage.path
+      }
+      PageEvent.lastPage = event
+    }
+
     return EventBuilder.build(event, context)
   }
 }

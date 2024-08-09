@@ -17,18 +17,33 @@
 
 import Event, { EventType } from '../Event'
 import EventBuilder from '../EventBuilder'
+import PageEvent, { Page } from '../PageEvent'
+import AnalyticsCore from '../../core/AnalyticsCore'
 import GrowingContext from '../../core/Context'
 
 const FAKE_PAGE_PATH = "GIOFakePage"
 
-export default class FakePageEvent extends Event {
+// mode SaaS
+export default class FakePageEvent extends Event implements Page {
   path: string = FAKE_PAGE_PATH
-  pageShowTimestamp: number = 0
+  title: string | undefined = undefined
+  referralPage: string | undefined = undefined
 
   static create(context: GrowingContext): FakePageEvent {
     let event = new FakePageEvent()
-    event.pageShowTimestamp = Date.now()
     event.eventType = EventType.Page
+    PageEvent.lastPage = event
     return EventBuilder.build(event, context)
+  }
+
+  static sendFakePageIfNeeded(context: GrowingContext) {
+    if (GrowingContext.isDefaultContext(context) &&
+        context.config.autotrackEnabled &&
+        context.config.autotrackAllPages) {
+      // 当前是主实例，且已开启PAGE无感埋点
+      return
+    }
+    let p = FakePageEvent.create(context)
+    AnalyticsCore.writeEventToDisk(p, context)
   }
 }

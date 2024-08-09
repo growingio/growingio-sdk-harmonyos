@@ -226,14 +226,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     sendTo?: string[]
   ) {
     if (this.context.config.mode == ConfigMode.SaaS) {
-      let p = FakePageEvent.create(this.context)
-      AnalyticsCore.writeEventToDisk(p, this.context)
-      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context, p)
-      AnalyticsCore.writeEventToDisk(e, this.context)
-    } else {
-      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
-      AnalyticsCore.writeEventToDisk(e, this.context)
+      FakePageEvent.sendFakePageIfNeeded(this.context)
     }
+    let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
+    AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info(() => 'Track custom event with eventName: ' + eventName + ', attributes: ' +
     JSON.stringify(attributes))
 

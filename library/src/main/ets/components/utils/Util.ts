@@ -135,7 +135,8 @@ export default class Util {
         t: 'page',
         p: event.path,
         o: 'portrait',
-        tl: ''
+        tl: event.title,
+        rp: event.referralPage
       }
 
       return JSON.stringify(page)
