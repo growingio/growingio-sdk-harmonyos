@@ -80,6 +80,13 @@
         "startWindowBackground": "$color:start_window_background"
       }
     ],
-    "requestPermissions": []
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET"
+      },
+      {
+        "name": "ohos.permission.GET_NETWORK_INFO"
+      }
+    ]
   }
 }
