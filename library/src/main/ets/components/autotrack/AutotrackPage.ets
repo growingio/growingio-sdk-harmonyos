@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import deviceInfo from '@ohos.deviceInfo'
 import uiObserver from '@ohos.arkui.observer'
 import emitter from '@ohos.events.emitter'
 
@@ -35,10 +34,8 @@ export default class AutotrackPage {
   static pagesCache: Array<PageInfo> = []
 
   static initAutotrackPage(context: UIContext) {
-    if (deviceInfo.sdkApiVersion >= 12) {
-      uiObserver.on('navDestinationUpdate', AutotrackPage.onPageUpdate)
-      uiObserver.on('routerPageUpdate', context, AutotrackPage.onPageUpdate)
-    }
+    uiObserver.on('navDestinationUpdate', AutotrackPage.onPageUpdate)
+    uiObserver.on('routerPageUpdate', context, AutotrackPage.onPageUpdate)
 
     emitter.once({eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE}, AutotrackPage.resendPageFromCache)
     emitter.on({eventId: EMIT_EVENT_SESSION_STATE_FOREGROUND}, AutotrackPage.resendPageFromCache)
