@@ -24,3 +24,7 @@
 # -remove-log
 # -keep
 # ./src/main/ets/components/interfaces
+-enable-property-obfuscation
+-enable-toplevel-obfuscation
+-enable-filename-obfuscation
+-enable-export-obfuscation
