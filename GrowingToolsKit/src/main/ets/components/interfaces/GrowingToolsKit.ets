@@ -21,6 +21,7 @@ import { routeName } from '../pages/EntryIcon'
 import { SUB_WINDOW_NAME, ENTRY_PADDING, Position } from '../utils/Constants'
 
 export class GrowingToolsKit {
+  static mainWindowStage: window.WindowStage | undefined = undefined
   private _position: Position = { x: 0, y: 0 }
 
   constructor(x: number = vp2px(ENTRY_PADDING), y: number = 400) {
@@ -29,7 +30,11 @@ export class GrowingToolsKit {
   }
 
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
-    AppStorage.setOrCreate('windowStage', windowStage)
+    if (GrowingToolsKit.mainWindowStage != undefined) {
+      return
+    }
+
+    GrowingToolsKit.mainWindowStage = windowStage
     windowStage.createSubWindow(SUB_WINDOW_NAME).then(window => {
       let localStorage = new LocalStorage()
       localStorage.setOrCreate('position', this._position)

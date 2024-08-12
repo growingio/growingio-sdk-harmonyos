@@ -18,7 +18,7 @@
 import window from '@ohos.window'
 import ModuleButton from '../views/ModuleButton'
 import NavStackManager from '../core/NavStackManager'
-import { SUB_WINDOW_NAME } from '../utils/Constants'
+import { NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
 
 @Component
 export default struct Home {
@@ -33,28 +33,28 @@ export default struct Home {
           ModuleButton({ name: 'SDK信息', image: 'app.media.growingtk_sdkInfo' })
             .onTouch(event => {
               if (event.type ==  TouchType.Up) {
-                let destination = new NavPathInfo('SdkInfo', '')
+                let destination = new NavPathInfo(NAV_PATH_PREFIX + 'SdkInfo', '')
                 this.pageStack.pushDestination(destination)
               }
             })
           ModuleButton({ name: '事件库', image: 'app.media.growingtk_eventsList' })
             .onTouch(event => {
               if (event.type ==  TouchType.Up) {
-                let destination = new NavPathInfo('EventsList', '')
+                let destination = new NavPathInfo(NAV_PATH_PREFIX + 'EventsList', '')
                 this.pageStack.pushDestination(destination)
               }
             })
           ModuleButton({ name: '实时事件', image: 'app.media.growingtk_realtime' })
             .onTouch(event => {
               if (event.type ==  TouchType.Up) {
-                let destination = new NavPathInfo('Realtime', '')
+                let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Realtime', '')
                 this.pageStack.pushDestination(destination)
               }
             })
           ModuleButton({ name: '网络记录', image: 'app.media.growingtk_netFlow' })
             .onTouch(event => {
               if (event.type ==  TouchType.Up) {
-                let destination = new NavPathInfo('NetFlow', '')
+                let destination = new NavPathInfo(NAV_PATH_PREFIX + 'NetFlow', '')
                 this.pageStack.pushDestination(destination)
               }
             })

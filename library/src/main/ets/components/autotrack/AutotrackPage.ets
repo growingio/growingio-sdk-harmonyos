@@ -62,6 +62,10 @@ export default class AutotrackPage {
     }
 
     let name = info.name.toString()
+    const GTK_NAV_PATH_PREFIX = '__GTK_'
+    if (name.startsWith(GTK_NAV_PATH_PREFIX)) {
+      return
+    }
     let path = '/' + name
     let title = name
     if (title.includes('/')) {

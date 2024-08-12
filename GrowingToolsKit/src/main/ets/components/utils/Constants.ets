@@ -18,6 +18,7 @@
 export const ENTRY_PADDING = 5
 export const ENTRY_MARGIN = 8
 export const SUB_WINDOW_NAME = 'GrowingToolsKit'
+export const NAV_PATH_PREFIX = '__GTK_'
 
 export interface Position {
   x: number

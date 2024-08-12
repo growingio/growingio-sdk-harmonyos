@@ -17,13 +17,14 @@
 
 import window from '@ohos.window'
 import display from '@ohos.display'
-import { SUB_WINDOW_NAME, ENTRY_MARGIN, ENTRY_PADDING, Position } from '../utils/Constants'
+import { SUB_WINDOW_NAME, ENTRY_MARGIN, ENTRY_PADDING, Position, NAV_PATH_PREFIX } from '../utils/Constants'
 import Home from './Home'
 import SdkInfo from './SdkInfo'
 import EventsList from './EventsList'
 import Realtime from './Realtime'
 import NetFlow from './NetFlow'
 import NavStackManager from '../core/NavStackManager'
+import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 
 export const routeName: string = "EntryIcon"
 @Entry({ routeName: routeName, storage: LocalStorage.getShared() })
@@ -31,26 +32,52 @@ export const routeName: string = "EntryIcon"
 struct EntryIcon {
   pageStack: NavPathStack = NavStackManager.pageStack
   @LocalStorageProp('position') windowPosition: Position = { x: 0, y: 0 }
-  window: window.Window = window.findWindow(SUB_WINDOW_NAME)
+
+  _mainWindow: window.Window | undefined = undefined
+  mainWindow(): window.Window {
+    if (this._mainWindow == undefined) {
+      let windowStage = GrowingToolsKit.mainWindowStage
+      this._mainWindow = windowStage!.getMainWindowSync()
+    }
+
+    return this._mainWindow
+  }
+
+  _window: window.Window | undefined = undefined
+  subWindow(): window.Window {
+    if (this._window == undefined) {
+      this._window = window.findWindow(SUB_WINDOW_NAME)
+    }
+
+    return this._window
+  }
+
   _entrySideLength: number = 0
   entrySideLength(): number {
     if (this._entrySideLength == 0) {
-      this._entrySideLength = px2vp(this.window.getWindowProperties().windowRect.width)
+      this._entrySideLength = px2vp(this.subWindow().getWindowProperties().windowRect.width)
     }
     return this._entrySideLength
   }
 
+  removePrefixForPathIfExist(path: string): string {
+    if (path.startsWith(NAV_PATH_PREFIX)) {
+      return path.slice(NAV_PATH_PREFIX.length)
+    }
+    return path
+  }
+
   @Builder
   pagesMap(name: string) {
-    if (name == 'Home') {
+    if (this.removePrefixForPathIfExist(name) == 'Home') {
       Home()
-    } else if (name == 'SdkInfo') {
+    } else if (this.removePrefixForPathIfExist(name) == 'SdkInfo') {
       SdkInfo()
-    } else if (name == 'EventsList') {
+    } else if (this.removePrefixForPathIfExist(name) == 'EventsList') {
       EventsList()
-    } else if (name == 'Realtime') {
+    } else if (this.removePrefixForPathIfExist(name) == 'Realtime') {
       Realtime()
-    } else if (name == 'NetFlow') {
+    } else if (this.removePrefixForPathIfExist(name) == 'NetFlow') {
       NetFlow()
     }
   }
@@ -69,26 +96,25 @@ struct EntryIcon {
         .width(this.entrySideLength())
         .height(this.entrySideLength())
         .onClick(event => {
+          let subWindow = this.subWindow()
           if (canIUse('SystemCapability.Window.SessionManager')) {
-            this.window.minimize()
+            subWindow.minimize()
           }
           let screenWidth = display.getDefaultDisplaySync().width
           let screenHeight = display.getDefaultDisplaySync().height
-          let windowStage = AppStorage.get<window.WindowStage>('windowStage')
-          let mainWindow = windowStage!.getMainWindowSync()
-          let avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
+          let avoidArea = this.mainWindow().getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
           let avoidTop = Math.max(avoidArea.topRect.height, 126)
 
-          this.window.moveWindowTo(0, avoidTop)
-          let curSizeWidth = this.window.getWindowProperties().windowRect.width
-          let curSizeHeight = this.window.getWindowProperties().windowRect.height
-          this.window.resize(screenWidth, screenHeight - avoidTop).then(() => {
-            let destination = new NavPathInfo('Home', '', popInfo => {
-              this.window.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
-              this.window.resize(curSizeWidth, curSizeHeight)
+          subWindow.moveWindowTo(0, avoidTop)
+          let curSizeWidth = subWindow.getWindowProperties().windowRect.width
+          let curSizeHeight = subWindow.getWindowProperties().windowRect.height
+          subWindow.resize(screenWidth, screenHeight - avoidTop).then(() => {
+            let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Home', '', popInfo => {
+              subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+              subWindow.resize(curSizeWidth, curSizeHeight)
             })
             this.pageStack.pushDestination(destination, false).then(() => {
-              this.window.showWindow()
+              subWindow.showWindow()
             })
           })
         })
@@ -100,17 +126,15 @@ struct EntryIcon {
               this.windowPosition.x += event.offsetX
               this.windowPosition.y += event.offsetY
 
-              this.window.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+              this.subWindow().moveWindowTo(this.windowPosition.x, this.windowPosition.y)
             })
             .onActionEnd(event => {
+              let subWindow = this.subWindow()
               let screenWidth = display.getDefaultDisplaySync().width
               let screenHeight = display.getDefaultDisplaySync().height
-              let entryWidth = this.window.getWindowProperties().windowRect.width
+              let entryWidth = subWindow.getWindowProperties().windowRect.width
               let padding = vp2px(ENTRY_PADDING)
-
-              let windowStage = AppStorage.get<window.WindowStage>('windowStage')
-              let mainWindow = windowStage!.getMainWindowSync()
-              let avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
+              let avoidArea = this.mainWindow().getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
               let avoidTop = Math.max(avoidArea.topRect.height, 126)
               let avoidBottom = Math.max(avoidArea.bottomRect.height, 100)
 
@@ -130,9 +154,7 @@ struct EntryIcon {
                 this.windowPosition.x = minX
               }
 
-              if (this.window) {
-                this.window.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
-              }
+              subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
             })
             .onActionCancel(() => {
 
