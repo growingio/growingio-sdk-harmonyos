@@ -32,8 +32,8 @@
       ]
     },
     {
-      "name": "library",
-      "srcPath": "./library",
+      "name": "GrowingAnalytics",
+      "srcPath": "./GrowingAnalytics",
     },
     {
       "name": "GrowingToolsKit",

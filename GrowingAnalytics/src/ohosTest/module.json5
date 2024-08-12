@@ -1,6 +1,6 @@
 {
   "module": {
-    "name": "library_test",
+    "name": "GrowingAnalytics_test",
     "type": "feature",
     "description": "$string:module_test_desc",
     "mainElement": "TestAbility",
