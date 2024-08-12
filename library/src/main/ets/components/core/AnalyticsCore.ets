@@ -16,6 +16,7 @@
  */
 
 import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback'
+import ApplicationStateChangeCallback from '@ohos.app.ability.ApplicationStateChangeCallback'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import emitter from '@ohos.events.emitter'
 import window from '@ohos.window'
@@ -62,7 +63,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static dummyTracker: DummyTracker = new DummyTracker()
   static location: Location = new Location()
   context: GrowingContext
-  _isInitializedSuccessfully: boolean = false
+  private _isInitializedSuccessfully: boolean = false
+  private static _mainWindowStage: window.WindowStage | undefined = undefined
 
   constructor(context: GrowingContext) {
     this.context = context
@@ -78,7 +80,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     config.plugins.forEach(plugin => {
       Plugins.registerPlugin(plugin)
     })
-    AnalyticsCore.setAbilityLifecycleCallback(context)
+    AnalyticsCore.setLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
     await Promise.all<Promise<void>>([
       AppInfo.initAppInfo(context),
@@ -140,12 +142,18 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     return AnalyticsCore.dummyTracker
   }
 
-  static setAbilityLifecycleCallback(context: Context) {
+  static setLifecycleCallback(context: Context) {
     let gContext = GrowingContext.getDefaultContext() as GrowingContext
     let abilityLifecycleCallback: AbilityLifecycleCallback = {
       onAbilityCreate(ability: UIAbility) {
       },
       onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
+        if (AnalyticsCore._mainWindowStage != undefined) {
+          return
+        }
+
+        AnalyticsCore._mainWindowStage = windowStage
+
         if (gContext.config.autotrackEnabled) {
           windowStage.getMainWindow().then(window => {
             AutotrackPage.initAutotrackPage(window.getUIContext())
@@ -155,12 +163,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
         Plugins.onWindowStageCreate(ability, windowStage)
       },
       onWindowStageActive(ability: UIAbility, windowStage: window.WindowStage) {
-        Session.onForeground()
-        EventTimer.handleAllTimersResume()
       },
       onWindowStageInactive(ability: UIAbility, windowStage: window.WindowStage) {
-        Session.onBackground()
-        EventTimer.handleAllTimersPause()
       },
       onWindowStageDestroy(ability: UIAbility, windowStage: window.WindowStage) {
       },
@@ -174,6 +178,19 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       }
     }
     context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
+
+    let applicationStateChangeCallback: ApplicationStateChangeCallback = {
+      onApplicationForeground() {
+        Session.onForeground()
+        EventTimer.handleAllTimersResume()
+      },
+      onApplicationBackground() {
+        Session.onBackground()
+        EventTimer.handleAllTimersPause()
+      }
+    }
+
+    context.getApplicationContext().on('applicationStateChange', applicationStateChangeCallback)
   }
 
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
