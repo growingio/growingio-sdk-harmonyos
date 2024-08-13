@@ -50,7 +50,7 @@ export default class EventPersistence {
 
   sequenceId(): string {
     let e = this.getEvent()
-    return String(e.eventSequenceId ?? e.gesid)
+    return String(e.eventSequenceId ?? e.esid)
   }
 
   path(): string | undefined {
@@ -66,7 +66,7 @@ export default class EventPersistence {
 
   time(): string {
     let e = this.getEvent()
-    let date = new Date(e.timestamp)
+    let date = new Date(e.timestamp ?? e.tm)
     const hours = date.getHours().toString().padStart(2, '0')
     const minutes = date.getMinutes().toString().padStart(2, '0')
     const seconds = date.getSeconds().toString().padStart(2, '0')
@@ -75,7 +75,7 @@ export default class EventPersistence {
 
   day(): string {
     let e = this.getEvent()
-    let date = new Date(e.timestamp)
+    let date = new Date(e.timestamp ?? e.tm)
     return date.toISOString().split('T')[0]
   }
 
@@ -93,7 +93,7 @@ export default class EventPersistence {
           // mode SaaS
           n: '',
           p: '',
-          gesid: 0,
+          esid: 0,
           tm: 0,
         }
       }
@@ -111,6 +111,6 @@ interface Event {
   // mode SaaS
   n: string
   p: string
-  gesid: number
+  esid: number
   tm: number
 }
