@@ -17,7 +17,7 @@
 
 import { PullToRefresh } from '@ohos/pulltorefresh'
 import EventDatabase from '../event/EventDatabase'
-import EventPersistence from '../event/EventPersistence'
+import EventPersistence, { EventScene } from '../event/EventPersistence'
 import { GTKColor } from '../utils/Constants'
 
 @ComponentV2
@@ -79,12 +79,33 @@ export default struct EventsList {
             Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceAround }) {
               Text(event.sequenceId() ?? '-')
               Column() {
-                Text(event.eventType)
+                Row() {
+                  Text(event.eventType)
+                  if (event.eventScene == EventScene.Hybrid) {
+                    Blank(5)
+                    Text('Hybrid')
+                      .fontSize(11)
+                      .fontColor(GTKColor.primaryWhite)
+                      .padding(4)
+                      .borderRadius(4)
+                      .backgroundColor(GTKColor.hybridTagLabel)
+                  }
+                  if (event.eventScene == EventScene.Flutter) {
+                    Blank(5)
+                    Text('Flutter')
+                      .fontSize(11)
+                      .fontColor(GTKColor.primaryWhite)
+                      .padding(4)
+                      .borderRadius(4)
+                      .backgroundColor(GTKColor.flutterTagLabel)
+                  }
+                }
                 if (event.path()) {
                   Text(event.path())
                 }
               }
               .width('50%')
+              .alignItems(HorizontalAlign.Start)
               Text(event.isSend ? '已发送' : '未发送')
                 .fontColor(event.isSend ? GTKColor.primaryLabel : GTKColor.tertiaryTheme)
               Text(event.time())

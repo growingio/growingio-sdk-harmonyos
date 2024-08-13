@@ -15,10 +15,17 @@
  * limitations under the License.
  */
 
+export enum EventScene {
+  Native = 0,
+  Hybrid,
+  Flutter
+}
+
 export default class EventPersistence {
   uuid: string
   data: string
   eventType: string
+  eventScene: EventScene
   createAt: number
   isSend: boolean
   private _event: Event | undefined = undefined
@@ -27,12 +34,14 @@ export default class EventPersistence {
     uuid: string,
     data: string,
     eventType: string,
+    eventScene: EventScene,
     createAt: number = Date.now(),
     isSend: boolean = false
   ) {
     this.uuid = uuid
     this.data = data
     this.eventType = eventType
+    this.eventScene = eventScene
     this.createAt = createAt
     this.isSend = isSend
   }
@@ -41,10 +50,11 @@ export default class EventPersistence {
     uuid: string,
     data: string,
     eventType: string,
+    eventScene: EventScene,
     createAt: number,
     isSend: boolean
   ): EventPersistence {
-    let e = new EventPersistence(uuid, data, eventType, createAt, isSend)
+    let e = new EventPersistence(uuid, data, eventType, eventScene, createAt, isSend)
     return e
   }
 

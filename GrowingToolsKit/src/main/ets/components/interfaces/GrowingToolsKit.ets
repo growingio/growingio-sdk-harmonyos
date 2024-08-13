@@ -20,15 +20,39 @@ import window from '@ohos.window'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import { routeName } from '../pages/EntryIcon'
-import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_POSITION } from '../utils/Constants'
+import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_POSITION,
+  GrowingTKConfig } from '../utils/Constants'
 
 export class GrowingToolsKit {
   static mainWindowStage: window.WindowStage | undefined = undefined
+  static config: GrowingTKConfig
+  static version: string
+  static sdkStartTime: number = 0
+  static sdkEndTime: number = 0
+
   private _position: Position = { x: 0, y: 0 }
 
   constructor(x: number = vp2px(ENTRY_PADDING), y: number = 400) {
     this._position.x = x
     this._position.y = y
+  }
+
+  onSDKWillInitialize() {
+    GrowingToolsKit.sdkStartTime = new Date().getTime()
+  }
+
+  onSDKDidInitialize(config: GrowingTKConfig, version: string) {
+    GrowingToolsKit.sdkEndTime = new Date().getTime()
+    GrowingToolsKit.config = config.copy()
+    GrowingToolsKit.version = version
+  }
+
+  onUserIdChange(before: string, after: string) {
+
+  }
+
+  onSessionChange(before: string, after: string) {
+
   }
 
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
@@ -52,8 +76,8 @@ export class GrowingToolsKit {
     EventDatabase.initDatabase(ability.context)
   }
 
-  onEventWroteToDisk(uuid: string, data: string, eventType: string) {
-    let e = new EventPersistence(uuid, data, eventType)
+  onEventWroteToDisk(uuid: string, data: string, eventType: string, eventScene: number) {
+    let e = new EventPersistence(uuid, data, eventType, eventScene)
     EventDatabase.writeEvent(e)
   }
 }

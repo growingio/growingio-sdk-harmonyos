@@ -36,6 +36,39 @@ export enum GTKColor {
   secondaryLabel = '#3C3C4399',
   primaryBackground = '#FFFFFF',
   secondaryBackground = '#F4F5F6',
+  hybridTagLabel = '#FF5733',
+  flutterTagLabel = '#027DFD',
+}
+
+export enum ConfigMode {
+  NewSaaS = 0,
+  SaaS,
+  CDP
+}
+
+export interface RequestOptions {
+  _connectTimeout: number
+  _readTimeout: number
+}
+
+export interface GrowingTKConfig {
+  mode: ConfigMode
+  accountId: string
+  dataSourceId: string
+  dataCollectionServerHost: string
+  urlScheme: string
+  debugEnabled: boolean
+  _sessionInterval: number
+  _dataUploadInterval: number
+  dataCollectionEnabled: boolean
+  idMappingEnabled: boolean
+  encryptEnabled: boolean
+  compressEnabled: boolean
+  requestOptions: RequestOptions
+  _dataValidityPeriod: number
+  autotrackEnabled: boolean
+  autotrackAllPages: boolean
+  copy(): GrowingTKConfig
 }
 
 export interface Position {

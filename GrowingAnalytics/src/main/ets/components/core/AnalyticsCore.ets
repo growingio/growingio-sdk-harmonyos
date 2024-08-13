@@ -71,15 +71,16 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   static async startCore(context: Context, config: GrowingConfig) {
+    config.plugins.forEach(plugin => {
+      Plugins.registerPlugin(plugin)
+    })
+    Plugins.onSDKWillInitialize()
     GrowingContext.setDefaultContext(config)
     let gContext = GrowingContext.getDefaultContext() as GrowingContext
     let core = new AnalyticsCore(gContext)
     AnalyticsCore.core = core
     AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
-    config.plugins.forEach(plugin => {
-      Plugins.registerPlugin(plugin)
-    })
     AnalyticsCore.setLifecycleCallback(context)
     await SharedPreferences.initWithContext(context)
     await Promise.all<Promise<void>>([
@@ -106,6 +107,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     })
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
       + 'GrowingIO version: ' + SDK_VERSION)
+    Plugins.onSDKDidInitialize(config, SDK_VERSION)
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
@@ -319,7 +321,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     let pst = EventPersistence.fromEvent(event, context)
     await EventDatabase.writeEvent(pst)
-    Plugins.onEventWroteToDisk(pst.uuid, pst.data, pst.eventType)
+    Plugins.onEventWroteToDisk(pst.uuid, pst.data, pst.eventType, eventScene)
     if (pst.eventType == EventType.Visit) {
       if (context.config.mode == ConfigMode.SaaS) {
         await PVEventSender.sendEvent(context)

@@ -37,6 +37,7 @@ export default class EventDatabase {
       + 'EVENT_UUID TEXT NOT NULL, '
       + 'DATA TEXT NOT NULL, '
       + 'TYPE TEXT NOT NULL, '
+      + 'EVENT_SCENE INTEGER NOT NULL, '
       + 'CREATE_AT INTEGER NOT NULL, '
       + 'IS_SEND INTEGER NOT NULL)'
 
@@ -62,6 +63,7 @@ export default class EventDatabase {
       'EVENT_UUID': event.uuid,
       'DATA': event.data,
       'TYPE': event.eventType,
+      'EVENT_SCENE': event.eventScene,
       'CREATE_AT': event.createAt,
       'IS_SEND': event.isSend
     }
@@ -99,9 +101,10 @@ export default class EventDatabase {
         const uuid = r.getString(r.getColumnIndex('EVENT_UUID'))
         const data = r.getString(r.getColumnIndex('DATA'))
         const eventType = r.getString(r.getColumnIndex('TYPE'))
+        const eventScene = r.getDouble(r.getColumnIndex('EVENT_SCENE'))
         const createAt = r.getDouble(r.getColumnIndex('CREATE_AT'))
         const isSend = r.getValue(r.getColumnIndex('IS_SEND'))
-        let e = EventPersistence.fromDatabase(uuid, data, eventType, createAt, isSend as boolean)
+        let e = EventPersistence.fromDatabase(uuid, data, eventType, eventScene, createAt, isSend as boolean)
         events.push(e)
       }
       r.close()
@@ -145,6 +148,7 @@ export default class EventDatabase {
         'EVENT_UUID': event.uuid,
         'DATA': event.data,
         'TYPE': event.eventType,
+        'EVENT_SCENE': event.eventScene,
         'CREATE_AT': event.createAt,
         'IS_SEND': true
       }
