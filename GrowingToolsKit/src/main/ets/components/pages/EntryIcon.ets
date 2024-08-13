@@ -17,7 +17,14 @@
 
 import window from '@ohos.window'
 import display from '@ohos.display'
-import { SUB_WINDOW_NAME, ENTRY_MARGIN, ENTRY_PADDING, Position, NAV_PATH_PREFIX } from '../utils/Constants'
+import {
+  SUB_WINDOW_NAME,
+  ENTRY_MARGIN,
+  ENTRY_PADDING,
+  Position,
+  NAV_PATH_PREFIX,
+  PREFERENCE_ENTRY_POSITION,
+  GTKColor} from '../utils/Constants'
 import Home from './Home'
 import SdkInfo from './SdkInfo'
 import EventsList from './EventsList'
@@ -31,7 +38,7 @@ export const routeName: string = "EntryIcon"
 @Component
 struct EntryIcon {
   pageStack: NavPathStack = NavStackManager.pageStack
-  @LocalStorageProp('position') windowPosition: Position = { x: 0, y: 0 }
+  @LocalStorageProp(PREFERENCE_ENTRY_POSITION) windowPosition: Position = { x: 0, y: 0 }
 
   _mainWindow: window.Window | undefined = undefined
   mainWindow(): window.Window {
@@ -86,12 +93,12 @@ struct EntryIcon {
     Navigation(this.pageStack) {
         Button() {
           Image($r('app.media.growingtk_logo'))
-            .backgroundColor('#FF9167')
+            .backgroundColor(GTKColor.secondaryTheme)
             .borderRadius(this.entrySideLength() / 2 - ENTRY_MARGIN)
             .width(this.entrySideLength() - ENTRY_MARGIN * 2)
             .height(this.entrySideLength() - ENTRY_MARGIN * 2)
         }
-        .backgroundColor('#FC5F3A')
+        .backgroundColor(GTKColor.primaryTheme)
         .borderRadius(this.entrySideLength() / 2)
         .width(this.entrySideLength())
         .height(this.entrySideLength())

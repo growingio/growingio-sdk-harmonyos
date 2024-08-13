@@ -3,6 +3,7 @@ import window from '@ohos.window'
 
 export interface PluginsInterface {
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage): void
+  onEventWroteToDisk(uuid: string, data: string, eventType: string): void
 }
 
 export default class Plugins {
@@ -25,6 +26,12 @@ export default class Plugins {
   static onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
     Plugins.plugins.forEach(plugin => {
       plugin.onWindowStageCreate(ability, windowStage)
+    })
+  }
+
+  static onEventWroteToDisk(uuid: string, data: string, eventType: string) {
+    Plugins.plugins.forEach(plugin => {
+      plugin.onEventWroteToDisk(uuid, data, eventType)
     })
   }
 }

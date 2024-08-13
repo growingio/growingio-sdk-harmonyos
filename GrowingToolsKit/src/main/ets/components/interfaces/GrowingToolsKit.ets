@@ -17,8 +17,10 @@
 
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
+import EventDatabase from '../event/EventDatabase'
+import EventPersistence from '../event/EventPersistence'
 import { routeName } from '../pages/EntryIcon'
-import { SUB_WINDOW_NAME, ENTRY_PADDING, Position } from '../utils/Constants'
+import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_POSITION } from '../utils/Constants'
 
 export class GrowingToolsKit {
   static mainWindowStage: window.WindowStage | undefined = undefined
@@ -37,14 +39,21 @@ export class GrowingToolsKit {
     GrowingToolsKit.mainWindowStage = windowStage
     windowStage.createSubWindow(SUB_WINDOW_NAME).then(window => {
       let localStorage = new LocalStorage()
-      localStorage.setOrCreate('position', this._position)
+      localStorage.setOrCreate(PREFERENCE_ENTRY_POSITION, this._position)
       window.loadContentByName(routeName, localStorage).then(() => {
-        window.setWindowBackgroundColor('#00000000')
+        window.setWindowBackgroundColor(GTKColor.blackAlpha)
       })
       window.moveWindowTo(this._position.x, this._position.y)
       window.resize(vp2px(56), vp2px(56))
       window.showWindow()
       window.setWindowLayoutFullScreen(true)
     })
+
+    EventDatabase.initDatabase(ability.context)
+  }
+
+  onEventWroteToDisk(uuid: string, data: string, eventType: string) {
+    let e = new EventPersistence(uuid, data, eventType)
+    EventDatabase.writeEvent(e)
   }
 }

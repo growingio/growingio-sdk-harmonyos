@@ -319,6 +319,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     let pst = EventPersistence.fromEvent(event, context)
     await EventDatabase.writeEvent(pst)
+    Plugins.onEventWroteToDisk(pst.uuid, pst.data, pst.eventType)
     if (pst.eventType == EventType.Visit) {
       if (context.config.mode == ConfigMode.SaaS) {
         await PVEventSender.sendEvent(context)

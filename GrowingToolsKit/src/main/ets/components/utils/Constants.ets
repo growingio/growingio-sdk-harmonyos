@@ -20,7 +20,26 @@ export const ENTRY_MARGIN = 8
 export const SUB_WINDOW_NAME = 'GrowingToolsKit'
 export const NAV_PATH_PREFIX = '__GTK_'
 
+export const DATABASE_NAME = 'growing_tools_database'
+
+export enum GTKColor {
+  primaryTheme = '#FC5F3A',
+  secondaryTheme = '#FF9167',
+  tertiaryTheme = '#C22A0D',
+  blackAlpha = '#000000E6',
+  primaryBlack = '#333333',
+  secondaryBlack = '#666666',
+  tertiaryBlack = '#999999',
+  primaryWhite = '#FFFFFF',
+  secondaryWhite = '#F2F2F7FF',
+  primaryLabel = '#000000FF',
+  secondaryLabel = '#3C3C4399',
+  primaryBackground = '#FFFFFF',
+  secondaryBackground = '#F4F5F6',
+}
+
 export interface Position {
   x: number
   y: number
 }
+export const PREFERENCE_ENTRY_POSITION = 'growingtk_entry_position'
