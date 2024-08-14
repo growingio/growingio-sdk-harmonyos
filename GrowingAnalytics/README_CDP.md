@@ -58,14 +58,14 @@ export default class MyAbilityStage extends AbilityStage {
     return 'MyAbilityStage'
   }
 
-  async startAnalytics() {
+  startAnalytics() {
     let config = new GrowingConfig().CDP(
       'Your AccountId',
       'Your DataSourceId',
       'Your UrlScheme',
       'Your DataCollectionServerHost'
     )
-    await GrowingAnalytics.start(this.context, config)
+    GrowingAnalytics.start(this.context, config)
   }
 }
 ```

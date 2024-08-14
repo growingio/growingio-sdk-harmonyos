@@ -23,6 +23,7 @@ import { LogUtil } from '../utils/LogUtil'
 
 export default class EventDatabase {
   static store: relationalStore.RdbStore
+  static eventsCache: relationalStore.ValuesBucket[] = []
   static tableName: string = 'EVENTS'
 
   static async initDatabase(context: Context) {
@@ -46,19 +47,32 @@ export default class EventDatabase {
     try {
       let store = await relationalStore.getRdbStore(appContext, config)
       await store.executeSql(SQL_CREATE_TABLE)
+      await EventDatabase.cleanExpiredEventIfNeeded(store)
       EventDatabase.store = store
+      EventDatabase.flushCacheIfNeeded()
     } catch (e) {
       LogUtil.error(() => "Failed to create database. code = " + e.code + ", message = " + e.message)
     }
-
-    await EventDatabase.cleanExpiredEventIfNeeded()
   }
 
-  static async writeEvent(event: EventPersistence) {
+  static async flushCacheIfNeeded() {
     if (!EventDatabase.store) {
       return
     }
 
+    if (EventDatabase.eventsCache.length == 0) {
+      return
+    }
+
+    try {
+      await EventDatabase.store.batchInsert(EventDatabase.tableName, EventDatabase.eventsCache)
+      EventDatabase.eventsCache = []
+    } catch (e) {
+      LogUtil.error(() => "Failed to write cached events to disk. code = " + e.code + ", message = " + e.message)
+    }
+  }
+
+  static async writeEvent(event: EventPersistence) {
     const valueBucket: relationalStore.ValuesBucket = {
       'EVENT_UUID': event.uuid,
       'DATA': event.data,
@@ -68,9 +82,14 @@ export default class EventDatabase {
       'IS_SEND': event.isSend
     }
 
+    if (!EventDatabase.store) {
+      EventDatabase.eventsCache.push(valueBucket)
+      return
+    }
+
     try {
+      await EventDatabase.flushCacheIfNeeded()
       await EventDatabase.store.insert(EventDatabase.tableName, valueBucket)
-      LogUtil.info(() => 'Write event to disk = ' + JSON.stringify(JSON.parse(event.data), null, 4))
     } catch (e) {
       LogUtil.error(() => "Failed to write event to disk. code = " + e.code + ", message = " + e.message)
     }
@@ -159,18 +178,18 @@ export default class EventDatabase {
   }
 
   static async removeAllEvents() {
-    EventDatabase.cleanExpiredEventIfNeeded(Date.now())
+    EventDatabase.cleanExpiredEventIfNeeded(EventDatabase.store, Date.now())
   }
 
-  static async cleanExpiredEventIfNeeded(daysAgo: number = Date.now() - 30 * 86400000) {
-    if (!EventDatabase.store) {
+  static async cleanExpiredEventIfNeeded(store: relationalStore.RdbStore, daysAgo: number = Date.now() - 30 * 86400000) {
+    if (!store) {
       return
     }
 
     try {
       let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
       predicates.lessThanOrEqualTo('CREATE_AT', daysAgo)
-      await EventDatabase.store.delete(predicates)
+      await store.delete(predicates)
     } catch (e) {
       LogUtil.error(() => "Failed to remove event from disk. code = " + e.code + ", message = " + e.message)
     }

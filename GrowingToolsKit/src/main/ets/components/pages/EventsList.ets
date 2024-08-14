@@ -147,7 +147,7 @@ export default struct EventsList {
   }
 
   async refreshData(loadMore: boolean = false): Promise<void> {
-    let pageSize = 20
+    let pageSize = 50
     if (loadMore) {
       let createAt = this.events[this.events.length - 1].createAt
       let events = await EventDatabase.getEventsByCount(pageSize, createAt)

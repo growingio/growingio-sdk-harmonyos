@@ -13,7 +13,7 @@ export default class EntryAbilityStage extends AbilityStage {
     return 'EntryAbilityStage'
   }
 
-  async startAnalytics() {
+  startAnalytics() {
     // 在初始化 SDK 之前，可配置通用属性
     // GrowingAnalytics.setGeneralProps({ 'defaultProps':'good' })
     // let count = 0
@@ -38,7 +38,7 @@ export default class EntryAbilityStage extends AbilityStage {
     config.requestOptions.readTimeout = 10
     config.autotrackAllPages = true
     config.plugins = [new GrowingToolsKit()]
-    await GrowingAnalytics.start(this.context, config)
+    GrowingAnalytics.start(this.context, config)
 
     // ---------------- CDP ----------------
 
@@ -55,7 +55,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.requestOptions.connectTimeout = 10
     // config.requestOptions.readTimeout = 10
     // config.autotrackAllPages = true
-    // await GrowingAnalytics.start(this.context, config)
+    // GrowingAnalytics.start(this.context, config)
 
     // ---------------- SaaS ----------------
 
@@ -69,6 +69,6 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.requestOptions.connectTimeout = 10
     // config.requestOptions.readTimeout = 10
     // config.autotrackAllPages = true
-    // await GrowingAnalytics.start(this.context, config)
+    // GrowingAnalytics.start(this.context, config)
   }
 }

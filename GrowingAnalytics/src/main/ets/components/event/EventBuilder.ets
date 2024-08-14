@@ -30,8 +30,8 @@ import Util from '../utils/Util'
 export default class EventBuilder {
   private static _eventSequenceId: number
 
-  static async initEventBuilder() {
-    EventBuilder._eventSequenceId = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
+  static initEventBuilder() {
+    EventBuilder._eventSequenceId = SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
   }
 
   static build<T extends Event>(event: T, context: GrowingContext): T {

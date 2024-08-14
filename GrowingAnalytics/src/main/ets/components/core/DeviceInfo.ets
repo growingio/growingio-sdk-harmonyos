@@ -40,7 +40,7 @@ export default class DeviceInfo {
   static networkState: string = ''
   static netConnection = connection.createNetConnection()
 
-  static async initDeviceInfo() {
+  static initDeviceInfo() {
     DeviceInfo.platform = 'HarmonyOS'
     DeviceInfo.platformVersion = deviceInfo.displayVersion
 
@@ -102,11 +102,11 @@ export default class DeviceInfo {
       }
     })
 
-    let deviceId = await SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
+    let deviceId = SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
     LogUtil.info(() => 'DeviceId from preferences is ' + deviceId)
     if (deviceId == '') {
       deviceId = util.generateRandomUUID(false)
-      await SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)
+      SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)
     }
     DeviceInfo.deviceId = deviceId
   }

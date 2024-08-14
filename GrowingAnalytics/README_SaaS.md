@@ -58,12 +58,12 @@ export default class MyAbilityStage extends AbilityStage {
     return 'MyAbilityStage'
   }
 
-  async startAnalytics() {
+  startAnalytics() {
     let config = new GrowingConfig().SaaS(
       'Your AccountId',
       'Your UrlScheme'
     )
-    await GrowingAnalytics.start(this.context, config)
+    GrowingAnalytics.start(this.context, config)
   }
 }
 ```

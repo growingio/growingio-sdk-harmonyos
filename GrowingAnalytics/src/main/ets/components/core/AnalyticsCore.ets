@@ -70,7 +70,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     this.context = context
   }
 
-  static async startCore(context: Context, config: GrowingConfig) {
+  static startCore(context: Context, config: GrowingConfig) {
     config.plugins.forEach(plugin => {
       Plugins.registerPlugin(plugin)
     })
@@ -82,14 +82,12 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
     AnalyticsCore.setLifecycleCallback(context)
-    await SharedPreferences.initWithContext(context)
-    await Promise.all<Promise<void>>([
-      AppInfo.initAppInfo(context),
-      DeviceInfo.initDeviceInfo(),
-      UserIdentifier.initUser(gContext),
-      EventBuilder.initEventBuilder(),
-      EventDatabase.initDatabase(context)
-    ])
+    SharedPreferences.initWithContext(context)
+    AppInfo.initAppInfo(context)
+    DeviceInfo.initDeviceInfo()
+    UserIdentifier.initUser(gContext)
+    EventBuilder.initEventBuilder()
+    EventDatabase.initDatabase(context)
     Session.refreshSession(gContext)
 
     let delay = config._dataUploadInterval
@@ -101,13 +99,13 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     }
     setInterval(runner, delay)
 
-    core._isInitializedSuccessfully = true
     emitter.emit({
       eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE
     })
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
       + 'GrowingIO version: ' + SDK_VERSION)
     Plugins.onSDKDidInitialize(config, SDK_VERSION)
+    core._isInitializedSuccessfully = true
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {

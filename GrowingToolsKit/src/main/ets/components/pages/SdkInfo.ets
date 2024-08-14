@@ -53,15 +53,16 @@ export default struct SdkInfo {
           ListItem() {
             Flex() {
               Text(info.key)
+                .padding({ left: 10, right: 15 })
               Blank()
               Text(info.value)
                 .flexBasis('auto')
+                .padding({ left: 15, right: 10 })
             }
-            .padding({ left: 10, right: 10 })
+            .padding({ top: 10, bottom: 10 })
             .width('100%')
           }
           .width('100%')
-          .height(45)
         })
       }
       .backgroundColor(GTKColor.primaryWhite)
