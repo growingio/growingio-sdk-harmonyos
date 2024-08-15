@@ -15,17 +15,26 @@
  * limitations under the License.
  */
 
-import { GrowingConfig } from '../interfaces/GrowingConfig'
+import EventSender, { EventSenderType } from '../event/EventSender'
+import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
 
 export default class GrowingContext {
   trackerId: string
   config: GrowingConfig
+  eventSender: EventSender[] = []
   static contexts: Map<string, GrowingContext> = new Map()
   static defaultContext: GrowingContext | undefined = undefined
 
   constructor(trackerId: string, config: GrowingConfig) {
     this.trackerId = trackerId
     this.config = config
+
+    if (config.mode == ConfigMode.SaaS) {
+      this.eventSender.push(new EventSender(EventSenderType.SaaS_PV))
+      this.eventSender.push(new EventSender(EventSenderType.SaaS_CSTM))
+    } else {
+      this.eventSender.push(new EventSender(EventSenderType.NewSaaS))
+    }
   }
 
   static hasSimilarContext(trackerId: string, configuration: GrowingConfig): boolean {

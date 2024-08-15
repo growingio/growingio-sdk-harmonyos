@@ -15,92 +15,89 @@
  * limitations under the License.
  */
 
-import http from '@ohos.net.http'
-
 import EventDatabase from './EventDatabase'
+import Network from '../core/Network'
 import GrowingContext from '../core/Context'
 import { REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
-import Util from '../utils/Util'
+import { EventType } from './Event'
+
+const URL_PATH_NEW_SAAS = '/v3/projects/accountId/collect'
+const URL_PATH_SAAS_PV = '/v3/accountId/harmonyos/pv'
+const URL_PATH_SAAS_CSTM = '/v3/accountId/harmonyos/cstm'
+
+export enum EventSenderType {
+  NewSaaS = 0,
+  SaaS_PV,
+  SaaS_CSTM
+}
 
 export default class EventSender {
-  static isUploading: boolean = false
+  urlPath: string
+  eventTypes: string[] | undefined = undefined
+  isUploading: boolean = false
+
+  constructor(type: EventSenderType) {
+    switch (type) {
+      case EventSenderType.NewSaaS:
+        this.urlPath = URL_PATH_NEW_SAAS
+        break
+      case EventSenderType.SaaS_PV:
+        this.urlPath = URL_PATH_SAAS_PV
+        this.eventTypes = [EventType.Visit, EventType.Page]
+        break
+      case EventSenderType.SaaS_CSTM:
+        this.urlPath = URL_PATH_SAAS_CSTM
+        this.eventTypes = [EventType.Custom, EventType.LoginUserAttributes]
+        break
+    }
+  }
 
   static async sendEvent(context: GrowingContext) {
+    for (let eventSender of context.eventSender) {
+      await eventSender.sendEvent(context)
+    }
+  }
+  
+  async sendEvent(context: GrowingContext) {
     if (!context.config.dataCollectionEnabled) {
       return
     }
 
-    if (EventSender.isUploading) {
+    if (this.isUploading) {
       return
     }
 
-    let events = await EventDatabase.getEventsByCount(REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE, context)
+    let events = await EventDatabase.getEventsByCount(
+      REQUEST_MAX_EVENT_COUNT,
+      REQUEST_MAX_EVENT_SIZE,
+      context,
+      this.eventTypes
+    )
     if (events.length == 0) {
       return
     }
 
-    EventSender.isUploading = true
+    this.isUploading = true
+    try {
+      let response = await Network.request(events, this.urlPath, context)
+      if (response.statusCode >= 200 && response.statusCode < 400) {
+        LogUtil.info(() => 'Request Success, Url = ' + response.request.url)
+        LogUtil.info(() => 'Send event = ' + response.request.content)
 
-    let serialize: string | ArrayBuffer = '[' + events.map(event => String(event.data)).join(',') + ']'
-    let curTime = Date.now()
-    let header: Record<string, string> = {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      "X-Timestamp": curTime + ''
-    }
-
-    if (context.config.compressEnabled) {
-      serialize = Util.compress(serialize as string)
-      header['X-Compress-Codec'] = '2'
-    }
-
-    if (context.config.encryptEnabled) {
-      serialize = Util.encrypt(serialize, curTime)
-      header['X-Crypt-Codec'] = '1'
-    }
-
-    let request = http.createHttp()
-    let url = EventSender.url(context, curTime)
-
-    request.request(url, {
-      method: http.RequestMethod.POST,
-      connectTimeout: context.config.requestOptions._connectTimeout,
-      readTimeout: context.config.requestOptions._readTimeout,
-      extraData: serialize,
-      header: header
-    }, (e, v) => {
-      if (v) {
-        if (v.responseCode >= 200 && v.responseCode < 400) {
-          LogUtil.info(() => 'Request Success, Url = ' + url)
-          LogUtil.info(() => 'Send event = ' + serialize)
-
-          EventDatabase.removeEvents(events).then(() => {
-            EventSender.isUploading = false
-            EventDatabase.countOfEvents(context).then(count => {
-              if (count > REQUEST_MAX_EVENT_COUNT) {
-                EventSender.sendEvent(context)
-              }
-            })
-          })
-        } else {
-          LogUtil.info(() => 'Request Failure, responseCode: ' + String(v.responseCode))
-          EventSender.isUploading = false
+        await EventDatabase.removeEvents(events)
+        this.isUploading = false
+        let count = await EventDatabase.countOfEvents(context, this.eventTypes)
+        if (count > REQUEST_MAX_EVENT_COUNT) {
+          this.sendEvent(context)
         }
       } else {
-        if (e) {
-          LogUtil.info(() => 'Request Failure, error: ' + JSON.stringify(e))
-        }
-        EventSender.isUploading = false
+        LogUtil.info(() => 'Request Failure, responseCode: ' + String(response.statusCode))
+        this.isUploading = false
       }
-      request.destroy()
-    })
-  }
-
-  static url(context: GrowingContext, time: number) {
-    let config = context.config
-    let serverHost = config.dataCollectionServerHost
-    let accountId = config.accountId
-    return serverHost + '/v3/projects/' + accountId + '/collect?stm=' + time
+    } catch (e) {
+      LogUtil.info(() => 'Request Failure, error: ' + JSON.stringify(e))
+      this.isUploading = false
+    }
   }
 }

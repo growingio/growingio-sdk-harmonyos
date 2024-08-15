@@ -39,8 +39,7 @@ import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
-import CustomEventSender from '../event/saas/SaaSCSTMEventSender'
-import PVEventSender from '../event/saas/SaaSPVEventSender'
+import Network from './Network'
 import FakePageEvent from '../event/saas/FakePageEvent'
 import { AttributesType, EMIT_EVENT_MAIN_TRACKER_INITIALIZE, JavaScriptProxyType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -88,16 +87,13 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     UserIdentifier.initUser(gContext)
     EventBuilder.initEventBuilder()
     EventDatabase.initDatabase(context)
+    Network.initNetwork(gContext)
     Session.refreshSession(gContext)
 
     let delay = config._dataUploadInterval
-    let runner = config.mode == ConfigMode.SaaS ? () => {
-      CustomEventSender.sendEvent(gContext)
-      PVEventSender.sendEvent(gContext)
-    } : () => {
+    setInterval(() => {
       EventSender.sendEvent(gContext)
-    }
-    setInterval(runner, delay)
+    }, delay)
 
     emitter.emit({
       eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE
@@ -121,13 +117,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     Session.refreshSession(context)
 
     let delay = config._dataUploadInterval
-    let runner = config.mode == ConfigMode.SaaS ? () => {
-      CustomEventSender.sendEvent(context)
-      PVEventSender.sendEvent(context)
-    } : () => {
+    setInterval(() => {
       EventSender.sendEvent(context)
-    }
-    setInterval(runner, delay)
+    }, delay)
 
     core._isInitializedSuccessfully = true
     return true
@@ -321,11 +313,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     await EventDatabase.writeEvent(pst)
     Plugins.onEventWroteToDisk(pst.uuid, pst.data, pst.eventType, eventScene)
     if (pst.eventType == EventType.Visit) {
-      if (context.config.mode == ConfigMode.SaaS) {
-        await PVEventSender.sendEvent(context)
-      } else {
-        await EventSender.sendEvent(context)
-      }
+      setTimeout(() => {
+        EventSender.sendEvent(context)
+      }, 1000)
     }
   }
 
