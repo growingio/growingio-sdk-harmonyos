@@ -20,7 +20,7 @@ export const ENTRY_MARGIN = 8
 export const SUB_WINDOW_NAME = 'GrowingToolsKit'
 export const NAV_PATH_PREFIX = '__GTK_'
 
-export const DATABASE_NAME = 'growing_tools_database'
+export const DATABASE_NAME = 'growing_tools_enc_database'
 
 export enum GTKColor {
   primaryTheme = '#FC5F3A',

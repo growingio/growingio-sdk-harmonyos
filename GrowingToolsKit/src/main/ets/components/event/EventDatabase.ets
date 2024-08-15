@@ -29,7 +29,8 @@ export default class EventDatabase {
   static async initDatabase(context: Context) {
     const config: relationalStore.StoreConfig = {
       name: DATABASE_NAME + '.db',
-      securityLevel: relationalStore.SecurityLevel.S1
+      securityLevel: relationalStore.SecurityLevel.S1,
+      encrypt: true
     }
 
     const SQL_CREATE_TABLE = 'CREATE TABLE IF NOT EXISTS '

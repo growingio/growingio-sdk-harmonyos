@@ -24,7 +24,7 @@ export const PREFERENCE_USER_IDENTIFIER = "growing_user_identifier"
 export const PREFERENCE_DEVICE_ID = "growing_device_id"
 export const PREFERENCE_EVENT_SEQUENCE_ID = "growing_event_sequence_id"
 
-export const DATABASE_NAME = 'growing_analytics_database'
+export const DATABASE_NAME = 'growing_analytics_enc_database'
 
 export const REQUEST_MAX_EVENT_COUNT = 500
 export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024

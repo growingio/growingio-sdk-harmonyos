@@ -31,7 +31,8 @@ export default class EventDatabase {
   static async initDatabase(context: Context) {
     const config: relationalStore.StoreConfig = {
       name: DATABASE_NAME + '.db',
-      securityLevel: relationalStore.SecurityLevel.S1
+      securityLevel: relationalStore.SecurityLevel.S1,
+      encrypt: true
     }
 
     const SQL_CREATE_TABLE = 'CREATE TABLE IF NOT EXISTS '
@@ -69,7 +70,7 @@ export default class EventDatabase {
 
     try {
       await EventDatabase.store.batchInsert(EventDatabase.tableName, EventDatabase.eventsCache)
-      LogUtil.info(() => 'Write events that were created before database initialize to disk = '
+      LogUtil.info(() => 'Write events that were created before database initialization to disk = '
         + JSON.stringify(
         JSON.parse('[' + EventDatabase.eventsCache.map((e: relationalStore.ValuesBucket) => {
           return e['DATA'] as string
