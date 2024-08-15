@@ -86,7 +86,7 @@ export default class MyAbilityStage extends AbilityStage {
 | dataCollectionEnabled         | boolean  | true   | 数据收集，当数据收集关闭时，SDK 将不会再产生事件和上报事件   |
 | idMappingEnabled              | boolean  | false  | 是否开启多用户身份上报                                       |
 | requestOptions.connectTimeout | number   | 30     | 事件请求尝试建立连接的最大等待时间，默认为 30 秒             |
-| requestOptions.readTimeout    | number   | 30     | 事件请求读取服务器响应的最大等待时间，默认为 30 秒           |
+| requestOptions.transferTimeout| number   | 30     | 事件请求允许传输数据的最大等待时间，默认为 30 秒           |
 | dataValidityPeriod            | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                    |
 | encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示           |
 | compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                            |
@@ -411,8 +411,8 @@ GrowingAnalytics.startSubTracker(trackerId, config)
 | dataUploadInterval            | 是                   |
 | dataCollectionEnabled         | 是                   |
 | idMappingEnabled              | 是                   |
-| requestOptions.connectTimeout | 是                   |
-| requestOptions.readTimeout    | 是                   |
+| requestOptions.connectTimeout | 否，以主实例为准     |
+| requestOptions.transferTimeout| 否，以主实例为准     |
 | dataValidityPeriod            | 否，以主实例为准     |
 | encryptEnabled                | 是                   |
 | compressEnabled               | 是                   |

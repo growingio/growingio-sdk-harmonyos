@@ -19,7 +19,7 @@ import { PluginsInterface } from '../plugins/Plugins'
 
 class RequestOptions {
   _connectTimeout: number = 30 * 1000
-  _readTimeout: number = 30 * 1000
+  _transferTimeout: number = 30 * 1000
 
   set connectTimeout(timeout: number) {
     timeout = Math.max(1, Math.min(timeout, 60)) * 1000
@@ -30,19 +30,19 @@ class RequestOptions {
     return this._connectTimeout / 1000
   }
 
-  set readTimeout(timeout: number) {
+  set transferTimeout(timeout: number) {
     timeout = Math.max(1, Math.min(timeout, 60)) * 1000
-    this._readTimeout = timeout
+    this._transferTimeout = timeout
   }
 
-  get readTimeout(): number {
-    return this._readTimeout / 1000
+  get transferTimeout(): number {
+    return this._transferTimeout / 1000
   }
 
   copy(): RequestOptions {
     let options = new RequestOptions()
     options._connectTimeout = this._connectTimeout
-    options._readTimeout = this._readTimeout
+    options._transferTimeout = this._transferTimeout
     return options
   }
 }

@@ -35,7 +35,7 @@ export default class EntryAbilityStage extends AbilityStage {
     config.dataUploadInterval = 15
     config.idMappingEnabled = true
     config.requestOptions.connectTimeout = 10
-    config.requestOptions.readTimeout = 10
+    config.requestOptions.transferTimeout = 10
     config.autotrackAllPages = true
     config.plugins = [new GrowingToolsKit()]
     GrowingAnalytics.start(this.context, config)
@@ -53,7 +53,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.dataUploadInterval = 15
     // config.idMappingEnabled = true
     // config.requestOptions.connectTimeout = 10
-    // config.requestOptions.readTimeout = 10
+    // config.requestOptions.transferTimeout = 10
     // config.autotrackAllPages = true
     // GrowingAnalytics.start(this.context, config)
 
@@ -67,7 +67,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.sessionInterval = 30
     // config.dataUploadInterval = 15
     // config.requestOptions.connectTimeout = 10
-    // config.requestOptions.readTimeout = 10
+    // config.requestOptions.transferTimeout = 10
     // config.autotrackAllPages = true
     // GrowingAnalytics.start(this.context, config)
   }

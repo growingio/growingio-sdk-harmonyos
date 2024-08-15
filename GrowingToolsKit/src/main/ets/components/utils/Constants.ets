@@ -48,7 +48,7 @@ export enum ConfigMode {
 
 export interface RequestOptions {
   _connectTimeout: number
-  _readTimeout: number
+  _transferTimeout: number
 }
 
 export interface GrowingTKConfig {
