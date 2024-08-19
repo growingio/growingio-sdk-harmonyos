@@ -411,8 +411,8 @@ GrowingAnalytics.startSubTracker(trackerId, config)
 | dataUploadInterval            | 是                   |
 | dataCollectionEnabled         | 是                   |
 | idMappingEnabled              | 是                   |
-| requestOptions.connectTimeout | 否，以主实例为准     |
-| requestOptions.transferTimeout| 否，以主实例为准     |
+| requestOptions.connectTimeout | 是                   |
+| requestOptions.transferTimeout| 是                   |
 | dataValidityPeriod            | 否，以主实例为准     |
 | encryptEnabled                | 是                   |
 | compressEnabled               | 是                   |

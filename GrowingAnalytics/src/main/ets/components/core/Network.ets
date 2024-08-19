@@ -24,23 +24,7 @@ export default class Network {
   static session: rcp.Session
 
   static initNetwork(context: GrowingContext) {
-    const requestConfig: rcp.Configuration = {
-      transfer: {
-        timeout: {
-          connectMs: context.config.requestOptions._connectTimeout,
-          transferMs: context.config.requestOptions._transferTimeout,
-        }
-      },
-      tracing: {
-        verbose: true,
-      },
-    }
-
-    const sessionConfig: rcp.SessionConfiguration = {
-      requestConfiguration: requestConfig,
-    }
-
-    Network.session = rcp.createSession(sessionConfig)
+    Network.session = rcp.createSession()
   }
 
   static request(events: EventPersistence[], urlPath: string, context: GrowingContext): Promise<rcp.Response> {
@@ -68,7 +52,22 @@ export default class Network {
       headers['X-Crypt-Codec'] = '1'
     }
 
-    return new rcp.Request(url, "POST", headers, serialize)
+    let request = new rcp.Request(url, "POST", headers, serialize)
+    const tracingConfig: rcp.TracingConfiguration = {
+      collectTimeInfo: true
+    }
+
+    const requestConfig: rcp.Configuration = {
+      transfer: {
+        timeout: {
+          connectMs: context.config.requestOptions._connectTimeout,
+          transferMs: context.config.requestOptions._transferTimeout,
+        }
+      },
+      tracing: tracingConfig,
+    }
+    request.configuration = requestConfig
+    return request
   }
 
   static generateUrl(time: number, urlPath: string, context: GrowingContext): string {
