@@ -39,6 +39,7 @@ export const routeName: string = "EntryIcon"
 struct EntryIcon {
   pageStack: NavPathStack = NavStackManager.pageStack
   @LocalStorageProp(PREFERENCE_ENTRY_POSITION) windowPosition: Position = { x: 0, y: 0 }
+  entrySideLength: number = 56
 
   _mainWindow: window.Window | undefined = undefined
   mainWindow(): window.Window {
@@ -59,13 +60,6 @@ struct EntryIcon {
     return this._window
   }
 
-  _entrySideLength: number = 0
-  entrySideLength(): number {
-    if (this._entrySideLength == 0) {
-      this._entrySideLength = px2vp(this.subWindow().getWindowProperties().windowRect.width)
-    }
-    return this._entrySideLength
-  }
 
   removePrefixForPathIfExist(path: string): string {
     if (path.startsWith(NAV_PATH_PREFIX)) {
@@ -94,14 +88,14 @@ struct EntryIcon {
         Button() {
           Image($r('app.media.growingtk_logo'))
             .backgroundColor(GTKColor.secondaryTheme)
-            .borderRadius(this.entrySideLength() / 2 - ENTRY_MARGIN)
-            .width(this.entrySideLength() - ENTRY_MARGIN * 2)
-            .height(this.entrySideLength() - ENTRY_MARGIN * 2)
+            .borderRadius(this.entrySideLength / 2 - ENTRY_MARGIN)
+            .width(this.entrySideLength - ENTRY_MARGIN * 2)
+            .height(this.entrySideLength - ENTRY_MARGIN * 2)
         }
         .backgroundColor(GTKColor.primaryTheme)
-        .borderRadius(this.entrySideLength() / 2)
-        .width(this.entrySideLength())
-        .height(this.entrySideLength())
+        .borderRadius(this.entrySideLength / 2)
+        .width(this.entrySideLength)
+        .height(this.entrySideLength)
         .onClick(event => {
           let subWindow = this.subWindow()
           if (canIUse('SystemCapability.Window.SessionManager')) {
