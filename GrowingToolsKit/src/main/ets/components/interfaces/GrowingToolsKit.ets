@@ -80,4 +80,8 @@ export class GrowingToolsKit {
     let e = new EventPersistence(uuid, data, eventType, eventScene)
     EventDatabase.writeEvent(e)
   }
+
+  onEventsRemoveFromDisk(events: string[]) {
+    EventDatabase.updateEventsDidSend(events)
+  }
 }

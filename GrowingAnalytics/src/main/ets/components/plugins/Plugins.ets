@@ -26,6 +26,7 @@ export interface PluginsInterface {
   onSessionChange(before: string, after: string): void
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage): void
   onEventWroteToDisk(uuid: string, data: string, eventType: string, eventScene: number): void
+  onEventsRemoveFromDisk(events: string[]): void
 }
 
 export default class Plugins {
@@ -78,6 +79,12 @@ export default class Plugins {
   static onEventWroteToDisk(uuid: string, data: string, eventType: string, eventScene: number) {
     Plugins.plugins.forEach(plugin => {
       plugin.onEventWroteToDisk(uuid, data, eventType, eventScene)
+    })
+  }
+
+  static onEventsRemoveFromDisk(events: string[]) {
+    Plugins.plugins.forEach(plugin => {
+      plugin.onEventsRemoveFromDisk(events)
     })
   }
 }

@@ -156,23 +156,20 @@ export default class EventDatabase {
     return count
   }
 
-  static async updateEventDidSend(event: EventPersistence) {
+  static async updateEventsDidSend(events: string[]) {
     if (!EventDatabase.store) {
       return
     }
 
     try {
-      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
-      predicates.equalTo('EVENT_UUID', event.uuid)
-      const valueBucket: relationalStore.ValuesBucket = {
-        'EVENT_UUID': event.uuid,
-        'DATA': event.data,
-        'TYPE': event.eventType,
-        'EVENT_SCENE': event.eventScene,
-        'CREATE_AT': event.createAt,
-        'IS_SEND': true
+      EventDatabase.store.beginTransaction()
+      for (let uuid of events) {
+        await EventDatabase.store.execute(
+          'UPDATE Events SET IS_SEND = 1 WHERE EVENT_UUID = ?',
+          [uuid]
+        )
       }
-      await EventDatabase.store.update(valueBucket, predicates)
+      EventDatabase.store.commit()
     } catch (e) {
       LogUtil.error(() => "Failed to update event from disk. code = " + e.code + ", message = " + e.message)
     }

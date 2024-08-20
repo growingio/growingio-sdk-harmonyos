@@ -21,6 +21,7 @@ import GrowingContext from '../core/Context'
 import { REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import { EventType } from './Event'
+import Plugins from '../plugins/Plugins'
 
 const URL_PATH_NEW_SAAS = '/v3/projects/accountId/collect'
 const URL_PATH_SAAS_PV = '/v3/accountId/harmonyos/pv'
@@ -85,7 +86,8 @@ export default class EventSender {
         LogUtil.info(() => 'Request Success, Url = ' + response.request.url)
         LogUtil.info(() => 'Send event = ' + response.request.content)
 
-        await EventDatabase.removeEvents(events)
+        await EventDatabase.removeEvents([...events])
+        Plugins.onEventsRemoveFromDisk(events.map(e => e.uuid))
         this.isUploading = false
         let count = await EventDatabase.countOfEvents(context, this.eventTypes)
         if (count > REQUEST_MAX_EVENT_COUNT) {
