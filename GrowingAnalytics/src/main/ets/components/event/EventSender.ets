@@ -82,6 +82,7 @@ export default class EventSender {
     this.isUploading = true
     try {
       let response = await Network.request(events, this.urlPath, context)
+      Plugins.onResponseReceive(response)
       if (response.statusCode >= 200 && response.statusCode < 400) {
         LogUtil.info(() => 'Request Success, Url = ' + response.request.url)
         LogUtil.info(() => 'Send event = ' + response.request.content)

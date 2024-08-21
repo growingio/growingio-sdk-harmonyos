@@ -17,6 +17,7 @@
 
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
+import { rcp } from '@kit.RemoteCommunicationKit'
 import { GrowingConfig } from '../interfaces/GrowingConfig'
 
 export interface PluginsInterface {
@@ -27,6 +28,7 @@ export interface PluginsInterface {
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage): void
   onEventWroteToDisk(uuid: string, data: string, eventType: string, eventScene: number): void
   onEventsRemoveFromDisk(events: string[]): void
+  onResponseReceive(response: rcp.Response): void
 }
 
 export default class Plugins {
@@ -85,6 +87,12 @@ export default class Plugins {
   static onEventsRemoveFromDisk(events: string[]) {
     Plugins.plugins.forEach(plugin => {
       plugin.onEventsRemoveFromDisk(events)
+    })
+  }
+
+  static onResponseReceive(response: rcp.Response) {
+    Plugins.plugins.forEach(plugin => {
+      plugin.onResponseReceive(response)
     })
   }
 }

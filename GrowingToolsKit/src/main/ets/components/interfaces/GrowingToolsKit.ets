@@ -17,11 +17,13 @@
 
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
+import { rcp } from '@kit.RemoteCommunicationKit'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import { routeName } from '../pages/EntryIcon'
 import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_POSITION,
   GrowingTKConfig } from '../utils/Constants'
+import RequestPersistence from '../network/RequestPersistence'
 
 export class GrowingToolsKit {
   static mainWindowStage: window.WindowStage | undefined = undefined
@@ -29,20 +31,22 @@ export class GrowingToolsKit {
   static version: string
   static sdkStartTime: number = 0
   static sdkEndTime: number = 0
+  static gioKitStartTime: number = 0
 
   private _position: Position = { x: 0, y: 0 }
 
   constructor(x: number = vp2px(ENTRY_PADDING), y: number = 400) {
     this._position.x = x
     this._position.y = y
+    GrowingToolsKit.gioKitStartTime = Date.now()
   }
 
   onSDKWillInitialize() {
-    GrowingToolsKit.sdkStartTime = new Date().getTime()
+    GrowingToolsKit.sdkStartTime = Date.now()
   }
 
   onSDKDidInitialize(config: GrowingTKConfig, version: string) {
-    GrowingToolsKit.sdkEndTime = new Date().getTime()
+    GrowingToolsKit.sdkEndTime = Date.now()
     GrowingToolsKit.config = config.copy()
     GrowingToolsKit.version = version
   }
@@ -83,5 +87,10 @@ export class GrowingToolsKit {
 
   onEventsRemoveFromDisk(events: string[]) {
     EventDatabase.updateEventsDidSend(events)
+  }
+
+  onResponseReceive(response: rcp.Response) {
+    let r = RequestPersistence.fromResponse(response)
+    EventDatabase.writeRequest(r)
   }
 }

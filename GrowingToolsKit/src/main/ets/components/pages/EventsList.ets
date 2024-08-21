@@ -18,6 +18,7 @@
 import { PullToRefresh } from '@ohos/pulltorefresh'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence, { EventScene } from '../event/EventPersistence'
+import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 import { GTKColor } from '../utils/Constants'
 
 @ComponentV2
@@ -105,13 +106,14 @@ export default struct EventsList {
                 }
               }
               .width('50%')
+              .padding({ top: 5, bottom: 5 })
               .alignItems(HorizontalAlign.Start)
               Text(event.isSend ? '已发送' : '未发送')
                 .fontColor(event.isSend ? GTKColor.primaryLabel : GTKColor.tertiaryTheme)
               Text(event.time())
             }
             .width('100%')
-            .height(45)
+            .constraintSize({minHeight: 45})
             .onClick(() => {
               this.isShowDetail.set(event.uuid, true)
             })
@@ -162,18 +164,22 @@ export default struct EventsList {
   recalculateData(): (EventPersistence | string)[] {
     let today = new Date().toISOString().split('T')[0]
     let yesterday = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    let currentDate: string = ''
+    let currentLabel: string = ''
     return this.events.flatMap(e => {
       let day = e.day()
-      let dateLabel = day
-      if (day == today) {
+      let dateLabel = ''
+      if (e.createAt > GrowingToolsKit.gioKitStartTime) {
+        dateLabel = '运行期间'
+      } else if (day == today) {
         dateLabel = '今日'
       } else if (day == yesterday) {
         dateLabel = '昨日'
+      } else {
+        dateLabel = day
       }
 
-      if (day != currentDate) {
-        currentDate = day
+      if (currentLabel != dateLabel) {
+        currentLabel = dateLabel
         return [dateLabel, e]
       }
       return [e]

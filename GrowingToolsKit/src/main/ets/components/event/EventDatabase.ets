@@ -20,11 +20,14 @@ import relationalStore from '@ohos.data.relationalStore'
 import EventPersistence from './EventPersistence'
 import { DATABASE_NAME } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
+import RequestPersistence from '../network/RequestPersistence'
 
 export default class EventDatabase {
   static store: relationalStore.RdbStore
   static eventsCache: relationalStore.ValuesBucket[] = []
-  static tableName: string = 'EVENTS'
+  static tableEvents: string = 'EVENTS'
+  static requestsCache: relationalStore.ValuesBucket[] = []
+  static tableRequests: string = 'REQUESTS'
 
   static async initDatabase(context: Context) {
     const config: relationalStore.StoreConfig = {
@@ -33,8 +36,8 @@ export default class EventDatabase {
       encrypt: true
     }
 
-    const SQL_CREATE_TABLE = 'CREATE TABLE IF NOT EXISTS '
-      + EventDatabase.tableName + '('
+    const SQL_CREATE_TABLE_EVENTS = 'CREATE TABLE IF NOT EXISTS '
+      + EventDatabase.tableEvents + '('
       + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
       + 'EVENT_UUID TEXT NOT NULL, '
       + 'DATA TEXT NOT NULL, '
@@ -43,12 +46,24 @@ export default class EventDatabase {
       + 'CREATE_AT INTEGER NOT NULL, '
       + 'IS_SEND INTEGER NOT NULL)'
 
+    const SQL_CREATE_TABLE_REQUESTS = 'CREATE TABLE IF NOT EXISTS '
+      + EventDatabase.tableRequests + '('
+      + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
+      + 'REQUEST_UUID TEXT NOT NULL, '
+      + 'INFO TEXT NOT NULL, '
+      + 'REQUEST TEXT DEFAULT NULL, '
+      + 'REQUEST_BLOB BLOB DEFAULT NULL, '
+      + 'RESPONSE_BLOB BLOB DEFAULT NULL, '
+      + 'CREATE_AT INTEGER NOT NULL)'
+
     let appContext = context.getApplicationContext()
 
     try {
       let store = await relationalStore.getRdbStore(appContext, config)
-      await store.executeSql(SQL_CREATE_TABLE)
+      await store.executeSql(SQL_CREATE_TABLE_EVENTS)
       await EventDatabase.cleanExpiredEventIfNeeded(store)
+      await store.executeSql(SQL_CREATE_TABLE_REQUESTS)
+      await EventDatabase.cleanExpiredRequestIfNeeded(store)
       EventDatabase.store = store
       EventDatabase.flushCacheIfNeeded()
     } catch (e) {
@@ -61,13 +76,15 @@ export default class EventDatabase {
       return
     }
 
-    if (EventDatabase.eventsCache.length == 0) {
-      return
-    }
-
     try {
-      await EventDatabase.store.batchInsert(EventDatabase.tableName, EventDatabase.eventsCache)
-      EventDatabase.eventsCache = []
+      if (EventDatabase.eventsCache.length > 0) {
+        await EventDatabase.store.batchInsert(EventDatabase.tableEvents, EventDatabase.eventsCache)
+        EventDatabase.eventsCache = []
+      }
+      if (EventDatabase.requestsCache.length > 0) {
+        await EventDatabase.store.batchInsert(EventDatabase.tableRequests, EventDatabase.requestsCache)
+        EventDatabase.requestsCache = []
+      }
     } catch (e) {
       LogUtil.error(() => "Failed to write cached events to disk. code = " + e.code + ", message = " + e.message)
     }
@@ -90,7 +107,7 @@ export default class EventDatabase {
 
     try {
       await EventDatabase.flushCacheIfNeeded()
-      await EventDatabase.store.insert(EventDatabase.tableName, valueBucket)
+      await EventDatabase.store.insert(EventDatabase.tableEvents, valueBucket)
     } catch (e) {
       LogUtil.error(() => "Failed to write event to disk. code = " + e.code + ", message = " + e.message)
     }
@@ -108,7 +125,7 @@ export default class EventDatabase {
     }
 
     try {
-      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableEvents)
       if (eventTypes && eventTypes.length > 0) {
         predicates.in('TYPE', eventTypes)
       }
@@ -142,7 +159,7 @@ export default class EventDatabase {
 
     let count = 0
     try {
-      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableEvents)
       if (eventTypes && eventTypes.length > 0) {
         predicates.in('TYPE', eventTypes)
       }
@@ -185,11 +202,118 @@ export default class EventDatabase {
     }
 
     try {
-      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableEvents)
       predicates.lessThanOrEqualTo('CREATE_AT', daysAgo)
       await store.delete(predicates)
     } catch (e) {
       LogUtil.error(() => "Failed to remove event from disk. code = " + e.code + ", message = " + e.message)
+    }
+  }
+
+  static async writeRequest(request: RequestPersistence) {
+    const valueBucket: relationalStore.ValuesBucket = {
+      'REQUEST_UUID': request.uuid,
+      'INFO': JSON.stringify(request.info),
+      'CREATE_AT': request.info.startTimestamp
+    }
+
+    if (typeof request.requestBody == 'string') {
+      valueBucket['REQUEST'] = request.requestBody as string
+    } else {
+      let blob = request.requestBody as ArrayBuffer
+      valueBucket['REQUEST_BLOB'] = new Uint8Array(blob)
+    }
+
+    if (request.responseBody) {
+      let blob = request.responseBody as ArrayBuffer
+      valueBucket['RESPONSE_BLOB'] = new Uint8Array(blob)
+    }
+
+    if (!EventDatabase.store) {
+      EventDatabase.requestsCache.push(valueBucket)
+      return
+    }
+
+    try {
+      await EventDatabase.flushCacheIfNeeded()
+      await EventDatabase.store.insert(EventDatabase.tableRequests, valueBucket)
+    } catch (e) {
+      LogUtil.error(() => "Failed to write request to disk. code = " + e.code + ", message = " + e.message)
+    }
+  }
+
+  static async getRequestsByCount(
+    count: number,
+    createAt?: number
+  ): Promise<RequestPersistence[]> {
+    let requests: RequestPersistence[] = []
+
+    if (!EventDatabase.store) {
+      return requests
+    }
+
+    try {
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableRequests)
+      if (createAt && createAt > 0) {
+        predicates.lessThan('CREATE_AT', createAt)
+      }
+      predicates.orderByDesc('CREATE_AT')
+      let r = await EventDatabase.store.query(predicates)
+      while (r.goToNextRow() && requests.length < count) {
+        const info = r.getString(r.getColumnIndex('INFO'))
+        const uuid = r.getString(r.getColumnIndex('REQUEST_UUID'))
+        const requestBody = r.getString(r.getColumnIndex('REQUEST'))
+        const requestBodyBlob = r.getBlob(r.getColumnIndex('REQUEST_BLOB'))
+        const responseBodyBlob = r.getBlob(r.getColumnIndex('RESPONSE_BLOB'))
+        let req = RequestPersistence.fromDatabase(
+          info,
+          uuid,
+          requestBody && requestBody.length > 0 ? requestBody : (requestBodyBlob.buffer as ArrayBuffer),
+          responseBodyBlob.buffer as ArrayBuffer
+        )
+        requests.push(req)
+      }
+      r.close()
+    } catch (e) {
+      LogUtil.error(() => "Failed to get request from disk. code = " + e.code + ", message = " + e.message)
+    }
+
+    return requests
+  }
+
+  static async countOfRequests(): Promise<number> {
+    if (!EventDatabase.store) {
+      return 0
+    }
+
+    let count = 0
+    try {
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableRequests)
+      let r = await EventDatabase.store.query(predicates)
+      count = r.rowCount
+      r.close()
+    } catch (e) {
+      LogUtil.error(() => "Failed to get request count from disk. code = " + e.code + ", message = " + e.message)
+    }
+
+    return count
+  }
+
+  static async removeAllRequests() {
+    EventDatabase.cleanExpiredRequestIfNeeded(EventDatabase.store, Date.now())
+  }
+
+  static async cleanExpiredRequestIfNeeded(store: relationalStore.RdbStore, daysAgo: number = Date.now() - 30 * 86400000) {
+    if (!store) {
+      return
+    }
+
+    try {
+      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableRequests)
+      predicates.lessThanOrEqualTo('CREATE_AT', daysAgo)
+      await store.delete(predicates)
+    } catch (e) {
+      LogUtil.error(() => "Failed to remove request from disk. code = " + e.code + ", message = " + e.message)
     }
   }
 }
