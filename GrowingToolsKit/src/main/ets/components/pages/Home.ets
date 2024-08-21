@@ -18,7 +18,8 @@
 import window from '@ohos.window'
 import ModuleButton from '../views/ModuleButton'
 import NavStackManager from '../core/NavStackManager'
-import { NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
+import { GTKColor, NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
+import { HAR_VERSION } from '../../../../../BuildProfile'
 
 @Component
 export default struct Home {
@@ -44,13 +45,13 @@ export default struct Home {
                 this.pageStack.pushDestination(destination)
               }
             })
-          ModuleButton({ name: '实时事件', image: 'app.media.growingtk_realtime' })
-            .onTouch(event => {
-              if (event.type ==  TouchType.Up) {
-                let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Realtime', '')
-                this.pageStack.pushDestination(destination)
-              }
-            })
+          // ModuleButton({ name: '实时事件', image: 'app.media.growingtk_realtime' })
+          //   .onTouch(event => {
+          //     if (event.type ==  TouchType.Up) {
+          //       let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Realtime', '')
+          //       this.pageStack.pushDestination(destination)
+          //     }
+          //   })
           ModuleButton({ name: '网络记录', image: 'app.media.growingtk_netFlow' })
             .onTouch(event => {
               if (event.type ==  TouchType.Up) {
@@ -59,6 +60,14 @@ export default struct Home {
               }
             })
         }
+        Row() {
+          Text('当前版本：' + HAR_VERSION)
+        }
+        .margin({top: 50})
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor(GTKColor.tertiaryBlack)
+        .width('100%')
+        .height(40)
       }
     }
     .onBackPressed(() => {

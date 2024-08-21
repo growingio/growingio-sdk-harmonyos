@@ -70,9 +70,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   static startCore(context: Context, config: GrowingConfig) {
-    config.plugins.forEach(plugin => {
-      Plugins.registerPlugin(plugin)
-    })
+    Plugins.registerPlugins(config.plugins)
     Plugins.onSDKWillInitialize()
     GrowingContext.setDefaultContext(config)
     let gContext = GrowingContext.getDefaultContext() as GrowingContext

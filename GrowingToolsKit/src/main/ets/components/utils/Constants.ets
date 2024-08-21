@@ -29,7 +29,7 @@ export enum GTKColor {
   blackAlpha = '#00000000',
   primaryBlack = '#333333',
   secondaryBlack = '#666666',
-  tertiaryBlack = '#999999',
+  tertiaryBlack = '#DDDDDD',
   primaryWhite = '#FFFFFF',
   secondaryWhite = '#FFF2F2F7',
   primaryLabel = '#FF000000',

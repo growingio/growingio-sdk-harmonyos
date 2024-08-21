@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { rcp } from '@kit.RemoteCommunicationKit'
+import rcp from '@hms.collaboration.rcp'
 import EventPersistence from '../event/EventPersistence'
 import GrowingContext from './Context'
 import Util from '../utils/Util'

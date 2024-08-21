@@ -62,6 +62,7 @@ export default struct NetFlow {
         })
       }
     }
+    .title('网络记录')
   }
 
   @Builder

@@ -60,6 +60,7 @@ export default struct EventsList {
         })
       }
     }
+    .title('事件库')
   }
 
   @Builder

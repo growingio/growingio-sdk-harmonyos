@@ -68,6 +68,7 @@ export default struct SdkInfo {
       .backgroundColor(GTKColor.primaryWhite)
       .divider({ strokeWidth: 0.5, startMargin: 10, color: GTKColor.tertiaryBlack })
     }
+    .title('SDK信息')
   }
 
   refreshData() {
