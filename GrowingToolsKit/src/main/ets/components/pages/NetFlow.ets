@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { PullToRefresh } from '@ohos/pulltorefresh'
+import { PullToRefresh } from '../views/PullToRefresh'
 import EventDatabase from '../event/EventDatabase'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 import RequestPersistence from '../network/RequestPersistence'

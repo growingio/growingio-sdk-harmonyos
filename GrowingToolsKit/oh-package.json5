@@ -6,7 +6,6 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@ohos/pulltorefresh": "2.1.0-rc.0",
     "snappyjs": "^0.7.0"
   }
 }
