@@ -19,7 +19,6 @@ export {
   GrowingAnalytics,
   GrowingAttrType,
   GrowingAnalyticsInterface,
-  GrowingPluginsInterface
 } from './src/main/ets/components/interfaces/GrowingAnalytics'
 export { GrowingConfig } from './src/main/ets/components/interfaces/GrowingConfig'
 
