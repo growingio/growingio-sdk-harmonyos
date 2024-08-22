@@ -16,10 +16,11 @@
  */
 
 import relationalStore from '@ohos.data.relationalStore'
+import emitter from '@ohos.events.emitter'
 
 import EventPersistence from './EventPersistence'
 import GrowingContext from '../core/Context'
-import { DATABASE_NAME } from '../utils/Constants'
+import { DATABASE_NAME, EMIT_EVENT_DATABASE_FLUSH } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import Util from '../utils/Util'
 
@@ -76,6 +77,9 @@ export default class EventDatabase {
           return e['DATA'] as string
         }).join(',') + ']'), null, 4))
       EventDatabase.eventsCache = []
+      emitter.emit({
+        eventId: EMIT_EVENT_DATABASE_FLUSH
+      })
     } catch (e) {
       LogUtil.error(() => "Failed to write cached events to disk. code = " + e.code + ", message = " + e.message)
     }

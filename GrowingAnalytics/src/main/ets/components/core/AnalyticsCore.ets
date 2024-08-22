@@ -311,9 +311,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     await EventDatabase.writeEvent(pst)
     Plugins.onEventWroteToDisk(pst.uuid, pst.data, pst.eventType, eventScene)
     if (pst.eventType == EventType.Visit) {
-      setTimeout(() => {
-        EventSender.sendEvent(context)
-      }, 1000)
+      EventSender.sendEvent(context)
     }
   }
 

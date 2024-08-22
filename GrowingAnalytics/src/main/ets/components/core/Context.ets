@@ -30,10 +30,10 @@ export default class GrowingContext {
     this.config = config
 
     if (config.mode == ConfigMode.SaaS) {
-      this.eventSender.push(new EventSender(EventSenderType.SaaS_PV))
-      this.eventSender.push(new EventSender(EventSenderType.SaaS_CSTM))
+      this.eventSender.push(new EventSender(EventSenderType.SaaS_PV, this.trackerId))
+      this.eventSender.push(new EventSender(EventSenderType.SaaS_CSTM, this.trackerId))
     } else {
-      this.eventSender.push(new EventSender(EventSenderType.NewSaaS))
+      this.eventSender.push(new EventSender(EventSenderType.NewSaaS, this.trackerId))
     }
   }
 

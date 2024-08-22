@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
+import emitter from '@ohos.events.emitter'
 import EventDatabase from './EventDatabase'
 import Network from '../core/Network'
 import GrowingContext from '../core/Context'
-import { REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
+import { EMIT_EVENT_DATABASE_FLUSH, REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import { EventType } from './Event'
 import Plugins from '../plugins/Plugins'
@@ -35,17 +36,27 @@ export enum EventSenderType {
 
 export default class EventSender {
   urlPath: string
+  trackerId: string
   eventTypes: string[] | undefined = undefined
   isUploading: boolean = false
 
-  constructor(type: EventSenderType) {
+  constructor(type: EventSenderType, trackerId: string) {
+    this.trackerId = trackerId
     switch (type) {
       case EventSenderType.NewSaaS:
         this.urlPath = URL_PATH_NEW_SAAS
+        // 保证首个VISIT及时发送
+        emitter.once({eventId: EMIT_EVENT_DATABASE_FLUSH}, () => {
+          this.sendEvent()
+        })
         break
       case EventSenderType.SaaS_PV:
         this.urlPath = URL_PATH_SAAS_PV
         this.eventTypes = [EventType.Visit, EventType.Page]
+        // 保证首个VISIT及时发送
+        emitter.once({eventId: EMIT_EVENT_DATABASE_FLUSH}, () => {
+          this.sendEvent()
+        })
         break
       case EventSenderType.SaaS_CSTM:
         this.urlPath = URL_PATH_SAAS_CSTM
@@ -60,7 +71,8 @@ export default class EventSender {
     }
   }
   
-  async sendEvent(context: GrowingContext) {
+  async sendEvent(gContext?: GrowingContext) {
+    let context = gContext ?? GrowingContext.getContext(this.trackerId) as GrowingContext
     if (!context.config.dataCollectionEnabled) {
       return
     }
@@ -68,6 +80,7 @@ export default class EventSender {
     if (this.isUploading) {
       return
     }
+    this.isUploading = true
 
     let events = await EventDatabase.getEventsByCount(
       REQUEST_MAX_EVENT_COUNT,
@@ -76,10 +89,10 @@ export default class EventSender {
       this.eventTypes
     )
     if (events.length == 0) {
+      this.isUploading = false
       return
     }
 
-    this.isUploading = true
     try {
       let response = await Network.request(events, this.urlPath, context)
       Plugins.onResponseReceive(response)
