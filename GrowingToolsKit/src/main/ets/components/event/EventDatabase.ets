@@ -193,7 +193,7 @@ export default class EventDatabase {
   }
 
   static async removeAllEvents() {
-    EventDatabase.cleanExpiredEventIfNeeded(EventDatabase.store, Date.now())
+    await EventDatabase.cleanExpiredEventIfNeeded(EventDatabase.store, Date.now())
   }
 
   static async cleanExpiredEventIfNeeded(store: relationalStore.RdbStore, daysAgo: number = Date.now() - 30 * 86400000) {
@@ -300,7 +300,7 @@ export default class EventDatabase {
   }
 
   static async removeAllRequests() {
-    EventDatabase.cleanExpiredRequestIfNeeded(EventDatabase.store, Date.now())
+    await EventDatabase.cleanExpiredRequestIfNeeded(EventDatabase.store, Date.now())
   }
 
   static async cleanExpiredRequestIfNeeded(store: relationalStore.RdbStore, daysAgo: number = Date.now() - 30 * 86400000) {

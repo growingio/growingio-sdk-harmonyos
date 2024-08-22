@@ -19,6 +19,7 @@ import { PullToRefresh } from '@ohos/pulltorefresh'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence, { EventScene } from '../event/EventPersistence'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
+import { NavTitle } from '../views/Common'
 import { GTKColor } from '../utils/Constants'
 
 @ComponentV2
@@ -60,7 +61,21 @@ export default struct EventsList {
         })
       }
     }
-    .title('事件库')
+    .title(this.getNavTitle)
+  }
+
+  @Builder
+  private getNavTitle() {
+    NavTitle({
+      title: '事件库',
+      isPopup: true,
+      message: '是否清空事件库',
+      confirm: '删除全部',
+      confirmHandler: async () => {
+        await EventDatabase.removeAllEvents()
+        await this.refreshData()
+      }
+    })
   }
 
   @Builder

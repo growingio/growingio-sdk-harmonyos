@@ -19,6 +19,7 @@ import { PullToRefresh } from '@ohos/pulltorefresh'
 import EventDatabase from '../event/EventDatabase'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 import RequestPersistence from '../network/RequestPersistence'
+import { NavTitle } from '../views/Common'
 import { GTKColor } from '../utils/Constants'
 import Util from '../utils/Util'
 
@@ -62,7 +63,21 @@ export default struct NetFlow {
         })
       }
     }
-    .title('网络记录')
+    .title(this.getNavTitle)
+  }
+
+  @Builder
+  private getNavTitle() {
+    NavTitle({
+      title: '网络记录',
+      isPopup: true,
+      message: '是否清空网络记录',
+      confirm: '删除全部',
+      confirmHandler: async () => {
+        await EventDatabase.removeAllRequests()
+        await this.refreshData()
+      }
+    })
   }
 
   @Builder

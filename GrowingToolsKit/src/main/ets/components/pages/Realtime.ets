@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-@Component
+@ComponentV2
 export default struct Realtime {
   build() {
     NavDestination() {
