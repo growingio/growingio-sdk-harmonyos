@@ -172,6 +172,16 @@ export default class Util {
       }
 
       return JSON.stringify(vst)
+
+    } else if (eventType == 'APP_CLOSED') {
+      let cls = {
+        ...basic,
+        t: 'cls',
+        p: event.path,
+      }
+
+      return JSON.stringify(cls)
+
     }
     return ''
   }

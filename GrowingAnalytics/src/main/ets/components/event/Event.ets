@@ -75,6 +75,7 @@ export enum EventType {
   Page = 'PAGE',
   ViewClick = 'VIEW_CLICK',
   ViewChange = 'VIEW_CHANGE',
+  AppClosed = 'APP_CLOSED',
 }
 
 export enum EventScene {

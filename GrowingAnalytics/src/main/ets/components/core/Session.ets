@@ -20,6 +20,7 @@ import emitter from '@ohos.events.emitter'
 
 import AnalyticsCore from './AnalyticsCore'
 import GrowingContext from './Context'
+import AppClosedEvent from '../event/AppClosedEvent'
 import VisitEvent from '../event/VisitEvent'
 import FakePageEvent from '../event/saas/FakePageEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
@@ -76,6 +77,9 @@ export default class Session {
     Session.sessionState = SessionState.Background
     Session.sessions.forEach(session => {
       session.latestOnBackgroundTime = Date.now()
+
+      let context = GrowingContext.getContext(session.trackerId)!
+      Session.generateAppClosed(context)
     })
   }
 
@@ -118,5 +122,13 @@ export default class Session {
     if (context.config.mode == ConfigMode.SaaS) {
       FakePageEvent.sendFakePageIfNeeded(context)
     }
+  }
+
+  static generateAppClosed(context: GrowingContext) {
+    if (!context.config.dataCollectionEnabled) {
+      return
+    }
+    let e = AppClosedEvent.create(context)
+    AnalyticsCore.writeEventToDisk(e, context)
   }
 }

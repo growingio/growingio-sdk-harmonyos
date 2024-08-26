@@ -52,7 +52,7 @@ export default class EventSender {
         break
       case EventSenderType.SaaS_PV:
         this.urlPath = URL_PATH_SAAS_PV
-        this.eventTypes = [EventType.Visit, EventType.Page]
+        this.eventTypes = [EventType.Visit, EventType.Page, EventType.AppClosed]
         // 保证首个VISIT及时发送
         emitter.once({eventId: EMIT_EVENT_DATABASE_FLUSH}, () => {
           this.sendEvent()
