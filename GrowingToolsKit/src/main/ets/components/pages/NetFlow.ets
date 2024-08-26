@@ -95,7 +95,7 @@ export default struct NetFlow {
             .width('100%')
             .height(40)
           } else {
-            Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceAround }) {
+            Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceBetween }) {
               Column() {
                 Text(request.info.statusCode + '')
                   .fontSize(16)
@@ -106,10 +106,10 @@ export default struct NetFlow {
                   .fontSize(12)
                   .fontColor(GTKColor.secondaryBlack)
                   .textAlign(TextAlign.Center)
-                  .constraintSize({maxWidth: 70})
                   .minFontSize(10)
                   .maxLines(2)
               }
+              .width('20%')
               Column() {
                 Text(request.info.url)
                   .fontSize(12)
@@ -144,6 +144,7 @@ export default struct NetFlow {
                 }
               }
               .alignItems(HorizontalAlign.Start)
+              .width('75%')
             }
             .padding({ top: 5, left: 5, bottom: 5, right: 5 })
             .margin({ top: 2, left: 8, bottom: 2, right: 8 })

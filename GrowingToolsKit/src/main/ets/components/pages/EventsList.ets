@@ -93,8 +93,10 @@ export default struct EventsList {
             .width('100%')
             .height(40)
           } else {
-            Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceAround }) {
+            Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceBetween }) {
               Text(event.sequenceId() ?? '-')
+                .textAlign(TextAlign.Center)
+                .width('10%')
               Column() {
                 Row() {
                   Text(event.eventType)
@@ -128,8 +130,8 @@ export default struct EventsList {
                 .fontColor(event.isSend ? GTKColor.primaryLabel : GTKColor.tertiaryTheme)
               Text(event.time())
             }
-            .width('100%')
             .constraintSize({minHeight: 45})
+            .margin({left: 8, right: 8 })
             .onClick(() => {
               this.isShowDetail.set(event.uuid, true)
             })
