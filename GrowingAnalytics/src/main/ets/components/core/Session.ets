@@ -111,11 +111,11 @@ export default class Session {
   }
 
   static generateVisit(context: GrowingContext) {
-    LogUtil.info(() => 'Generate Visit for tracker = ' + context.trackerId)
     if (!context.config.dataCollectionEnabled) {
-      LogUtil.info(() => 'Failed to Generate Visit, dataCollectionEnabled is false')
+      LogUtil.info(() => 'Failed to generate visit, dataCollectionEnabled is false')
       return
     }
+    LogUtil.info(() => 'Generate visit for tracker = ' + context.trackerId)
     let e = VisitEvent.create(context)
     AnalyticsCore.writeEventToDisk(e, context)
 

@@ -22,11 +22,18 @@ import { EventScene, EventType } from '../event/Event'
 import ViewElementEvent from '../event/ViewElementEvent'
 import { AttributesType, ValueType } from '../utils/Constants'
 import { ConfigMode } from '../interfaces/GrowingConfig'
+import { LogUtil } from '../utils/LogUtil'
 
 export default class Flutter {
   constructor() {}
 
   static trackFlutterPage(argument: Map<string, Object>) {
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (!context.config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to dispatch flutter event, dataCollectionEnabled is false')
+      return
+    }
+
     let path = argument.get('path') as string
     if (path == null || path == undefined || path.length == 0) {
       return
@@ -34,7 +41,6 @@ export default class Flutter {
     let title = argument.get('title') as string
     let map = argument.get('attributes') as Map<string, ValueType>
     let attributes = Flutter.attributesFromMap(map)
-    let context = GrowingContext.getDefaultContext() as GrowingContext
     // 可能会出现在后台触发PAGE的场景(类似ANLSPI-20126)，走AutotrackPage内部缓存机制进行规避
     // 与iOS不同在于：
     // iOS上在特定条件下(Flutter应用在后台进行跳转)必定复现且该事件的前后台状态必定处于后台；HarmonyOS NEXT则是在同等条件下偶现
@@ -46,6 +52,11 @@ export default class Flutter {
 
   static trackFlutterClickEvent(argument: Map<string, Object>) {
     let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (!context.config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to dispatch flutter event, dataCollectionEnabled is false')
+      return
+    }
+
     let mode = context.config.mode
 
     let eventType = argument.get('eventType') as string

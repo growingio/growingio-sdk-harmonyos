@@ -50,6 +50,7 @@ export default class EventTimer {
     context: GrowingContext
   ): string {
     if (!context.config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to start timer event with name ' + eventName + ', dataCollectionEnabled is false')
       return ''
     }
 
@@ -90,6 +91,11 @@ export default class EventTimer {
     context: GrowingContext,
     sendTo?: string[]
   ) {
+    if (!context.config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to end timer event with timerId ' + timerId + ', dataCollectionEnabled is false')
+      return
+    }
+
     let timer: EventTimer | undefined = EventTimer.timers.get(timerId)
     if (!timer) {
       return

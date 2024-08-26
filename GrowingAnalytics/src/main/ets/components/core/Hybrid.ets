@@ -79,6 +79,11 @@ export default class Hybrid {
     try {
       LogUtil.info(() => "[Hybrid] dispatchEvent: " + JSON.stringify(JSON.parse(eventString), null, 4))
 
+      if (!this.context.config.dataCollectionEnabled) {
+        LogUtil.info(() => 'Failed to dispatch hybrid event, dataCollectionEnabled is false')
+        return
+      }
+
       let event: Record<string, Object> = JSON.parse(eventString)
       let eventType: string = event.eventType as string
       if (eventType == EventType.Custom) {

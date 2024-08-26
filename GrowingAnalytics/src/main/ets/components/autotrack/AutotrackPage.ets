@@ -85,6 +85,9 @@ export default class AutotrackPage {
     }
     if (AnalyticsCore.tracker(pageInfo.trackerId).isInitializedSuccessfully()
       && Session.sessionState === SessionState.Foreground) {
+      if (!context.config.dataCollectionEnabled) {
+        return
+      }
       let e = PageEvent.create(
         pageInfo.path,
         pageInfo.title,

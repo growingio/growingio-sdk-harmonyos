@@ -224,6 +224,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   setLoginUserAttributes(attributes: AttributesType) {
+    if (!this.context.config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to set login user attributes, dataCollectionEnabled is false')
+      return
+    }
+
     let e = LoginUserAttributesEvent.create(Util.cloneObject(attributes), this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info(() => 'Set loginUserAttributes: ' + JSON.stringify(attributes))
@@ -238,7 +243,12 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     attributes: AttributesType = {},
     sendTo?: string[]
   ) {
-    if (this.context.config.mode == ConfigMode.SaaS) {
+    let config = this.context.config
+    if (!config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to track event with name ' + eventName + ', dataCollectionEnabled is false')
+      return
+    }
+    if (config.mode == ConfigMode.SaaS) {
       FakePageEvent.sendFakePageIfNeeded(this.context)
     }
     let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
@@ -261,12 +271,16 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     trackers = Array.from(new Set(trackers))
     trackers.forEach(trackerId => {
       let tracker = AnalyticsCore.tracker(trackerId)
-      if (tracker.isInitializedSuccessfully()) {
-        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), (tracker as AnalyticsCore).context)
-        AnalyticsCore.writeEventToDisk(e, (tracker as AnalyticsCore).context)
-        LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
-          + ', attributes: ' + JSON.stringify(attributes))
+      if (!tracker.isInitializedSuccessfully()) {
+        return
       }
+      if (!(tracker as AnalyticsCore).context.config.dataCollectionEnabled) {
+        return
+      }
+      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), (tracker as AnalyticsCore).context)
+      AnalyticsCore.writeEventToDisk(e, (tracker as AnalyticsCore).context)
+      LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
+        + ', attributes: ' + JSON.stringify(attributes))
     })
   }
 
@@ -304,6 +318,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     eventScene: EventScene = EventScene.Native
   ) {
     if (!context.config.dataCollectionEnabled) {
+      // 所有event在生成之前都应该做此判断，此处实现是防呆设计
       return
     }
 
