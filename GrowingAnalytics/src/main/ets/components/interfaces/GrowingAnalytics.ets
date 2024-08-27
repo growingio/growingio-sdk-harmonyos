@@ -47,34 +47,34 @@ export interface GrowingAnalyticsInterface {
 export class GrowingAnalytics {
   static async start(context: Context, configuration: GrowingConfig): Promise<void> {
     if (GrowingAnalytics.isInitializedSuccessfully()) {
-      LogUtil.warn(() => '[GrowingAnalytics] Do not initialize GrowingAnalytics repeatedly')
+      LogUtil.warn(() => 'Do not initialize GrowingAnalytics repeatedly')
       return
     }
     if (!context.stageMode) {
-      LogUtil.error(() => '[GrowingAnalytics] Only support stageMode')
+      LogUtil.error(() => 'Only support stageMode')
       return
     }
     let config = configuration.copy()
-    await AnalyticsCore.startCore(context, config)
+    AnalyticsCore.startCore(context, config)
   }
 
   static startSubTracker(trackerId: string, configuration: GrowingConfig) {
     if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      LogUtil.error(() => '[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
+      LogUtil.error(() => 'Must call GrowingAnalytics.start(context, configuration) first')
       return
     }
 
     let config = configuration.copy()
     let success = AnalyticsCore.startSubTracker(trackerId, config)
     if (!success) {
-      LogUtil.error(() => '[GrowingAnalytics] Do not start tracker with same trackerId/dataSourceId')
+      LogUtil.error(() => 'Do not start tracker with the same trackerId or the same accountId and dataSourceId')
     }
   }
 
   static tracker(trackerId: string): GrowingAnalyticsInterface {
     let tracker = AnalyticsCore.tracker(trackerId)
     if (!tracker.isInitializedSuccessfully()) {
-      LogUtil.error(() => '[GrowingAnalytics] Please start a subTracker with the trackerId ' + trackerId + ' first')
+      LogUtil.error(() => 'Please start a subTracker with the trackerId ' + trackerId + ' first')
     }
     return tracker
   }
@@ -179,7 +179,7 @@ export class GrowingAnalytics {
 
   static trackFlutterPage(argument: Map<string, Object>) {
     if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      LogUtil.error(() => '[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
+      LogUtil.error(() => 'Must call GrowingAnalytics.start(context, configuration) first')
       return
     }
     if (argument == null || argument == undefined) {
@@ -190,7 +190,7 @@ export class GrowingAnalytics {
 
   static trackFlutterClickEvent(argument: Map<string, Object>) {
     if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      LogUtil.error(() => '[GrowingAnalytics] Must call GrowingAnalytics.start(context, configuration) first')
+      LogUtil.error(() => 'Must call GrowingAnalytics.start(context, configuration) first')
       return
     }
     if (argument == null || argument == undefined) {
