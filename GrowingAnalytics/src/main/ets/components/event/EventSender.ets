@@ -72,16 +72,12 @@ export default class EventSender {
   }
   
   async sendEvent(gContext?: GrowingContext) {
-    let context = gContext ?? GrowingContext.getContext(this.trackerId) as GrowingContext
-    if (!context.config.dataCollectionEnabled) {
-      return
-    }
-
     if (this.isUploading) {
       return
     }
     this.isUploading = true
 
+    let context = gContext ?? GrowingContext.getContext(this.trackerId) as GrowingContext
     let events = await EventDatabase.getEventsByCount(
       REQUEST_MAX_EVENT_COUNT,
       REQUEST_MAX_EVENT_SIZE,
