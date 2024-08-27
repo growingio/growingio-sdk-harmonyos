@@ -26,6 +26,8 @@ export const PREFERENCE_EVENT_SEQUENCE_ID = "growing_event_sequence_id"
 
 export const DATABASE_NAME = 'growing_analytics_enc_database'
 
+export const MAIN_TRACKER_ID = '__GrowingAnalyticsCore'
+
 export const REQUEST_MAX_EVENT_COUNT = 500
 export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
 

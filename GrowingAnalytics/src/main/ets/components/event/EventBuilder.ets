@@ -23,15 +23,17 @@ import GrowingContext from '../core/Context'
 import GrowingGeneralProps from '../core/GeneralProps'
 import Session, { SessionState } from '../core/Session'
 import UserIdentifier from '../core/UserIdentifier'
-import { PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
+import { MAIN_TRACKER_ID, PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 
 export default class EventBuilder {
-  private static _eventSequenceId: number
+  private static _eventSequenceId: Record<string, number> = {}
 
   static initEventBuilder() {
-    EventBuilder._eventSequenceId = SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
+    let trackerId = MAIN_TRACKER_ID
+    let sequenceId = SharedPreferences.getValue(EventBuilder.getEventSequenceIdPersistKey(trackerId), 0) as number
+    EventBuilder._eventSequenceId[trackerId] = sequenceId
   }
 
   static build<T extends Event>(event: T, context: GrowingContext): T {
@@ -80,13 +82,28 @@ export default class EventBuilder {
     }
     event.attributes = Util.serializableAttributes(attributes)
 
-    EventBuilder.updateEventSequenceId()
-    event.eventSequenceId = EventBuilder._eventSequenceId
+    event.eventSequenceId = EventBuilder.updateEventSequenceId(context)
     return event
   }
 
-  private static updateEventSequenceId() {
-    EventBuilder._eventSequenceId = EventBuilder._eventSequenceId + 1
-    SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, EventBuilder._eventSequenceId)
+  private static updateEventSequenceId(context: GrowingContext): number {
+    let trackerId = context.trackerId
+    let sequenceId = EventBuilder.getEventSequenceId(trackerId) + 1
+    EventBuilder._eventSequenceId[trackerId] = sequenceId
+    SharedPreferences.put(EventBuilder.getEventSequenceIdPersistKey(trackerId), sequenceId)
+    return sequenceId
+  }
+
+  static getEventSequenceId(trackerId: string): number {
+    let sequenceId = EventBuilder._eventSequenceId[trackerId]
+    if (!sequenceId) {
+      sequenceId = SharedPreferences.getValue(EventBuilder.getEventSequenceIdPersistKey(trackerId), 0) as number
+      EventBuilder._eventSequenceId[trackerId] = sequenceId
+    }
+    return sequenceId
+  }
+
+  static getEventSequenceIdPersistKey(trackerId: string): string {
+    return trackerId == MAIN_TRACKER_ID ? PREFERENCE_EVENT_SEQUENCE_ID : PREFERENCE_EVENT_SEQUENCE_ID + '_' + trackerId
   }
 }
