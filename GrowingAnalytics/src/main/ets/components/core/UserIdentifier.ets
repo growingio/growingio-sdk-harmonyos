@@ -60,8 +60,9 @@ export default class UserIdentifier {
   static initMultiUser(context: GrowingContext) {
     let userInfo = UserIdentifier.userInfo
 
-    let userId = (userInfo[PREFERENCE_USER_ID + '_' + context.trackerId] as string | undefined) ?? ''
-    let userKey = (userInfo[PREFERENCE_USER_KEY + '_' + context.trackerId] as string | undefined) ?? ''
+    let suffix = '_' + context.config.accountId + '_' + context.config.dataSourceId
+    let userId = (userInfo[PREFERENCE_USER_ID + suffix] as string | undefined) ?? ''
+    let userKey = (userInfo[PREFERENCE_USER_KEY + suffix] as string | undefined) ?? ''
     let user = new UserIdentifier(userId, userKey)
     UserIdentifier.users.set(context.trackerId, user)
 
@@ -127,8 +128,9 @@ export default class UserIdentifier {
       userInfo[PREFERENCE_USER_ID] = String(this.userId)
       userInfo[PREFERENCE_USER_KEY] = String(this.userKey)
     } else {
-      userInfo[PREFERENCE_USER_ID + '_' + context.trackerId] = String(this.userId)
-      userInfo[PREFERENCE_USER_KEY + '_' + context.trackerId] = String(this.userKey)
+      let suffix = '_' + context.config.accountId + '_' + context.config.dataSourceId
+      userInfo[PREFERENCE_USER_ID + suffix] = String(this.userId)
+      userInfo[PREFERENCE_USER_KEY + suffix] = String(this.userKey)
     }
     SharedPreferences.put(PREFERENCE_USER_IDENTIFIER, JSON.stringify(userInfo))
   }

@@ -23,18 +23,12 @@ import GrowingContext from '../core/Context'
 import GrowingGeneralProps from '../core/GeneralProps'
 import Session, { SessionState } from '../core/Session'
 import UserIdentifier from '../core/UserIdentifier'
-import { MAIN_TRACKER_ID, PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
+import { PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 
 export default class EventBuilder {
-  private static _eventSequenceId: Record<string, number> = {}
-
-  static initEventBuilder() {
-    let trackerId = MAIN_TRACKER_ID
-    let sequenceId = SharedPreferences.getValue(EventBuilder.getEventSequenceIdPersistKey(trackerId), 0) as number
-    EventBuilder._eventSequenceId[trackerId] = sequenceId
-  }
+  private static _eventSequenceIds: Record<string, number>
 
   static build<T extends Event>(event: T, context: GrowingContext): T {
     event.sessionId = Session.getSessionId(context)!
@@ -87,23 +81,21 @@ export default class EventBuilder {
   }
 
   private static updateEventSequenceId(context: GrowingContext): number {
-    let trackerId = context.trackerId
-    let sequenceId = EventBuilder.getEventSequenceId(trackerId) + 1
-    EventBuilder._eventSequenceId[trackerId] = sequenceId
-    SharedPreferences.put(EventBuilder.getEventSequenceIdPersistKey(trackerId), sequenceId)
+    let sequenceId = EventBuilder.getEventSequenceId(context) + 1
+    let key = context.config.accountId + '_' + context.config.dataSourceId
+    EventBuilder._eventSequenceIds[key] = sequenceId
+    SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, JSON.stringify(EventBuilder._eventSequenceIds))
     return sequenceId
   }
 
-  static getEventSequenceId(trackerId: string): number {
-    let sequenceId = EventBuilder._eventSequenceId[trackerId]
-    if (!sequenceId) {
-      sequenceId = SharedPreferences.getValue(EventBuilder.getEventSequenceIdPersistKey(trackerId), 0) as number
-      EventBuilder._eventSequenceId[trackerId] = sequenceId
+  private static getEventSequenceId(context: GrowingContext): number {
+    if (!EventBuilder._eventSequenceIds) {
+      let sequenceIdsString = SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, '{}') as string
+      let sequenceIds = JSON.parse(sequenceIdsString) as Record<string, number>
+      EventBuilder._eventSequenceIds = sequenceIds
     }
-    return sequenceId
-  }
 
-  static getEventSequenceIdPersistKey(trackerId: string): string {
-    return trackerId == MAIN_TRACKER_ID ? PREFERENCE_EVENT_SEQUENCE_ID : PREFERENCE_EVENT_SEQUENCE_ID + '_' + trackerId
+    let key = context.config.accountId + '_' + context.config.dataSourceId
+    return EventBuilder._eventSequenceIds[key] ?? 0
   }
 }
