@@ -20,8 +20,13 @@ struct SubTracker {
       Button('createSubTracker')
         .onClick(() => {
           let trackerId = this.createSubTracker()
-          this.curTrackerId = trackerId
-          this.trackerIds = [trackerId, ...this.trackerIds]
+          if (trackerId.length > 0) {
+            this.curTrackerId = trackerId
+            if (this.trackerIds.includes(trackerId)) {
+              return
+            }
+            this.trackerIds = [trackerId, ...this.trackerIds]
+          }
         }).margin({ top: 15 })
       Toggle({ type: ToggleType.Button, isOn: true }) {
         Text('setDataCollectionEnabled')
@@ -100,7 +105,7 @@ struct SubTracker {
     config.dataUploadInterval = 15
     config.idMappingEnabled = true
     GrowingAnalytics.startSubTracker(trackerId, config)
-    return trackerId
+    return GrowingAnalytics.tracker(trackerId).isInitializedSuccessfully() ? trackerId : ''
   }
 
   setDataCollectionEnabled(enabled: boolean) {

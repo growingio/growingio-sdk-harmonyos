@@ -20,12 +20,38 @@ import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 import { NavTitle } from '../views/Common'
-import { GTKColor, EventScene } from '../utils/Constants'
+import { GTKColor, EventScene, MAIN_TRACKER_ID } from '../utils/Constants'
+import TrackerTabBar from '../views/TrackerTabBar'
+import TrackersInfo from '../core/TrackersInfo'
 
 @ComponentV2
 export default struct EventsList {
   @Local dataSource: (EventPersistence | string)[] = []
   @Local isShowDetail: Map<string, boolean> = new Map()
+  @Provider() trackerId: string = ''
+  @Monitor('trackerId')
+  onTrackerIdChange(monitor: IMonitor) {
+    let trackerId = monitor.value()?.now as string
+    if (trackerId.length > 0) {
+      if (trackerId == MAIN_TRACKER_ID) {
+        this.accountId = GrowingToolsKit.sdkConfig.accountId
+        this.dataSourceId = GrowingToolsKit.sdkConfig.dataSourceId
+      } else {
+        TrackersInfo.info.forEach(info => {
+          if (info.trackerId == trackerId) {
+            this.accountId = info.config.accountId
+            this.dataSourceId = info.config.dataSourceId
+          }
+        })
+      }
+    } else {
+      this.accountId = ''
+      this.dataSourceId = ''
+    }
+    this.refreshData()
+  }
+  accountId: string = ''
+  dataSourceId: string = ''
   events: EventPersistence[] = []
   private scroller: Scroller = new Scroller()
 
@@ -36,6 +62,7 @@ export default struct EventsList {
   build() {
     NavDestination() {
       Column() {
+        TrackerTabBar()
         PullToRefresh({
           data: this.dataSource,
           scroller: this.scroller,
@@ -167,13 +194,13 @@ export default struct EventsList {
   }
 
   async refreshData(loadMore: boolean = false): Promise<void> {
-    let pageSize = 50
+    let pageSize = 20
     if (loadMore) {
       let createAt = this.events[this.events.length - 1].createAt
-      let events = await EventDatabase.getEventsByCount(pageSize, createAt)
+      let events = await EventDatabase.getEventsByCount(pageSize, createAt, this.accountId, this.dataSourceId)
       this.events = [...this.events, ...events]
     } else {
-      let events = await EventDatabase.getEventsByCount(pageSize)
+      let events = await EventDatabase.getEventsByCount(pageSize, 0, this.accountId, this.dataSourceId)
       this.events = events
     }
     this.dataSource = this.recalculateData()

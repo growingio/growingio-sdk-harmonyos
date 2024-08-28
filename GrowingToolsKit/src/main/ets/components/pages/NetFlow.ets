@@ -315,7 +315,7 @@ export default struct NetFlow {
   }
 
   async refreshData(loadMore: boolean = false): Promise<void> {
-    let pageSize = 50
+    let pageSize = 15
     if (loadMore) {
       let createAt = this.requests[this.requests.length - 1].info.startTimestamp
       let requests = await EventDatabase.getRequestsByCount(pageSize, createAt)
