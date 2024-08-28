@@ -178,8 +178,10 @@ export default struct EventsList {
             })
           }
         }
-      })
+      }, (event: EventPersistence | string) => typeof event == 'string' ? event : event.uuid)
     }
+    .width('100%')
+    .height('100%')
     .backgroundColor(GTKColor.primaryWhite)
     .divider({ strokeWidth: 0.5, startMargin: 10, color: GTKColor.tertiaryBlack })
     .edgeEffect(EdgeEffect.None) // 必须设置列表为滑动到边缘无效果

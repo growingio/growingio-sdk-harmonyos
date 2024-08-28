@@ -170,7 +170,7 @@ export default struct NetFlow {
             })
           }
         }
-      })
+      }, (request: RequestPersistence | string) => typeof request == 'string' ? request : request.uuid)
     }
     .backgroundColor(GTKColor.secondaryWhite)
     .width('100%')
