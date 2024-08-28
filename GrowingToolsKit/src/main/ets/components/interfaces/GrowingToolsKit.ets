@@ -22,13 +22,14 @@ import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import { routeName } from '../pages/EntryIcon'
 import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_POSITION,
-  GrowingTKConfig } from '../utils/Constants'
+  GTKConfig, GTKEventPersistence } from '../utils/Constants'
 import RequestPersistence from '../network/RequestPersistence'
+import TrackersInfo from '../core/TrackersInfo'
 
 export class GrowingToolsKit {
   static mainWindowStage: window.WindowStage | undefined = undefined
-  static config: GrowingTKConfig
-  static version: string
+  static sdkConfig: GTKConfig
+  static sdkVersion: string
   static sdkStartTime: number = 0
   static sdkEndTime: number = 0
   static gioKitStartTime: number = 0
@@ -46,10 +47,14 @@ export class GrowingToolsKit {
     GrowingToolsKit.sdkStartTime = Date.now()
   }
 
-  onSDKDidInitialize(config: GrowingTKConfig, version: string) {
+  onSDKDidInitialize(config: GTKConfig, version: string) {
     GrowingToolsKit.sdkEndTime = Date.now()
-    GrowingToolsKit.config = config.copy()
-    GrowingToolsKit.version = version
+    GrowingToolsKit.sdkConfig = config.copy()
+    GrowingToolsKit.sdkVersion = version
+  }
+
+  onStartSubTracker?(trackerId: string, config: GTKConfig) {
+    TrackersInfo.push(trackerId, config)
   }
 
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
@@ -73,8 +78,8 @@ export class GrowingToolsKit {
     EventDatabase.initDatabase(ability.context)
   }
 
-  onEventWroteToDisk(uuid: string, data: string, eventType: string, eventScene: number) {
-    let e = new EventPersistence(uuid, data, eventType, eventScene)
+  onEventWroteToDisk(event: GTKEventPersistence, eventScene: number) {
+    let e = EventPersistence.fromEvent(event, eventScene)
     EventDatabase.writeEvent(e)
   }
 

@@ -51,7 +51,7 @@ export interface RequestOptions {
   _transferTimeout: number
 }
 
-export interface GrowingTKConfig {
+export interface GTKConfig {
   mode: ConfigMode
   accountId: string
   dataSourceId: string
@@ -68,7 +68,22 @@ export interface GrowingTKConfig {
   _dataValidityPeriod: number
   autotrackEnabled: boolean
   autotrackAllPages: boolean
-  copy(): GrowingTKConfig
+  copy(): GTKConfig
+}
+
+export interface GTKEventPersistence {
+  uuid: string
+  data: string
+  eventType: string
+  sdkVersion: string
+  accountId: string
+  dataSourceId: string
+}
+
+export enum EventScene {
+  Native = 0,
+  Hybrid,
+  Flutter
 }
 
 export interface Position {

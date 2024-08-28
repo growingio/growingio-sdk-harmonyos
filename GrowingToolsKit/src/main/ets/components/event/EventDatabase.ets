@@ -42,6 +42,8 @@ export default class EventDatabase {
       + 'EVENT_UUID TEXT NOT NULL, '
       + 'DATA TEXT NOT NULL, '
       + 'TYPE TEXT NOT NULL, '
+      + 'ACCOUNT_ID TEXT NOT NULL, '
+      + 'DATASOURCE_ID TEXT NOT NULL, '
       + 'EVENT_SCENE INTEGER NOT NULL, '
       + 'CREATE_AT INTEGER NOT NULL, '
       + 'IS_SEND INTEGER NOT NULL)'
@@ -95,6 +97,8 @@ export default class EventDatabase {
       'EVENT_UUID': event.uuid,
       'DATA': event.data,
       'TYPE': event.eventType,
+      'ACCOUNT_ID': event.accountId,
+      'DATASOURCE_ID': event.dataSourceId,
       'EVENT_SCENE': event.eventScene,
       'CREATE_AT': event.createAt,
       'IS_SEND': event.isSend
@@ -116,6 +120,8 @@ export default class EventDatabase {
   static async getEventsByCount(
     count: number,
     createAt?: number,
+    accountId?: string,
+    dataSourceId?: string,
     eventTypes?: string[]
   ): Promise<EventPersistence[]> {
     let events: EventPersistence[] = []
@@ -129,6 +135,12 @@ export default class EventDatabase {
       if (eventTypes && eventTypes.length > 0) {
         predicates.in('TYPE', eventTypes)
       }
+      if (accountId && accountId.length > 0) {
+        predicates.equalTo('ACCOUNT_ID', accountId)
+      }
+      if (dataSourceId && dataSourceId.length > 0) {
+        predicates.equalTo('DATASOURCE_ID', dataSourceId)
+      }
       if (createAt && createAt > 0) {
         predicates.lessThan('CREATE_AT', createAt)
       }
@@ -138,10 +150,13 @@ export default class EventDatabase {
         const uuid = r.getString(r.getColumnIndex('EVENT_UUID'))
         const data = r.getString(r.getColumnIndex('DATA'))
         const eventType = r.getString(r.getColumnIndex('TYPE'))
+        const accountId = r.getString(r.getColumnIndex('ACCOUNT_ID'))
+        const dataSourceId = r.getString(r.getColumnIndex('DATASOURCE_ID'))
         const eventScene = r.getDouble(r.getColumnIndex('EVENT_SCENE'))
         const createAt = r.getDouble(r.getColumnIndex('CREATE_AT'))
         const isSend = r.getValue(r.getColumnIndex('IS_SEND'))
-        let e = EventPersistence.fromDatabase(uuid, data, eventType, eventScene, createAt, isSend as boolean)
+        let e = EventPersistence.fromDatabase(
+          uuid, data, eventType, accountId, dataSourceId, eventScene, createAt, isSend as boolean)
         events.push(e)
       }
       r.close()

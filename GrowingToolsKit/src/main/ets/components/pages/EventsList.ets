@@ -17,10 +17,10 @@
 
 import { PullToRefresh } from '../views/PullToRefresh'
 import EventDatabase from '../event/EventDatabase'
-import EventPersistence, { EventScene } from '../event/EventPersistence'
+import EventPersistence from '../event/EventPersistence'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 import { NavTitle } from '../views/Common'
-import { GTKColor } from '../utils/Constants'
+import { GTKColor, EventScene } from '../utils/Constants'
 
 @ComponentV2
 export default struct EventsList {

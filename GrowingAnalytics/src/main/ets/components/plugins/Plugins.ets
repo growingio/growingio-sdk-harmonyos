@@ -19,12 +19,14 @@ import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
 import { GrowingConfig } from '../interfaces/GrowingConfig'
+import EventPersistence from '../event/EventPersistence'
 
 export interface PluginsInterface {
   onSDKWillInitialize?(): void
   onSDKDidInitialize?(config: GrowingConfig, version: string): void
+  onStartSubTracker?(trackerId: string, config: GrowingConfig): void
   onWindowStageCreate?(ability: UIAbility, windowStage: window.WindowStage): void
-  onEventWroteToDisk?(uuid: string, data: string, eventType: string, eventScene: number): void
+  onEventWroteToDisk?(event: EventPersistence, eventScene: number): void
   onEventsRemoveFromDisk?(events: string[]): void
   onResponseReceive?(response: rcp.Response): void
 }
@@ -68,6 +70,14 @@ export default class Plugins {
     })
   }
 
+  static onStartSubTracker(trackerId: string, config: GrowingConfig) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onStartSubTracker) {
+        plugin.onStartSubTracker(trackerId, config)
+      }
+    })
+  }
+
   static onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
     Plugins.plugins.forEach(plugin => {
       if (plugin.onWindowStageCreate) {
@@ -76,10 +86,10 @@ export default class Plugins {
     })
   }
 
-  static onEventWroteToDisk(uuid: string, data: string, eventType: string, eventScene: number) {
+  static onEventWroteToDisk(event: EventPersistence, eventScene: number) {
     Plugins.plugins.forEach(plugin => {
       if (plugin.onEventWroteToDisk) {
-        plugin.onEventWroteToDisk(uuid, data, eventType, eventScene)
+        plugin.onEventWroteToDisk(event, eventScene)
       }
     })
   }

@@ -15,16 +15,14 @@
  * limitations under the License.
  */
 
-export enum EventScene {
-  Native = 0,
-  Hybrid,
-  Flutter
-}
+import { EventScene, GTKEventPersistence } from '../utils/Constants'
 
 export default class EventPersistence {
   uuid: string
   data: string
   eventType: string
+  accountId: string
+  dataSourceId: string
   eventScene: EventScene
   createAt: number
   isSend: boolean
@@ -34,6 +32,8 @@ export default class EventPersistence {
     uuid: string,
     data: string,
     eventType: string,
+    accountId: string,
+    dataSourceId: string,
     eventScene: EventScene,
     createAt: number = Date.now(),
     isSend: boolean = false
@@ -41,20 +41,37 @@ export default class EventPersistence {
     this.uuid = uuid
     this.data = data
     this.eventType = eventType
+    this.accountId = accountId
+    this.dataSourceId = dataSourceId
     this.eventScene = eventScene
     this.createAt = createAt
     this.isSend = isSend
+  }
+
+  static fromEvent<T extends GTKEventPersistence>(
+    event: T,
+    eventScene: EventScene
+  ): EventPersistence {
+    let uuid = event.uuid
+    let data = event.data
+    let eventType = event.eventType
+    let accountId = event.accountId
+    let dataSourceId = event.dataSourceId
+    let e = new EventPersistence(uuid, data, eventType, accountId, dataSourceId, eventScene)
+    return e
   }
 
   static fromDatabase(
     uuid: string,
     data: string,
     eventType: string,
+    accountId: string,
+    dataSourceId: string,
     eventScene: EventScene,
     createAt: number,
     isSend: boolean
   ): EventPersistence {
-    let e = new EventPersistence(uuid, data, eventType, eventScene, createAt, isSend)
+    let e = new EventPersistence(uuid, data, eventType, accountId, dataSourceId, eventScene, createAt, isSend)
     return e
   }
 

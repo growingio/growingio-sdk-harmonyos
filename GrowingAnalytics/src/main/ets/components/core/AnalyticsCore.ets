@@ -118,6 +118,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       EventSender.sendEvent(context)
     }, delay)
 
+    Plugins.onStartSubTracker(trackerId, config)
     core._isInitializedSuccessfully = true
     return true
   }
@@ -323,7 +324,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     let pst = EventPersistence.fromEvent(event, context)
     await EventDatabase.writeEvent(pst)
-    Plugins.onEventWroteToDisk(pst.uuid, pst.data, pst.eventType, eventScene)
+    Plugins.onEventWroteToDisk(pst, eventScene)
     if (pst.eventType == EventType.Visit) {
       EventSender.sendEvent(context)
     }
