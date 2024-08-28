@@ -105,7 +105,7 @@ export default class Util {
     return buffer.from(encrypted).buffer
   }
 
-  static toSerializeByMeasurementProtocolV2(event: any): string {
+  static toSerializeByMeasurementProtocolV2(event: any, networkState: string): string {
     let basic = {
       esid: event.eventSequenceId,
       gesid: 0,
@@ -114,6 +114,15 @@ export default class Util {
       d: event.domain,
       tm: event.timestamp,
       cs1: event.userId
+    }
+
+    let r = 'NONE'
+    if (networkState == 'UNKNOWN') {
+      r = 'UNKNOWN'
+    } else if (networkState == 'WIFI') {
+      r = 'WIFI'
+    } else if (networkState.length > 0 /* 5G etc. */) {
+      r = 'CELL'
     }
 
     let eventType = event.eventType as string
@@ -136,7 +145,8 @@ export default class Util {
         p: event.path,
         o: 'portrait',
         tl: event.title,
-        rp: event.referralPage
+        rp: event.referralPage,
+        r: r
       }
 
       return JSON.stringify(page)
@@ -178,6 +188,7 @@ export default class Util {
         ...basic,
         t: 'cls',
         p: event.path,
+        r: r
       }
 
       return JSON.stringify(cls)

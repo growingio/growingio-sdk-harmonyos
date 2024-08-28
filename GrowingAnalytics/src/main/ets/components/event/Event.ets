@@ -16,9 +16,11 @@
  */
 
 import GrowingContext from '../core/Context'
+import DeviceInfo from '../core/DeviceInfo'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import Util from '../utils/Util'
 import { AttributesType } from '../utils/Constants'
+
 export { AttributesType } from '../utils/Constants'
 
 export default abstract class Event {
@@ -59,7 +61,7 @@ export default abstract class Event {
   toSerialize(context: GrowingContext): string {
     let mode = context.config.mode
     if (mode == ConfigMode.SaaS) {
-      return Util.toSerializeByMeasurementProtocolV2(this)
+      return Util.toSerializeByMeasurementProtocolV2(this, DeviceInfo.networkState)
     } else if (mode == ConfigMode.CDP) {
       return Util.toSerializeByMeasurementProtocolV3(this)
     } else {
