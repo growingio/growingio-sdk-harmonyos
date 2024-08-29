@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 import { PullToRefreshConfigurator } from './PullToRefreshConfigurator'
+import componentUtils from '@ohos.arkui.componentUtils'
 
 const IS_FREE = 0;
 const IS_PULL_DOWN_1 = 11;
@@ -31,6 +32,7 @@ export struct PullToRefresh {
   @Param refreshConfigurator?: PullToRefreshConfigurator = new PullToRefreshConfigurator();
   @Param mWidth?: Length = '100%';
   @Param mHeight?: Length = '100%';
+  @Param avoidAreaHeight?: number = 0;
   @Param onRefresh?: () => Promise<string> = () => {
     return new Promise<string>((resolve, reject) => {
       setTimeout(() => {
@@ -55,6 +57,7 @@ export struct PullToRefresh {
   @Param onAnimPullUp?: (value?: number, width?: number, height?: number) => void | undefined = undefined;
   @Param onAnimLoading?: (value?: number, width?: number, height?: number) => void | undefined = undefined;
   //-----------------------------以下为组件内自用属性-----------------------------//
+  @Local private actuallyHeight: number = 0;
   @Local private mHeightNumber?: number = 0;
   @Local private trYTop?: number = 0;
   @Local private trYBottom?: number = 0;
@@ -107,54 +110,66 @@ export struct PullToRefresh {
   }
 
   build() {
-    Column() {
-      // 下拉刷新动画部分
-      Stack() {
-        this.headerUI()
-      }
-      .width('100%')
-      .height(this.trYTop !== undefined ? this.trYTop : 0)
-      .backgroundColor(this.refreshConfigurator !== undefined ? this.refreshConfigurator.getRefreshBackgroundColor() : 0)
-
-      // 主体列表部分
+    Row() {
+      Blank() // 用于计算当前PullToRefresh的高度，用于给主体列表设置
+        .height('100%')
+        .id('ptr_fix_no_full_screen_bug')
+        .onAppear(() => {
+          this.actuallyHeight = px2vp(componentUtils.getRectangleById('ptr_fix_no_full_screen_bug').size.height)
+          if (this.avoidAreaHeight) {
+            this.actuallyHeight = this.actuallyHeight - this.avoidAreaHeight
+          }
+        })
       Column() {
-        if (this.customList !== undefined) {
-          this.customList()
+        // 下拉刷新动画部分
+        Stack() {
+          this.headerUI()
         }
-      }
-      .width('100%')
-      .height((this.mHeightNumber !== undefined ? this.mHeightNumber : 0) - (this.trYTop !== undefined ? this.trYTop : 0) + (this.trYBottom !== undefined ? this.trYBottom : 0))
+        .width('100%')
+        .height(this.trYTop !== undefined ? this.trYTop : 0)
+        .backgroundColor(this.refreshConfigurator !== undefined ? this.refreshConfigurator.getRefreshBackgroundColor() : 0)
 
-      // 上拉加载动画部分
-      Stack() {
-        this.footerUI()
+        // 主体列表部分
+        Column() {
+          if (this.customList !== undefined) {
+            this.customList()
+          }
+        }
+        .width('100%')
+        .height((this.mHeightNumber !== undefined ? this.mHeightNumber : 0) - (this.trYTop !== undefined ? this.trYTop : 0) + (this.trYBottom !== undefined ? this.trYBottom : 0))
+
+        // 上拉加载动画部分
+        Stack() {
+          this.footerUI()
+        }
+        .width('100%')
+        .height(this.trYBottom !== undefined ? -this.trYBottom : 0)
+        .backgroundColor(this.refreshConfigurator !== undefined ? this.refreshConfigurator.getLoadBackgroundColor() : 0)
       }
-      .width('100%')
-      .height(this.trYBottom !== undefined ? -this.trYBottom : 0)
-      .backgroundColor(this.refreshConfigurator !== undefined ? this.refreshConfigurator.getLoadBackgroundColor() : 0)
+      .width(this.mWidth === undefined ? '100%' : this.mWidth)
+      .height(this.actuallyHeight)
+      .onAreaChange((oldValue: Area, newValue: Area) => {
+        this.mWidthNumber = Math.round(newValue.width as number);
+        this.mHeightNumber = Math.round(newValue.height as number);
+      })
+      .parallelGesture(
+        PanGesture(this.panOption)
+          .onActionStart((event?: GestureEvent) => {
+            if (event !== undefined) {
+              this.touchYOld = event.offsetY;
+            }
+          })
+          .onActionUpdate((event?: GestureEvent) => {
+            if (event !== undefined) {
+              this.onActionUpdate(event);
+            }
+          })
+          .onActionEnd(() => {
+            this.onActionEnd();
+          })
+      )
     }
-    .width(this.mWidth === undefined ? '100%' : this.mWidth)
-    .height(this.mHeight === undefined ? '100%' : this.mHeight)
-    .onAreaChange((oldValue: Area, newValue: Area) => {
-      this.mWidthNumber = Math.round(newValue.width as number);
-      this.mHeightNumber = Math.round(newValue.height as number);
-    })
-    .parallelGesture(
-      PanGesture(this.panOption)
-        .onActionStart((event?: GestureEvent) => {
-          if (event !== undefined) {
-            this.touchYOld = event.offsetY;
-          }
-        })
-        .onActionUpdate((event?: GestureEvent) => {
-          if (event !== undefined) {
-            this.onActionUpdate(event);
-          }
-        })
-        .onActionEnd(() => {
-          this.onActionEnd();
-        })
-    )
+    .alignItems(VerticalAlign.Top)
   }
 
   @Builder

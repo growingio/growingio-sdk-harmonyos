@@ -63,6 +63,7 @@ export default struct EventsList {
       Column() {
         TrackerTabBar()
         PullToRefresh({
+          avoidAreaHeight: 40,
           scroller: this.scroller,
           customList: () => {
             this.getListView()
