@@ -25,10 +25,9 @@ import Util from '../utils/Util'
 
 @ComponentV2
 export default struct NetFlow {
-  @Local dataSource: (RequestPersistence | string)[] = []
+  @Local dataSource: NetFlowDataSource = new NetFlowDataSource()
   @Local isShowDetail: Map<string, boolean> = new Map()
   @Local isShowRequestDetail: boolean = true
-  requests: RequestPersistence[] = []
   private scroller: Scroller = new Scroller()
 
   aboutToAppear(): void {
@@ -39,24 +38,15 @@ export default struct NetFlow {
     NavDestination() {
       Column() {
         PullToRefresh({
-          data: this.dataSource,
           scroller: this.scroller,
           customList: () => {
             this.getListView()
           },
           onRefresh: () => {
-            return new Promise<string>((resolve, reject) => {
-              this.refreshData().then(() => {
-                resolve('刷新成功')
-              })
-            })
+            return this.refreshData().then(() => {return '刷新成功'})
           },
           onLoadMore: () => {
-            return new Promise<string>((resolve, reject) => {
-              this.refreshData(true).then(() => {
-                resolve('')
-              })
-            });
+            return this.refreshData(true).then(() => {return ''})
           },
           customLoad: null,
           customRefresh: null,
@@ -83,7 +73,7 @@ export default struct NetFlow {
   @Builder
   private getListView() {
     List({ space: 3, scroller: this.scroller }) {
-      ForEach(this.dataSource, (request: RequestPersistence | string) => {
+      LazyForEach(this.dataSource, (request: RequestPersistence | string) => {
         ListItem() {
           if (typeof request == 'string') {
             Row() {
@@ -315,23 +305,28 @@ export default struct NetFlow {
   }
 
   async refreshData(loadMore: boolean = false): Promise<void> {
-    let pageSize = 15
+    let pageSize = 50
     if (loadMore) {
-      let createAt = this.requests[this.requests.length - 1].info.startTimestamp
+      let originDataSource = this.dataSource.getAllData()
+      let createAt = (originDataSource[originDataSource.length - 1] as RequestPersistence).info.startTimestamp
       let requests = await EventDatabase.getRequestsByCount(pageSize, createAt)
-      this.requests = [...this.requests, ...requests]
+      let dataSource = this.recalculateData(requests, originDataSource)
+      this.dataSource.pushData(dataSource)
     } else {
       let requests = await EventDatabase.getRequestsByCount(pageSize)
-      this.requests = requests
+      let dataSource = this.recalculateData(requests)
+      this.dataSource.reloadData(dataSource)
     }
-    this.dataSource = this.recalculateData()
   }
 
-  recalculateData(): (RequestPersistence | string)[] {
+  recalculateData(
+    data: RequestPersistence[],
+    originData?: (RequestPersistence | string)[]
+  ): (RequestPersistence | string)[] {
     let today = new Date().toISOString().split('T')[0]
     let yesterday = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     let currentLabel: string = ''
-    return this.requests.flatMap(req => {
+    return data.flatMap(req => {
       let day = req.info.day
       let dateLabel = ''
       if (req.info.startTimestamp > GrowingToolsKit.gioKitStartTime) {
@@ -346,9 +341,71 @@ export default struct NetFlow {
 
       if (currentLabel != dateLabel) {
         currentLabel = dateLabel
+        if (originData && originData.indexOf(dateLabel) > 0) {
+          return [req]
+        }
         return [dateLabel, req]
       }
       return [req]
+    })
+  }
+}
+
+class NetFlowDataSource implements IDataSource {
+  private listeners: DataChangeListener[] = []
+  private dataSource: (RequestPersistence | string)[] = []
+
+  public totalCount(): number {
+    return this.dataSource.length
+  }
+
+  public getData(index: number): RequestPersistence | string {
+    return this.dataSource[index]
+  }
+
+  public getAllData(): (RequestPersistence | string)[] {
+    return [...this.dataSource]
+  }
+
+  public reloadData(data: (RequestPersistence | string)[]): void {
+    this.dataSource = data
+    this.notifyDataReload()
+  }
+
+  public pushData(data: (RequestPersistence | string)[]): void {
+    let index = this.dataSource.length - 1
+    this.dataSource = [...this.dataSource, ...data]
+    this.notifyDataAdd(index, data.length)
+  }
+
+  registerDataChangeListener(listener: DataChangeListener): void {
+    if (this.listeners.indexOf(listener) < 0) {
+      this.listeners.push(listener)
+    }
+  }
+
+  unregisterDataChangeListener(listener: DataChangeListener): void {
+    const pos = this.listeners.indexOf(listener)
+    if (pos >= 0) {
+      this.listeners.splice(pos, 1)
+    }
+  }
+
+  notifyDataReload(): void {
+    this.listeners.forEach(listener => {
+      listener.onDatasetChange([{
+        type: DataOperationType.RELOAD
+      }])
+    })
+  }
+
+  notifyDataAdd(index: number, count: number): void {
+    this.listeners.forEach(listener => {
+      listener.onDatasetChange([{
+        type: DataOperationType.ADD,
+        index: index,
+        count: count
+      }])
     })
   }
 }

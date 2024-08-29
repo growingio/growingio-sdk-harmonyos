@@ -26,7 +26,7 @@ import TrackersInfo from '../core/TrackersInfo'
 
 @ComponentV2
 export default struct EventsList {
-  @Local dataSource: (EventPersistence | string)[] = []
+  @Local dataSource: EventsListDataSource = new EventsListDataSource()
   @Local isShowDetail: Map<string, boolean> = new Map()
   @Provider() trackerId: string = ''
   @Monitor('trackerId')
@@ -52,7 +52,6 @@ export default struct EventsList {
   }
   accountId: string = ''
   dataSourceId: string = ''
-  events: EventPersistence[] = []
   private scroller: Scroller = new Scroller()
 
   aboutToAppear(): void {
@@ -64,24 +63,15 @@ export default struct EventsList {
       Column() {
         TrackerTabBar()
         PullToRefresh({
-          data: this.dataSource,
           scroller: this.scroller,
           customList: () => {
             this.getListView()
           },
           onRefresh: () => {
-            return new Promise<string>((resolve, reject) => {
-              this.refreshData().then(() => {
-                resolve('刷新成功')
-              })
-            })
+            return this.refreshData().then(() => {return '刷新成功'})
           },
           onLoadMore: () => {
-            return new Promise<string>((resolve, reject) => {
-              this.refreshData(true).then(() => {
-                resolve('')
-              })
-            });
+            return this.refreshData(true).then(() => {return ''})
           },
           customLoad: null,
           customRefresh: null,
@@ -108,7 +98,7 @@ export default struct EventsList {
   @Builder
   private getListView() {
     List({ space: 3, scroller: this.scroller }) {
-      ForEach(this.dataSource, (event: EventPersistence | string) => {
+      LazyForEach(this.dataSource, (event: EventPersistence | string) => {
         ListItem() {
           if (typeof event == 'string') {
             Row() {
@@ -196,23 +186,28 @@ export default struct EventsList {
   }
 
   async refreshData(loadMore: boolean = false): Promise<void> {
-    let pageSize = 20
+    let pageSize = 50
     if (loadMore) {
-      let createAt = this.events[this.events.length - 1].createAt
+      let originDataSource = this.dataSource.getAllData()
+      let createAt = (originDataSource[originDataSource.length - 1] as EventPersistence).createAt
       let events = await EventDatabase.getEventsByCount(pageSize, createAt, this.accountId, this.dataSourceId)
-      this.events = [...this.events, ...events]
+      let dataSource = this.recalculateData(events, originDataSource)
+      this.dataSource.pushData(dataSource)
     } else {
       let events = await EventDatabase.getEventsByCount(pageSize, 0, this.accountId, this.dataSourceId)
-      this.events = events
+      let dataSource = this.recalculateData(events)
+      this.dataSource.reloadData(dataSource)
     }
-    this.dataSource = this.recalculateData()
   }
 
-  recalculateData(): (EventPersistence | string)[] {
+  recalculateData(
+    data: EventPersistence[],
+    originData?: (EventPersistence | string)[]
+  ): (EventPersistence | string)[] {
     let today = new Date().toISOString().split('T')[0]
     let yesterday = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     let currentLabel: string = ''
-    return this.events.flatMap(e => {
+    return data.flatMap(e => {
       let day = e.day()
       let dateLabel = ''
       if (e.createAt > GrowingToolsKit.gioKitStartTime) {
@@ -227,9 +222,71 @@ export default struct EventsList {
 
       if (currentLabel != dateLabel) {
         currentLabel = dateLabel
+        if (originData && originData.indexOf(dateLabel) > 0) {
+          return [e]
+        }
         return [dateLabel, e]
       }
       return [e]
+    })
+  }
+}
+
+class EventsListDataSource implements IDataSource {
+  private listeners: DataChangeListener[] = []
+  private dataSource: (EventPersistence | string)[] = []
+
+  public totalCount(): number {
+    return this.dataSource.length
+  }
+
+  public getData(index: number): EventPersistence | string {
+    return this.dataSource[index]
+  }
+
+  public getAllData(): (EventPersistence | string)[] {
+    return [...this.dataSource]
+  }
+
+  public reloadData(data: (EventPersistence | string)[]): void {
+    this.dataSource = data
+    this.notifyDataReload()
+  }
+
+  public pushData(data: (EventPersistence | string)[]): void {
+    let index = this.dataSource.length - 1
+    this.dataSource = [...this.dataSource, ...data]
+    this.notifyDataAdd(index, data.length)
+  }
+
+  registerDataChangeListener(listener: DataChangeListener): void {
+    if (this.listeners.indexOf(listener) < 0) {
+      this.listeners.push(listener)
+    }
+  }
+
+  unregisterDataChangeListener(listener: DataChangeListener): void {
+    const pos = this.listeners.indexOf(listener)
+    if (pos >= 0) {
+      this.listeners.splice(pos, 1)
+    }
+  }
+
+  notifyDataReload(): void {
+    this.listeners.forEach(listener => {
+      listener.onDatasetChange([{
+        type: DataOperationType.RELOAD
+      }])
+    })
+  }
+
+  notifyDataAdd(index: number, count: number): void {
+    this.listeners.forEach(listener => {
+      listener.onDatasetChange([{
+        type: DataOperationType.ADD,
+        index: index,
+        count: count
+      }])
     })
   }
 }
