@@ -1,11 +1,24 @@
 {
-  "name": "@growingio/tools",
-  "version": "1.0.0",
-  "description": "Please describe the basic information.",
+  "types": "",
+  "keywords": [
+    "analytics",
+    "data-analysis",
+    "tools",
+    "GrowingIO"
+  ],
+  "author": "GrowingIO",
+  "description": "ToolsKit for GrowingIO HarmonyOS NEXT SDK.",
   "main": "Index.ets",
-  "author": "",
-  "license": "Apache-2.0",
+  "type": "module",
+  "repository": "https://github.com/growingio/growingio-sdk-harmonyos",
+  "version": "1.0.0",
   "dependencies": {
     "snappyjs": "^0.7.0"
-  }
+  },
+  "tags": [
+    "Tool"
+  ],
+  "license": "Apache License 2.0",
+  "devDependencies": {},
+  "name": "@growingio/tools"
 }
