@@ -90,20 +90,21 @@ export default class MyAbilityStage extends AbilityStage {
 
 其他初始化配置项见下表，在 start 方法调用前通过`config.<配置项> = 对应值`进行配置：
 
-| 配置项                        | 参数类型 | 默认值 | 说明                                                         |
-| ----------------------------- | -------- | ------ | ------------------------------------------------------------ |
-| accountId                     | string   | -      | 项目 ID (AccountID)，每个应用对应唯一值                      |
-| urlScheme                     | string   | -      | 自定义 URL Scheme                                            |
-| dataCollectionServerHost      | string   | -      | 服务端部署后的 ServerHost，默认值为 https://api.growingio.com |
-| debugEnabled                  | boolean  | false  | 调试模式，开启后会输出 SDK 日志，在线上环境请关闭            |
+| 配置项                        | 参数类型 | 默认值 | 说明                                                                                   |
+| ----------------------------- | -------- | ------ |--------------------------------------------------------------------------------------|
+| accountId                     | string   | -      | 项目 ID (AccountID)，每个应用对应唯一值                                                          |
+| urlScheme                     | string   | -      | 自定义 URL Scheme                                                                       |
+| dataCollectionServerHost      | string   | -      | 服务端部署后的 ServerHost，默认值为 https://api.growingio.com                                    |
+| debugEnabled                  | boolean  | false  | 调试模式，开启后会输出 SDK 日志，在线上环境请关闭                                                          |
 | sessionInterval               | number   | 30     | 设置会话后台留存时长，指当前会话在应用进入后台后的最大留存时间，默认为 30 秒。另外，其他情况下也会重新生成一个新的会话，如设置用户 ID 等核心信息，重新打开数据收集等 |
-| dataUploadInterval            | number   | 15     | 数据发送的间隔，默认为 15 秒。SDK 会先将事件存入数据库中，然后以每隔默认时间 15 秒向服务器发送事件包 |
-| dataCollectionEnabled         | boolean  | true   | 数据收集，当数据收集关闭时，SDK 将不会再产生事件和上报事件   |
-| requestOptions.connectTimeout | number   | 30     | 事件请求尝试建立连接的最大等待时间，默认为 30 秒             |
-| requestOptions.transferTimeout| number   | 30     | 事件请求允许传输数据的最大等待时间，默认为 30 秒           |
-| dataValidityPeriod            | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                    |
-| encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示           |
-| compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                            |
+| dataUploadInterval            | number   | 15     | 数据发送的间隔，默认为 15 秒。SDK 会先将事件存入数据库中，然后以每隔默认时间 15 秒向服务器发送事件包                             |
+| dataCollectionEnabled         | boolean  | true   | 数据收集，当数据收集关闭时，SDK 将不会再产生事件和上报事件                                                      |
+| requestOptions.connectTimeout | number   | 30     | 事件请求尝试建立连接的最大等待时间，默认为 30 秒                                                           |
+| requestOptions.transferTimeout| number   | 30     | 事件请求允许传输数据的最大等待时间，默认为 30 秒                                                           |
+| dataValidityPeriod            | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                                                               |
+| encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示                                                            |
+| compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                                                                |
+| hybridAutotrackEnabled        | boolean  | true   | 是否集成无埋点对应的 Hybrid JS SDK                                                             |
 
 ### 数据采集 API
 
@@ -375,7 +376,25 @@ name: string;
 methodList: Array<string>;
 controller: WebviewController;
 } | undefined
+
+static javaScriptOnDocumentStart(
+  scriptRules?: Array<string>,
+  saasJavaScriptConfig?: {
+    hashTagEnabled: boolean;
+    impEnabled: boolean;
+}): Array<ScriptItem>
+
+static javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem>
 ```
+
+##### 参数说明
+
+| 参数    | 参数类型      | 说明                         |
+| ------- |-----------| -------------------------- |
+| `hashTagEnabled` | `boolean` | 设置是否启用 Hash Tag |
+| `impEnabled` | `boolean` | 设置是否发送元素的展现次数（浏览量、曝光量） |
+
+##### 示例
 
 在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)：
 ```typescript
@@ -384,9 +403,20 @@ Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
   .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+  .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart())
+  .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd())
 ```
 
-对应的 H5 页面需要集成 Web JS SDK 以及 App 内嵌页打通插件才能生效
+如果您的 H5 页面集成的是仅埋点的 Hybrid JS SDK (gio_hybrid_track.js)，那么需要修改初始化配置项 `hybridAutotrackEnabled` 为 `false`, 并修改注入 hybrid 为：
+```typescript
+let url = 'https://www.example.com'
+Web({ src: url, controller: this.controller})
+  .javaScriptAccess(true)
+  .domStorageAccess(true)
+  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+```
+
+> 当前 Hybrid 打通仅支持页面浏览/自定义埋点/登录用户属性事件
 
 ## License
 ```

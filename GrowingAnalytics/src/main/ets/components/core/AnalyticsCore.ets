@@ -41,7 +41,8 @@ import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import Network from './Network'
 import FakePageEvent from '../event/saas/FakePageEvent'
-import { AttributesType, EMIT_EVENT_MAIN_TRACKER_INITIALIZE, JavaScriptProxyType } from '../utils/Constants'
+import { AttributesType, EMIT_EVENT_MAIN_TRACKER_INITIALIZE, JavaScriptProxyType,
+  SaaSJavaScriptConfigType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
@@ -185,6 +186,16 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
     return Hybrid.createHybridProxy(controller, this.context)
+  }
+
+  javaScriptOnDocumentStart(
+    scriptRules?: Array<string>,
+    saasJavaScriptConfig?: SaaSJavaScriptConfigType): Array<ScriptItem> {
+    return Hybrid.javaScriptOnDocumentStart(this.context, scriptRules, saasJavaScriptConfig)
+  }
+
+  javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem> {
+    return Hybrid.javaScriptOnDocumentEnd(this.context, scriptRules)
   }
 
   isInitializedSuccessfully(): boolean {

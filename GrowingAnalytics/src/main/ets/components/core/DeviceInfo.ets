@@ -26,6 +26,8 @@ import { PREFERENCE_DEVICE_ID } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
+export const SDK_PLATFORM: string = 'HarmonyOS'
+
 export default class DeviceInfo {
   static deviceId: string = ''
   static platform: string = ''
@@ -41,7 +43,7 @@ export default class DeviceInfo {
   static netConnection = connection.createNetConnection()
 
   static initDeviceInfo() {
-    DeviceInfo.platform = 'HarmonyOS'
+    DeviceInfo.platform = SDK_PLATFORM
     DeviceInfo.platformVersion = deviceInfo.displayVersion
 
     let displayInfo = display.getDefaultDisplaySync()

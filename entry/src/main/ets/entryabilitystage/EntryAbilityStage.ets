@@ -55,6 +55,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.requestOptions.connectTimeout = 10
     // config.requestOptions.transferTimeout = 10
     // config.autotrackAllPages = true
+    // config.plugins = [new GrowingToolsKit()]
     // GrowingAnalytics.start(this.context, config)
 
     // ---------------- SaaS ----------------
@@ -69,6 +70,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.requestOptions.connectTimeout = 10
     // config.requestOptions.transferTimeout = 10
     // config.autotrackAllPages = true
+    // config.plugins = [new GrowingToolsKit()]
     // GrowingAnalytics.start(this.context, config)
   }
 }

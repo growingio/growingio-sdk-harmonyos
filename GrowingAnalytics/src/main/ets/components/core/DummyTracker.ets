@@ -16,7 +16,7 @@
  */
 
 import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
-import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
+import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '../utils/Constants'
 import webview from '@ohos.web.webview'
 
 export default class DummyTracker implements GrowingAnalyticsInterface {
@@ -39,6 +39,14 @@ export default class DummyTracker implements GrowingAnalyticsInterface {
 
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {
     return undefined
+  }
+  javaScriptOnDocumentStart(
+    scriptRules?: Array<string>,
+    saasJavaScriptConfig?: SaaSJavaScriptConfigType): Array<ScriptItem> {
+    return []
+  }
+  javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem> {
+    return []
   }
 
   // Main tracker only

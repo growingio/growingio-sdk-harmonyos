@@ -20,7 +20,7 @@ import buffer from '@ohos.buffer'
 import snappy from 'snappyjs'
 
 export default class Util {
-  static mapToObject(map: Map<string, ValueType>): { [key: string]: ValueType } {
+  static mapToObject(map: Map<string, ValueType>): AttributesType {
     const object: { [key: string]: ValueType } = {}
     map.forEach((value, key) => {
       object[key] = value
@@ -143,6 +143,7 @@ export default class Util {
         ...basic,
         t: 'page',
         p: event.path,
+        q: event.query,
         o: 'portrait',
         tl: event.title,
         rp: event.referralPage,

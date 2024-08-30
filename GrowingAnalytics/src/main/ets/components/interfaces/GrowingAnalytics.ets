@@ -21,7 +21,8 @@ import { GrowingConfig } from './GrowingConfig'
 import AnalyticsCore from '../core/AnalyticsCore'
 import Flutter from '../core/Flutter'
 import GeneralProps from '../core/GeneralProps'
-import { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
+import { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType,
+  SaaSJavaScriptConfigType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
 export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
@@ -81,6 +82,16 @@ export class GrowingAnalytics {
 
   static createHybridProxy(controller: webview.WebviewController): GrowingJSProxyType | undefined {
     return AnalyticsCore.core.createHybridProxy(controller)
+  }
+
+  static javaScriptOnDocumentStart(
+    scriptRules?: Array<string>,
+    saasJavaScriptConfig?: SaaSJavaScriptConfigType): Array<ScriptItem> {
+    return AnalyticsCore.core.javaScriptOnDocumentStart(scriptRules, saasJavaScriptConfig)
+  }
+
+  static javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem> {
+    return AnalyticsCore.core.javaScriptOnDocumentEnd(scriptRules)
   }
 
   static isInitializedSuccessfully(trackerId?: string): boolean {

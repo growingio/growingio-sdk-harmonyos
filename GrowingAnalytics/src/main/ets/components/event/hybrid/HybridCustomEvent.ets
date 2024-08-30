@@ -25,6 +25,9 @@ export default class HybridCustomEvent extends Event implements HybridEvent {
   path: string | undefined = undefined
   query: string | undefined = undefined
 
+  // mode SaaS
+  pageShowTimestamp: number | undefined = undefined
+
   static create(
     eventName: string,
     attributes: AttributesType,

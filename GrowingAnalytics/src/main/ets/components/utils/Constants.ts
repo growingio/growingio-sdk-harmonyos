@@ -41,6 +41,10 @@ export type JavaScriptProxyType = {
   methodList: Array<string>;
   controller: webview.WebviewController;
 }
+export type SaaSJavaScriptConfigType = {
+  hashTagEnabled: boolean;
+  impEnabled: boolean;
+}
 
 export const EMIT_EVENT_MAIN_TRACKER_INITIALIZE = 1
 export const EMIT_EVENT_SESSION_STATE_FOREGROUND = 2
