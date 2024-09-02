@@ -396,24 +396,62 @@ static javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem>
 
 ##### 示例
 
-在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)：
+在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)，并在 onDocumentStart 和 onDocumentEnd 2 个时机注入 SDK 提供的脚本：
 ```typescript
 let url = 'https://www.example.com'
 Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
   .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
-  .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart())
+  .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart(['*'], {
+    hashTagEnabled: true,
+    impEnabled: true
+  }))
   .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd())
 ```
 
-如果您的 H5 页面集成的是仅埋点的 Hybrid JS SDK (gio_hybrid_track.js)，那么需要修改初始化配置项 `hybridAutotrackEnabled` 为 `false`, 并修改注入 hybrid 为：
+如果您的 H5 页面集成的是仅埋点的 Hybrid JS SDK (`gio_hybrid_track.js`)，那么需要修改 SDK 的初始化配置项 `hybridAutotrackEnabled` 为 `false`, 且仅注入 hybrid：
 ```typescript
+// 初始化配置项hybridAutotrackEnabled设置为false
+startAnalytics() {
+  let config = new GrowingConfig().SaaS(
+    'Your AccountId',
+    'Your UrlScheme'
+  )
+  config.hybridAutotrackEnabled = false
+  GrowingAnalytics.start(this.context, config)
+}
+
+//仅注入hybrid
 let url = 'https://www.example.com'
 Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
   .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+```
+
+如果您需要注入多个 JavaScript 对象或者通过 permission 配置权限管控，请在 `onControllerAttached` 回调中使用 `registerJavaScriptProxy` 进行注入 hybrid：
+```typescript
+let url = 'https://www.example.com'
+// 通过permission配置权限管控
+let permission = 'Your Permission'
+Web({ src: url, controller: this.controller})
+  .javaScriptAccess(true)
+  .domStorageAccess(true)
+  .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart()) // H5页面集成的是仅埋点的Hybrid JS SDK则不需要此操作
+  .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd()) // H5页面集成的是仅埋点的Hybrid JS SDK则不需要此操作
+  .onControllerAttached(() => {
+    let proxy = GrowingAnalytics.createHybridProxy(this.controller)
+    if (proxy) {
+      this.controller.registerJavaScriptProxy(proxy.object, proxy.name, proxy.methodList, [], permission)
+    }
+    
+    // 如果需要注入多个JavaScript对象
+    let yourProxy = new YourProxy()
+    if (yourProxy) {
+      this.controller.registerJavaScriptProxy(yourProxy.object, yourProxy.name, yourProxy.methodList, yourProxy.asyncMethodList, permission)
+    }
+  })
 ```
 
 > 当前 Hybrid 打通仅支持页面浏览/自定义埋点/登录用户属性事件
