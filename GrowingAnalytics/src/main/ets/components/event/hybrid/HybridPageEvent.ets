@@ -27,9 +27,6 @@ export default class HybridPageEvent extends Event implements HybridEvent {
   path: string | undefined = undefined
   query: string | undefined = undefined
 
-  // mode SaaS
-  pageShowTimestamp: number | undefined = undefined
-
   static create(
     title: string,
     referralPage: string,

@@ -32,7 +32,7 @@ export default class FakePageEvent extends Event implements Page {
   static create(context: GrowingContext): FakePageEvent {
     let event = new FakePageEvent()
     event.eventType = EventType.Page
-    PageEvent.lastPage = event
+    PageEvent.setLastPage(event, context)
     return EventBuilder.build(event, context)
   }
 
@@ -41,7 +41,10 @@ export default class FakePageEvent extends Event implements Page {
         context.config.autotrackEnabled &&
         context.config.autotrackAllPages) {
       // 当前是主实例，且已开启PAGE无感埋点
-      return
+      if (PageEvent.getLastPage(context)) {
+        // 延迟采集时可能出现lastPage为空，此时将走下方逻辑发FakePage
+        return
+      }
     }
     let p = FakePageEvent.create(context)
     AnalyticsCore.writeEventToDisk(p, context)

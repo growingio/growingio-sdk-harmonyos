@@ -39,9 +39,10 @@ export default class CustomEvent extends Event {
     event.eventType = EventType.Custom
 
     if (context.config.mode == ConfigMode.SaaS) {
-      if (PageEvent.lastPage) {
-        event.path = PageEvent.lastPage.path ?? ''
-        event.pageShowTimestamp = PageEvent.lastPage.timestamp ?? 0
+      let lastPage = PageEvent.getLastPage(context)
+      if (lastPage) {
+        event.path = lastPage.path ?? ''
+        event.pageShowTimestamp = lastPage.timestamp ?? 0
       }
     }
 

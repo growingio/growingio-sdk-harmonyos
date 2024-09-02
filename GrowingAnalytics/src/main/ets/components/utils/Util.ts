@@ -142,6 +142,7 @@ export default class Util {
       let page = {
         ...basic,
         t: 'page',
+        var: event.attributes,
         p: event.path,
         q: event.query,
         o: 'portrait',

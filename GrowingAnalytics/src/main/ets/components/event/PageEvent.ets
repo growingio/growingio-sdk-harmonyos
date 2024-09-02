@@ -34,7 +34,7 @@ export default class PageEvent extends Event implements Page {
   title: string | undefined = undefined
 
   // mode SaaS
-  static lastPage: Page | undefined = undefined
+  private static lastPage: Record<string, Page> = {}
   referralPage: string | undefined = undefined
 
   static create(
@@ -50,12 +50,21 @@ export default class PageEvent extends Event implements Page {
     event.eventType = EventType.Page
 
     if (context.config.mode == ConfigMode.SaaS) {
-      if (PageEvent.lastPage) {
-        event.referralPage = PageEvent.lastPage.path
+      let lastPage = PageEvent.getLastPage(context)
+      if (lastPage) {
+        event.referralPage = lastPage.path
       }
-      PageEvent.lastPage = event
+      PageEvent.setLastPage(event, context)
     }
 
     return EventBuilder.build(event, context)
+  }
+
+  static getLastPage(context: GrowingContext): Page | undefined {
+    return PageEvent.lastPage[context.trackerId]
+  }
+
+  static setLastPage(page: Page, context: GrowingContext) {
+    PageEvent.lastPage[context.trackerId] = page
   }
 }

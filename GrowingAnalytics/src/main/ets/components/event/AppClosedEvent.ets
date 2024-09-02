@@ -31,8 +31,9 @@ export default class AppClosedEvent extends Event {
     event.eventType = EventType.AppClosed
 
     if (context.config.mode == ConfigMode.SaaS) {
-      if (PageEvent.lastPage) {
-        event.path = PageEvent.lastPage.path ?? ''
+      let lastPage = PageEvent.getLastPage(context)
+      if (lastPage) {
+        event.path = lastPage.path ?? ''
       }
     }
 

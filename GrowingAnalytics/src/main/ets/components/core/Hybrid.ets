@@ -265,8 +265,9 @@ class SaaSHybrid {
       let eventType: string = event.t as string
       if (eventType == 'cstm') {
         let p = String(event.p ?? '')
-        if (PageEvent.lastPage) {
-          p = (PageEvent.lastPage.path ?? '') + '::' + p
+        let lastPage = PageEvent.getLastPage(this.context)
+        if (lastPage) {
+          p = (lastPage.path ?? '') + '::' + p
         }
         let d = AppInfo.domain + '::' + String(event.d ?? '')
         let e = HybridCustomEvent.create(
@@ -284,10 +285,11 @@ class SaaSHybrid {
         let p = String(event.p ?? '')
         let rp = String(event.rp ?? '')
         let tl = String(event.tl ?? '')
-        if (PageEvent.lastPage) {
-          p = (PageEvent.lastPage.path ?? '') + '::' + p
-          rp = (PageEvent.lastPage.path ?? '') + '::' + rp
-          tl = (PageEvent.lastPage.title ?? '') + '::' + tl
+        let lastPage = PageEvent.getLastPage(this.context)
+        if (lastPage) {
+          p = (lastPage.path ?? '') + '::' + p
+          rp = (lastPage.path ?? '') + '::' + rp
+          tl = (lastPage.title ?? '') + '::' + tl
         }
         let d = AppInfo.domain + '::' + String(event.d ?? '')
         let e = HybridPageEvent.create(
@@ -301,7 +303,6 @@ class SaaSHybrid {
           d,
           this.context
         )
-        e.pageShowTimestamp = event.tm as number
         AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
       } else if (eventType == 'ppl') {
         let e = LoginUserAttributesEvent.create(event.var as AttributesType, this.context)
