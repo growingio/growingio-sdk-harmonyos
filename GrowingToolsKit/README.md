@@ -55,6 +55,8 @@ config.plugins = [new GrowingToolsKit()]
 GrowingAnalytics.start(this.context, config)
 ```
 
+> 注意：请仅在 DEBUG 环境下使用 GrowingToolsKit
+
 ## License
 ```
 Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.

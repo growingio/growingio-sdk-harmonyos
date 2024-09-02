@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import bundleManager from '@ohos.bundle.bundleManager'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
@@ -27,6 +28,7 @@ import RequestPersistence from '../network/RequestPersistence'
 import TrackersInfo from '../core/TrackersInfo'
 
 export class GrowingToolsKit {
+  static debug: boolean = false
   static mainWindowStage: window.WindowStage | undefined = undefined
   static sdkConfig: GTKConfig
   static sdkVersion: string
@@ -41,23 +43,44 @@ export class GrowingToolsKit {
     if (GrowingToolsKit.gioKitStartTime == 0) {
       GrowingToolsKit.gioKitStartTime = Date.now()
     }
+
+    let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
+    let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleFlags)
+    let appInfo = bundleInfo.appInfo
+    GrowingToolsKit.debug = appInfo.debug
   }
 
   onSDKWillInitialize() {
+    if (!GrowingToolsKit.debug) {
+      return
+    }
+
     GrowingToolsKit.sdkStartTime = Date.now()
   }
 
   onSDKDidInitialize(config: GTKConfig, version: string) {
+    if (!GrowingToolsKit.debug) {
+      return
+    }
+
     GrowingToolsKit.sdkEndTime = Date.now()
     GrowingToolsKit.sdkConfig = config.copy()
     GrowingToolsKit.sdkVersion = version
   }
 
-  onStartSubTracker?(trackerId: string, config: GTKConfig) {
+  onStartSubTracker(trackerId: string, config: GTKConfig) {
+    if (!GrowingToolsKit.debug) {
+      return
+    }
+
     TrackersInfo.push(trackerId, config)
   }
 
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
+    if (!GrowingToolsKit.debug) {
+      return
+    }
+
     if (GrowingToolsKit.mainWindowStage != undefined) {
       return
     }
@@ -79,15 +102,27 @@ export class GrowingToolsKit {
   }
 
   onEventWroteToDisk(event: GTKEventPersistence, eventScene: number) {
+    if (!GrowingToolsKit.debug) {
+      return
+    }
+
     let e = EventPersistence.fromEvent(event, eventScene)
     EventDatabase.writeEvent(e)
   }
 
   onEventsRemoveFromDisk(events: string[]) {
+    if (!GrowingToolsKit.debug) {
+      return
+    }
+
     EventDatabase.updateEventsDidSend(events)
   }
 
   onResponseReceive(response: rcp.Response) {
+    if (!GrowingToolsKit.debug) {
+      return
+    }
+
     let r = RequestPersistence.fromResponse(response)
     EventDatabase.writeRequest(r)
   }
