@@ -118,6 +118,7 @@ export default struct EventsList {
               Column() {
                 Row() {
                   Text(event.eventType)
+                    .constraintSize({maxWidth: '80%'})
                   if (event.eventScene == EventScene.Hybrid) {
                     Blank(5)
                     Text('Hybrid')
@@ -126,6 +127,7 @@ export default struct EventsList {
                       .padding(4)
                       .borderRadius(4)
                       .backgroundColor(GTKColor.hybridTagLabel)
+                      .alignSelf(ItemAlign.Start)
                   }
                   if (event.eventScene == EventScene.Flutter) {
                     Blank(5)
@@ -135,6 +137,7 @@ export default struct EventsList {
                       .padding(4)
                       .borderRadius(4)
                       .backgroundColor(GTKColor.flutterTagLabel)
+                      .alignSelf(ItemAlign.Start)
                   }
                 }
                 if (event.path()) {
