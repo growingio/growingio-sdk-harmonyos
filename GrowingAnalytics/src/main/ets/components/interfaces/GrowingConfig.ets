@@ -16,7 +16,6 @@
  */
 
 import { PluginsInterface } from '../plugins/Plugins'
-import { LogUtil } from '../utils/LogUtil'
 
 class RequestOptions {
   _connectTimeout: number = 30 * 1000
@@ -170,10 +169,6 @@ export class GrowingConfig {
     let pattern = /^(https?:\/\/)((([a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,})|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/[^\s]*)?$/
     if (!pattern.test(this.dataCollectionServerHost)) {
       throw new Error('[GrowingAnalytics] 请在初始化配置中传入正确的 dataCollectionServerHost')
-    }
-
-    if (this.autotrackEnabled && this.autotrackAllPages) {
-      LogUtil.warn(() => '已开启无感监听(组件导航Navigation和页面路由Router跳转，需API 12及以上)，此功能为实验性功能，后续将根据最新官方接口进行优化')
     }
 
     let config = new GrowingConfig()
