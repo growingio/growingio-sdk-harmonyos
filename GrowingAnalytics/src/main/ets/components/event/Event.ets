@@ -82,6 +82,7 @@ export enum EventType {
   // mode SaaS
   SaaS_Evar = 'evar',
   SaaS_Vstr = 'vstr',
+  SaaS_Pvar = 'pvar',
 }
 
 export enum EventScene {

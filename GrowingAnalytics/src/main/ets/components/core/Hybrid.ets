@@ -32,6 +32,7 @@ import { SaaSEvarEvent, SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
 import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import { ConfigMode } from '../interfaces/GrowingConfig'
+import SaaSPageVarEvent from '../event/saas/SaaSPageVarEvent'
 
 export default class Hybrid {
   name: string = 'GrowingWebViewJavascriptBridge'
@@ -313,38 +314,48 @@ class SaaSHybridTrackEventHandler {
   static eventHandler(event: Record<string, Object>, context: GrowingContext) {
     let t: string = String(event.t ?? '')
     let attributes: AttributesType = event.var as (AttributesType | undefined) ?? {}
-    if (t == 'cstm') {
-      let eventName: string = event.n as string
-      if (eventName.length > 0) {
-        let p = String(event.p ?? '')
-        let lastPage = PageEvent.getLastPage(context)
-        if (lastPage) {
-          p = (lastPage.path ?? '') + '::' + p
+    let d = AppInfo.domain + '::' + String(event.d ?? '')
+    if (t == 'cstm' || t == 'pvar') {
+      let p = String(event.p ?? '')
+      let lastPage = PageEvent.getLastPage(context)
+      if (lastPage) {
+        p = (lastPage.path ?? '') + '::' + p
+      }
+      if (t == 'cstm') {
+        let eventName: string = event.n as string
+        if (eventName.length > 0) {
+          let e = HybridCustomEvent.create(
+            eventName,
+            attributes,
+            p,
+            event.q as string,
+            event.tm as number,
+            d,
+            context)
+          e.pageShowTimestamp = event.ptm as number
+          AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
         }
-        let d = AppInfo.domain + '::' + String(event.d ?? '')
-        let e = HybridCustomEvent.create(
-          eventName,
+      } else if (t == 'pvar') {
+        let e = SaaSPageVarEvent.create(
           attributes,
           p,
-          event.q as string,
-          event.tm as number,
-          d,
+          event.ptm as number,
           context)
-        e.pageShowTimestamp = event.ptm as number
+        e.domain = d
         AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
       }
     } else if (Object.keys(attributes).length > 0) {
       if (t == 'ppl') {
         let e = LoginUserAttributesEvent.create(attributes, context)
-        e.domain = e.domain + '::' + String(event.d ?? '')
+        e.domain = d
         AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
       } else if (t == 'evar') {
         let e = SaaSEvarEvent.create(attributes, context)
-        e.domain = e.domain + '::' + String(event.d ?? '')
+        e.domain = d
         AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
       } else if (t == 'vstr') {
         let e = SaaSVisitorEvent.create(attributes, context)
-        e.domain = e.domain + '::' + String(event.d ?? '')
+        e.domain = d
         AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
       }
     }

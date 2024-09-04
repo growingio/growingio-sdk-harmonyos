@@ -60,7 +60,13 @@ export default class EventSender {
         break
       case EventSenderType.SaaS_CSTM:
         this.urlPath = URL_PATH_SAAS_CSTM
-        this.eventTypes = [EventType.Custom, EventType.LoginUserAttributes, EventType.SaaS_Evar, EventType.SaaS_Vstr]
+        this.eventTypes = [
+          EventType.Custom,
+          EventType.LoginUserAttributes,
+          EventType.SaaS_Evar,
+          EventType.SaaS_Vstr,
+          EventType.SaaS_Pvar
+        ]
         break
     }
   }

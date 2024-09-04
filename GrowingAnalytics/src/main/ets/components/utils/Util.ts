@@ -153,6 +153,17 @@ export default class Util {
 
       return JSON.stringify(page)
 
+    } else if (eventType == 'pvar') {
+      let pvar = {
+        ...basic,
+        t: 'pvar',
+        var: event.attributes,
+        p: event.path,
+        ptm: event.pageShowTimestamp
+      }
+
+      return JSON.stringify(pvar)
+
     } else if (eventType == 'LOGIN_USER_ATTRIBUTES') {
       let ppl = {
         ...basic,
