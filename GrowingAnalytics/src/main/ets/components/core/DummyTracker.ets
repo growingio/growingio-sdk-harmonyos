@@ -51,4 +51,9 @@ export default class DummyTracker implements GrowingAnalyticsInterface {
 
   // Main tracker only
   getDeviceId(): string { return '' }
+
+  // mode SaaS
+  setPeopleVariable(attributes: AttributesType): void {}
+  setEvar(attributes: AttributesType): void {}
+  setVisitor(attributes: AttributesType): void {}
 }

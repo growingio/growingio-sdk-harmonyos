@@ -162,6 +162,24 @@ export default class Util {
 
       return JSON.stringify(ppl)
 
+    } else if (eventType == 'vstr') {
+      let vstr = {
+        ...basic,
+        t: 'vstr',
+        var: event.attributes
+      }
+
+      return JSON.stringify(vstr)
+
+    } else if (eventType == 'evar') {
+      let evar = {
+        ...basic,
+        t: 'evar',
+        var: event.attributes
+      }
+
+      return JSON.stringify(evar)
+
     } else if (eventType == 'VISIT') {
       let vst = {
         ...basic,

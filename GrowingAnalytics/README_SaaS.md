@@ -289,24 +289,66 @@ GrowingAnalytics.clearTrackTimer()
     >   event_duration 时间统计不会计算后台时间
 > - eventName 对应的埋点事件需要在平台中**绑定**标识符为 event_duration， 且类型为小数的事件属性
 
-#### 设置登录用户属性
+#### 设置登录用户变量
 
-`static setLoginUserAttributes(attributes: GrowingAttrType)`
+`static setPeopleVariable(attributes: GrowingAttrType)`
 
-以登录用户的身份定义登录用户属性，用于用户信息相关分析
+以登录用户的身份定义登录用户变量，用于登录用户信息相关分析，在添加代码之前必须在打点管理界面上创建登录用户变量
 
 ##### 参数说明
 
-| 参数         | 参数类型          | 说明         |
-| ------------ | ----------------- | ------------ |
-| `attributes` | `GrowingAttrType` | 用户属性信息 |
+| 参数         | 参数类型          | 说明     |
+| ------------ | ----------------- |--------|
+| `attributes` | `GrowingAttrType` | 用户变量信息 |
 
 ##### 示例
 
 ```typescript
-GrowingAnalytics.setLoginUserAttributes({
+GrowingAnalytics.setPeopleVariable({
   'name': 'ben',
   'age': 30
+})
+```
+
+#### 设置访问用户变量
+
+`static setVisitor(attributes: GrowingAttrType)`
+
+以访问用户的身份定义访问用户变量，用于访问用户信息相关分析，也可用于A/B测试上传标签。在添加代码之前必须在打点管理界面上创建访问用户变量
+
+##### 参数说明
+
+| 参数         | 参数类型          | 说明     |
+| ------------ | ----------------- |--------|
+| `attributes` | `GrowingAttrType` | 用户变量信息 |
+
+##### 示例
+
+```typescript
+GrowingAnalytics.setVisitor({
+  'name': 'ben',
+  'age': 30
+})
+```
+
+#### 设置转化变量
+
+`static setEvar(attributes: GrowingAttrType)`
+
+发送一个转化信息用于高级归因分析，在添加代码之前必须在打点管理界面上创建转化变量
+
+##### 参数说明
+
+| 参数         | 参数类型          | 说明     |
+| ------------ | ----------------- |--------|
+| `attributes` | `GrowingAttrType` | 转化变量信息 |
+
+##### 示例
+
+```typescript
+GrowingAnalytics.setEvar({
+  'campaignOwner': 'Li Si',
+  'campaignId': 12345
 })
 ```
 
@@ -454,7 +496,7 @@ Web({ src: url, controller: this.controller})
   })
 ```
 
-> 当前 Hybrid 打通仅支持页面浏览/自定义埋点/登录用户属性事件
+> 当前 Hybrid 打通不支持点击事件、表单提交事件等无埋点事件
 
 ## License
 ```

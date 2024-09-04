@@ -34,11 +34,11 @@ import UserIdentifier from './UserIdentifier'
 import AutotrackPage from '../autotrack/AutotrackPage'
 import CustomEvent from '../event/CustomEvent'
 import Event, { EventScene, EventType } from '../event/Event'
-import EventBuilder from '../event/EventBuilder'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import EventSender from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
+import { SaaSEvarEvent, SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
 import Network from './Network'
 import FakePageEvent from '../event/saas/FakePageEvent'
 import { AttributesType, EMIT_EVENT_MAIN_TRACKER_INITIALIZE, JavaScriptProxyType,
@@ -369,5 +369,47 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static cleanLocation() {
     AnalyticsCore.location.latitude = 0
     AnalyticsCore.location.longitude = 0
+  }
+
+  setPeopleVariable(attributes: AttributesType) {
+    if (this.context.config.mode != ConfigMode.SaaS) {
+      LogUtil.info(() => 'Failed to set people variable, only support on SaaS mode')
+      return
+    }
+    if (!this.context.config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to set people variable, dataCollectionEnabled is false')
+      return
+    }
+    this.setLoginUserAttributes(attributes)
+  }
+
+  setEvar(attributes: AttributesType) {
+    if (this.context.config.mode != ConfigMode.SaaS) {
+      LogUtil.info(() => 'Failed to set evar, only support on SaaS mode')
+      return
+    }
+    if (!this.context.config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to set evar, dataCollectionEnabled is false')
+      return
+    }
+
+    let e = SaaSEvarEvent.create(Util.cloneObject(attributes), this.context)
+    AnalyticsCore.writeEventToDisk(e, this.context)
+    LogUtil.info(() => 'Set evar: ' + JSON.stringify(attributes))
+  }
+
+  setVisitor(attributes: AttributesType) {
+    if (this.context.config.mode != ConfigMode.SaaS) {
+      LogUtil.info(() => 'Failed to set visitor, only support on SaaS mode')
+      return
+    }
+    if (!this.context.config.dataCollectionEnabled) {
+      LogUtil.info(() => 'Failed to set visitor, dataCollectionEnabled is false')
+      return
+    }
+
+    let e = SaaSVisitorEvent.create(Util.cloneObject(attributes), this.context)
+    AnalyticsCore.writeEventToDisk(e, this.context)
+    LogUtil.info(() => 'Set visitor: ' + JSON.stringify(attributes))
   }
 }

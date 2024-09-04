@@ -26,6 +26,7 @@ import FakePageEvent from '../event/saas/FakePageEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import { EMIT_EVENT_SESSION_STATE_FOREGROUND } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
+import { SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
 
 export enum SessionState {
   Foreground,
@@ -92,13 +93,18 @@ export default class Session {
         break
       }
     }
+    let isRefresh: boolean = false
     if (session) {
       session.sessionId = util.generateRandomUUID(false)
+      isRefresh = true
     } else {
       session = new Session(util.generateRandomUUID(false), context.trackerId)
       Session.sessions.push(session)
     }
     Session.generateVisit(context)
+    if (isRefresh && context.config.mode == ConfigMode.SaaS) {
+      SaaSVisitorEvent.sendVisitorIfNeeded(context)
+    }
   }
 
   static getSessionId(context: GrowingContext): string | undefined {

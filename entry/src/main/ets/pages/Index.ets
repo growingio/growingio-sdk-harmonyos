@@ -41,10 +41,20 @@ struct Index {
             this.cleanLocation()
           }).margin({ top: 15 })
       }
-      Button('loginUserAttributes')
-        .onClick(() => {
-          this.loginUserAttributes()
-        }).margin({ top: 15 })
+      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+        Button('loginUserAttributes')
+          .onClick(() => {
+            this.loginUserAttributes()
+          }).margin({ top: 15 })
+        Button('setEvar(SaaS)')
+          .onClick(() => {
+            this.setEvar()
+          }).margin({ top: 15 })
+        Button('setVisitor(SaaS)')
+          .onClick(() => {
+            this.setVisitor()
+          }).margin({ top: 15 })
+      }
       Button('track')
         .onClick(() => {
           Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track')
@@ -100,6 +110,20 @@ struct Index {
   loginUserAttributes() {
     GrowingAnalytics.setLoginUserAttributes({
       'name': 'ben',
+      'age': 30
+    })
+  }
+
+  setEvar() {
+    GrowingAnalytics.setEvar({
+      'product': 'apple',
+      'age': 30
+    })
+  }
+
+  setVisitor() {
+    GrowingAnalytics.setVisitor({
+      'visitor': 'david',
       'age': 30
     })
   }

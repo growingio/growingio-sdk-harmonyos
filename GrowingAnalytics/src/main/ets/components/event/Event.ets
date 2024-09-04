@@ -78,6 +78,10 @@ export enum EventType {
   ViewClick = 'VIEW_CLICK',
   ViewChange = 'VIEW_CHANGE',
   AppClosed = 'APP_CLOSED',
+
+  // mode SaaS
+  SaaS_Evar = 'evar',
+  SaaS_Vstr = 'vstr',
 }
 
 export enum EventScene {

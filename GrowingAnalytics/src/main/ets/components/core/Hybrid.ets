@@ -22,13 +22,13 @@ import AppInfo from './AppInfo'
 import GrowingContext from './Context'
 import DeviceInfo, { SDK_PLATFORM } from './DeviceInfo'
 import UserIdentifier from './UserIdentifier'
-import CustomEvent from '../event/CustomEvent'
 import { EventScene, EventType } from '../event/Event'
+import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import PageEvent from '../event/PageEvent'
 import HybridCustomEvent from '../event/hybrid/HybridCustomEvent'
 import HybridPageEvent from '../event/hybrid/HybridPageEvent'
 import HybridViewElementEvent from '../event/hybrid/HybridViewElementEvent'
-import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
+import { SaaSEvarEvent, SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
 import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import { ConfigMode } from '../interfaces/GrowingConfig'
@@ -181,20 +181,7 @@ export default class Hybrid {
         AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
       } else if (this.context.config.mode == ConfigMode.SaaS) {
         // hybridAutotrackEnabled == false，集成埋点SDK对应的Hybrid JS SDK: gio_hybrid_track.js
-        let t: string = String(event.t ?? '')
-        // 暂不支持evar/vstr
-        if (t == 'cstm') {
-          let eventName: string = event.n as string
-          let attributes: AttributesType = event.var as (AttributesType | undefined) ?? {}
-          let e = CustomEvent.create(eventName, attributes, this.context)
-          AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
-        } else if (t == 'ppl') {
-          let attributes: AttributesType = event.var as (AttributesType | undefined) ?? {}
-          if (Object.keys(attributes).length > 0) {
-            let e = LoginUserAttributesEvent.create(attributes, this.context)
-            AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
-          }
-        }
+        SaaSHybridTrackEventHandler.eventHandler(event, this.context)
       }
     } catch (e) {
       LogUtil.error(() => "Failed to dispatch event. code = " + e.code + ", message = " + e.message)
@@ -263,25 +250,7 @@ class SaaSHybrid {
 
       let event: Record<string, Object> = JSON.parse(eventString)
       let eventType: string = event.t as string
-      if (eventType == 'cstm') {
-        let p = String(event.p ?? '')
-        let lastPage = PageEvent.getLastPage(this.context)
-        if (lastPage) {
-          p = (lastPage.path ?? '') + '::' + p
-        }
-        let d = AppInfo.domain + '::' + String(event.d ?? '')
-        let e = HybridCustomEvent.create(
-          event.n as string,
-          event.var as AttributesType,
-          p,
-          event.q as string,
-          event.tm as number,
-          d,
-          this.context
-        )
-        e.pageShowTimestamp = event.ptm as number
-        AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
-      } else if (eventType == 'page') {
+      if (eventType == 'page') {
         let p = String(event.p ?? '')
         let rp = String(event.rp ?? '')
         let tl = String(event.tl ?? '')
@@ -304,10 +273,9 @@ class SaaSHybrid {
           this.context
         )
         AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
-      } else if (eventType == 'ppl') {
-        let e = LoginUserAttributesEvent.create(event.var as AttributesType, this.context)
-        e.domain = e.domain + '::' + String(event.d ?? '')
-        AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
+      } else {
+        // 埋点事件
+        SaaSHybridTrackEventHandler.eventHandler(event, this.context)
       }
     } catch (e) {
       LogUtil.error(() => "Failed to save hybrid event. code = " + e.code + ", message = " + e.message)
@@ -338,5 +306,47 @@ class SaaSHybrid {
 
   onDOMChanged = (): void => {
     // LogUtil.info(() => "[SaaS] [Hybrid] onDOMChanged")
+  }
+}
+
+class SaaSHybridTrackEventHandler {
+  static eventHandler(event: Record<string, Object>, context: GrowingContext) {
+    let t: string = String(event.t ?? '')
+    let attributes: AttributesType = event.var as (AttributesType | undefined) ?? {}
+    if (t == 'cstm') {
+      let eventName: string = event.n as string
+      if (eventName.length > 0) {
+        let p = String(event.p ?? '')
+        let lastPage = PageEvent.getLastPage(context)
+        if (lastPage) {
+          p = (lastPage.path ?? '') + '::' + p
+        }
+        let d = AppInfo.domain + '::' + String(event.d ?? '')
+        let e = HybridCustomEvent.create(
+          eventName,
+          attributes,
+          p,
+          event.q as string,
+          event.tm as number,
+          d,
+          context)
+        e.pageShowTimestamp = event.ptm as number
+        AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
+      }
+    } else if (Object.keys(attributes).length > 0) {
+      if (t == 'ppl') {
+        let e = LoginUserAttributesEvent.create(attributes, context)
+        e.domain = e.domain + '::' + String(event.d ?? '')
+        AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
+      } else if (t == 'evar') {
+        let e = SaaSEvarEvent.create(attributes, context)
+        e.domain = e.domain + '::' + String(event.d ?? '')
+        AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
+      } else if (t == 'vstr') {
+        let e = SaaSVisitorEvent.create(attributes, context)
+        e.domain = e.domain + '::' + String(event.d ?? '')
+        AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
+      }
+    }
   }
 }

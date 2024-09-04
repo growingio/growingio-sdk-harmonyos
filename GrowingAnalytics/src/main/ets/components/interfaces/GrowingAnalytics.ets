@@ -43,6 +43,11 @@ export interface GrowingAnalyticsInterface {
   clearTrackTimer(): void
 
   createHybridProxy(controller: webview.WebviewController): GrowingJSProxyType | undefined
+
+  // mode SaaS
+  setPeopleVariable(attributes: GrowingAttrType): void
+  setEvar(attributes: GrowingAttrType): void
+  setVisitor(attributes: GrowingAttrType): void
 }
 
 export class GrowingAnalytics {
@@ -186,6 +191,18 @@ export class GrowingAnalytics {
 
   static cleanLocation() {
     AnalyticsCore.setLocation(0, 0)
+  }
+
+  static setPeopleVariable(attributes: GrowingAttrType) {
+    AnalyticsCore.core.setPeopleVariable(attributes)
+  }
+
+  static setEvar(attributes: GrowingAttrType) {
+    AnalyticsCore.core.setEvar(attributes)
+  }
+
+  static setVisitor(attributes: GrowingAttrType) {
+    AnalyticsCore.core.setVisitor(attributes)
   }
 
   static trackFlutterPage(argument: Map<string, Object>) {
