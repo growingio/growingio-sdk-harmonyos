@@ -21,6 +21,7 @@ import AnalyticsCore, { SDK_VERSION } from './AnalyticsCore'
 import AppInfo from './AppInfo'
 import GrowingContext from './Context'
 import DeviceInfo, { SDK_PLATFORM } from './DeviceInfo'
+import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import { EventScene, EventType } from '../event/Event'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
@@ -96,6 +97,17 @@ export default class Hybrid {
       }
       scripts.push({
         script: 'window._vds_hybrid_config = ' + JSON.stringify(config), scriptRules: scriptRules
+      })
+
+      let nativeInfo: AttributesType = {
+        ai: context.config.accountId,
+        d: AppInfo.domain,
+        u: DeviceInfo.deviceId,
+        s: Session.getSessionId(context) ?? '',
+        cs1:  UserIdentifier.getUser(context)?.userId ?? ''
+      }
+      scripts.push({
+        script: 'window._vds_hybrid_native_info = ' + JSON.stringify(nativeInfo), scriptRules: scriptRules
       })
     }
     return scripts
