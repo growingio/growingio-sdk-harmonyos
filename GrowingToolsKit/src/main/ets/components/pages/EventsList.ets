@@ -172,7 +172,7 @@ export default struct EventsList {
             })
           }
         }
-      }, (event: EventPersistence | string) => typeof event == 'string' ? event : event.uuid)
+      }, (event: EventPersistence | string) => typeof event == 'string' ? event : event.uuid + String(event.isSend))
     }
     .width('100%')
     .height('100%')
