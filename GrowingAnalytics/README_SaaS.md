@@ -431,10 +431,10 @@ static javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem>
 
 ##### 参数说明
 
-| 参数    | 参数类型      | 说明                         |
-| ------- |-----------| -------------------------- |
-| `hashTagEnabled` | `boolean` | 设置是否启用 Hash Tag |
-| `impEnabled` | `boolean` | 设置是否发送元素的展现次数（浏览量、曝光量） |
+| 参数    | 参数类型      | 默认值                      | 说明 |
+| ------- |-----------| -------------------------- | ------- |
+| `hashTagEnabled` | `boolean` | false | 设置是否启用 Hash Tag |
+| `impEnabled` | `boolean` | false | 设置是否发送元素的展现次数（浏览量、曝光量） |
 
 ##### 示例
 
@@ -445,10 +445,7 @@ Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
   .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
-  .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart(['*'], {
-    hashTagEnabled: true,
-    impEnabled: true
-  }))
+  .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart())
   .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd())
 ```
 
