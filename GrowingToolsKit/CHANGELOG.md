@@ -1,4 +1,4 @@
-# [1.0.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.0.0) (2024-xx-xx)
+# [1.0.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.0.0) (2024-09-10)
 
 ### Features
 
