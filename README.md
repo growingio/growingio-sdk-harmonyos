@@ -1,1 +1,1 @@
-./library/README.md
+./GrowingAnalytics/README.md

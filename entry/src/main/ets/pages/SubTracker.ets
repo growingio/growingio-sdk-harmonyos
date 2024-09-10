@@ -20,8 +20,13 @@ struct SubTracker {
       Button('createSubTracker')
         .onClick(() => {
           let trackerId = this.createSubTracker()
-          this.curTrackerId = trackerId
-          this.trackerIds = [trackerId, ...this.trackerIds]
+          if (trackerId.length > 0) {
+            this.curTrackerId = trackerId
+            if (this.trackerIds.includes(trackerId)) {
+              return
+            }
+            this.trackerIds = [trackerId, ...this.trackerIds]
+          }
         }).margin({ top: 15 })
       Toggle({ type: ToggleType.Button, isOn: true }) {
         Text('setDataCollectionEnabled')
@@ -46,10 +51,20 @@ struct SubTracker {
           }
           Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track', {'trackerId': this.curTrackerId})
         }).margin({ top: 15 })
-      Button('loginUserAttributes')
-        .onClick(() => {
-          this.loginUserAttributes()
-        }).margin({ top: 15 })
+      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+        Button('loginUserAttributes')
+          .onClick(() => {
+            this.loginUserAttributes()
+          }).margin({ top: 15 })
+        Button('setEvar(SaaS)')
+          .onClick(() => {
+            this.setEvar()
+          }).margin({ top: 15 })
+        Button('setVisitor(SaaS)')
+          .onClick(() => {
+            this.setVisitor()
+          }).margin({ top: 15 })
+      }
       Button('trackTimer')
         .onClick(() => {
           if (this.curTrackerId.length == 0) {
@@ -100,7 +115,7 @@ struct SubTracker {
     config.dataUploadInterval = 15
     config.idMappingEnabled = true
     GrowingAnalytics.startSubTracker(trackerId, config)
-    return trackerId
+    return GrowingAnalytics.tracker(trackerId).isInitializedSuccessfully() ? trackerId : ''
   }
 
   setDataCollectionEnabled(enabled: boolean) {
@@ -119,6 +134,20 @@ struct SubTracker {
   loginUserAttributes() {
     this.subTracker().setLoginUserAttributes({
       'name': 'ben',
+      'age': 30
+    })
+  }
+
+  setEvar() {
+    this.subTracker().setEvar({
+      'product': 'apple',
+      'age': 30
+    })
+  }
+
+  setVisitor() {
+    this.subTracker().setVisitor({
+      'visitor': 'david',
       'age': 30
     })
   }

@@ -20,8 +20,8 @@ struct TrackTimer {
         Text('trackerId = ' + this.getTrackerId())
       }
       Button('trackTimerStart')
-        .onClick(async () => {
-          let timerId = await this.trackTimerStart()
+        .onClick(() => {
+          let timerId = this.trackTimerStart()
           this.curTimerId = timerId
           this.timerIds = [timerId, ...this.timerIds]
         }).margin({ top: 15 })
@@ -84,12 +84,12 @@ struct TrackTimer {
     return ''
   }
 
-  async trackTimerStart() {
+  trackTimerStart() {
     let trackerId = this.getTrackerId()
     if (trackerId && trackerId.length > 0) {
-      return await this.subTracker().trackTimerStart("timer")
+      return this.subTracker().trackTimerStart("timer")
     } else {
-      return await GrowingAnalytics.trackTimerStart("timer")
+      return GrowingAnalytics.trackTimerStart("timer")
     }
   }
 

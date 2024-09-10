@@ -1,0 +1,26 @@
+{
+  "types": "",
+  "keywords": [
+    "analytics",
+    "data-analysis",
+    "marketing-automation",
+    "openHarmony",
+    "HarmonyOS",
+    "GrowingIO"
+  ],
+  "author": "GrowingIO",
+  "description": "GrowingAnalytics for HarmonyOS NEXT SDK.",
+  "main": "index.ets",
+  "type": "module",
+  "repository": "https://github.com/growingio/growingio-sdk-harmonyos",
+  "version": "2.0.0",
+  "dependencies": {
+    "snappyjs": "^0.7.0"
+  },
+  "tags": [
+    "Tool"
+  ],
+  "license": "Apache License 2.0",
+  "devDependencies": {},
+  "name": "@growingio/analytics"
+}

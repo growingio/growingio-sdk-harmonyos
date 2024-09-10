@@ -1,6 +1,7 @@
 import AbilityStage from '@ohos.app.ability.AbilityStage'
 import type Want from '@ohos.app.ability.Want'
 import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
+import { GrowingToolsKit } from '@growingio/tools'
 
 export default class EntryAbilityStage extends AbilityStage {
   onCreate(): void {
@@ -12,7 +13,7 @@ export default class EntryAbilityStage extends AbilityStage {
     return 'EntryAbilityStage'
   }
 
-  async startAnalytics() {
+  startAnalytics() {
     // 在初始化 SDK 之前，可配置通用属性
     // GrowingAnalytics.setGeneralProps({ 'defaultProps':'good' })
     // let count = 0
@@ -34,8 +35,10 @@ export default class EntryAbilityStage extends AbilityStage {
     config.dataUploadInterval = 15
     config.idMappingEnabled = true
     config.requestOptions.connectTimeout = 10
-    config.requestOptions.readTimeout = 10
-    await GrowingAnalytics.start(this.context, config)
+    config.requestOptions.transferTimeout = 10
+    config.autotrackAllPages = true
+    config.plugins = [new GrowingToolsKit()]
+    GrowingAnalytics.start(this.context, config)
 
     // ---------------- CDP ----------------
 
@@ -50,8 +53,10 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.dataUploadInterval = 15
     // config.idMappingEnabled = true
     // config.requestOptions.connectTimeout = 10
-    // config.requestOptions.readTimeout = 10
-    // await GrowingAnalytics.start(this.context, config)
+    // config.requestOptions.transferTimeout = 10
+    // config.autotrackAllPages = true
+    // config.plugins = [new GrowingToolsKit()]
+    // GrowingAnalytics.start(this.context, config)
 
     // ---------------- SaaS ----------------
 
@@ -63,7 +68,9 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.sessionInterval = 30
     // config.dataUploadInterval = 15
     // config.requestOptions.connectTimeout = 10
-    // config.requestOptions.readTimeout = 10
-    // await GrowingAnalytics.start(this.context, config)
+    // config.requestOptions.transferTimeout = 10
+    // config.autotrackAllPages = true
+    // config.plugins = [new GrowingToolsKit()]
+    // GrowingAnalytics.start(this.context, config)
   }
 }

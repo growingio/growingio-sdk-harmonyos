@@ -1,0 +1,112 @@
+/**
+ * @license
+ * Copyright (C) 2024 Beijing Yishu Technology Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import UIAbility from '@ohos.app.ability.UIAbility'
+import window from '@ohos.window'
+import rcp from '@hms.collaboration.rcp'
+import { GrowingConfig } from '../interfaces/GrowingConfig'
+import EventPersistence from '../event/EventPersistence'
+
+export interface PluginsInterface {
+  onSDKWillInitialize?(): void
+  onSDKDidInitialize?(config: GrowingConfig, version: string): void
+  onStartSubTracker?(trackerId: string, config: GrowingConfig): void
+  onWindowStageCreate?(ability: UIAbility, windowStage: window.WindowStage): void
+  onEventWroteToDisk?(event: EventPersistence, eventScene: number): void
+  onEventsRemoveFromDisk?(events: string[]): void
+  onResponseReceive?(response: rcp.Response): void
+}
+
+export default class Plugins {
+  static plugins: Array<PluginsInterface> = []
+
+  static registerPlugins(plugins: PluginsInterface[]) {
+    plugins.forEach(plugin => {
+      Plugins.registerPlugin(plugin)
+    })
+  }
+
+  static registerPlugin(plugin: PluginsInterface) {
+    let hasPlugin: boolean = false
+    for (let i = 0; i < Plugins.plugins.length; i++) {
+      if (typeof Plugins.plugins[i] == typeof plugin) {
+        hasPlugin = true
+        break
+      }
+    }
+    if (hasPlugin) {
+      return
+    }
+    Plugins.plugins.push(plugin)
+  }
+
+  static onSDKWillInitialize() {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onSDKWillInitialize) {
+        plugin.onSDKWillInitialize()
+      }
+    })
+  }
+
+  static onSDKDidInitialize(config: GrowingConfig, version: string) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onSDKDidInitialize) {
+        plugin.onSDKDidInitialize(config, version)
+      }
+    })
+  }
+
+  static onStartSubTracker(trackerId: string, config: GrowingConfig) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onStartSubTracker) {
+        plugin.onStartSubTracker(trackerId, config)
+      }
+    })
+  }
+
+  static onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onWindowStageCreate) {
+        plugin.onWindowStageCreate(ability, windowStage)
+      }
+    })
+  }
+
+  static onEventWroteToDisk(event: EventPersistence, eventScene: number) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onEventWroteToDisk) {
+        plugin.onEventWroteToDisk(event, eventScene)
+      }
+    })
+  }
+
+  static onEventsRemoveFromDisk(events: string[]) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onEventsRemoveFromDisk) {
+        plugin.onEventsRemoveFromDisk(events)
+      }
+    })
+  }
+
+  static onResponseReceive(response: rcp.Response) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onResponseReceive) {
+        plugin.onResponseReceive(response)
+      }
+    })
+  }
+}
