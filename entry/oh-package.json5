@@ -6,8 +6,8 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "@growingio/analytics": "file:../GrowingAnalytics",
-    "@growingio/tools": "file:../GrowingToolsKit"
+    "@growingio/analytics": "^2.0.0",
+    "@growingio/tools": "^1.0.0",
   },
   "devDependencies": {}
 }

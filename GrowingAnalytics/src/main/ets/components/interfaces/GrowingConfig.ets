@@ -17,6 +17,7 @@
 
 import { PluginsInterface } from '../plugins/Plugins'
 
+@Sendable
 class RequestOptions {
   _connectTimeout: number = 30 * 1000
   _transferTimeout: number = 30 * 1000
@@ -53,6 +54,7 @@ export enum ConfigMode {
   CDP
 }
 
+@Sendable
 export class GrowingConfig {
   mode: ConfigMode = ConfigMode.NewSaaS
   accountId: string = ''
@@ -72,7 +74,7 @@ export class GrowingConfig {
   hybridAutotrackEnabled: boolean = true
   autotrackEnabled: boolean = true
   autotrackAllPages: boolean = false
-  plugins: Array<PluginsInterface> = []
+  plugins: collections.Array<PluginsInterface> = new collections.Array<PluginsInterface>()
 
   constructor() {}
 

@@ -5,3 +5,6 @@ export default class Util_TS {
     })
   }
 }
+
+export type ValueType = string | number | boolean | string[] | number[] | boolean[]
+export type AttributesType = { [key: string]: ValueType }

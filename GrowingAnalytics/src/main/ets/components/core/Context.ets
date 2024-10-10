@@ -16,14 +16,17 @@
  */
 
 import EventSender, { EventSenderType } from '../event/EventSender'
+import collections from '@arkts.collections'
+
 import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
 import { MAIN_TRACKER_ID } from '../utils/Constants'
 
+@Sendable
 export default class GrowingContext {
   trackerId: string
   config: GrowingConfig
-  eventSender: EventSender[] = []
-  static contexts: Map<string, GrowingContext> = new Map()
+  eventSender: collections.Array<EventSender> = new collections.Array<EventSender>()
+  static contexts: collections.Map<string, GrowingContext> = new collections.Map<string, GrowingContext>()
   static defaultContext: GrowingContext | undefined = undefined
 
   constructor(trackerId: string, config: GrowingConfig) {

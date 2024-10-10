@@ -33,7 +33,7 @@ export default class ViewElementEvent extends Event {
     xcontent: string,
     index: number,
     attributes: AttributesType,
-    eventType: EventType,
+    eventType: string,
     context: GrowingContext
   ): ViewElementEvent {
     let event = new ViewElementEvent()

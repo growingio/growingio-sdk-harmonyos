@@ -16,6 +16,7 @@
  */
 
 import webview from '@ohos.web.webview'
+import lang from '@arkts.lang'
 
 import { GrowingConfig } from './GrowingConfig'
 import AnalyticsCore from '../core/AnalyticsCore'
@@ -25,9 +26,9 @@ import { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProx
   SaaSJavaScriptConfigType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
-export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
+"use shared"
 
-export interface GrowingAnalyticsInterface {
+export interface GrowingAnalyticsInterface extends lang.ISendable {
   isInitializedSuccessfully(): boolean
   setDataCollectionEnabled(enabled: boolean): void
   setLoginUserId(userId: string, userKey?: string): void
@@ -50,6 +51,7 @@ export interface GrowingAnalyticsInterface {
   setVisitor(attributes: GrowingAttrType): void
 }
 
+@Sendable
 export class GrowingAnalytics {
   static start(context: Context, configuration: GrowingConfig) {
     if (GrowingAnalytics.isInitializedSuccessfully()) {

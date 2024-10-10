@@ -1,7 +1,9 @@
-import { GrowingAnalytics, GrowingAnalyticsInterface, GrowingAttrType } from '@growingio/analytics'
+import { GrowingAnalytics, GrowingAnalyticsInterface } from '@growingio/analytics'
 import AppContext from '@ohos.app.ability.common'
 import Util from '../Util'
 import router from '@ohos.router'
+import { taskpool } from '@kit.ArkTS'
+import { AttributesType } from '../Util_TS'
 
 type ValueType = string | number | boolean | string[] | number[] | boolean[]
 let storage: LocalStorage = LocalStorage.getShared()
@@ -55,6 +57,11 @@ struct Track {
         .onClick(() => {
           this.track()
         }).margin({ top: 15 })
+      Button('trackTaskpool')
+        .onClick(async () => {
+          let task: taskpool.Task = new taskpool.Task(taskFunc, GrowingAnalytics)
+          await taskpool.execute(task)
+        }).margin({ top: 15 })
       Button('Back')
         .onClick(() => {
           // let context = getContext(this) as AppContext.UIAbilityContext
@@ -76,7 +83,7 @@ struct Track {
   }
 
   track() {
-    let attributes: GrowingAttrType = {}
+    let attributes: AttributesType = {}
     this.attributesK.forEach((k, i) => {
       if (k.length == 0) {
         return
@@ -108,4 +115,9 @@ struct Track {
   subTracker(): GrowingAnalyticsInterface {
     return GrowingAnalytics.tracker(this.getTrackerId()) as GrowingAnalyticsInterface
   }
+}
+
+@Concurrent
+async function taskFunc(growingio: GrowingAnalytics) {
+  GrowingAnalytics.track('xxxxxxxxxxx')
 }

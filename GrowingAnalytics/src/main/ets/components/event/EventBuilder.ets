@@ -16,7 +16,7 @@
  */
 
 import Event from './Event'
-import AnalyticsCore, { SDK_VERSION } from '../core/AnalyticsCore'
+import AnalyticsCore from '../core/AnalyticsCore'
 import AppInfo from '../core/AppInfo'
 import DeviceInfo from '../core/DeviceInfo'
 import GrowingContext from '../core/Context'
@@ -27,6 +27,8 @@ import { PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 
+import { HAR_VERSION } from '../../../../../BuildProfile'
+
 export default class EventBuilder {
   private static _eventSequenceIds: Record<string, number>
 
@@ -34,7 +36,7 @@ export default class EventBuilder {
     event.sessionId = Session.getSessionId(context)!
     event.appState = Session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
     event.timestamp = event.timestamp > 0 ? event.timestamp : Date.now()
-    event.sdkVersion = SDK_VERSION
+    event.sdkVersion = HAR_VERSION
 
     // device info
     event.deviceId = DeviceInfo.deviceId

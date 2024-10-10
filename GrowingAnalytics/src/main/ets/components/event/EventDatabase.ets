@@ -17,6 +17,7 @@
 
 import relationalStore from '@ohos.data.relationalStore'
 import emitter from '@ohos.events.emitter'
+import collections from '@arkts.collections'
 
 import EventPersistence from './EventPersistence'
 import GrowingContext from '../core/Context'
@@ -114,7 +115,7 @@ export default class EventDatabase {
     count: number,
     size: number,
     context: GrowingContext,
-    eventTypes?: string[]
+    eventTypes?: collections.Array<string>
   ): Promise<EventPersistence[]> {
     let events: EventPersistence[] = []
 
@@ -125,7 +126,11 @@ export default class EventDatabase {
     try {
       let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
       if (eventTypes && eventTypes.length > 0) {
-        predicates.in('TYPE', eventTypes)
+        let types: string[] = []
+        eventTypes.forEach(v => {
+          types.push(v)
+        })
+        predicates.in('TYPE', types)
       }
       predicates.orderByAsc('CREATE_AT')
       predicates.equalTo('ACCOUNT_ID', context.config.accountId)
@@ -170,7 +175,7 @@ export default class EventDatabase {
     }
   }
 
-  static async countOfEvents(context: GrowingContext, eventTypes?: string[]): Promise<number> {
+  static async countOfEvents(context: GrowingContext, eventTypes?: collections.Array<string>): Promise<number> {
     if (!EventDatabase.store) {
       return 0
     }
@@ -179,7 +184,11 @@ export default class EventDatabase {
     try {
       let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
       if (eventTypes && eventTypes.length > 0) {
-        predicates.in('TYPE', eventTypes)
+        let types: string[] = []
+        eventTypes.forEach(v => {
+          types.push(v)
+        })
+        predicates.in('TYPE', types)
       }
       predicates.equalTo('ACCOUNT_ID', context.config.accountId)
       predicates.equalTo('DATASOURCE_ID', context.config.dataSourceId)

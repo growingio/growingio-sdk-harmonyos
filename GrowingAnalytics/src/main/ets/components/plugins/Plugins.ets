@@ -18,10 +18,13 @@
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
+import lang from '@arkts.lang'
+import collections from '@arkts.collections'
+
 import { GrowingConfig } from '../interfaces/GrowingConfig'
 import EventPersistence from '../event/EventPersistence'
 
-export interface PluginsInterface {
+export interface PluginsInterface extends lang.ISendable {
   onSDKWillInitialize?(): void
   onSDKDidInitialize?(config: GrowingConfig, version: string): void
   onStartSubTracker?(trackerId: string, config: GrowingConfig): void
@@ -32,9 +35,9 @@ export interface PluginsInterface {
 }
 
 export default class Plugins {
-  static plugins: Array<PluginsInterface> = []
+  static plugins: collections.Array<PluginsInterface> = new collections.Array<PluginsInterface>()
 
-  static registerPlugins(plugins: PluginsInterface[]) {
+  static registerPlugins(plugins: collections.Array<PluginsInterface>) {
     plugins.forEach(plugin => {
       Plugins.registerPlugin(plugin)
     })

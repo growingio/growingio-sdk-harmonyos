@@ -45,6 +45,17 @@ export type SaaSJavaScriptConfigType = {
   hashTagEnabled: boolean;
   impEnabled: boolean;
 }
+export enum EventSenderType {
+  NewSaaS = 0,
+  SaaS_PV = 1,
+  SaaS_CSTM = 2
+}
+
+export enum ConfigMode {
+  NewSaaS = 0,
+  SaaS = 1,
+  CDP = 2
+}
 
 export const EMIT_EVENT_MAIN_TRACKER_INITIALIZE = 1
 export const EMIT_EVENT_SESSION_STATE_FOREGROUND = 2

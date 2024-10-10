@@ -17,7 +17,7 @@
 
 import webview from '@ohos.web.webview'
 
-import AnalyticsCore, { SDK_VERSION } from './AnalyticsCore'
+import AnalyticsCore from './AnalyticsCore'
 import AppInfo from './AppInfo'
 import GrowingContext from './Context'
 import DeviceInfo, { SDK_PLATFORM } from './DeviceInfo'
@@ -34,6 +34,8 @@ import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '.
 import { LogUtil } from '../utils/LogUtil'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import SaaSPageVarEvent from '../event/saas/SaaSPageVarEvent'
+
+import { HAR_VERSION } from '../../../../../BuildProfile'
 
 export default class Hybrid {
   name: string = 'GrowingWebViewJavascriptBridge'
@@ -62,7 +64,7 @@ export default class Hybrid {
       "dataSourceId": context.config.dataSourceId,
       "appPackage": AppInfo.domain,
       "appId": context.config.urlScheme,
-      "nativeSdkVersion": SDK_VERSION,
+      "nativeSdkVersion": HAR_VERSION,
       "nativeSdkVersionCode": 1
     })
   }
@@ -119,7 +121,7 @@ export default class Hybrid {
   ): Array<ScriptItem> {
     let scripts: Array<ScriptItem> = []
     if (context.config.mode == ConfigMode.SaaS && context.config.hybridAutotrackEnabled) {
-      let sdkVersion = SDK_VERSION
+      let sdkVersion = HAR_VERSION
       let sdkPlatform = SDK_PLATFORM
       let hybridSrc = 'https://assets.giocdn.com/sdk/hybrid/2.0/gio_hybrid.min.js?sdkVer='
         + sdkVersion + '&platform=' + sdkPlatform

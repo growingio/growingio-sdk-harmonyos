@@ -37,7 +37,7 @@ export default abstract class Event {
   urlScheme: string = ''
   attributes: AttributesType | undefined = undefined
 
-  eventType: EventType = EventType.Visit
+  eventType: string = EventType.Visit
 
   // deviceInfo
   deviceId: string = ''
@@ -70,19 +70,20 @@ export default abstract class Event {
   }
 }
 
-export enum EventType {
-  Visit = 'VISIT',
-  Custom = 'CUSTOM',
-  LoginUserAttributes = 'LOGIN_USER_ATTRIBUTES',
-  Page = 'PAGE',
-  ViewClick = 'VIEW_CLICK',
-  ViewChange = 'VIEW_CHANGE',
-  AppClosed = 'APP_CLOSED',
+@Sendable
+export class EventType {
+  static Visit: string = 'VISIT'
+  static Custom: string = 'CUSTOM'
+  static LoginUserAttributes: string = 'LOGIN_USER_ATTRIBUTES'
+  static Page: string = 'PAGE'
+  static ViewClick: string = 'VIEW_CLICK'
+  static ViewChange: string = 'VIEW_CHANGE'
+  static AppClosed: string = 'APP_CLOSED'
 
   // mode SaaS
-  SaaS_Evar = 'evar',
-  SaaS_Vstr = 'vstr',
-  SaaS_Pvar = 'pvar',
+  static SaaS_Evar: string = 'evar'
+  static SaaS_Vstr: string = 'vstr'
+  static SaaS_Pvar: string = 'pvar'
 }
 
 export enum EventScene {

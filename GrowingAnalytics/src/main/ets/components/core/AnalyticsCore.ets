@@ -21,6 +21,7 @@ import UIAbility from '@ohos.app.ability.UIAbility'
 import emitter from '@ohos.events.emitter'
 import window from '@ohos.window'
 import webview from '@ohos.web.webview'
+import collections from '@arkts.collections'
 
 import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
 import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
@@ -50,21 +51,21 @@ import DummyTracker from './DummyTracker'
 import { HAR_VERSION } from '../../../../../BuildProfile'
 import Plugins from '../plugins/Plugins'
 
+@Sendable
 class Location {
   latitude: number = 0
   longitude: number = 0
 }
 
-export const SDK_VERSION: string = HAR_VERSION
-
+@Sendable
 export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static core: AnalyticsCore | DummyTracker = new DummyTracker()
-  static trackers: Array<AnalyticsCore> = []
+  static trackers: collections.Array<AnalyticsCore> = new collections.Array<AnalyticsCore>()
   static dummyTracker: DummyTracker = new DummyTracker()
   static location: Location = new Location()
   context: GrowingContext
   private _isInitializedSuccessfully: boolean = false
-  private static _mainWindowStage: window.WindowStage | undefined = undefined
+  private static alreadyAutotrackPage: boolean = false
 
   constructor(context: GrowingContext) {
     this.context = context
@@ -97,8 +98,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE
     })
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
-      + 'GrowingIO version: ' + SDK_VERSION)
-    Plugins.onSDKDidInitialize(config, SDK_VERSION)
+      + 'GrowingIO version: ' + HAR_VERSION)
+    Plugins.onSDKDidInitialize(config, HAR_VERSION)
     core._isInitializedSuccessfully = true
 
     if (config.autotrackEnabled && config.autotrackAllPages) {
@@ -143,11 +144,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       onAbilityCreate(ability: UIAbility) {
       },
       onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
-        if (AnalyticsCore._mainWindowStage != undefined) {
+        if (AnalyticsCore.alreadyAutotrackPage) {
           return
         }
 
-        AnalyticsCore._mainWindowStage = windowStage
+        AnalyticsCore.alreadyAutotrackPage = true
 
         if (gContext.config.autotrackEnabled) {
           windowStage.getMainWindow().then(window => {

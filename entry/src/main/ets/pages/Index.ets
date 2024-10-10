@@ -1,4 +1,4 @@
-import { GrowingAnalytics, GrowingAttrType } from '@growingio/analytics'
+import { GrowingAnalytics } from '@growingio/analytics'
 import Util from '../Util'
 
 @Entry

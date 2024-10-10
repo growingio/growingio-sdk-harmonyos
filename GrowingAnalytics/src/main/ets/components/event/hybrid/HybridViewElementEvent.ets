@@ -40,7 +40,7 @@ export default class HybridViewElementEvent extends Event implements HybridEvent
     query: string,
     timestamp: number,
     domain: string,
-    eventType: EventType,
+    eventType: string,
     context: GrowingContext
   ): HybridViewElementEvent {
     let event = new HybridViewElementEvent()
