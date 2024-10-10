@@ -15,58 +15,60 @@
  * limitations under the License.
  */
 
+import collections from '@arkts.collections'
+import lang from '@arkts.lang'
 import emitter from '@ohos.events.emitter'
 import EventDatabase from './EventDatabase'
 import Network from '../core/Network'
 import GrowingContext from '../core/Context'
-import { EMIT_EVENT_DATABASE_FLUSH, REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
+import { EMIT_EVENT_DATABASE_FLUSH, REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE, EventSenderType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import { EventType } from './Event'
 import Plugins from '../plugins/Plugins'
 
-const URL_PATH_NEW_SAAS = '/v3/projects/accountId/collect'
-const URL_PATH_SAAS_PV = '/v3/accountId/harmonyos/pv'
-const URL_PATH_SAAS_CSTM = '/v3/accountId/harmonyos/cstm'
+"use shared"
 
-export enum EventSenderType {
-  NewSaaS = 0,
-  SaaS_PV,
-  SaaS_CSTM
-}
+@Sendable
+export class EventSender {
+  URL_PATH_NEW_SAAS: string = '/v3/projects/accountId/collect'
+  URL_PATH_SAAS_PV: string = '/v3/accountId/harmonyos/pv'
+  URL_PATH_SAAS_CSTM: string = '/v3/accountId/harmonyos/cstm'
 
-export default class EventSender {
   urlPath: string
   trackerId: string
-  eventTypes: string[] | undefined = undefined
+  eventTypes: collections.Array<string> | undefined = undefined
   isUploading: boolean = false
 
-  constructor(type: EventSenderType, trackerId: string) {
+  constructor(type: number, trackerId: string) {
     this.trackerId = trackerId
     switch (type) {
       case EventSenderType.NewSaaS:
-        this.urlPath = URL_PATH_NEW_SAAS
+        this.urlPath = this.URL_PATH_NEW_SAAS
         // 保证首个VISIT及时发送
         emitter.once({eventId: EMIT_EVENT_DATABASE_FLUSH}, () => {
           this.sendEvent()
         })
         break
       case EventSenderType.SaaS_PV:
-        this.urlPath = URL_PATH_SAAS_PV
-        this.eventTypes = [EventType.Visit, EventType.Page, EventType.AppClosed]
+        this.urlPath = this.URL_PATH_SAAS_PV
+        this.eventTypes = collections.Array.from([EventType.Visit, EventType.Page, EventType.AppClosed])
         // 保证首个VISIT及时发送
         emitter.once({eventId: EMIT_EVENT_DATABASE_FLUSH}, () => {
           this.sendEvent()
         })
         break
       case EventSenderType.SaaS_CSTM:
-        this.urlPath = URL_PATH_SAAS_CSTM
-        this.eventTypes = [
+        this.urlPath = this.URL_PATH_SAAS_CSTM
+        this.eventTypes = collections.Array.from([
           EventType.Custom,
           EventType.LoginUserAttributes,
           EventType.SaaS_Evar,
           EventType.SaaS_Vstr,
           EventType.SaaS_Pvar
-        ]
+        ])
+        break
+      default:
+        this.urlPath = this.URL_PATH_NEW_SAAS
         break
     }
   }

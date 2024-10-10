@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 
+import collections from '@arkts.collections'
+
 import { PluginsInterface } from '../plugins/Plugins'
+import { ConfigMode } from '../utils/Constants'
+export { ConfigMode } from '../utils/Constants'
 
 @Sendable
 class RequestOptions {
@@ -48,15 +52,9 @@ class RequestOptions {
   }
 }
 
-export enum ConfigMode {
-  NewSaaS = 0,
-  SaaS,
-  CDP
-}
-
 @Sendable
 export class GrowingConfig {
-  mode: ConfigMode = ConfigMode.NewSaaS
+  mode: number = ConfigMode.NewSaaS
   accountId: string = ''
   dataSourceId: string = ''
   dataCollectionServerHost: string = ''
@@ -192,7 +190,7 @@ export class GrowingConfig {
     config.hybridAutotrackEnabled = this.hybridAutotrackEnabled
     config.autotrackEnabled = this.autotrackEnabled
     config.autotrackAllPages = this.autotrackAllPages
-    config.plugins = [...this.plugins]
+    config.plugins = collections.Array.from(this.plugins)
 
     return config
   }

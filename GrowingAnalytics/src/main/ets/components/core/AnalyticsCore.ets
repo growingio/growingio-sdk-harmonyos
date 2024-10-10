@@ -37,7 +37,7 @@ import CustomEvent from '../event/CustomEvent'
 import Event, { EventScene, EventType } from '../event/Event'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
-import EventSender from '../event/EventSender'
+import { EventSender } from '../event/EventSender'
 import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import { SaaSEvarEvent, SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
 import Network from './Network'
@@ -50,6 +50,8 @@ import Util from '../utils/Util'
 import DummyTracker from './DummyTracker'
 import { HAR_VERSION } from '../../../../../BuildProfile'
 import Plugins from '../plugins/Plugins'
+
+"use shared"
 
 @Sendable
 class Location {
@@ -288,6 +290,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     trackers.forEach(trackerId => {
       let tracker = AnalyticsCore.tracker(trackerId)
       if (!tracker.isInitializedSuccessfully()) {
+        return
+      }
+      if (!(tracker instanceof AnalyticsCore)) {
         return
       }
       if (!(tracker as AnalyticsCore).context.config.dataCollectionEnabled) {

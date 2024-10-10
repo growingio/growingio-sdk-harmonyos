@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
-import EventSender, { EventSenderType } from '../event/EventSender'
 import collections from '@arkts.collections'
 
+import { EventSender } from '../event/EventSender'
 import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
-import { MAIN_TRACKER_ID } from '../utils/Constants'
+import { MAIN_TRACKER_ID, EventSenderType } from '../utils/Constants'
+
+"use shared"
 
 @Sendable
 export default class GrowingContext {
