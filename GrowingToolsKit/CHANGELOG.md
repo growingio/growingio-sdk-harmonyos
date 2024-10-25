@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.0.1) (2024-10-25)
+
+### Bug Fixes 修复
+
+* fix: 替换已废弃的接口 util.TextDecoder().decodeWithStream
+
 # [1.0.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.0.0) (2024-09-10)
 
 ### Features
