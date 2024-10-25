@@ -34,11 +34,11 @@ export interface GrowingAnalyticsInterface {
   cleanLoginUserId(): void
 
   setLoginUserAttributes(attributes: GrowingAttrType): void
-  track(eventName: string, attributes: GrowingAttrType, sendTo?: string[]): void
+  track(eventName: string, attributes?: GrowingAttrType, sendTo?: string[]): void
   trackTimerStart(eventName: string): string
   trackTimerPause(timerId: string): void
   trackTimerResume(timerId: string): void
-  trackTimerEnd(timerId: string, attributes: GrowingAttrType, sendTo?: string[]): void
+  trackTimerEnd(timerId: string, attributes?: GrowingAttrType, sendTo?: string[]): void
   removeTimer(timerId: string): void
   clearTrackTimer(): void
 
@@ -51,7 +51,7 @@ export interface GrowingAnalyticsInterface {
 }
 
 export class GrowingAnalytics {
-  static async start(context: Context, configuration: GrowingConfig): Promise<void> {
+  static start(context: Context, configuration: GrowingConfig) {
     if (GrowingAnalytics.isInitializedSuccessfully()) {
       LogUtil.warn(() => 'Do not initialize GrowingAnalytics repeatedly')
       return
@@ -132,7 +132,7 @@ export class GrowingAnalytics {
 
   static track(
     eventName: string,
-    attributes: GrowingAttrType = {},
+    attributes?: GrowingAttrType,
     sendTo?: string[]
   ) {
     AnalyticsCore.core.track(eventName, attributes, sendTo)
@@ -152,7 +152,7 @@ export class GrowingAnalytics {
 
   static trackTimerEnd(
     timerId: string,
-    attributes: GrowingAttrType = {},
+    attributes?: GrowingAttrType,
     sendTo?: string[]
   ) {
     AnalyticsCore.core.trackTimerEnd(timerId, attributes, sendTo)

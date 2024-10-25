@@ -59,7 +59,7 @@ export default class Util {
     }
 
     let decompressed = new Uint8Array(snappy.uncompress(serialize))
-    return new util.TextDecoder().decodeWithStream(decompressed)
+    return new util.TextDecoder().decodeToString(decompressed)
   }
 
   static decrypt(requestHeaders: string, serialize: ArrayBuffer, time: number): string | ArrayBuffer {
@@ -77,7 +77,7 @@ export default class Util {
     }
 
     if (isString) {
-      return new util.TextDecoder().decodeWithStream(decrypted)
+      return new util.TextDecoder().decodeToString(decrypted)
     } else {
       return buffer.from(decrypted).buffer
     }
