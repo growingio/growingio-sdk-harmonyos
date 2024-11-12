@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.1.0) (2024-11-22)
+
+### Features 功能
+
+* feat: 兼容 SDK 2.1.0(支持 protobuf 数据格式传输)
+
 ## [1.0.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.0.1) (2024-10-25)
 
 ### Bug Fixes 修复
