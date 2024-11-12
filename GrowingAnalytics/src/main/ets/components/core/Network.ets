@@ -35,15 +35,16 @@ export default class Network {
   }
 
   static generateRequest(time: number, url: string, events: EventPersistence[], context: GrowingContext): rcp.Request {
-    let serialize: string | ArrayBuffer = '[' + events.map(event => String(event.data)).join(',') + ']'
+    let useProtobuf = context.config.useProtobuf
+    let serialize = Util.toSerialize(useProtobuf, events)
     let headers: Record<string, string> = {
-      "Content-Type": "application/json",
+      "Content-Type": useProtobuf ? "application/protobuf" : "application/json",
       "Accept": "application/json",
       "X-Timestamp": time + ''
     }
 
     if (context.config.compressEnabled) {
-      serialize = Util.compress(serialize as string)
+      serialize = Util.compress(serialize)
       headers['X-Compress-Codec'] = '2'
     }
 

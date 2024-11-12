@@ -16,6 +16,7 @@
  */
 
 import rcp from '@hms.collaboration.rcp'
+import buffer from '@ohos.buffer'
 import util from '@ohos.util'
 
 class RequestPersistenceInfo {
@@ -145,7 +146,7 @@ class RequestPersistenceInfo {
 export default class RequestPersistence {
   info: RequestPersistenceInfo
   uuid: string = ''
-  requestBody: string | ArrayBuffer = ''
+  requestBody: ArrayBuffer = new ArrayBuffer(0)
   responseBody?: ArrayBuffer
 
   constructor(info: RequestPersistenceInfo) {
@@ -156,7 +157,12 @@ export default class RequestPersistence {
     let info = RequestPersistenceInfo.fromResponse(response)
     let r = new RequestPersistence(info)
     r.uuid = util.generateRandomUUID(false)
-    r.requestBody = response.request.content as string | ArrayBuffer
+    let requestBody = response.request.content as string | ArrayBuffer
+    // 兼容旧版本，可能使用 string 对象作为 requestBody
+    if (typeof requestBody == 'string') {
+      requestBody = buffer.from(requestBody, 'utf-8').buffer
+    }
+    r.requestBody = requestBody
     r.responseBody = response.body
     return r
   }
@@ -170,6 +176,10 @@ export default class RequestPersistence {
     let info = RequestPersistenceInfo.fromJsonString(infoByJsonString)
     let r = new RequestPersistence(info)
     r.uuid = uuid
+    // 兼容旧版本，可能使用 string 对象作为 requestBody
+    if (typeof requestBody == 'string') {
+      requestBody = buffer.from(requestBody, 'utf-8').buffer
+    }
     r.requestBody = requestBody
     r.responseBody = responseBody
     return r

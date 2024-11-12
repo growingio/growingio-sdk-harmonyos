@@ -72,6 +72,7 @@ export class GrowingConfig {
   hybridAutotrackEnabled: boolean = true
   autotrackEnabled: boolean = true
   autotrackAllPages: boolean = false
+  useProtobuf: boolean = true
   plugins: Array<PluginsInterface> = []
 
   constructor() {}
@@ -190,6 +191,7 @@ export class GrowingConfig {
     config.hybridAutotrackEnabled = this.hybridAutotrackEnabled
     config.autotrackEnabled = this.autotrackEnabled
     config.autotrackAllPages = this.autotrackAllPages
+    config.useProtobuf = this.useProtobuf
     config.plugins = [...this.plugins]
 
     return config
