@@ -19,6 +19,8 @@ import rcp from '@hms.collaboration.rcp'
 import EventPersistence from '../event/EventPersistence'
 import GrowingContext from './Context'
 import Util from '../utils/Util'
+import { ConfigMode } from '../interfaces/GrowingConfig'
+import { LogUtil } from '../utils/LogUtil'
 
 export default class Network {
   static session: rcp.Session
@@ -36,6 +38,10 @@ export default class Network {
 
   static generateRequest(time: number, url: string, events: EventPersistence[], context: GrowingContext): rcp.Request {
     let useProtobuf = context.config.useProtobuf
+    if (context.config.mode == ConfigMode.SaaS) {
+      LogUtil.warn(() => 'SaaS mode have not protobuf support')
+      useProtobuf = false
+    }
     let serialize = Util.toSerialize(useProtobuf, events)
     let headers: Record<string, string> = {
       "Content-Type": useProtobuf ? "application/protobuf" : "application/json",
