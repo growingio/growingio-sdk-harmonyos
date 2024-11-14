@@ -15,11 +15,17 @@
  * limitations under the License.
  */
 
+import { event_pb } from './protobuf/event_pb'
 import buffer from '@ohos.buffer'
 import snappy from 'snappyjs'
 import util from '@ohos.util'
 
 export default class Util {
+  static isUseProtobuf(requestHeaders: string): boolean {
+    let headers = JSON.parse(requestHeaders)
+    return headers['Content-Type'] == 'application/protobuf'
+  }
+
   static isRequestCompress(requestHeaders: string): boolean {
     let headers = JSON.parse(requestHeaders)
     return headers['X-Compress-Codec'] == '2'
@@ -35,39 +41,35 @@ export default class Util {
     return Number(headers['X-Timestamp'])
   }
 
-  static getRequestBodyText(requestHeaders: string, requestBody: string | ArrayBuffer): string {
+  static getRequestBodyText(requestHeaders: string, requestBody: ArrayBuffer): string {
     try {
-      let result = requestBody
-      if (typeof result != 'string') {
-        if (Util.isRequestEncrypt(requestHeaders)) {
-          result = Util.decrypt(requestHeaders, result, Util.getTimestamp(requestHeaders))
-        }
-
-        if (Util.isRequestCompress(requestHeaders)) {
-          result = Util.decompress(result as ArrayBuffer)
-        }
+      let original: ArrayBuffer = requestBody
+      if (Util.isRequestEncrypt(requestHeaders)) {
+        original = Util.decrypt(original, Util.getTimestamp(requestHeaders))
       }
-      return JSON.stringify(JSON.parse(result as string), null, 4)
+      if (Util.isRequestCompress(requestHeaders)) {
+        original = Util.decompress(original)
+      }
+
+      let uint8 = new Uint8Array(original)
+      if (Util.isUseProtobuf(requestHeaders)) {
+        let list = event_pb.EventV3List.decode(uint8)
+        return JSON.stringify(list.toJSON().values, null, 4)
+      } else {
+        let jsonString = new util.TextDecoder().decodeToString(uint8)
+        return JSON.stringify(JSON.parse(jsonString), null, 4)
+      }
     } catch (e) {
-      return ''
+      return '{}'
     }
   }
 
-  static decompress(serialize: ArrayBuffer): string {
-    if (!(serialize instanceof ArrayBuffer)) {
-      throw new TypeError('[GrowingToolsKit] Argument decompressed must be type of ArrayBuffer')
-    }
-
+  static decompress(serialize: ArrayBuffer): ArrayBuffer {
     let decompressed = new Uint8Array(snappy.uncompress(serialize))
-    return new util.TextDecoder().decodeToString(decompressed)
+    return buffer.from(decompressed).buffer
   }
 
-  static decrypt(requestHeaders: string, serialize: ArrayBuffer, time: number): string | ArrayBuffer {
-    let isString: boolean = false
-    if (!Util.isRequestCompress(requestHeaders)) {
-      isString = true
-    }
-
+  static decrypt(serialize: ArrayBuffer, time: number): ArrayBuffer {
     let buf: ArrayBuffer = serialize
     let hint = Util.getHintFromTime(time)
     let original = new Uint8Array(buf)
@@ -76,11 +78,7 @@ export default class Util {
       decrypted[i] = original[i] ^ hint[i % hint.length]
     }
 
-    if (isString) {
-      return new util.TextDecoder().decodeToString(decrypted)
-    } else {
-      return buffer.from(decrypted).buffer
-    }
+    return buffer.from(decrypted).buffer
   }
 
   static getHintFromTime(time: number): Uint8Array {

@@ -16,6 +16,7 @@
  */
 
 import { ValueType, AttributesType } from '../utils/Constants'
+import { event_pb } from './protobuf/event_pb'
 import buffer from '@ohos.buffer'
 import snappy from 'snappyjs'
 
@@ -68,33 +69,30 @@ export default class Util {
     return buf.byteLength
   }
 
-  static compress(serialize: string): ArrayBuffer {
-    if (typeof serialize != 'string') {
-      throw new TypeError('[GrowingAnalytics] Argument compressed must be type of string')
+  static toSerialize(isProtobuf: boolean, events: any[]): ArrayBuffer {
+    if (isProtobuf) {
+      let values: event_pb.EventV3Dto[] = []
+      events.forEach(e => {
+        let event = JSON.parse(e.data)
+        let dto = event_pb.EventV3Dto.fromObject(event)
+        values.push(dto)
+      })
+      let list = event_pb.EventV3List.create({values: values})
+      let arrayBuffer: Uint8Array = event_pb.EventV3List.encode(list).finish()
+      return buffer.from(arrayBuffer).buffer
+    } else {
+      let json = '[' + events.map(event => String(event.data)).join(',') + ']'
+      return buffer.from(json, 'utf-8').buffer
     }
+  }
 
-    let buf: ArrayBuffer = buffer.from(serialize, 'utf-8').buffer
-    let compressed = snappy.compress(buf) as ArrayBuffer
+  static compress(serialize: ArrayBuffer): ArrayBuffer {
+    let compressed = snappy.compress(serialize) as ArrayBuffer
     return compressed
   }
 
-  static encrypt(serialize: string | ArrayBuffer, time: number): ArrayBuffer {
-    let isString: boolean = false
-    if (typeof serialize == 'string') {
-      isString = true
-    } else if (serialize instanceof ArrayBuffer) {
-      isString = false
-    } else {
-      throw new TypeError('[GrowingAnalytics] Argument encrypted must be type of string or ArrayBuffer')
-    }
-
-    let buf: ArrayBuffer
-    if (isString) {
-      buf = buffer.from(serialize as string, 'utf-8').buffer
-    } else {
-      buf = serialize as ArrayBuffer
-    }
-
+  static encrypt(serialize: ArrayBuffer, time: number): ArrayBuffer {
+    let buf: ArrayBuffer = serialize
     let hint = Util.getHintFromTime(time)
     let original = new Uint8Array(buf)
     let encrypted = new Uint8Array(buf.byteLength)

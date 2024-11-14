@@ -69,6 +69,7 @@ export interface GTKConfig {
   _dataValidityPeriod: number
   autotrackEnabled: boolean
   autotrackAllPages: boolean
+  useProtobuf: boolean
   copy(): GTKConfig
 }
 
