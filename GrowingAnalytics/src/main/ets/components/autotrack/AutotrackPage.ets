@@ -17,6 +17,7 @@
 
 import uiObserver from '@ohos.arkui.observer'
 import emitter from '@ohos.events.emitter'
+import router from '@ohos.router'
 
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
@@ -69,7 +70,16 @@ export default class AutotrackPage {
       title = title.substring(title.lastIndexOf("/") + 1)
     }
 
-    let pageInfo = new PageInfo(path, title, {}, context.trackerId)
+    let attributes: AttributesType = {}
+    if (Util.isRouterPageInfo(info)) {
+      let param = router.getParams()
+      attributes = Util.getAttributesFromNavInfoParameter(param)
+    } else {
+      let param = (info as NavDestinationInfo).param
+      attributes = Util.getAttributesFromNavInfoParameter(param)
+    }
+
+    let pageInfo = new PageInfo(path, title, attributes, context.trackerId)
     AutotrackPage.sendPage(pageInfo)
   }
 

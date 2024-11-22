@@ -229,7 +229,7 @@ export default class Util {
   static toSerializeByMeasurementProtocolV3(event: any): string {
     let modified = { ...event, gioId: '', globalSequenceId: 0}
     delete modified.timezoneOffset
-    if (modified.xcontent && modified.xcontent.length > 0) {
+    if (modified.xcontent != undefined && modified.xcontent != null) {
       delete modified.xcontent
     }
     return JSON.stringify(modified)
@@ -250,5 +250,21 @@ export default class Util {
 
   static isRouterPageInfo(info: any): boolean {
     return info && info.pageId && typeof info.pageId === 'string'
+  }
+
+  static getComponentLabel(inspectorInfo: any): string {
+    try {
+      return inspectorInfo['$attrs']['label'] || ''
+    } catch (e) {
+      return ''
+    }
+  }
+
+  static getAttributesFromNavInfoParameter(param: any): AttributesType {
+    try {
+      return param['growing_attributes'] || {}
+    } catch (e) {
+      return {}
+    }
   }
 }

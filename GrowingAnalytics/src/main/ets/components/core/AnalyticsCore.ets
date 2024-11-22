@@ -31,6 +31,7 @@ import EventTimer from './EventTimer'
 import Hybrid from './Hybrid'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
+import AutotrackClick from '../autotrack/AutotrackClick'
 import AutotrackPage from '../autotrack/AutotrackPage'
 import CustomEvent from '../event/CustomEvent'
 import Event, { EventScene, EventType } from '../event/Event'
@@ -151,7 +152,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
         if (gContext.config.autotrackEnabled) {
           windowStage.getMainWindow().then(window => {
-            AutotrackPage.initAutotrackPage(window.getUIContext())
+            let c = window.getUIContext()
+            AutotrackPage.initAutotrackPage(c)
+            if (gContext.config.mode != ConfigMode.SaaS) { // mode SaaS not support
+              AutotrackClick.initAutotrackClick(c)
+            }
           })
         }
 

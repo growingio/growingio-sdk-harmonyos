@@ -57,8 +57,18 @@ struct Index {
       }
       Button('track')
         .onClick(() => {
-          Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track')
+          Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track', {
+            "growing_attributes": {
+              "name": "kk",
+              "age": 21
+            } as Record<string, Object>
+          })
         }).margin({ top: 15 })
+        .customProperty("growing_attributes", {
+          "action": "click",
+          "timestamp": Date.now(),
+          "where": "index_track_button"
+        })
       Button('generalProps')
         .onClick(() => {
           Util.startAbility(getContext(this), 'GeneralPropsAbility', 'pages/GeneralProps')

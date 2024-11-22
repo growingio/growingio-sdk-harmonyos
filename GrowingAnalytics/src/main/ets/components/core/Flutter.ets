@@ -71,6 +71,13 @@ export default class Flutter {
       }
     }
 
+    let ptm = argument.get('pageShowTimestamp') as number
+    if (mode == ConfigMode.CDP) {
+      if (ptm == null || ptm == undefined) {
+        return
+      }
+    }
+
     let xpath = argument.get('xpath') as string
     if (xpath == null || xpath == undefined || xpath.length == 0) {
       return
@@ -90,6 +97,7 @@ export default class Flutter {
     if (AnalyticsCore.core.isInitializedSuccessfully()) {
       let e = ViewElementEvent.create(
         path,
+        ptm,
         textValue,
         xpath,
         xcontent,
