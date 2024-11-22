@@ -71,7 +71,7 @@ export default class AutotrackClick {
       }
     }
     let eventType = xpathInfo.eventType
-    let attributes: AttributesType = frameNode.getCustomProperty('growing_attributes') as AttributesType
+    // let attributes: AttributesType = frameNode.getCustomProperty('growing_attributes') as AttributesType
     let e = ViewElementEvent.create(
       path,
       ptm,
@@ -79,7 +79,7 @@ export default class AutotrackClick {
       xpath,
       xcontent,
       index,
-      attributes,
+      {},
       eventType,
       context
     )
