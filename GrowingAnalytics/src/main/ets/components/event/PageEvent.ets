@@ -24,6 +24,7 @@ export interface Page {
   path: string | undefined
   title: string | undefined
   timestamp: number
+  attributes: AttributesType | undefined
 
   // mode SaaS
   referralPage: string | undefined

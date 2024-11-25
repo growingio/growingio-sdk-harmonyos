@@ -248,8 +248,8 @@ export default class Util {
     return true
   }
 
-  static isRouterPageInfo(info: any): boolean {
-    return info && info.pageId && typeof info.pageId === 'string'
+  static isNavDestinationSwitchInfo(info: any): boolean {
+    return info && info.from && info.to
   }
 
   static getComponentLabel(inspectorInfo: any): string {

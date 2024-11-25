@@ -33,16 +33,17 @@ import Util from '../utils/Util'
 
 export default class AutotrackPage {
   static pagesCache: Array<PageInfo> = []
+  static navBarStack: Array<PageInfo> = []
 
   static initAutotrackPage(context: UIContext) {
-    uiObserver.on('navDestinationUpdate', AutotrackPage.onPageUpdate)
+    uiObserver.on('navDestinationSwitch', context, AutotrackPage.onPageUpdate)
     uiObserver.on('routerPageUpdate', context, AutotrackPage.onPageUpdate)
 
     emitter.once({eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE}, AutotrackPage.resendPageFromCache)
     emitter.on({eventId: EMIT_EVENT_SESSION_STATE_FOREGROUND}, AutotrackPage.resendPageFromCache)
   }
 
-  static onPageUpdate(info: NavDestinationInfo | uiObserver.RouterPageInfo) {
+  static onPageUpdate(info: uiObserver.NavDestinationSwitchInfo | uiObserver.RouterPageInfo) {
     let context = GrowingContext.getDefaultContext() as GrowingContext
     if (!context.config.autotrackAllPages) {
       return
@@ -51,32 +52,59 @@ export default class AutotrackPage {
     if (!info) {
       return
     }
-    if (Util.isRouterPageInfo(info)) {
-      if ((info as uiObserver.RouterPageInfo).state != uiObserver.RouterPageState.ON_PAGE_SHOW) {
+    let name = ''
+    let attributes: AttributesType = {}
+    if (Util.isNavDestinationSwitchInfo(info)) {
+      // navigation
+      let switchInfo = info as uiObserver.NavDestinationSwitchInfo
+      let from: NavDestinationInfo | NavBar = switchInfo.from
+      let to: NavDestinationInfo | NavBar = switchInfo.to
+
+      // to
+      if (typeof to == 'string' && to != null && to != undefined) {
+        // 将当前NavPathStack对应的首页属性出栈
+        let curNavBar = AutotrackPage.navBarStack.pop()
+        if (curNavBar != undefined) {
+          AutotrackPage.sendPage(curNavBar)
+          return
+        }
+      } else {
+        let navInfo = to as NavDestinationInfo
+        if (navInfo.state != uiObserver.NavDestinationState.ON_SHOWN) {
+          return
+        }
+        name = navInfo.name.toString()
+        attributes = Util.getAttributesFromNavInfoParameter(navInfo.param)
+      }
+
+      // from
+      if (typeof from == 'string' && from != null && from != undefined) {
+        let lastPage = PageEvent.getLastPage(context)
+        if (lastPage?.path != undefined) {
+          // 将当前NavPathStack对应的首页属性入栈
+          AutotrackPage.navBarStack.push(new PageInfo(
+            lastPage.path,
+            lastPage?.title ?? '',
+            lastPage?.attributes ?? {},
+            context.trackerId))
+        }
+      }
+    } else {
+      // router
+      let routerInfo = info as uiObserver.RouterPageInfo
+      if (routerInfo.state != uiObserver.RouterPageState.ON_PAGE_SHOW) {
         return
       }
-    } else if ((info as NavDestinationInfo).state != uiObserver.NavDestinationState.ON_SHOWN) {
-      return
+
+      name = routerInfo.name.toString()
+      let param = router.getParams()
+      attributes = Util.getAttributesFromNavInfoParameter(param)
     }
 
-    let name = info.name.toString()
-    const GTK_NAV_PATH_PREFIX = '__GTK_'
-    if (name.startsWith(GTK_NAV_PATH_PREFIX)) {
-      return
-    }
     let path = '/' + name
     let title = name
     if (title.includes('/')) {
       title = title.substring(title.lastIndexOf("/") + 1)
-    }
-
-    let attributes: AttributesType = {}
-    if (Util.isRouterPageInfo(info)) {
-      let param = router.getParams()
-      attributes = Util.getAttributesFromNavInfoParameter(param)
-    } else {
-      let param = (info as NavDestinationInfo).param
-      attributes = Util.getAttributesFromNavInfoParameter(param)
     }
 
     let pageInfo = new PageInfo(path, title, attributes, context.trackerId)
