@@ -44,7 +44,7 @@ export default class ViewElementEvent extends Event {
     let event = new ViewElementEvent()
     event.path = String(path ?? '')
     if (context.config.mode == ConfigMode.CDP) {
-      event.pageShowTimestamp = Number(pageShowTimestamp ?? 0)
+      event.pageShowTimestamp = pageShowTimestamp > 0 ? pageShowTimestamp : Date.now()
     }
     event.textValue = textValue && textValue.length > 0 ? textValue : undefined
     event.xpath = xpath

@@ -19,13 +19,15 @@ import { FrameNode } from '@ohos.arkui.node'
 
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
-import { AttributesType, EventType } from '../event/Event'
+import { EventType } from '../event/Event'
 import PageEvent from '../event/PageEvent'
 import ViewElementEvent from '../event/ViewElementEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
+import { PATH_SEPARATOR } from '../utils/Constants'
 import Util from '../utils/Util'
 
 export default class AutotrackClick {
+  private static uiContent: UIContext
   private static listComponents: Array<string> = [
     "ListItem",
     "GridItem",
@@ -39,6 +41,7 @@ export default class AutotrackClick {
   ]
 
   static initAutotrackClick(context: UIContext) {
+    AutotrackClick.uiContent = context
     context.getUIObserver().on('willClick', AutotrackClick.onWillClick)
   }
 
@@ -51,27 +54,33 @@ export default class AutotrackClick {
     }
 
     let context = GrowingContext.getDefaultContext() as GrowingContext
-    let lastPage = PageEvent.getLastPage(context)
-    let path = lastPage?.path ?? ''
-    let ptm = lastPage?.timestamp ?? 0
+
+    // page
+    let pageInfo = AutotrackClick.getPageInfo(frameNode)
+    let path = pageInfo.path
+    let ptm = pageInfo.pageShowTimestamp
+
+    // view
     let textValue = Util.getComponentLabel(frameNode.getInspectorInfo())
     let xpathInfo = AutotrackClick.getXpathInfo(frameNode)
     let xpath = ''
     let xcontent = ''
     let index = xpathInfo.index
     if (context.config.mode == ConfigMode.NewSaaS) {
-      xpath = '/' + xpathInfo.xpath.reverse().join('/')
-      xcontent = '/' + xpathInfo.xcontent.reverse().join('/')
+      xpath = PATH_SEPARATOR + xpathInfo.xpath.reverse().join(PATH_SEPARATOR)
+      xcontent = PATH_SEPARATOR + xpathInfo.xcontent.reverse().join(PATH_SEPARATOR)
       if (xpathInfo.inList) {
         index = index + 1
       }
     } else if (context.config.mode == ConfigMode.CDP) {
       for (let i = xpathInfo.xpath.length - 1; i >= 0; i--) {
-        xpath = xpath + '/' + xpathInfo.xpath[i] + '[' + xpathInfo.xcontent[i] + ']'
+        xpath = xpath + PATH_SEPARATOR + xpathInfo.xpath[i] + '[' + xpathInfo.xcontent[i] + ']'
       }
     }
     let eventType = xpathInfo.eventType
     // let attributes: AttributesType = frameNode.getCustomProperty('growing_attributes') as AttributesType
+
+    // send event
     let e = ViewElementEvent.create(
       path,
       ptm,
@@ -84,6 +93,35 @@ export default class AutotrackClick {
       context
     )
     AnalyticsCore.writeEventToDisk(e, context)
+  }
+
+  static getPageInfo(frameNode: FrameNode): PageInfo {
+    let info = new PageInfo()
+
+    // get real page
+    let pageInfo = AutotrackClick.uiContent.getPageInfoByUniqueId(frameNode.getUniqueId())
+    let realPath: string | undefined = undefined
+    if (pageInfo.navDestinationInfo) {
+      realPath = PATH_SEPARATOR + pageInfo.navDestinationInfo.name.toString()
+    } else if (pageInfo.routerPageInfo) {
+      realPath = PATH_SEPARATOR + pageInfo.routerPageInfo.name.toString()
+    }
+
+    if (realPath) {
+      info.path = realPath
+
+      let context = GrowingContext.getDefaultContext() as GrowingContext
+      if (context.config.mode == ConfigMode.CDP) {
+        // compare with last page in cache
+        let lastPage = PageEvent.getLastPage(context)
+        let path = lastPage?.path
+        if (path == realPath) {
+          info.pageShowTimestamp = lastPage?.timestamp ?? 0
+        }
+      }
+    }
+
+    return info
   }
 
   static getXpathInfo(frameNode: FrameNode): XpathInfo {
@@ -136,6 +174,11 @@ export default class AutotrackClick {
     }
     return EventType.ViewClick
   }
+}
+
+class PageInfo {
+  path: string = ''
+  pageShowTimestamp: number = 0
 }
 
 class XpathInfo {

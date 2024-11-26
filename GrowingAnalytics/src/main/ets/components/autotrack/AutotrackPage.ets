@@ -27,7 +27,8 @@ import PageEvent from '../event/PageEvent'
 import {
   AttributesType,
   EMIT_EVENT_MAIN_TRACKER_INITIALIZE,
-  EMIT_EVENT_SESSION_STATE_FOREGROUND
+  EMIT_EVENT_SESSION_STATE_FOREGROUND,
+  PATH_SEPARATOR
 } from '../utils/Constants'
 import Util from '../utils/Util'
 
@@ -101,10 +102,10 @@ export default class AutotrackPage {
       attributes = Util.getAttributesFromNavInfoParameter(param)
     }
 
-    let path = '/' + name
+    let path = PATH_SEPARATOR + name
     let title = name
-    if (title.includes('/')) {
-      title = title.substring(title.lastIndexOf("/") + 1)
+    if (title.includes(PATH_SEPARATOR)) {
+      title = title.substring(title.lastIndexOf(PATH_SEPARATOR) + 1)
     }
 
     let pageInfo = new PageInfo(path, title, attributes, context.trackerId)
