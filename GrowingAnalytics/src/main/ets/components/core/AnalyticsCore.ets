@@ -151,6 +151,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
         AnalyticsCore._mainWindowStage = windowStage
 
         if (gContext.config.autotrackEnabled) {
+          // 仅支持mainWindow内无埋点事件监听与发送，不支持其他window
           windowStage.getMainWindow().then(window => {
             let c = window.getUIContext()
             AutotrackPage.initAutotrackPage(c)

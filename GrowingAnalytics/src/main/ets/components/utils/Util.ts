@@ -252,6 +252,10 @@ export default class Util {
     return info && info.from && info.to
   }
 
+  static isNavDestinationInfo(info: any): boolean {
+    return info && info.navDestinationId
+  }
+
   static getComponentLabel(inspectorInfo: any): string {
     try {
       return inspectorInfo['$attrs']['label'] || ''
