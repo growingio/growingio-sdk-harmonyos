@@ -99,7 +99,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     })
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
       + 'GrowingIO version: ' + SDK_VERSION)
-    Plugins.onSDKDidInitialize(config, SDK_VERSION)
+    Plugins.onSDKDidInitialize(context, config, SDK_VERSION)
     core._isInitializedSuccessfully = true
 
     if (config.autotrackEnabled && config.autotrackAllPages) {

@@ -1,0 +1,3 @@
+[submodule "growingio-sdk-harmonyos-internal"]
+	path = Internal
+	url = https://github.com/growingio/growingio-sdk-harmonyos-internal

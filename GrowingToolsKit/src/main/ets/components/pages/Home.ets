@@ -20,8 +20,13 @@ import ModuleButton from '../views/ModuleButton'
 import NavStackManager from '../core/NavStackManager'
 import { GTKColor, NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
 import { HAR_VERSION } from '../../../../../BuildProfile'
+import SharedPreferences from '../utils/SharedPreferences'
+import EventDatabase from '../event/EventDatabase'
+import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 
-@Component
+import { Preferences, AutotrackEvent, CircleModule } from '@growingio/tools_circle'
+
+@ComponentV2
 export default struct Home {
   pageStack: NavPathStack = NavStackManager.pageStack
   window: window.Window = window.findWindow(SUB_WINDOW_NAME)
@@ -57,6 +62,38 @@ export default struct Home {
               if (event.type ==  TouchType.Up) {
                 let destination = new NavPathInfo(NAV_PATH_PREFIX + 'NetFlow', '')
                 this.pageStack.pushDestination(destination)
+              }
+            })
+          ModuleButton({ name: '圈选', image: 'app.media.growingtk_circle' })
+            .onTouch(event => {
+              if (event.type ==  TouchType.Up) {
+                CircleModule.initModule({
+                  dataSourceId: GrowingToolsKit.sdkConfig.dataSourceId,
+                  preferences: SharedPreferences.shared as Preferences,
+                  recentAutotrackEventsGetter: async (count: number) => {
+                    let events = await EventDatabase.getEventsByCount(
+                      count,
+                      0,
+                      GrowingToolsKit.sdkConfig.accountId,
+                      GrowingToolsKit.sdkConfig.dataSourceId,
+                      ['PAGE', 'VIEW_CLICK', 'VIEW_CHANGE']
+                    )
+                    let autotrackEvents: Array<AutotrackEvent> = []
+                    for (let event of events) {
+                      let e = event.getEvent()
+                      autotrackEvents.push(e)
+                    }
+                    return autotrackEvents
+                  }
+                })
+
+                if (CircleModule.isLogin()) {
+                  let destination = new NavPathInfo(NAV_PATH_PREFIX + 'CircleList', '')
+                  this.pageStack.pushDestination(destination)
+                } else {
+                  let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Login', '')
+                  this.pageStack.pushDestination(destination)
+                }
               }
             })
         }

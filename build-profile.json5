@@ -43,6 +43,10 @@
     {
       "name": "GrowingToolsKit",
       "srcPath": "./GrowingToolsKit",
+    },
+    {
+      "name": "GrowingToolsKit_Circle",
+      "srcPath": "./Internal/GrowingToolsKit/GrowingToolsKit_Circle",
     }
   ]
 }

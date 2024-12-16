@@ -26,6 +26,7 @@ import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_PO
   GTKConfig, GTKEventPersistence } from '../utils/Constants'
 import RequestPersistence from '../network/RequestPersistence'
 import TrackersInfo from '../core/TrackersInfo'
+import SharedPreferences from '../utils/SharedPreferences'
 
 export class GrowingToolsKit {
   static debug: boolean = false
@@ -58,7 +59,7 @@ export class GrowingToolsKit {
     GrowingToolsKit.sdkStartTime = Date.now()
   }
 
-  onSDKDidInitialize(config: GTKConfig, version: string) {
+  onSDKDidInitialize(context: Context, config: GTKConfig, version: string) {
     if (!GrowingToolsKit.debug) {
       return
     }
@@ -66,6 +67,7 @@ export class GrowingToolsKit {
     GrowingToolsKit.sdkEndTime = Date.now()
     GrowingToolsKit.sdkConfig = config.copy()
     GrowingToolsKit.sdkVersion = version
+    SharedPreferences.initWithContext(context)
   }
 
   onStartSubTracker(trackerId: string, config: GTKConfig) {
