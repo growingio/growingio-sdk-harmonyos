@@ -61,7 +61,7 @@ export default class AutotrackClick {
     let ptm = pageInfo.pageShowTimestamp
 
     // view
-    let textValue = Util.getComponentLabel(frameNode.getInspectorInfo())
+    let textValue = AutotrackClick.getTextValue(frameNode)
     let xpathInfo = AutotrackClick.getXpathInfo(frameNode)
     let xpath = ''
     let xcontent = ''
@@ -147,7 +147,7 @@ export default class AutotrackClick {
       info.index = xcontent
       info.inList = true
     } else {
-      info.xcontent.push(String(xcontent))
+      info.xcontent.push(String(xcontent) + AutotrackClick.getCustomId(frameNode))
     }
   }
 
@@ -166,6 +166,39 @@ export default class AutotrackClick {
     }
 
     return xcontent
+  }
+
+  static getCustomId(frameNode: FrameNode) {
+    let customId = frameNode.getId()
+    if (customId && customId.length > 0) {
+      customId = customId.replace(/\//g, '')
+      return '#' + customId
+    }
+    return ''
+  }
+
+  static getTextValue(frameNode: FrameNode): string {
+    try {
+      let queue: Array<FrameNode> = [frameNode]
+      while (queue.length > 0) {
+        let f = queue.shift()!
+        let textValue = Util.getComponentLabel(f.getInspectorInfo())
+        if (textValue.length > 0) {
+          return textValue
+        }
+
+        let count = f.getChildrenCount()
+        for (let i = 0; i < count; i++) {
+          let child = f.getChild(i)
+          if (child) {
+            queue.push(child)
+          }
+        }
+      }
+      return ''
+    } catch (e) {
+      return ''
+    }
   }
 
   static getEventType(nodeType: string) {

@@ -258,7 +258,7 @@ export default class Util {
 
   static getComponentLabel(inspectorInfo: any): string {
     try {
-      return inspectorInfo['$attrs']['label'] || ''
+      return inspectorInfo['$attrs']['label'] || inspectorInfo['$attrs']['content'] || ''
     } catch (e) {
       return ''
     }

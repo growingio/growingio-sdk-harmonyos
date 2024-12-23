@@ -46,7 +46,9 @@ export default class ViewElementEvent extends Event {
     if (context.config.mode == ConfigMode.CDP) {
       event.pageShowTimestamp = pageShowTimestamp > 0 ? pageShowTimestamp : Date.now()
     }
-    event.textValue = textValue && textValue.length > 0 ? textValue : undefined
+    if (eventType == EventType.ViewClick) {
+      event.textValue = textValue && textValue.length > 0 ? textValue : undefined
+    }
     event.xpath = xpath
     event.xcontent = xcontent
     event.index = index && index > 0 ? index : undefined
