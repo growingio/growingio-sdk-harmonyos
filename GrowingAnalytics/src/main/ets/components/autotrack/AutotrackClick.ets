@@ -40,6 +40,17 @@ export default class AutotrackClick {
     "RichEditor",
   ]
 
+  private static dialogPathPrefixes: Array<string> = [
+    "/root/AlertDialog",
+    "/root/Dialog",
+    "/root/MenuWrapper/Menu",
+    "/root/ModalPage",
+    "/root/Popup",
+    "/root/SheetWrapper/SheetPage",
+    "/root/SelectOverlay",
+    "/root/Video",
+  ]
+
   static initAutotrackClick(context: UIContext) {
     AutotrackClick.uiContent = context
     context.getUIObserver().on('willClick', AutotrackClick.onWillClick)
@@ -79,6 +90,19 @@ export default class AutotrackClick {
     }
     let eventType = xpathInfo.eventType
     // let attributes: AttributesType = frameNode.getCustomProperty('growing_attributes') as AttributesType
+
+    if (!path || path.length == 0) {
+      // 该frameNode所在页面并不是通过Navigation或Router跳转，可能是弹窗视图
+      for (let i = 0; i < AutotrackClick.dialogPathPrefixes.length; i++) {
+        let prefix = AutotrackClick.dialogPathPrefixes[i]
+        if (xpath.startsWith(prefix)) {
+          let lastPage = PageEvent.getLastPage(context)
+          path = lastPage?.path ?? ''
+          ptm = lastPage?.timestamp ?? 0
+          break
+        }
+      }
+    }
 
     // send event
     let e = ViewElementEvent.create(
