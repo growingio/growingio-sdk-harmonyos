@@ -33,9 +33,12 @@ import {
 import Util from '../utils/Util'
 
 export default class AutotrackPage {
+  // 存储SDK尚未初始化或应用处于后台时，触发的页面浏览事件
   static pagesCacheOnBackground: Array<PageInfo> = []
-  static navBarStack: Array<PageInfo> = []
-  static deferNavDestinationPage: PageInfo | undefined = undefined
+  // 存储当前所有的NavPathStack
+  static navBarStack: Array<NavBarInfo> = []
+  // 存储监听Navigation路由触发的页面浏览事件 (主要是为了保证先发送routerPage，再发送deferNavDestinationPage)
+  static deferNavDestinationPages: Array<PageInfo> = []
 
   static initAutotrackPage(context: UIContext) {
     uiObserver.on('navDestinationUpdate', AutotrackPage.onPageUpdate)
@@ -51,7 +54,7 @@ export default class AutotrackPage {
     // 2. router页面切换: routerPageUpdate会触发
     // 3. 返回Navigation首页(navBar)：navDestinationSwitch会触发，navDestinationUpdate不会触发
     // 4. 后台回前台: navDestinationUpdate和routerPageUpdate会触发，navDestinationSwitch不会触发
-    // 5. 触发时机: navDestinationUpdate早于navDestinationSwitch早于routerPageUpdate
+    // 5. 触发时机: navDestinationUpdate、navDestinationSwitch不确定先后，navDestinationUpdate早于routerPageUpdate
     // 注意:
     // 以上仅在当前版本5.0.0(12)下有效，不保证后续系统更新后结果依旧
     let context = GrowingContext.getDefaultContext() as GrowingContext
@@ -65,60 +68,78 @@ export default class AutotrackPage {
     if (Util.isNavDestinationSwitchInfo(info)) {
       // case: navDestinationSwitch
       // 负责:
-      // (1) 记录当前NavPathStack对应的首页，并在返回到首页时，发送对应的页面浏览事件
-      // (2) 发送由navDestinationUpdate在Navigation页面切换时记录的deferNavDestinationPage
+      // (1) 记录当前navBar对应的首页，并在返回到首页时，发送对应的页面浏览事件
+      // (2) Navigation页面切换时，若同一页面已触发navDestinationUpdate，发送对应的页面浏览事件；否则，存储为deferNavDestinationPage
       let switchInfo = info as uiObserver.NavDestinationSwitchInfo
       let from: NavDestinationInfo | NavBar = switchInfo.from
       let to: NavDestinationInfo | NavBar = switchInfo.to
 
-      // to
       if (typeof to == 'string' && to != null && to != undefined) {
-        // 将当前NavPathStack对应的首页属性出栈
-        let curNavBar = AutotrackPage.navBarStack.pop()
-        if (curNavBar != undefined) {
-          //发送当前返回的navBar首页对应的页面浏览事件
-          AutotrackPage.sendPage(curNavBar)
+        // case：返回到首页
+        let fromInfo = from as NavDestinationInfo
+        let isFind = false
+
+        // 找到对应的navBar，发送页面浏览事件
+        while (!isFind && AutotrackPage.navBarStack.length > 0) {
+          // LIFO
+          let k = AutotrackPage.navBarStack.pop()!
+          if (k.isEqual(fromInfo)) {
+            AutotrackPage.sendPage(k.navBar)
+
+            // 清除当前navBar栈中from对应的deferNavDestinationPage，减小内存占用
+            // 该page可能是由于全模态返回时，在navDestinationUpdate监听下生成
+            // TODO: 待优化，有当前navBar非from对应的deferNavDestinationPage占用内存的场景
+            for (let i = 0; i < AutotrackPage.deferNavDestinationPages.length; i++) {
+              let p = AutotrackPage.deferNavDestinationPages[i]
+              if (k.dstId == p.dstId) {
+                AutotrackPage.deferNavDestinationPages.splice(i, 1)
+                break
+              }
+            }
+
+            isFind = true
+          }
         }
       } else {
-        // from
+        // case：NavDestination切换
+        let toInfo = to as NavDestinationInfo
+
         if (typeof from == 'string' && from != null && from != undefined) {
           let lastPage = PageEvent.getLastPage(context)
           if (lastPage?.path != undefined) {
-            // 将当前NavPathStack对应的首页属性入栈
-            AutotrackPage.navBarStack.push(new PageInfo(
+            // 将当前navBar对应的首页入栈，并同时关联NavDestination，避免在返回到首页时发错事件
+            let navBar = new PageInfo(
               lastPage.path,
               lastPage?.title ?? '',
               lastPage?.attributes ?? {},
-              context.trackerId))
+              context.trackerId)
+            let navBarInfo = new NavBarInfo(navBar, toInfo)
+            AutotrackPage.navBarStack.push(navBarInfo)
+          }
+        } else {
+          // 刷新对应navBar的NavDestination
+          let fromInfo = from as NavDestinationInfo
+          // 从后往前遍历，在一般情况下，更快
+          // 一般情况：子navBar而不是父navBar发生跳转
+          for (let i = AutotrackPage.navBarStack.length - 1; i >= 0; i--) {
+            let k = AutotrackPage.navBarStack[i]
+            if (k.isEqual(fromInfo)) {
+              k.refreshNavDestination(toInfo)
+              break
+            }
           }
         }
 
         // 发送Navigation页面切换对应的页面浏览事件
-        if (AutotrackPage.deferNavDestinationPage) {
-          AutotrackPage.sendPage(AutotrackPage.deferNavDestinationPage)
-          AutotrackPage.deferNavDestinationPage = undefined
-        }
+        AutotrackPage.sendNavDestinationPageIfNeeded(toInfo)
       }
     } else if (Util.isNavDestinationInfo(info)) {
       // case: navDestinationUpdate
-      // 负责记录在Navigation页面切换时和后台回前台时，所对应的deferNavDestinationPage
+      // 负责:
+      // (1) 记录后台回前台时，所对应的deferNavDestinationPage
+      // (2) Navigation页面切换时，若同一页面已触发navDestinationSwitch，发送对应的页面浏览事件；否则，存储为deferNavDestinationPage
       let navInfo = info as NavDestinationInfo
-      if (navInfo.state != uiObserver.NavDestinationState.ON_SHOWN) {
-        return
-      }
-      let name = navInfo.name.toString()
-      const GTK_NAV_PATH_PREFIX = '__GTK_'
-      if (name.startsWith(GTK_NAV_PATH_PREFIX)) {
-        return
-      }
-      let path = PATH_SEPARATOR + name
-      let title = name
-      if (title.includes(PATH_SEPARATOR)) {
-        title = title.substring(title.lastIndexOf(PATH_SEPARATOR) + 1)
-      }
-      let attributes = Util.getAttributesFromNavInfoParameter(navInfo.param)
-      let pageInfo = new PageInfo(path, title, attributes, context.trackerId)
-      AutotrackPage.deferNavDestinationPage = pageInfo
+      AutotrackPage.sendNavDestinationPageIfNeeded(navInfo)
     } else {
       // case: routerPageUpdate
       // 负责:
@@ -143,11 +164,53 @@ export default class AutotrackPage {
       let pageInfo = new PageInfo(path, title, attributes, context.trackerId)
       AutotrackPage.sendPage(pageInfo)
 
-      if (AutotrackPage.deferNavDestinationPage) {
-        AutotrackPage.sendPage(AutotrackPage.deferNavDestinationPage)
-        AutotrackPage.deferNavDestinationPage = undefined
+      while (AutotrackPage.deferNavDestinationPages.length > 0) {
+        let pageInfo = AutotrackPage.deferNavDestinationPages.shift()!
+        AutotrackPage.sendPage(pageInfo)
       }
     }
+  }
+
+  static sendNavDestinationPageIfNeeded(navInfo: NavDestinationInfo) {
+    let pageInfo = AutotrackPage.getPageInfoFromNavDestinationInfo(navInfo)
+    if (!pageInfo) {
+      return
+    }
+
+    let isSend = false
+    for (let i = 0; i < AutotrackPage.deferNavDestinationPages.length; i++) {
+      let p = AutotrackPage.deferNavDestinationPages[i]
+      if (p.isEqual(pageInfo)) {
+        AutotrackPage.sendPage(pageInfo)
+        AutotrackPage.deferNavDestinationPages.splice(i, 1)
+        isSend = true
+        break
+      }
+    }
+
+    if (!isSend) {
+      AutotrackPage.deferNavDestinationPages.push(pageInfo)
+    }
+  }
+
+  static getPageInfoFromNavDestinationInfo(navInfo: NavDestinationInfo): PageInfo | undefined {
+    if (navInfo.state != uiObserver.NavDestinationState.ON_SHOWN) {
+      return undefined
+    }
+    let name = navInfo.name.toString()
+    const GTK_NAV_PATH_PREFIX = '__GTK_'
+    if (name.startsWith(GTK_NAV_PATH_PREFIX)) {
+      return undefined
+    }
+    let path = PATH_SEPARATOR + name
+    let title = name
+    if (title.includes(PATH_SEPARATOR)) {
+      title = title.substring(title.lastIndexOf(PATH_SEPARATOR) + 1)
+    }
+    let attributes = Util.getAttributesFromNavInfoParameter(navInfo.param)
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    let pageInfo = new PageInfo(path, title, attributes, context.trackerId, navInfo.navDestinationId)
+    return pageInfo
   }
 
   static sendPage(pageInfo: PageInfo, eventScene: EventScene = EventScene.Native) {
@@ -196,16 +259,42 @@ export class PageInfo {
   title: string
   attributes: AttributesType
   trackerId: string
+  dstId?: string
 
   constructor(
     path: string,
     title: string,
     attributes: AttributesType,
-    trackerId: string
+    trackerId: string,
+    dstId?: string
   ) {
     this.path = path
     this.title = title
     this.attributes = attributes
     this.trackerId = trackerId
+    this.dstId = dstId
+  }
+
+  isEqual(to: PageInfo): boolean {
+    return this.path == to.path && this.title == to.title && this.trackerId == to.trackerId && this.dstId == to.dstId
+  }
+}
+
+class NavBarInfo {
+  navBar: PageInfo
+  dstId: string
+
+  constructor(navBar: PageInfo, dst: NavDestinationInfo) {
+    this.navBar = navBar
+    this.dstId = dst.navDestinationId
+  }
+
+  isEqual(to: NavDestinationInfo): boolean {
+    // 需要系统保证该navDestinationId全局唯一
+    return this.dstId == to.navDestinationId
+  }
+
+  refreshNavDestination(dst: NavDestinationInfo) {
+    this.dstId = dst.navDestinationId
   }
 }
