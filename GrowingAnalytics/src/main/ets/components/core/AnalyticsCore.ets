@@ -101,10 +101,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       + 'GrowingIO version: ' + SDK_VERSION)
     Plugins.onSDKDidInitialize(context, config, SDK_VERSION)
     core._isInitializedSuccessfully = true
-
-    if (config.autotrackEnabled && config.autotrackAllPages) {
-      LogUtil.warn(() => '已开启无感监听(组件导航Navigation和页面路由Router跳转，需API 12及以上)，此功能为实验性功能，后续将根据最新官方接口进行优化')
-    }
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
