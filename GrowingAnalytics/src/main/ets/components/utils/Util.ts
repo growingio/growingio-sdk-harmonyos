@@ -271,4 +271,12 @@ export default class Util {
       return {}
     }
   }
+
+  static getAliasFromNavInfoParameter(param: any): string {
+    try {
+      return param['growing_alias'] || ''
+    } catch (e) {
+      return ''
+    }
+  }
 }

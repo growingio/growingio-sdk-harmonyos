@@ -110,8 +110,9 @@ export default class AutotrackPage {
             // 将当前navBar对应的首页入栈，并同时关联NavDestination，避免在返回到首页时发错事件
             let navBar = new PageInfo(
               lastPage.path,
-              lastPage?.title ?? '',
-              lastPage?.attributes ?? {},
+              lastPage.title ?? '',
+              lastPage.attributes ?? {},
+              lastPage.path,
               context.trackerId)
             let navBarInfo = new NavBarInfo(navBar, toInfo)
             AutotrackPage.navBarStack.push(navBarInfo)
@@ -161,6 +162,10 @@ export default class AutotrackPage {
       }
       let param = router.getParams()
       let attributes = Util.getAttributesFromNavInfoParameter(param)
+      let alias = Util.getAliasFromNavInfoParameter(param)
+      if (alias.length > 0) {
+        path = PATH_SEPARATOR + alias
+      }
       let pageInfo = new PageInfo(path, title, attributes, context.trackerId)
       AutotrackPage.sendPage(pageInfo)
 
@@ -208,6 +213,10 @@ export default class AutotrackPage {
       title = title.substring(title.lastIndexOf(PATH_SEPARATOR) + 1)
     }
     let attributes = Util.getAttributesFromNavInfoParameter(navInfo.param)
+    let alias = Util.getAliasFromNavInfoParameter(navInfo.param)
+    if (alias.length > 0) {
+      path = PATH_SEPARATOR + alias
+    }
     let context = GrowingContext.getDefaultContext() as GrowingContext
     let pageInfo = new PageInfo(path, title, attributes, context.trackerId, navInfo.navDestinationId)
     return pageInfo
@@ -266,7 +275,7 @@ export class PageInfo {
     title: string,
     attributes: AttributesType,
     trackerId: string,
-    dstId?: string
+    dstId?: string,
   ) {
     this.path = path
     this.title = title
@@ -276,7 +285,7 @@ export class PageInfo {
   }
 
   isEqual(to: PageInfo): boolean {
-    return this.path == to.path && this.title == to.title && this.trackerId == to.trackerId && this.dstId == to.dstId
+    return this.path == to.path && this.trackerId == to.trackerId && this.dstId == to.dstId
   }
 }
 
