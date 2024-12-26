@@ -112,7 +112,6 @@ export default class AutotrackPage {
               lastPage.path,
               lastPage.title ?? '',
               lastPage.attributes ?? {},
-              lastPage.path,
               context.trackerId)
             let navBarInfo = new NavBarInfo(navBar, toInfo)
             AutotrackPage.navBarStack.push(navBarInfo)
