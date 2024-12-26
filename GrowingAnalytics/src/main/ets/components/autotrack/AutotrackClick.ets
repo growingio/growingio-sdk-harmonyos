@@ -161,7 +161,7 @@ export default class AutotrackClick {
   static getXpathInfo(frameNode: FrameNode): XpathInfo {
     let info = new XpathInfo()
     let f: FrameNode | null = frameNode
-    info.eventType = AutotrackClick.getEventType(f.getNodeType())
+    info.eventType = EventType.ViewClick
 
     while (f) {
       AutotrackClick.setXpathInfo(info, f)
@@ -233,13 +233,6 @@ export default class AutotrackClick {
     } catch (e) {
       return ''
     }
-  }
-
-  static getEventType(nodeType: string) {
-    if (AutotrackClick.inputComponents.includes(nodeType)) {
-      return EventType.ViewChange
-    }
-    return EventType.ViewClick
   }
 }
 
