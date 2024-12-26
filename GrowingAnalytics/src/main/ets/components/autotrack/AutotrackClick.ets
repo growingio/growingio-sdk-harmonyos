@@ -16,6 +16,7 @@
  */
 
 import { FrameNode } from '@ohos.arkui.node'
+import router from '@ohos.router'
 
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
@@ -127,8 +128,17 @@ export default class AutotrackClick {
     let realPath: string | undefined = undefined
     if (pageInfo.navDestinationInfo) {
       realPath = PATH_SEPARATOR + pageInfo.navDestinationInfo.name.toString()
+      let alias = Util.getAliasFromNavInfoParameter(pageInfo.navDestinationInfo.param)
+      if (alias.length > 0) {
+        realPath = PATH_SEPARATOR + alias
+      }
     } else if (pageInfo.routerPageInfo) {
       realPath = PATH_SEPARATOR + pageInfo.routerPageInfo.name.toString()
+      let param = router.getParams()
+      let alias = Util.getAliasFromNavInfoParameter(param)
+      if (alias.length > 0) {
+        realPath = PATH_SEPARATOR + alias
+      }
     }
 
     if (realPath) {
