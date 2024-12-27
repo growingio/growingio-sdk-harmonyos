@@ -150,8 +150,8 @@ export default struct SdkInfo {
     infoList.push(new _SdkInfo('事件请求尝试连接最长时间', String(config.requestOptions._connectTimeout / 1000) + 's'))
     infoList.push(new _SdkInfo('事件请求传输数据最长时间', String(config.requestOptions._transferTimeout / 1000) + 's'))
     infoList.push(new _SdkInfo('本地事件数据有效时长', String(config._dataValidityPeriod / 86400000) + 'd'))
-    // infoList.push(new _SdkInfo('无埋点采集', config.autotrackEnabled ? 'YES' : 'NO'))
-    // infoList.push(new _SdkInfo('页面浏览事件自动埋点', config.autotrackAllPages ? 'YES' : 'NO'))
+    infoList.push(new _SdkInfo('无埋点采集', config.autotrackEnabled ? 'YES' : 'NO'))
+    infoList.push(new _SdkInfo('页面浏览事件自动埋点', config.autotrackAllPages ? 'YES' : 'NO'))
 
     this.data.set(header, infoList)
   }

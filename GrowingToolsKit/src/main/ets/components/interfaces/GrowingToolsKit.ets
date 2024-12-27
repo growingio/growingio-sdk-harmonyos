@@ -16,6 +16,7 @@
  */
 
 import bundleManager from '@ohos.bundle.bundleManager'
+import common from '@ohos.app.ability.common'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
@@ -78,7 +79,12 @@ export class GrowingToolsKit {
     TrackersInfo.push(trackerId, config)
   }
 
+  // 暂时保留，兼容旧版本SDK(指版本<=2.1.0)
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
+    this.afterWindowStageCreate(ability.context, windowStage)
+  }
+
+  afterWindowStageCreate(context: common.UIAbilityContext, windowStage: window.WindowStage) {
     if (!GrowingToolsKit.debug) {
       return
     }
@@ -109,7 +115,7 @@ export class GrowingToolsKit {
       })
     })
 
-    EventDatabase.initDatabase(ability.context)
+    EventDatabase.initDatabase(context)
   }
 
   onEventWroteToDisk(event: GTKEventPersistence, eventScene: number) {

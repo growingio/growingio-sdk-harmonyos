@@ -18,13 +18,14 @@
 import window from '@ohos.window'
 import ModuleButton from '../views/ModuleButton'
 import NavStackManager from '../core/NavStackManager'
-import { GTKColor, NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
+import { ConfigMode, GTKColor, NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
 import { HAR_VERSION } from '../../../../../BuildProfile'
 import SharedPreferences from '../utils/SharedPreferences'
 import EventDatabase from '../event/EventDatabase'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 
 import { Preferences, AutotrackEvent, CircleModule } from '@growingio/tools_circle'
+import promptAction from '@ohos.promptAction'
 
 @ComponentV2
 export default struct Home {
@@ -67,6 +68,12 @@ export default struct Home {
           ModuleButton({ name: '圈选', image: 'app.media.growingtk_circle' })
             .onTouch(event => {
               if (event.type ==  TouchType.Up) {
+                let config = GrowingToolsKit.sdkConfig
+                if (config.mode != ConfigMode.NewSaaS) {
+                  promptAction.showToast({ message: '圈选功能仅支持 NewSaaS 模式下' })
+                  return
+                }
+
                 CircleModule.initModule({
                   dataSourceId: GrowingToolsKit.sdkConfig.dataSourceId,
                   preferences: SharedPreferences.shared as Preferences,

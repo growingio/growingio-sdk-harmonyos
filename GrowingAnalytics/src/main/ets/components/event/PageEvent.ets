@@ -55,8 +55,8 @@ export default class PageEvent extends Event implements Page {
       if (lastPage) {
         event.referralPage = lastPage.path
       }
+      PageEvent.setLastPage(event, context)
     }
-    PageEvent.setLastPage(event, context)
 
     return EventBuilder.build(event, context)
   }

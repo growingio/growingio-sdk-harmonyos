@@ -34,17 +34,21 @@ import Util from '../utils/Util'
 
 export default class AutotrackPage {
   // 存储SDK尚未初始化或应用处于后台时，触发的页面浏览事件
-  static pagesCacheOnBackground: Array<PageInfo> = []
+  static pagesCacheOnBackground: Array<Record<string, Object>> = []
   // 存储当前所有的NavPathStack
   static navBarStack: Array<NavBarInfo> = []
   // 存储监听Navigation路由触发的页面浏览事件 (主要是为了保证先发送routerPage，再发送deferNavDestinationPage)
   static deferNavDestinationPages: Array<PageInfo> = []
+  // 存储最后一个pageInfo，无论是否发送了该pageInfo对应的页面浏览事件 (主要是为了适配延迟初始化；与PageEvent.lastPage不同)
+  static lastPage: PageInfo | undefined = undefined
 
-  static initAutotrackPage(context: UIContext) {
-    uiObserver.on('navDestinationUpdate', AutotrackPage.onPageUpdate)
-    uiObserver.on('navDestinationSwitch', context, AutotrackPage.onPageUpdate)
-    uiObserver.on('routerPageUpdate', context, AutotrackPage.onPageUpdate)
+  static startObserver(context: UIContext) {
+    context.getUIObserver().on('navDestinationUpdate', AutotrackPage.onPageUpdate)
+    context.getUIObserver().on('navDestinationSwitch', AutotrackPage.onPageUpdate)
+    context.getUIObserver().on('routerPageUpdate', AutotrackPage.onPageUpdate)
+  }
 
+  static startSubscribeToEvent() {
     emitter.once({eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE}, AutotrackPage.resendPageFromCacheOnBackground)
     emitter.on({eventId: EMIT_EVENT_SESSION_STATE_FOREGROUND}, AutotrackPage.resendPageFromCacheOnBackground)
   }
@@ -57,10 +61,6 @@ export default class AutotrackPage {
     // 5. 触发时机: navDestinationUpdate、navDestinationSwitch不确定先后，navDestinationUpdate早于routerPageUpdate
     // 注意:
     // 以上仅在当前版本5.0.0(12)下有效，不保证后续系统更新后结果依旧
-    let context = GrowingContext.getDefaultContext() as GrowingContext
-    if (!context.config.autotrackAllPages) {
-      return
-    }
     if (!info) {
       return
     }
@@ -84,7 +84,7 @@ export default class AutotrackPage {
           // LIFO
           let k = AutotrackPage.navBarStack.pop()!
           if (k.isEqual(fromInfo)) {
-            AutotrackPage.sendPage(k.navBar)
+            AutotrackPage.sendNativePage(k.navBar)
 
             // 清除当前navBar栈中from对应的deferNavDestinationPage，减小内存占用
             // 该page可能是由于全模态返回时，在navDestinationUpdate监听下生成
@@ -105,15 +105,10 @@ export default class AutotrackPage {
         let toInfo = to as NavDestinationInfo
 
         if (typeof from == 'string' && from != null && from != undefined) {
-          let lastPage = PageEvent.getLastPage(context)
+          let lastPage = AutotrackPage.lastPage
           if (lastPage?.path != undefined) {
             // 将当前navBar对应的首页入栈，并同时关联NavDestination，避免在返回到首页时发错事件
-            let navBar = new PageInfo(
-              lastPage.path,
-              lastPage.title ?? '',
-              lastPage.attributes ?? {},
-              context.trackerId)
-            let navBarInfo = new NavBarInfo(navBar, toInfo)
+            let navBarInfo = new NavBarInfo(lastPage, toInfo)
             AutotrackPage.navBarStack.push(navBarInfo)
           }
         } else {
@@ -165,12 +160,12 @@ export default class AutotrackPage {
       if (alias.length > 0) {
         path = PATH_SEPARATOR + alias
       }
-      let pageInfo = new PageInfo(path, title, attributes, context.trackerId)
-      AutotrackPage.sendPage(pageInfo)
+      let pageInfo = new PageInfo(path, title, attributes)
+      AutotrackPage.sendNativePage(pageInfo)
 
       while (AutotrackPage.deferNavDestinationPages.length > 0) {
         let pageInfo = AutotrackPage.deferNavDestinationPages.shift()!
-        AutotrackPage.sendPage(pageInfo)
+        AutotrackPage.sendNativePage(pageInfo)
       }
     }
   }
@@ -185,7 +180,7 @@ export default class AutotrackPage {
     for (let i = 0; i < AutotrackPage.deferNavDestinationPages.length; i++) {
       let p = AutotrackPage.deferNavDestinationPages[i]
       if (p.isEqual(pageInfo)) {
-        AutotrackPage.sendPage(pageInfo)
+        AutotrackPage.sendNativePage(pageInfo)
         AutotrackPage.deferNavDestinationPages.splice(i, 1)
         isSend = true
         break
@@ -216,22 +211,39 @@ export default class AutotrackPage {
     if (alias.length > 0) {
       path = PATH_SEPARATOR + alias
     }
-    let context = GrowingContext.getDefaultContext() as GrowingContext
-    let pageInfo = new PageInfo(path, title, attributes, context.trackerId, navInfo.navDestinationId)
+    let pageInfo = new PageInfo(path, title, attributes, navInfo.navDestinationId)
     return pageInfo
   }
 
-  static sendPage(pageInfo: PageInfo, eventScene: EventScene = EventScene.Native) {
+  static sendNativePage(pageInfo: PageInfo) {
+    pageInfo.timestamp = Date.now()
+    AutotrackPage.lastPage = pageInfo
+
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (context == undefined) {
+      return
+    }
+    if (!context.config.autotrackEnabled) {
+      return
+    }
+    if (!context.config.autotrackAllPages) {
+      // 该配置仅影响NativePage，不影响FlutterPage等
+      return
+    }
+    AutotrackPage.sendPage(pageInfo, EventScene.Native)
+  }
+
+  static sendPage(pageInfo: PageInfo, eventScene: EventScene) {
     AutotrackPage.resendPageFromCacheOnBackground()
     AutotrackPage.generatePage(pageInfo, eventScene)
   }
 
-  static generatePage(pageInfo: PageInfo, eventScene: EventScene = EventScene.Native) {
-    let context = GrowingContext.getContext(pageInfo.trackerId)
+  static generatePage(pageInfo: PageInfo, eventScene: EventScene) {
+    let context = GrowingContext.getDefaultContext() as GrowingContext
     if (context == undefined) {
       return
     }
-    if (AnalyticsCore.tracker(pageInfo.trackerId).isInitializedSuccessfully()
+    if (AnalyticsCore.core.isInitializedSuccessfully()
       && Session.sessionState === SessionState.Foreground) {
       if (!context.config.dataCollectionEnabled) {
         return
@@ -245,20 +257,23 @@ export default class AutotrackPage {
       AnalyticsCore.writeEventToDisk(e, context, eventScene)
     } else {
       // 详见: https://github.com/growingio/growingio-sdk-harmonyos/pull/6#issuecomment-2232880146
-      AutotrackPage.cachePageOnBackground(pageInfo)
+      AutotrackPage.cachePageOnBackground(pageInfo, eventScene)
     }
   }
 
   static resendPageFromCacheOnBackground() {
     let pages = [...AutotrackPage.pagesCacheOnBackground]
     AutotrackPage.pagesCacheOnBackground = []
-    for (let pageInfo of pages) {
-      AutotrackPage.generatePage(pageInfo)
+    for (let p of pages) {
+      AutotrackPage.generatePage(p['pageInfo'] as PageInfo, p['eventScene'] as EventScene)
     }
   }
 
-  static cachePageOnBackground(pageInfo: PageInfo) {
-    AutotrackPage.pagesCacheOnBackground.push(pageInfo)
+  static cachePageOnBackground(pageInfo: PageInfo, eventScene: EventScene) {
+    AutotrackPage.pagesCacheOnBackground.push({
+      'pageInfo': pageInfo,
+      'eventScene': eventScene
+    })
   }
 }
 
@@ -266,25 +281,23 @@ export class PageInfo {
   path: string
   title: string
   attributes: AttributesType
-  trackerId: string
   dstId?: string
+  timestamp: number = 0
 
   constructor(
     path: string,
     title: string,
     attributes: AttributesType,
-    trackerId: string,
     dstId?: string,
   ) {
     this.path = path
     this.title = title
     this.attributes = attributes
-    this.trackerId = trackerId
     this.dstId = dstId
   }
 
   isEqual(to: PageInfo): boolean {
-    return this.path == to.path && this.trackerId == to.trackerId && this.dstId == to.dstId
+    return this.path == to.path && this.dstId == to.dstId
   }
 }
 

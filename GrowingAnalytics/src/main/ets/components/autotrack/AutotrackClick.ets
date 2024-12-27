@@ -18,10 +18,10 @@
 import { FrameNode } from '@ohos.arkui.node'
 import router from '@ohos.router'
 
+import AutotrackPage from './AutotrackPage'
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
 import { EventType } from '../event/Event'
-import PageEvent from '../event/PageEvent'
 import ViewElementEvent from '../event/ViewElementEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import { PATH_SEPARATOR } from '../utils/Constants'
@@ -35,12 +35,6 @@ export default class AutotrackClick {
     "GridCol",
   ]
 
-  private static inputComponents: Array<string> = [
-    "TextInput",
-    "TextArea",
-    "RichEditor",
-  ]
-
   private static dialogPathPrefixes: Array<string> = [
     "/root/AlertDialog",
     "/root/Dialog",
@@ -52,7 +46,7 @@ export default class AutotrackClick {
     "/root/Video",
   ]
 
-  static initAutotrackClick(context: UIContext) {
+  static startObserver(context: UIContext) {
     AutotrackClick.uiContent = context
     context.getUIObserver().on('willClick', AutotrackClick.onWillClick)
   }
@@ -65,7 +59,21 @@ export default class AutotrackClick {
       return
     }
 
+    if (!AnalyticsCore.core.isInitializedSuccessfully()) {
+      return
+    }
+
     let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (context.config.mode == ConfigMode.SaaS) {
+      // mode SaaS not support
+      return
+    }
+    if (!context.config.autotrackEnabled) {
+      return
+    }
+    if (!context.config.dataCollectionEnabled) {
+      return
+    }
 
     // page
     let pageInfo = AutotrackClick.getPageInfo(frameNode)
@@ -97,9 +105,11 @@ export default class AutotrackClick {
       for (let i = 0; i < AutotrackClick.dialogPathPrefixes.length; i++) {
         let prefix = AutotrackClick.dialogPathPrefixes[i]
         if (xpath.startsWith(prefix)) {
-          let lastPage = PageEvent.getLastPage(context)
+          let lastPage = AutotrackPage.lastPage
           path = lastPage?.path ?? ''
-          ptm = lastPage?.timestamp ?? 0
+          if (context.config.mode == ConfigMode.CDP) {
+            ptm = lastPage?.timestamp ?? 0
+          }
           break
         }
       }
@@ -147,7 +157,7 @@ export default class AutotrackClick {
       let context = GrowingContext.getDefaultContext() as GrowingContext
       if (context.config.mode == ConfigMode.CDP) {
         // compare with last page in cache
-        let lastPage = PageEvent.getLastPage(context)
+        let lastPage = AutotrackPage.lastPage
         let path = lastPage?.path
         if (path == realPath) {
           info.pageShowTimestamp = lastPage?.timestamp ?? 0

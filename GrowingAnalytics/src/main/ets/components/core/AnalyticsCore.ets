@@ -17,6 +17,7 @@
 
 import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback'
 import ApplicationStateChangeCallback from '@ohos.app.ability.ApplicationStateChangeCallback'
+import common from '@ohos.app.ability.common'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import emitter from '@ohos.events.emitter'
 import window from '@ohos.window'
@@ -31,8 +32,7 @@ import EventTimer from './EventTimer'
 import Hybrid from './Hybrid'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
-import AutotrackClick from '../autotrack/AutotrackClick'
-import AutotrackPage from '../autotrack/AutotrackPage'
+import Autotrack from '../autotrack/Autotrack'
 import CustomEvent from '../event/CustomEvent'
 import Event, { EventScene, EventType } from '../event/Event'
 import EventDatabase from '../event/EventDatabase'
@@ -80,7 +80,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     AnalyticsCore.core = core
     AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
+    Autotrack.initAutotrack(gContext)
     AnalyticsCore.setLifecycleCallback(context)
+    AnalyticsCore.setAppStateChangeCallback(context)
     SharedPreferences.initWithContext(context)
     AppInfo.initAppInfo(context)
     DeviceInfo.initDeviceInfo()
@@ -135,29 +137,32 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   static setLifecycleCallback(context: Context) {
-    let gContext = GrowingContext.getDefaultContext() as GrowingContext
+    // 与Autotrack不同，插件的初始化需要保证在SDK的初始化之后
+    // 而Autotrack的UI监听需要在应用启动之初，来保证page.path的正确性等
+    if (AnalyticsCore._mainWindowStage != undefined) {
+      return
+    }
+
+    let callback = (abilityContext: common.UIAbilityContext, windowStage: window.WindowStage) => {
+      AnalyticsCore._mainWindowStage = windowStage
+      Plugins.afterWindowStageCreate(abilityContext, windowStage)
+    }
+
+    // 如果传入UIAbility实例，且已到达onWindowStageCreate生命周期，则直接获取windowStage，不用再监听abilityLifecycle
+    if (Util.isUIAbilityContext(context)) {
+      let abilityContext = context as common.UIAbilityContext
+      let windowStage = abilityContext.windowStage
+      if (windowStage) {
+        callback(abilityContext, windowStage)
+        return
+      }
+    }
+
     let abilityLifecycleCallback: AbilityLifecycleCallback = {
       onAbilityCreate(ability: UIAbility) {
       },
       onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
-        if (AnalyticsCore._mainWindowStage != undefined) {
-          return
-        }
-
-        AnalyticsCore._mainWindowStage = windowStage
-
-        if (gContext.config.autotrackEnabled) {
-          // 仅支持mainWindow内无埋点事件监听与发送，不支持其他window
-          windowStage.getMainWindow().then(window => {
-            let c = window.getUIContext()
-            AutotrackPage.initAutotrackPage(c)
-            if (gContext.config.mode != ConfigMode.SaaS) { // mode SaaS not support
-              AutotrackClick.initAutotrackClick(c)
-            }
-          })
-        }
-
-        Plugins.onWindowStageCreate(ability, windowStage)
+        callback(ability.context, windowStage)
       },
       onWindowStageActive(ability: UIAbility, windowStage: window.WindowStage) {
       },
@@ -175,7 +180,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       }
     }
     context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
+  }
 
+  static setAppStateChangeCallback(context: Context) {
     let applicationStateChangeCallback: ApplicationStateChangeCallback = {
       onApplicationForeground() {
         Session.onForeground()
