@@ -127,7 +127,7 @@ export default struct SdkInfo {
     infoList.push(new _SdkInfo('SDK版本号', GrowingToolsKit.sdkVersion))
 
     let time = GrowingToolsKit.sdkEndTime - GrowingToolsKit.sdkStartTime
-    infoList.push(new _SdkInfo('初始化耗时', String(time) + 'ms'))
+    infoList.push(new _SdkInfo('初始化耗时', String(time) + 'ms' + (GrowingToolsKit.deferStart ? '(延迟初始化)' : '')))
 
     infoList.push(new _SdkInfo('AccountId', config.accountId))
     infoList.push(new _SdkInfo('DataSourceId', config.dataSourceId))
@@ -150,8 +150,9 @@ export default struct SdkInfo {
     infoList.push(new _SdkInfo('事件请求尝试连接最长时间', String(config.requestOptions._connectTimeout / 1000) + 's'))
     infoList.push(new _SdkInfo('事件请求传输数据最长时间', String(config.requestOptions._transferTimeout / 1000) + 's'))
     infoList.push(new _SdkInfo('本地事件数据有效时长', String(config._dataValidityPeriod / 86400000) + 'd'))
-    infoList.push(new _SdkInfo('无埋点采集', config.autotrackEnabled ? 'YES' : 'NO'))
+    infoList.push(new _SdkInfo('是否采集无埋点', config.autotrackEnabled ? 'YES' : 'NO'))
     infoList.push(new _SdkInfo('页面浏览事件自动埋点', config.autotrackAllPages ? 'YES' : 'NO'))
+    infoList.push(new _SdkInfo('无埋点集成是否完成', GrowingToolsKit.autotrackStatusFetcher() ? 'YES' : 'NO'))
 
     this.data.set(header, infoList)
   }

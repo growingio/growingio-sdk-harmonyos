@@ -36,15 +36,16 @@ export default class AutotrackClick {
   ]
 
   private static dialogPathPrefixes: Array<string> = [
-    "/root/AlertDialog",
-    "/root/Dialog",
-    "/root/Keyboard",
-    "/root/MenuWrapper/Menu",
-    "/root/ModalPage",
-    "/root/Popup",
-    "/root/SheetWrapper/SheetPage",
-    "/root/SelectOverlay",
-    "/root/Video",
+    "/root",
+    // "/root/AlertDialog",
+    // "/root/Dialog",
+    // "/root/Keyboard",
+    // "/root/MenuWrapper",
+    // "/root/ModalPage",
+    // "/root/Popup",
+    // "/root/SheetWrapper",
+    // "/root/SelectOverlay",
+    // "/root/Video",
   ]
 
   static startObserver(context: UIContext) {

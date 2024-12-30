@@ -145,6 +145,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     let callback = (abilityContext: common.UIAbilityContext, windowStage: window.WindowStage) => {
       AnalyticsCore._mainWindowStage = windowStage
+      // 无法保证用户对SDK初始化和Autotrack的UI监听的执行顺序，因此使用匿名函数实时获取
+      Plugins.setAutotrackStatusFetcher(() => {
+        return Autotrack.uiContent != undefined && Autotrack.uiContent != null
+      })
       Plugins.afterWindowStageCreate(abilityContext, windowStage)
     }
 
@@ -153,6 +157,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       let abilityContext = context as common.UIAbilityContext
       let windowStage = abilityContext.windowStage
       if (windowStage) {
+        // 可以断定为延迟初始化场景，即初始化时机在windowStage.loadContent之后
+        Plugins.onDeferStart()
         callback(abilityContext, windowStage)
         return
       }

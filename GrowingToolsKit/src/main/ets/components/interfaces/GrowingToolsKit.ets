@@ -38,6 +38,8 @@ export class GrowingToolsKit {
   static sdkEndTime: number = 0
   static gioKitStartTime: number = 0
   private _position: Position = { x: 0, y: 0 }
+  static autotrackStatusFetcher: () => boolean
+  static deferStart: boolean = false
 
   constructor(x: number = vp2px(ENTRY_PADDING), y: number = 400) {
     this._position.x = x
@@ -76,6 +78,14 @@ export class GrowingToolsKit {
     }
 
     TrackersInfo.push(trackerId, config)
+  }
+
+  setAutotrackStatusFetcher(fetcher: () => boolean) {
+    GrowingToolsKit.autotrackStatusFetcher = fetcher
+  }
+
+  onDeferStart() {
+    GrowingToolsKit.deferStart = true
   }
 
   // 暂时保留，兼容旧版本SDK(指版本<=2.1.0)
