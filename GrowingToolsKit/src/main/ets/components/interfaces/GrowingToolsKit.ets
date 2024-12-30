@@ -60,7 +60,7 @@ export class GrowingToolsKit {
     GrowingToolsKit.sdkStartTime = Date.now()
   }
 
-  onSDKDidInitialize(context: Context, config: GTKConfig, version: string) {
+  onSDKDidInitialize(config: GTKConfig, version: string) {
     if (!GrowingToolsKit.debug) {
       return
     }
@@ -68,7 +68,6 @@ export class GrowingToolsKit {
     GrowingToolsKit.sdkEndTime = Date.now()
     GrowingToolsKit.sdkConfig = config.copy()
     GrowingToolsKit.sdkVersion = version
-    SharedPreferences.initWithContext(context)
   }
 
   onStartSubTracker(trackerId: string, config: GTKConfig) {
@@ -94,6 +93,7 @@ export class GrowingToolsKit {
     }
 
     GrowingToolsKit.mainWindowStage = windowStage
+    SharedPreferences.initWithContext(context)
     windowStage.createSubWindow(SUB_WINDOW_NAME).then(subWindow => {
       let localStorage = new LocalStorage()
       localStorage.setOrCreate(PREFERENCE_ENTRY_POSITION, this._position)

@@ -38,6 +38,7 @@ export default class AutotrackClick {
   private static dialogPathPrefixes: Array<string> = [
     "/root/AlertDialog",
     "/root/Dialog",
+    "/root/Keyboard",
     "/root/MenuWrapper/Menu",
     "/root/ModalPage",
     "/root/Popup",

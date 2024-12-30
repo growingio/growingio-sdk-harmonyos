@@ -24,7 +24,7 @@ import EventPersistence from '../event/EventPersistence'
 
 export interface PluginsInterface {
   onSDKWillInitialize?(): void
-  onSDKDidInitialize?(context: Context, config: GrowingConfig, version: string): void
+  onSDKDidInitialize?(config: GrowingConfig, version: string): void
   onStartSubTracker?(trackerId: string, config: GrowingConfig): void
   afterWindowStageCreate?(abilityContext: common.UIAbilityContext, windowStage: window.WindowStage): void
   onEventWroteToDisk?(event: EventPersistence, eventScene: number): void
@@ -63,10 +63,10 @@ export default class Plugins {
     })
   }
 
-  static onSDKDidInitialize(context: Context, config: GrowingConfig, version: string) {
+  static onSDKDidInitialize(config: GrowingConfig, version: string) {
     Plugins.plugins.forEach(plugin => {
       if (plugin.onSDKDidInitialize) {
-        plugin.onSDKDidInitialize(context, config, version)
+        plugin.onSDKDidInitialize(config, version)
       }
     })
   }

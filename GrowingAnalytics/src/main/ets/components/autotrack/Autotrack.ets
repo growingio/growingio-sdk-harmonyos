@@ -42,10 +42,6 @@ export default class Autotrack {
     if (!context.config.autotrackEnabled) {
       return
     }
-    if (!Autotrack.uiContent) {
-      LogUtil.error(() => 'Must call Autotrack.startObserver(windowStage) when windowStageCreate')
-      return
-    }
     AutotrackPage.startSubscribeToEvent()
   }
 }
