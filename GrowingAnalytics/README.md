@@ -89,29 +89,10 @@ export default class MyAbilityStage extends AbilityStage {
 
 > 注意：其中 accountId/dataSourceId/urlScheme 为必填项，dataCollectionServerHost 为可选项，若不清楚请联系您的专属项目经理或技术支持
 
-若您的应用需要使用无埋点功能，在主窗口对应的 Ability 的 onWindowStageCreate 方法中开启无埋点监听：
-```typescript
-onWindowStageCreate(windowStage: window.WindowStage) {
-  try {
-    windowStage.loadContent('pages/Index',  (err: BusinessError) => {
-      const errCode: number = err.code;
-      if (errCode) {
-        console.error(`Failed to load the content. Cause code: ${err.code}, message: ${err.message}`);
-        return;
-      }
-      console.info('Succeeded in loading the content.');
-      GrowingAnalytics.onWindowStageCreate(this, windowStage);
-    });
-  } catch (exception) {
-    console.error(`Failed to load the content. Cause code: ${exception.code}, message: ${exception.message}`);
-  }
-}
-```
-> 注意：该监听在未初始化 SDK 之前不会获取任何用户设备信息和产生事件等等
-
 ### 延迟初始化
 
 若您的应用需要延迟初始化 SDK，请使用 deferStart 进行初始化，需确保传入的是 UIAbilityContext：
+
 ```typescript
 GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext, config)
 ```
