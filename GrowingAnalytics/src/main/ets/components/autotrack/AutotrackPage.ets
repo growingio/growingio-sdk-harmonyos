@@ -34,9 +34,9 @@ import Util from '../utils/Util'
 
 export default class AutotrackPage {
   // 存储SDK尚未初始化或应用处于后台时，触发的页面浏览事件
-  static pagesCacheOnBackground: Array<Record<string, Object>> = []
+  static pagesCacheOnBackground: Array<PageInfo> = []
   // 存储当前所有的NavPathStack
-  static navBarStack: Array<NavBarInfo> = []
+  static navBarStack: Array<_NavBarInfo> = []
   // 存储监听Navigation路由触发的页面浏览事件 (主要是为了保证先发送routerPage，再发送deferNavDestinationPage)
   static deferNavDestinationPages: Array<PageInfo> = []
   // 存储最后一个pageInfo，无论是否发送了该pageInfo对应的页面浏览事件 (主要是为了适配延迟初始化；与PageEvent.lastPage不同)
@@ -108,7 +108,7 @@ export default class AutotrackPage {
           let lastPage = AutotrackPage.lastPage
           if (lastPage?.path != undefined) {
             // 将当前navBar对应的首页入栈，并同时关联NavDestination，避免在返回到首页时发错事件
-            let navBarInfo = new NavBarInfo(lastPage, toInfo)
+            let navBarInfo = new _NavBarInfo(lastPage, toInfo)
             AutotrackPage.navBarStack.push(navBarInfo)
           }
         } else {
@@ -160,7 +160,7 @@ export default class AutotrackPage {
       if (alias.length > 0) {
         path = PATH_SEPARATOR + alias
       }
-      let pageInfo = new PageInfo(path, title, attributes)
+      let pageInfo = new PageInfo(path, title, attributes, alias)
       AutotrackPage.sendNativePage(pageInfo)
 
       while (AutotrackPage.deferNavDestinationPages.length > 0) {
@@ -211,7 +211,7 @@ export default class AutotrackPage {
     if (alias.length > 0) {
       path = PATH_SEPARATOR + alias
     }
-    let pageInfo = new PageInfo(path, title, attributes, navInfo.navDestinationId)
+    let pageInfo = new PageInfo(path, title, attributes, alias, navInfo.navDestinationId)
     return pageInfo
   }
 
@@ -226,19 +226,21 @@ export default class AutotrackPage {
     if (!context.config.autotrackEnabled) {
       return
     }
-    if (!context.config.autotrackAllPages) {
-      // 该配置仅影响NativePage，不影响FlutterPage等
-      return
+    if (!context.config.autotrackAllPages) { // 该配置仅影响NativePage，不影响FlutterPage等
+      // 若设置了页面别名，将继续发送该页面浏览事件
+      if (!pageInfo.alias || (pageInfo.alias && pageInfo.alias.length == 0)) {
+        return
+      }
     }
-    AutotrackPage.sendPage(pageInfo, EventScene.Native)
+    AutotrackPage.sendPage(pageInfo)
   }
 
-  static sendPage(pageInfo: PageInfo, eventScene: EventScene) {
+  static sendPage(pageInfo: PageInfo) {
     AutotrackPage.resendPageFromCacheOnBackground()
-    AutotrackPage.generatePage(pageInfo, eventScene)
+    AutotrackPage.generatePage(pageInfo)
   }
 
-  static generatePage(pageInfo: PageInfo, eventScene: EventScene) {
+  static generatePage(pageInfo: PageInfo) {
     let context = GrowingContext.getDefaultContext() as GrowingContext
     if (context == undefined) {
       return
@@ -252,28 +254,26 @@ export default class AutotrackPage {
         pageInfo.path,
         pageInfo.title,
         pageInfo.attributes,
+        pageInfo.timestamp,
         context
       )
-      AnalyticsCore.writeEventToDisk(e, context, eventScene)
+      AnalyticsCore.writeEventToDisk(e, context, pageInfo.eventScene)
     } else {
       // 详见: https://github.com/growingio/growingio-sdk-harmonyos/pull/6#issuecomment-2232880146
-      AutotrackPage.cachePageOnBackground(pageInfo, eventScene)
+      AutotrackPage.cachePageOnBackground(pageInfo)
     }
   }
 
   static resendPageFromCacheOnBackground() {
     let pages = [...AutotrackPage.pagesCacheOnBackground]
     AutotrackPage.pagesCacheOnBackground = []
-    for (let p of pages) {
-      AutotrackPage.generatePage(p['pageInfo'] as PageInfo, p['eventScene'] as EventScene)
+    for (let page of pages) {
+      AutotrackPage.generatePage(page)
     }
   }
 
-  static cachePageOnBackground(pageInfo: PageInfo, eventScene: EventScene) {
-    AutotrackPage.pagesCacheOnBackground.push({
-      'pageInfo': pageInfo,
-      'eventScene': eventScene
-    })
+  static cachePageOnBackground(pageInfo: PageInfo) {
+    AutotrackPage.pagesCacheOnBackground.push(pageInfo)
   }
 }
 
@@ -281,18 +281,22 @@ export class PageInfo {
   path: string
   title: string
   attributes: AttributesType
+  alias?: string
   dstId?: string
   timestamp: number = 0
+  eventScene: EventScene = EventScene.Native
 
   constructor(
     path: string,
     title: string,
     attributes: AttributesType,
+    alias?: string,
     dstId?: string,
   ) {
     this.path = path
     this.title = title
     this.attributes = attributes
+    this.alias = alias
     this.dstId = dstId
   }
 
@@ -301,7 +305,7 @@ export class PageInfo {
   }
 }
 
-class NavBarInfo {
+class _NavBarInfo {
   navBar: PageInfo
   dstId: string
 

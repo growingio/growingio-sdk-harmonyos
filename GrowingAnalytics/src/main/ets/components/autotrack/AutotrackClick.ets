@@ -132,8 +132,8 @@ export default class AutotrackClick {
     AnalyticsCore.writeEventToDisk(e, context)
   }
 
-  static getPageInfo(frameNode: FrameNode): PageInfo {
-    let info = new PageInfo()
+  static getPageInfo(frameNode: FrameNode): _PageInfo {
+    let info = new _PageInfo()
 
     // get real page
     let pageInfo = AutotrackClick.uiContent.getPageInfoByUniqueId(frameNode.getUniqueId())
@@ -170,8 +170,8 @@ export default class AutotrackClick {
     return info
   }
 
-  static getXpathInfo(frameNode: FrameNode): XpathInfo {
-    let info = new XpathInfo()
+  static getXpathInfo(frameNode: FrameNode): _XpathInfo {
+    let info = new _XpathInfo()
     let f: FrameNode | null = frameNode
     info.eventType = EventType.ViewClick
 
@@ -183,7 +183,7 @@ export default class AutotrackClick {
     return info
   }
 
-  static setXpathInfo(info: XpathInfo, frameNode: FrameNode) {
+  static setXpathInfo(info: _XpathInfo, frameNode: FrameNode) {
     let curNodeType = frameNode.getNodeType()
     info.xpath.push(curNodeType)
 
@@ -248,12 +248,12 @@ export default class AutotrackClick {
   }
 }
 
-class PageInfo {
+class _PageInfo {
   path: string = ''
   pageShowTimestamp: number = 0
 }
 
-class XpathInfo {
+class _XpathInfo {
   xpath: Array<string> = []
   xcontent: Array<string> = []
   index = 0

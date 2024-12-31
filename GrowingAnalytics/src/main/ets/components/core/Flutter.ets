@@ -47,7 +47,8 @@ export default class Flutter {
     // 因此，为避免事件数据差异，处理方式也有所不同，iOS丢弃这些PAGE；HarmonyOS NEXT则将这些PAGE缓存于内存中，回到前台时生成
     // 见：https://github.com/growingio/growingio-sdk-ios-autotracker/commit/1ae98f066d979c724aba9598f038e4781dac38d9
     let pageInfo = new PageInfo(path, title, attributes)
-    AutotrackPage.sendPage(pageInfo, EventScene.Flutter)
+    pageInfo.eventScene = EventScene.Flutter
+    AutotrackPage.sendPage(pageInfo)
   }
 
   static trackFlutterClickEvent(argument: Map<string, Object>) {

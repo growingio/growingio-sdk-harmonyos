@@ -42,12 +42,14 @@ export default class PageEvent extends Event implements Page {
     path: string,
     title: string,
     attributes: AttributesType,
+    timestamp: number,
     context: GrowingContext
   ): PageEvent {
     let event = new PageEvent()
     event.path = path
     event.title = title ?? undefined
     event.attributes = attributes
+    event.timestamp = timestamp
     event.eventType = EventType.Page
 
     if (context.config.mode == ConfigMode.SaaS) {

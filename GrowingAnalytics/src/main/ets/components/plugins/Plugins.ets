@@ -16,7 +16,6 @@
  */
 
 import common from '@ohos.app.ability.common'
-import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
 import { GrowingConfig } from '../interfaces/GrowingConfig'
