@@ -171,6 +171,7 @@ struct EntryIcon {
         )
       }
     .hideTitleBar(true)
+    .mode(NavigationMode.Stack)
     .navDestination(this.pagesMap)
   }
 }
