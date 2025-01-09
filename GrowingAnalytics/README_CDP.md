@@ -88,8 +88,15 @@ export default class MyAbilityStage extends AbilityStage {
 }
 ```
 
-> 注意：如若需要，可在用户同意隐私协议之后，再进行初始化 SDK
-> 其中 accountId/dataSourceId/urlScheme/dataCollectionServerHost 为必填项，若不清楚请联系您的专属项目经理或技术支持
+> 注意：其中 accountId/dataSourceId/urlScheme/dataCollectionServerHost 为必填项，若不清楚请联系您的专属项目经理或技术支持
+
+### 延迟初始化
+
+若您的应用需要延迟初始化 SDK，请使用 deferStart 进行初始化，需确保传入的是 UIAbilityContext：
+
+```typescript
+GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext, config)
+```
 
 其他初始化配置项见下表，在 start 方法调用前通过`config.<配置项> = 对应值`进行配置：
 

@@ -15,7 +15,8 @@
   "dependencies": {
     "snappyjs": "^0.7.0",
     "@ohos/protobufjs": "^2.1.0",
-    "long": "^5.2.1"
+    "long": "^5.2.1",
+    "@growingio/tools_circle": "^1.0.0",
   },
   "tags": [
     "Tool"

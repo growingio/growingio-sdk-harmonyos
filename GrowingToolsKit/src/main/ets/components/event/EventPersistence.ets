@@ -116,6 +116,13 @@ export default class EventPersistence {
           path: '',
           eventSequenceId: 0,
           timestamp: 0,
+          eventType: '',
+
+          // autotrack
+          xpath: '',
+          xcontent: '',
+          textValue: '',
+          index: 0,
 
           // mode SaaS
           n: '',
@@ -134,6 +141,13 @@ interface Event {
   path: string
   eventSequenceId: number
   timestamp: number
+  eventType: string
+
+  // autotrack
+  xpath: string
+  xcontent: string
+  textValue: string
+  index: number
 
   // mode SaaS
   n: string
