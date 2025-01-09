@@ -227,7 +227,7 @@ export default class Util {
   }
 
   static toSerializeByMeasurementProtocolV3(event: any): string {
-    let modified = { ...event, gioId: '', globalSequenceId: 0}
+    let modified = { ...event}
     delete modified.timezoneOffset
     if (modified.xcontent != undefined && modified.xcontent != null) {
       delete modified.xcontent
