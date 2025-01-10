@@ -50,6 +50,41 @@ export class GrowingToolsKit {
     GrowingToolsKit.debug = appInfo.debug
   }
 
+  static show(): Promise<void> {
+    try {
+      let subWindow = GrowingToolsKit._findGioKitWindow()
+      if (subWindow) {
+        return subWindow.showWindow()
+      } else {
+        return Promise.resolve()
+      }
+    } catch (e) {
+      return Promise.resolve()
+    }
+  }
+
+  static minimize(): Promise<void> {
+    try {
+      let subWindow = GrowingToolsKit._findGioKitWindow()
+      if (subWindow) {
+        return subWindow.minimize()
+      } else {
+        return Promise.resolve()
+      }
+    } catch (e) {
+      return Promise.resolve()
+    }
+  }
+
+  private static _findGioKitWindow(): window.Window | undefined {
+    try {
+      let subWindow = window.findWindow(SUB_WINDOW_NAME)
+      return subWindow
+    } catch (e) {
+      return undefined
+    }
+  }
+
   onSDKWillInitialize() {
     if (!GrowingToolsKit.debug) {
       return
