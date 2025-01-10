@@ -50,6 +50,41 @@ export class GrowingToolsKit {
     GrowingToolsKit.debug = appInfo.debug
   }
 
+  static show(): Promise<void> {
+    try {
+      let subWindow = GrowingToolsKit._findGioKitWindow()
+      if (subWindow) {
+        return subWindow.showWindow()
+      } else {
+        return Promise.resolve()
+      }
+    } catch (e) {
+      return Promise.resolve()
+    }
+  }
+
+  static minimize(): Promise<void> {
+    try {
+      let subWindow = GrowingToolsKit._findGioKitWindow()
+      if (subWindow) {
+        return subWindow.minimize()
+      } else {
+        return Promise.resolve()
+      }
+    } catch (e) {
+      return Promise.resolve()
+    }
+  }
+
+  private static _findGioKitWindow(): window.Window | undefined {
+    try {
+      let subWindow = window.findWindow(SUB_WINDOW_NAME)
+      return subWindow
+    } catch (e) {
+      return undefined
+    }
+  }
+
   onSDKWillInitialize() {
     if (!GrowingToolsKit.debug) {
       return
@@ -86,16 +121,25 @@ export class GrowingToolsKit {
     }
 
     GrowingToolsKit.mainWindowStage = windowStage
-    windowStage.createSubWindow(SUB_WINDOW_NAME).then(window => {
+    windowStage.createSubWindow(SUB_WINDOW_NAME).then(subWindow => {
       let localStorage = new LocalStorage()
       localStorage.setOrCreate(PREFERENCE_ENTRY_POSITION, this._position)
-      window.loadContentByName(routeName, localStorage).then(() => {
-        window.setWindowBackgroundColor(GTKColor.blackAlpha)
+      subWindow.loadContentByName(routeName, localStorage).then(() => {
+        subWindow.setWindowBackgroundColor(GTKColor.blackAlpha)
       })
-      window.moveWindowTo(this._position.x, this._position.y)
-      window.resize(vp2px(56), vp2px(56))
-      window.showWindow()
-      window.setWindowLayoutFullScreen(true)
+      subWindow.moveWindowTo(this._position.x, this._position.y)
+      subWindow.resize(vp2px(56), vp2px(56))
+      subWindow.showWindow()
+      subWindow.setWindowLayoutFullScreen(true)
+
+      subWindow.on("windowEvent", (windowEvent) => {
+        if (windowEvent == window.WindowEventType.WINDOW_ACTIVE) {
+          window.shiftAppWindowFocus(
+            subWindow.getWindowProperties().id,
+            windowStage.getMainWindowSync().getWindowProperties().id
+          )
+        }
+      })
     })
 
     EventDatabase.initDatabase(ability.context)
