@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.1.1) (2025-01-03)
+
+### Bug Fixes 修复
+
+* fix: 展示时主动让出焦点，避免影响应用功能
+
 ## [1.1.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.1.0) (2024-11-14)
 
 ### Features 功能
