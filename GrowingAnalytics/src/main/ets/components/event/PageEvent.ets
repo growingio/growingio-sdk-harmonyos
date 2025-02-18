@@ -18,6 +18,7 @@
 import Event, { EventType, AttributesType } from './Event'
 import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
+import DeviceInfo from '../core/DeviceInfo'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export interface Page {
@@ -33,6 +34,7 @@ export interface Page {
 export default class PageEvent extends Event implements Page {
   path: string | undefined = undefined
   title: string | undefined = undefined
+  orientation: string | undefined = undefined
 
   // mode SaaS
   private static lastPage: Record<string, Page> = {}
@@ -50,6 +52,7 @@ export default class PageEvent extends Event implements Page {
     event.title = title ?? undefined
     event.attributes = attributes
     event.timestamp = timestamp
+    event.orientation = DeviceInfo.orientation
     event.eventType = EventType.Page
 
     if (context.config.mode == ConfigMode.SaaS) {
