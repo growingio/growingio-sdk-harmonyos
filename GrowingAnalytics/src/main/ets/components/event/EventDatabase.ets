@@ -70,13 +70,14 @@ export default class EventDatabase {
     }
 
     try {
-      await EventDatabase.store.batchInsert(EventDatabase.tableName, EventDatabase.eventsCache)
+      let events = [...EventDatabase.eventsCache]
+      EventDatabase.eventsCache = []
+      await EventDatabase.store.batchInsert(EventDatabase.tableName, events)
       LogUtil.info(() => 'Write events that were created before database initialization to disk = '
         + JSON.stringify(
-        JSON.parse('[' + EventDatabase.eventsCache.map((e: relationalStore.ValuesBucket) => {
+        JSON.parse('[' + events.map((e: relationalStore.ValuesBucket) => {
           return e['DATA'] as string
         }).join(',') + ']'), null, 4))
-      EventDatabase.eventsCache = []
       emitter.emit({
         eventId: EMIT_EVENT_DATABASE_FLUSH
       })
