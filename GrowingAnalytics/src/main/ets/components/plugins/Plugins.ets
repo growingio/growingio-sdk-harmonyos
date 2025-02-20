@@ -18,23 +18,28 @@
 import common from '@ohos.app.ability.common'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
-import { GrowingConfig } from '../interfaces/GrowingConfig'
+
+import AnalyticsCore from '../core/AnalyticsCore'
 import EventPersistence from '../event/EventPersistence'
+import { GrowingConfig } from '../interfaces/GrowingConfig'
 
 export interface PluginsInterface {
   onSDKWillInitialize?(): void
   onSDKDidInitialize?(config: GrowingConfig, version: string): void
   onStartSubTracker?(trackerId: string, config: GrowingConfig): void
-  setAutotrackStatusFetcher(fetcher: () => boolean): void
-  onDeferStart(): void
+  setAutotrackStatusFetcher?(fetcher: () => boolean): void
+  onDeferStart?(): void
   afterWindowStageCreate?(abilityContext: common.UIAbilityContext, windowStage: window.WindowStage): void
+  handleOpenURL?(uri: string): boolean
   onEventWroteToDisk?(event: EventPersistence, eventScene: number): void
   onEventsRemoveFromDisk?(events: string[]): void
   onResponseReceive?(response: rcp.Response): void
+  onEventsDidSend?(events: EventPersistence[], request: rcp.Request): void
 }
 
 export default class Plugins {
   static plugins: Array<PluginsInterface> = []
+  static deferDeepLink: string | undefined = undefined
 
   static registerPlugins(plugins: PluginsInterface[]) {
     plugins.forEach(plugin => {
@@ -43,16 +48,6 @@ export default class Plugins {
   }
 
   static registerPlugin(plugin: PluginsInterface) {
-    let hasPlugin: boolean = false
-    for (let i = 0; i < Plugins.plugins.length; i++) {
-      if (typeof Plugins.plugins[i] == typeof plugin) {
-        hasPlugin = true
-        break
-      }
-    }
-    if (hasPlugin) {
-      return
-    }
     Plugins.plugins.push(plugin)
   }
 
@@ -70,6 +65,13 @@ export default class Plugins {
         plugin.onSDKDidInitialize(config, version)
       }
     })
+
+    // 延迟初始化场景下，待SDK初始化后再处理DeepLink
+    if (Plugins.deferDeepLink) {
+      let uri = Plugins.deferDeepLink
+      Plugins.deferDeepLink = undefined
+      Plugins.handleOpenURL(uri)
+    }
   }
 
   static onStartSubTracker(trackerId: string, config: GrowingConfig) {
@@ -104,6 +106,25 @@ export default class Plugins {
     })
   }
 
+  static handleOpenURL(uri: string): boolean {
+    let isHandle = false
+    for (let plugin of Plugins.plugins) {
+      if (plugin.handleOpenURL) {
+        isHandle = plugin.handleOpenURL(uri)
+        if (isHandle) {
+          break
+        }
+      }
+    }
+
+    if (!isHandle && !AnalyticsCore.core.isInitializedSuccessfully() && uri.startsWith('growing.')) {
+      // 延迟初始化场景下，待SDK初始化后再处理DeepLink
+      Plugins.deferDeepLink = uri
+    }
+
+    return isHandle
+  }
+
   static onEventWroteToDisk(event: EventPersistence, eventScene: number) {
     Plugins.plugins.forEach(plugin => {
       if (plugin.onEventWroteToDisk) {
@@ -124,6 +145,14 @@ export default class Plugins {
     Plugins.plugins.forEach(plugin => {
       if (plugin.onResponseReceive) {
         plugin.onResponseReceive(response)
+      }
+    })
+  }
+
+  static onEventsDidSend(events: EventPersistence[], request: rcp.Request) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onEventsDidSend) {
+        plugin.onEventsDidSend(events, request)
       }
     })
   }
