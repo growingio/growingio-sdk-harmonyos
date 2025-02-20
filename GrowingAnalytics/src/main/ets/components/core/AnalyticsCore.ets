@@ -99,7 +99,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     Network.initNetwork(gContext)
     Session.refreshSession(gContext)
 
-    let delay = config._dataUploadInterval
+    let delay = config.debugEnabled && AppInfo.debug ? 1000 : config._dataUploadInterval
     setInterval(() => {
       EventSender.sendEvent(gContext)
     }, delay)
@@ -120,18 +120,18 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     GrowingContext.setContext(trackerId, config)
     let context = GrowingContext.getContext(trackerId) as GrowingContext
-    let core = new AnalyticsCore(context)
-    AnalyticsCore.trackers.push(core)
+    let subTracker = new AnalyticsCore(context)
+    AnalyticsCore.trackers.push(subTracker)
     UserIdentifier.initMultiUser(context)
     Session.refreshSession(context)
 
-    let delay = config._dataUploadInterval
+    let delay = config.debugEnabled && AppInfo.debug ? 1000 : config._dataUploadInterval
     setInterval(() => {
       EventSender.sendEvent(context)
     }, delay)
 
     Plugins.onStartSubTracker(trackerId, config)
-    core._isInitializedSuccessfully = true
+    subTracker._isInitializedSuccessfully = true
     return true
   }
 
