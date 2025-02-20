@@ -27,8 +27,8 @@ export default class EntryAbilityStage extends AbilityStage {
 
     let config = new GrowingConfig().NewSaaS(
       '0a1b4118dd954ec3bcc69da5138bdb96',
-      'ab555003531e0fd1',
-      'growing.bf30ad277eaae1aa'
+      '8eeb910e0db7a73b',
+      'growing.84ff920737d56b1d'
     )
     config.debugEnabled = true
     config.sessionInterval = 30
@@ -44,8 +44,8 @@ export default class EntryAbilityStage extends AbilityStage {
 
     // let config = new GrowingConfig().CDP(
     //   '0a1b4118dd954ec3bcc69da5138bdb96',
-    //   'ab555003531e0fd1',
-    //   'growing.bf30ad277eaae1aa',
+    //   '8eeb910e0db7a73b',
+    //   'growing.84ff920737d56b1d',
     //   'https://cdp-api.growing.com'
     // )
     // config.debugEnabled = true
@@ -62,7 +62,7 @@ export default class EntryAbilityStage extends AbilityStage {
 
     // let config = new GrowingConfig().SaaS(
     //   '0a1b4118dd954ec3bcc69da5138bdb96',
-    //   'growing.bf30ad277eaae1aa'
+    //   'growing.84ff920737d56b1d'
     // )
     // config.debugEnabled = true
     // config.sessionInterval = 30

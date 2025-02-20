@@ -103,6 +103,7 @@ export default class EventSender {
         LogUtil.info(() => 'Send event = ' + response.request.content)
 
         await EventDatabase.removeEvents([...events])
+        Plugins.onEventsDidSend(events, response.request)
         Plugins.onEventsRemoveFromDisk(events.map(e => e.uuid))
         this.isUploading = false
         let count = await EventDatabase.countOfEvents(context, this.eventTypes)
