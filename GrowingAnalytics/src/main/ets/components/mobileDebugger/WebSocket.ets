@@ -63,8 +63,9 @@ export class WebSocket {
 
     let latestSocket = this.ws
     this.queue = []
-    latestSocket.send(JSON.stringify(new Quit()))
-    latestSocket.close()
+    latestSocket.send(JSON.stringify(new Quit())).then(() => {
+      latestSocket.close()
+    })
   }
 
   send(message: string) {
