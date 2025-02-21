@@ -65,6 +65,8 @@ export class WebSocket {
     this.queue = []
     latestSocket.send(JSON.stringify(new Quit())).then(() => {
       latestSocket.close()
+    }).catch((e: Error) => {
+      latestSocket.close()
     })
   }
 
