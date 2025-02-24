@@ -197,7 +197,7 @@ export class EventData {
     this.sdkVersion = e.sdkVersion
     this.appVersion = e.appVersion
     this.eventName = e.eventName
-    this.attributes = e.attributes && e.attributes.length > 0 ? Util.cloneObject(e.attributes) : undefined
+    this.attributes = e.attributes ? Util.serializableAttributes(e.attributes) : undefined
     this.protocolType = e.protocolType
     this.textValue = e.textValue
     this.xpath = e.xpath
