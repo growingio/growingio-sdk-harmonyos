@@ -89,7 +89,6 @@ export class WebSocket {
           this.sendIfNeeded()
         }
       }).catch((e: Error) => {
-        this.queue = [message as string, ...this.queue]
         this.isUploading = false
       })
     }
@@ -125,6 +124,28 @@ export class WebSocket {
     if (logs.length == 0) {
       return
     }
+
+    const MAX_SIZE = 2 * 1024 * 1024
+    let currentBatch: Array<LogData> = []
+    let currentSize = 0
+
+    for (let log of logs) {
+      let logSize = log.message.length
+      if (currentSize + logSize > MAX_SIZE) {
+        this._sendLogs(currentBatch)
+        currentBatch = []
+        currentSize = 0
+      }
+      currentBatch.push(log)
+      currentSize += logSize
+    }
+
+    if (currentBatch.length > 0) {
+      this._sendLogs(currentBatch)
+    }
+  }
+
+  private _sendLogs(logs: Array<LogData>) {
     let loggerData = new LoggerData(logs)
     this.send(JSON.stringify(loggerData))
   }
