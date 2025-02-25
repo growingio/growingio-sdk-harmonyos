@@ -266,7 +266,11 @@ export default class Util {
 
   static getAttributesFromNavInfoParameter(param: any): AttributesType {
     try {
-      return param['growing_attributes'] || {}
+      if (param) {
+        return param['growing_attributes'] || {}
+      } else {
+        return {}
+      }
     } catch (e) {
       return {}
     }
@@ -274,7 +278,11 @@ export default class Util {
 
   static getAliasFromNavInfoParameter(param: any): string {
     try {
-      return param['growing_alias'] || ''
+      if (param) {
+        return param['growing_alias'] || ''
+      } else {
+        return ''
+      }
     } catch (e) {
       return ''
     }
