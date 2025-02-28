@@ -22,15 +22,20 @@ export default class AppInfo {
   static appName: string = ''
   static appVersion: string = ''
   static appChannel: string | undefined = undefined
+  static debug: boolean = false
 
   static initAppInfo(context: Context) {
-    let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
-    let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleFlags)
+    try {
+      let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
+      let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleFlags)
 
-    AppInfo.domain = bundleInfo.name
-    let r_id = bundleInfo.appInfo.labelResource.id
-    AppInfo.appName = context.resourceManager.getStringSync(r_id)
-    AppInfo.appVersion = bundleInfo.versionName
-    // AppInfo.appChannel = '应用市场'
+      AppInfo.domain = bundleInfo.name
+      let r_id = bundleInfo.appInfo.labelResource.id
+      AppInfo.appName = context.resourceManager.getStringSync(r_id)
+      AppInfo.appVersion = bundleInfo.versionName
+      // AppInfo.appChannel = '应用市场'
+      AppInfo.debug = bundleInfo.appInfo.debug
+    } catch (e) {
+    }
   }
 }

@@ -17,19 +17,33 @@
 
 export class LogUtil {
   static debugEnabled: boolean = false
+  static logDebugger: ((type: string, message: string) => void) | undefined = undefined
 
   static info(message: () => string) {
-    if (!this.debugEnabled) {
-      return
+    let m = '[GrowingAnalytics] ' + message()
+    if (LogUtil.debugEnabled) {
+      console.info(m)
     }
-    console.info('[GrowingAnalytics] ' + message())
+    if (LogUtil.logDebugger) {
+      LogUtil.logDebugger('DEBUG', m)
+    }
   }
 
   static error(message: () => string) {
-    console.error('[GrowingAnalytics] ' + message())
+    let m = '[GrowingAnalytics] ' + message()
+    console.error(m)
+
+    if (LogUtil.logDebugger) {
+      LogUtil.logDebugger('ERROR', m)
+    }
   }
 
   static warn(message: () => string) {
-    console.warn('[GrowingAnalytics] ' + message())
+    let m = '[GrowingAnalytics] ' + message()
+    console.warn(m)
+
+    if (LogUtil.logDebugger) {
+      LogUtil.logDebugger('WARN', m)
+    }
   }
 }

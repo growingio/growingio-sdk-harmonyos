@@ -50,6 +50,7 @@ import Util from '../utils/Util'
 import DummyTracker from './DummyTracker'
 import { HAR_VERSION } from '../../../../../BuildProfile'
 import Plugins from '../plugins/Plugins'
+import MobileDebugger from '../mobileDebugger/MobileDebugger'
 
 class Location {
   latitude: number = 0
@@ -59,6 +60,8 @@ class Location {
 export const SDK_VERSION: string = HAR_VERSION
 
 export default class AnalyticsCore implements GrowingAnalyticsInterface {
+  static uiContent: UIContext
+  static mainWindow: window.Window
   static core: AnalyticsCore | DummyTracker = new DummyTracker()
   static trackers: Array<AnalyticsCore> = []
   static dummyTracker: DummyTracker = new DummyTracker()
@@ -72,7 +75,12 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   static startCore(context: Context, config: GrowingConfig) {
-    Plugins.registerPlugins(config.plugins)
+    let plugins = [...config.plugins]
+    if (config.mode != ConfigMode.SaaS) {
+      // 仅支持 NewSaaS 和 CDP
+      plugins.push(new MobileDebugger())
+    }
+    Plugins.registerPlugins(plugins)
     Plugins.onSDKWillInitialize()
     GrowingContext.setDefaultContext(config)
     let gContext = GrowingContext.getDefaultContext() as GrowingContext
@@ -91,7 +99,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     Network.initNetwork(gContext)
     Session.refreshSession(gContext)
 
-    let delay = config._dataUploadInterval
+    let delay = config.debugEnabled && AppInfo.debug ? 1000 : config._dataUploadInterval
     setInterval(() => {
       EventSender.sendEvent(gContext)
     }, delay)
@@ -112,18 +120,18 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     GrowingContext.setContext(trackerId, config)
     let context = GrowingContext.getContext(trackerId) as GrowingContext
-    let core = new AnalyticsCore(context)
-    AnalyticsCore.trackers.push(core)
+    let subTracker = new AnalyticsCore(context)
+    AnalyticsCore.trackers.push(subTracker)
     UserIdentifier.initMultiUser(context)
     Session.refreshSession(context)
 
-    let delay = config._dataUploadInterval
+    let delay = config.debugEnabled && AppInfo.debug ? 1000 : config._dataUploadInterval
     setInterval(() => {
       EventSender.sendEvent(context)
     }, delay)
 
     Plugins.onStartSubTracker(trackerId, config)
-    core._isInitializedSuccessfully = true
+    subTracker._isInitializedSuccessfully = true
     return true
   }
 
@@ -145,6 +153,12 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     let callback = (abilityContext: common.UIAbilityContext, windowStage: window.WindowStage) => {
       AnalyticsCore._mainWindowStage = windowStage
+      windowStage.getMainWindow().then(mainWindow => {
+        let context = mainWindow.getUIContext()
+        AnalyticsCore.mainWindow = mainWindow
+        AnalyticsCore.uiContent = context
+      })
+
       // 无法保证用户对SDK初始化和Autotrack的UI监听的执行顺序，因此使用匿名函数实时获取
       Plugins.setAutotrackStatusFetcher(() => {
         return Autotrack.uiContent != undefined && Autotrack.uiContent != null
@@ -430,5 +444,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     let e = SaaSVisitorEvent.create(Util.cloneObject(attributes), this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info(() => 'Set visitor: ' + JSON.stringify(attributes))
+  }
+
+  static handleOpenURL(uri: string): boolean {
+    return Plugins.handleOpenURL(uri)
   }
 }

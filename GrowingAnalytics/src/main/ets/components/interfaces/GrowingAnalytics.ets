@@ -235,4 +235,8 @@ export class GrowingAnalytics {
     }
     Flutter.trackFlutterClickEvent(argument)
   }
+
+  static handleOpenURL(uri: string): boolean {
+    return AnalyticsCore.handleOpenURL(uri)
+  }
 }

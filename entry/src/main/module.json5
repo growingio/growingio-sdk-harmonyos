@@ -31,6 +31,17 @@
             "actions": [
               "action.system.home"
             ]
+          },
+          {
+            "actions": [
+              "ohos.want.action.viewData"
+            ],
+            "uris": [
+              {
+                "scheme":"growing.84ff920737d56b1d",
+                "host": "growingio/webservice"
+              }
+            ]
           }
         ]
       },
