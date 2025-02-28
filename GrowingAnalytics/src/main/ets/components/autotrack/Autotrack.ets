@@ -24,7 +24,6 @@ import { LogUtil } from '../utils/LogUtil'
 
 export default class Autotrack {
   static uiContent: UIContext
-  static autotrackEnabled: boolean
 
   static startObserver(windowStage: window.WindowStage) {
     try {
