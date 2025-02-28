@@ -34,6 +34,7 @@ export default class DeviceInfo {
   static platformVersion: string = ''
   static screenHeight: number = 0
   static screenWidth: number = 0
+  static orientation: string = 'PORTRAIT'
   static deviceBrand: string = ''
   static deviceModel: string = ''
   static deviceType: string = ''
@@ -49,6 +50,10 @@ export default class DeviceInfo {
     let displayInfo = display.getDefaultDisplaySync()
     DeviceInfo.screenHeight = displayInfo.height
     DeviceInfo.screenWidth = displayInfo.width
+    if (displayInfo.orientation != undefined) {
+      let isPortrait = displayInfo.orientation == 0 || displayInfo.orientation == 2
+      DeviceInfo.orientation = isPortrait ? 'PORTRAIT' : 'LANDSCAPE'
+    }
 
     DeviceInfo.deviceBrand = deviceInfo.brand
     DeviceInfo.deviceModel = deviceInfo.productModel

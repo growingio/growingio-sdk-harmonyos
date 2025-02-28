@@ -18,10 +18,15 @@
 import window from '@ohos.window'
 import ModuleButton from '../views/ModuleButton'
 import NavStackManager from '../core/NavStackManager'
-import { GTKColor, NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
+import { ConfigMode, GTKColor, NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
 import { HAR_VERSION } from '../../../../../BuildProfile'
+import SharedPreferences from '../utils/SharedPreferences'
+import EventDatabase from '../event/EventDatabase'
+import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 
-@Component
+import promptAction from '@ohos.promptAction'
+
+@ComponentV2
 export default struct Home {
   pageStack: NavPathStack = NavStackManager.pageStack
   window: window.Window = window.findWindow(SUB_WINDOW_NAME)

@@ -31,6 +31,11 @@ struct Track {
           this.attributesK = [Util.getRandomString(), ...this.attributesK]
           this.attributesV = [Util.getRandomString(), ...this.attributesV]
         }).margin({ top: 15 })
+        .customProperty("growing_attributes", {
+          "action": "click",
+          "timestamp": Date.now(),
+          "where": "track_add_button"
+        })
       List({space: 15}) {
         ForEach(this.attributesK, (k: string, i: number) => {
           ListItem() {

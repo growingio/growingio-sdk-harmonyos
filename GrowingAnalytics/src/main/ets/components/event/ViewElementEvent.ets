@@ -18,6 +18,7 @@
 import Event, { EventType, AttributesType } from './Event'
 import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
+import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export default class ViewElementEvent extends Event {
   path: string | undefined = undefined
@@ -26,8 +27,12 @@ export default class ViewElementEvent extends Event {
   xcontent: string | undefined = undefined
   index: number | undefined = undefined
 
+  // mode CDP
+  pageShowTimestamp: number | undefined = undefined
+
   static create(
     path: string,
+    pageShowTimestamp: number,
     textValue: string,
     xpath: string,
     xcontent: string,
@@ -38,7 +43,12 @@ export default class ViewElementEvent extends Event {
   ): ViewElementEvent {
     let event = new ViewElementEvent()
     event.path = String(path ?? '')
-    event.textValue = textValue && textValue.length > 0 ? textValue : undefined
+    if (context.config.mode == ConfigMode.CDP) {
+      event.pageShowTimestamp = pageShowTimestamp > 0 ? pageShowTimestamp : Date.now()
+    }
+    if (eventType == EventType.ViewClick) {
+      event.textValue = textValue && textValue.length > 0 ? textValue : undefined
+    }
     event.xpath = xpath
     event.xcontent = xcontent
     event.index = index && index > 0 ? index : undefined

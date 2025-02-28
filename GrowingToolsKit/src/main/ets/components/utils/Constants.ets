@@ -20,6 +20,8 @@ export const ENTRY_MARGIN = 8
 export const SUB_WINDOW_NAME = 'GrowingToolsKit'
 export const NAV_PATH_PREFIX = '__GTK_'
 
+export const PREFERENCE_NAME = 'growing_tools_sp'
+
 export const DATABASE_NAME = 'growing_tools_enc_database'
 export const MAIN_TRACKER_ID = '__GrowingAnalyticsCore'
 

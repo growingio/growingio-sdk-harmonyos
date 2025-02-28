@@ -15,9 +15,13 @@
  * limitations under the License.
  */
 
+import common from '@ohos.app.ability.common'
+import UIAbility from '@ohos.app.ability.UIAbility'
+import window from '@ohos.window'
 import webview from '@ohos.web.webview'
 
 import { GrowingConfig } from './GrowingConfig'
+import Autotrack from '../autotrack/Autotrack'
 import AnalyticsCore from '../core/AnalyticsCore'
 import Flutter from '../core/Flutter'
 import GeneralProps from '../core/GeneralProps'
@@ -56,12 +60,17 @@ export class GrowingAnalytics {
       LogUtil.warn(() => 'Do not initialize GrowingAnalytics repeatedly')
       return
     }
-    if (!context.stageMode) {
-      LogUtil.error(() => 'Only support stageMode')
-      return
-    }
     let config = configuration.copy()
     AnalyticsCore.startCore(context, config)
+  }
+
+  static deferStart(context: common.UIAbilityContext, configuration: GrowingConfig) {
+    // In the case of delayed initialization, avoid users calling start and ensure that the context is UIAbilityContext
+    GrowingAnalytics.start(context, configuration)
+  }
+
+  static onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
+    Autotrack.startObserver(windowStage)
   }
 
   static startSubTracker(trackerId: string, configuration: GrowingConfig) {

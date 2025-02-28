@@ -16,6 +16,7 @@
  */
 
 import bundleManager from '@ohos.bundle.bundleManager'
+import common from '@ohos.app.ability.common'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
@@ -26,6 +27,7 @@ import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_PO
   GTKConfig, GTKEventPersistence } from '../utils/Constants'
 import RequestPersistence from '../network/RequestPersistence'
 import TrackersInfo from '../core/TrackersInfo'
+import SharedPreferences from '../utils/SharedPreferences'
 
 export class GrowingToolsKit {
   static debug: boolean = false
@@ -36,6 +38,8 @@ export class GrowingToolsKit {
   static sdkEndTime: number = 0
   static gioKitStartTime: number = 0
   private _position: Position = { x: 0, y: 0 }
+  static autotrackStatusFetcher: () => boolean
+  static deferStart: boolean = false
 
   constructor(x: number = vp2px(ENTRY_PADDING), y: number = 400) {
     this._position.x = x
@@ -111,7 +115,20 @@ export class GrowingToolsKit {
     TrackersInfo.push(trackerId, config)
   }
 
+  setAutotrackStatusFetcher(fetcher: () => boolean) {
+    GrowingToolsKit.autotrackStatusFetcher = fetcher
+  }
+
+  onDeferStart() {
+    GrowingToolsKit.deferStart = true
+  }
+
+  // 暂时保留，兼容旧版本SDK(指版本<=2.1.0)
   onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
+    this.afterWindowStageCreate(ability.context, windowStage)
+  }
+
+  afterWindowStageCreate(context: common.UIAbilityContext, windowStage: window.WindowStage) {
     if (!GrowingToolsKit.debug) {
       return
     }
@@ -121,6 +138,7 @@ export class GrowingToolsKit {
     }
 
     GrowingToolsKit.mainWindowStage = windowStage
+    SharedPreferences.initWithContext(context)
     windowStage.createSubWindow(SUB_WINDOW_NAME).then(subWindow => {
       let localStorage = new LocalStorage()
       localStorage.setOrCreate(PREFERENCE_ENTRY_POSITION, this._position)
@@ -142,7 +160,7 @@ export class GrowingToolsKit {
       })
     })
 
-    EventDatabase.initDatabase(ability.context)
+    EventDatabase.initDatabase(context)
   }
 
   onEventWroteToDisk(event: GTKEventPersistence, eventScene: number) {

@@ -17,6 +17,7 @@
 
 import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback'
 import ApplicationStateChangeCallback from '@ohos.app.ability.ApplicationStateChangeCallback'
+import common from '@ohos.app.ability.common'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import emitter from '@ohos.events.emitter'
 import window from '@ohos.window'
@@ -31,7 +32,7 @@ import EventTimer from './EventTimer'
 import Hybrid from './Hybrid'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
-import AutotrackPage from '../autotrack/AutotrackPage'
+import Autotrack from '../autotrack/Autotrack'
 import CustomEvent from '../event/CustomEvent'
 import Event, { EventScene, EventType } from '../event/Event'
 import EventDatabase from '../event/EventDatabase'
@@ -79,7 +80,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     AnalyticsCore.core = core
     AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
+    Autotrack.initAutotrack(gContext)
     AnalyticsCore.setLifecycleCallback(context)
+    AnalyticsCore.setAppStateChangeCallback(context)
     SharedPreferences.initWithContext(context)
     AppInfo.initAppInfo(context)
     DeviceInfo.initDeviceInfo()
@@ -100,10 +103,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       + 'GrowingIO version: ' + SDK_VERSION)
     Plugins.onSDKDidInitialize(config, SDK_VERSION)
     core._isInitializedSuccessfully = true
-
-    if (config.autotrackEnabled && config.autotrackAllPages) {
-      LogUtil.warn(() => '已开启无感监听(组件导航Navigation和页面路由Router跳转，需API 12及以上)，此功能为实验性功能，后续将根据最新官方接口进行优化')
-    }
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
@@ -138,24 +137,38 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   static setLifecycleCallback(context: Context) {
-    let gContext = GrowingContext.getDefaultContext() as GrowingContext
+    // 与Autotrack不同，插件的初始化需要保证在SDK的初始化之后
+    // 而Autotrack的UI监听需要在应用启动之初，来保证page.path的正确性等
+    if (AnalyticsCore._mainWindowStage != undefined) {
+      return
+    }
+
+    let callback = (abilityContext: common.UIAbilityContext, windowStage: window.WindowStage) => {
+      AnalyticsCore._mainWindowStage = windowStage
+      // 无法保证用户对SDK初始化和Autotrack的UI监听的执行顺序，因此使用匿名函数实时获取
+      Plugins.setAutotrackStatusFetcher(() => {
+        return Autotrack.uiContent != undefined && Autotrack.uiContent != null
+      })
+      Plugins.afterWindowStageCreate(abilityContext, windowStage)
+    }
+
+    // 如果传入UIAbility实例，且已到达onWindowStageCreate生命周期，则直接获取windowStage，不用再监听abilityLifecycle
+    if (Util.isUIAbilityContext(context)) {
+      let abilityContext = context as common.UIAbilityContext
+      let windowStage = abilityContext.windowStage
+      if (windowStage) {
+        // 可以断定为延迟初始化场景，即初始化时机在windowStage.loadContent之后
+        Plugins.onDeferStart()
+        callback(abilityContext, windowStage)
+        return
+      }
+    }
+
     let abilityLifecycleCallback: AbilityLifecycleCallback = {
       onAbilityCreate(ability: UIAbility) {
       },
       onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
-        if (AnalyticsCore._mainWindowStage != undefined) {
-          return
-        }
-
-        AnalyticsCore._mainWindowStage = windowStage
-
-        if (gContext.config.autotrackEnabled) {
-          windowStage.getMainWindow().then(window => {
-            AutotrackPage.initAutotrackPage(window.getUIContext())
-          })
-        }
-
-        Plugins.onWindowStageCreate(ability, windowStage)
+        callback(ability.context, windowStage)
       },
       onWindowStageActive(ability: UIAbility, windowStage: window.WindowStage) {
       },
@@ -173,7 +186,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       }
     }
     context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
+  }
 
+  static setAppStateChangeCallback(context: Context) {
     let applicationStateChangeCallback: ApplicationStateChangeCallback = {
       onApplicationForeground() {
         Session.onForeground()

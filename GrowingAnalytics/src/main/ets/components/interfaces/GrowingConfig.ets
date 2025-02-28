@@ -70,7 +70,7 @@ export class GrowingConfig {
   _dataValidityPeriod: number = 7 * 86400000
   trackerId: string = ''
   hybridAutotrackEnabled: boolean = true
-  autotrackEnabled: boolean = true
+  autotrackEnabled: boolean = false
   autotrackAllPages: boolean = false
   useProtobuf: boolean = true
   plugins: Array<PluginsInterface> = []

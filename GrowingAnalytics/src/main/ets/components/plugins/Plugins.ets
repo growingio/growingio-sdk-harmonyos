@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import UIAbility from '@ohos.app.ability.UIAbility'
+import common from '@ohos.app.ability.common'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
 import { GrowingConfig } from '../interfaces/GrowingConfig'
@@ -25,7 +25,9 @@ export interface PluginsInterface {
   onSDKWillInitialize?(): void
   onSDKDidInitialize?(config: GrowingConfig, version: string): void
   onStartSubTracker?(trackerId: string, config: GrowingConfig): void
-  onWindowStageCreate?(ability: UIAbility, windowStage: window.WindowStage): void
+  setAutotrackStatusFetcher(fetcher: () => boolean): void
+  onDeferStart(): void
+  afterWindowStageCreate?(abilityContext: common.UIAbilityContext, windowStage: window.WindowStage): void
   onEventWroteToDisk?(event: EventPersistence, eventScene: number): void
   onEventsRemoveFromDisk?(events: string[]): void
   onResponseReceive?(response: rcp.Response): void
@@ -78,10 +80,26 @@ export default class Plugins {
     })
   }
 
-  static onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
+  static setAutotrackStatusFetcher(fetcher: () => boolean) {
     Plugins.plugins.forEach(plugin => {
-      if (plugin.onWindowStageCreate) {
-        plugin.onWindowStageCreate(ability, windowStage)
+      if (plugin.setAutotrackStatusFetcher) {
+        plugin.setAutotrackStatusFetcher(fetcher)
+      }
+    })
+  }
+
+  static onDeferStart() {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onDeferStart) {
+        plugin.onDeferStart()
+      }
+    })
+  }
+
+  static afterWindowStageCreate(abilityContext: common.UIAbilityContext, windowStage: window.WindowStage) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.afterWindowStageCreate) {
+        plugin.afterWindowStageCreate(abilityContext, windowStage)
       }
     })
   }

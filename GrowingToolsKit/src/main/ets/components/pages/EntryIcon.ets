@@ -69,7 +69,7 @@ struct EntryIcon {
   }
 
   @Builder
-  pagesMap(name: string) {
+  pagesMap(name: string, param: object) {
     if (this.removePrefixForPathIfExist(name) == 'Home') {
       Home()
     } else if (this.removePrefixForPathIfExist(name) == 'SdkInfo') {
@@ -163,6 +163,7 @@ struct EntryIcon {
         )
       }
     .hideTitleBar(true)
+    .mode(NavigationMode.Stack)
     .navDestination(this.pagesMap)
   }
 }

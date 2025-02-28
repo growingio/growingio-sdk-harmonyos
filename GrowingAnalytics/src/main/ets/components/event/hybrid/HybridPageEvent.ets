@@ -19,6 +19,7 @@ import HybridEvent from './HybridEvent'
 import Event, { EventType, AttributesType } from '../Event'
 import EventBuilder from '../EventBuilder'
 import GrowingContext from '../../core/Context'
+import DeviceInfo from '../../core/DeviceInfo'
 
 export default class HybridPageEvent extends Event implements HybridEvent {
   title: string | undefined = undefined
@@ -26,6 +27,7 @@ export default class HybridPageEvent extends Event implements HybridEvent {
   protocolType: string | undefined = undefined
   path: string | undefined = undefined
   query: string | undefined = undefined
+  orientation: string | undefined = undefined
 
   static create(
     title: string,
@@ -47,6 +49,7 @@ export default class HybridPageEvent extends Event implements HybridEvent {
     event.query = query
     event.timestamp = Number(timestamp ?? 0)
     event.domain = String(domain ?? '')
+    event.orientation = DeviceInfo.orientation
     event.eventType = EventType.Page
     return EventBuilder.build(event, context)
   }
