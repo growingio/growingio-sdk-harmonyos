@@ -28,9 +28,9 @@ onWindowStageCreate(windowStage: window.WindowStage) {
 > 注意：
 > 该监听在未初始化 SDK 之前不会获取任何设备信息，以及产生事件数据
 
-#### 开启无埋点采集（默认开启）
+#### 开启无埋点采集
 
-在 SDK 初始化时，设置配置项 `autotrackEnabled` 为 `true` (默认为 `true`) 来开启采集无埋点数据: 
+在 SDK 初始化时，设置配置项 `autotrackEnabled` 为 `true` (2.1.0 版本默认为 `true`，2.2.0 版本起，默认为 `false`，后续版本可能会有所改动) 来开启采集无埋点数据: 
 
 ```typescript
 startAnalytics() {
@@ -135,4 +135,4 @@ router.pushUrl({
 
 如果您的应用中有 NavDestination 页面名称相同，或 Router 目标命名路由页面名称相同的情况，请通过设置页面别名来避免数据分析异常
 
-### 使用 GioKit 进行无埋点圈选
+### 进行无埋点圈选（开发中，敬请期待）
