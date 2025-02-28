@@ -33,8 +33,6 @@ import NetFlow from './NetFlow'
 import NavStackManager from '../core/NavStackManager'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 
-import { CircleListPage, CirclePage, LoginPage } from '@growingio/tools_circle'
-
 export const routeName: string = "EntryIcon"
 @Entry({ routeName: routeName, storage: LocalStorage.getShared() })
 @Component
@@ -82,12 +80,6 @@ struct EntryIcon {
       Realtime()
     } else if (this.removePrefixForPathIfExist(name) == 'NetFlow') {
       NetFlow()
-    } else if (this.removePrefixForPathIfExist(name) == 'CircleList') {
-      CircleListPage()
-    } else if (this.removePrefixForPathIfExist(name) == 'Circle') {
-      CirclePage()
-    } else if (this.removePrefixForPathIfExist(name) == 'Login') {
-      LoginPage()
     }
   }
 

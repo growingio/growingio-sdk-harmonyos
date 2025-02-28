@@ -24,7 +24,6 @@ import SharedPreferences from '../utils/SharedPreferences'
 import EventDatabase from '../event/EventDatabase'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 
-import { Preferences, AutotrackEvent, CircleModule } from '@growingio/tools_circle'
 import promptAction from '@ohos.promptAction'
 
 @ComponentV2
@@ -63,44 +62,6 @@ export default struct Home {
               if (event.type ==  TouchType.Up) {
                 let destination = new NavPathInfo(NAV_PATH_PREFIX + 'NetFlow', '')
                 this.pageStack.pushDestination(destination)
-              }
-            })
-          ModuleButton({ name: '圈选', image: 'app.media.growingtk_circle' })
-            .onTouch(event => {
-              if (event.type ==  TouchType.Up) {
-                let config = GrowingToolsKit.sdkConfig
-                if (config.mode != ConfigMode.NewSaaS) {
-                  promptAction.showToast({ message: '圈选功能仅支持 NewSaaS 模式下' })
-                  return
-                }
-
-                CircleModule.initModule({
-                  dataSourceId: GrowingToolsKit.sdkConfig.dataSourceId,
-                  preferences: SharedPreferences.shared as Preferences,
-                  recentAutotrackEventsGetter: async (count: number) => {
-                    let events = await EventDatabase.getEventsByCount(
-                      count,
-                      0,
-                      GrowingToolsKit.sdkConfig.accountId,
-                      GrowingToolsKit.sdkConfig.dataSourceId,
-                      ['PAGE', 'VIEW_CLICK', 'VIEW_CHANGE']
-                    )
-                    let autotrackEvents: Array<AutotrackEvent> = []
-                    for (let event of events) {
-                      let e = event.getEvent()
-                      autotrackEvents.push(e)
-                    }
-                    return autotrackEvents
-                  }
-                })
-
-                if (CircleModule.isLogin()) {
-                  let destination = new NavPathInfo(NAV_PATH_PREFIX + 'CircleList', '')
-                  this.pageStack.pushDestination(destination)
-                } else {
-                  let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Login', '')
-                  this.pageStack.pushDestination(destination)
-                }
               }
             })
         }
