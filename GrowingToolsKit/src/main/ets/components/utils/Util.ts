@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { event_pb } from './protobuf/event_pb'
 import buffer from '@ohos.buffer'
 import snappy from 'snappyjs'
 import util from '@ohos.util'
@@ -53,8 +52,7 @@ export default class Util {
 
       let uint8 = new Uint8Array(original)
       if (Util.isUseProtobuf(requestHeaders)) {
-        let list = event_pb.EventV3List.decode(uint8)
-        return JSON.stringify(list.toJSON().values, null, 4)
+        return '{}'
       } else {
         let jsonString = new util.TextDecoder().decodeToString(uint8)
         return JSON.stringify(JSON.parse(jsonString), null, 4)
