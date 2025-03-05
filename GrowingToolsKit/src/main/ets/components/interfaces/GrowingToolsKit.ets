@@ -27,6 +27,12 @@ import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_PO
 import RequestPersistence from '../network/RequestPersistence'
 import TrackersInfo from '../core/TrackersInfo'
 
+interface GrowingToolsKitOptions {
+  x?: number
+  y?: number
+  useInRelease?: boolean
+}
+
 export class GrowingToolsKit {
   static debug: boolean = false
   static mainWindowStage: window.WindowStage | undefined = undefined
@@ -37,7 +43,11 @@ export class GrowingToolsKit {
   static gioKitStartTime: number = 0
   private _position: Position = { x: 0, y: 0 }
 
-  constructor(x: number = vp2px(ENTRY_PADDING), y: number = 400) {
+  constructor(options?: GrowingToolsKitOptions) {
+    let x = options?.x ?? vp2px(ENTRY_PADDING)
+    let y = options?.y ?? 400
+    let useInRelease = options?.useInRelease ? true : false
+
     this._position.x = x
     this._position.y = y
     if (GrowingToolsKit.gioKitStartTime == 0) {
@@ -47,7 +57,7 @@ export class GrowingToolsKit {
     let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
     let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleFlags)
     let appInfo = bundleInfo.appInfo
-    GrowingToolsKit.debug = appInfo.debug
+    GrowingToolsKit.debug = (appInfo.debug || useInRelease)
   }
 
   static show(): Promise<void> {
