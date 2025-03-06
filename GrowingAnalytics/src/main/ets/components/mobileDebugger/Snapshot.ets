@@ -43,7 +43,7 @@ export class SnapshotProvider {
       }
       this.timer = setTimeout(() => {
         this.needRefreshSnapshot()
-      }, 300)
+      }, 500)
     })
     this.observer.on()
     this.needRefreshSnapshot()
@@ -72,7 +72,7 @@ export class SnapshotProvider {
     }
     this.timer = setTimeout(() => {
       this.needRefreshSnapshot()
-    }, 300)
+    }, 100)
   }
 
   needRefreshSnapshot() {
