@@ -34,6 +34,7 @@ import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '.
 import { LogUtil } from '../utils/LogUtil'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import SaaSPageVarEvent from '../event/saas/SaaSPageVarEvent'
+import Plugins from '../plugins/Plugins'
 
 export default class Hybrid {
   name: string = 'GrowingWebViewJavascriptBridge'
@@ -206,7 +207,7 @@ export default class Hybrid {
   }
 
   onDomChanged = (): void => {
-    // LogUtil.info(() => "[Hybrid] onDomChanged")
+    Plugins.onWebViewDomTreeChanged()
   }
 
   setNativeUserId = (userId: string): void => {

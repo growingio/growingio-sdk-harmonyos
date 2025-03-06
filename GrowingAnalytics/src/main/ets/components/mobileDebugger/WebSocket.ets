@@ -21,7 +21,15 @@ import { BusinessError } from '@ohos.base'
 import DeviceInfo from "../core/DeviceInfo"
 import AppInfo from "../core/AppInfo"
 import GrowingContext from "../core/Context"
-import { ClientInfo, ClientInfoData, DebuggerData, EventData, LogData, LoggerData, Quit, ReadyInfo,
+import {
+  CircleReadyInfo,
+  ClientInfo,
+  ClientInfoData, 
+  DebuggerData, EventData,
+  LogData,
+  LoggerData,
+  Quit,
+  ReadyInfo,
   RefreshScreenshot } from './Model'
 
 export interface WebSocketCallbackInterface {
@@ -63,11 +71,7 @@ export class WebSocket {
 
     let latestSocket = this.ws
     this.queue = []
-    latestSocket.send(JSON.stringify(new Quit())).then(() => {
-      latestSocket.close()
-    }).catch((e: Error) => {
-      latestSocket.close()
-    })
+    latestSocket.send(JSON.stringify(new Quit()))
   }
 
   send(message: string) {
@@ -103,6 +107,20 @@ export class WebSocket {
       DeviceInfo.screenWidth,
       DeviceInfo.screenHeight,
       context.config.urlScheme
+    )
+    this.send(JSON.stringify(readyInfo))
+  }
+
+  sendCircleReadyInfo() {
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    let readyInfo = new CircleReadyInfo(
+      context.config.accountId,
+      Date.now(),
+      AppInfo.domain,
+      DeviceInfo.screenWidth,
+      DeviceInfo.screenHeight,
+      context.config.urlScheme,
+      AppInfo.appVersion,
     )
     this.send(JSON.stringify(readyInfo))
   }

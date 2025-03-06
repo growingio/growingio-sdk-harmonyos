@@ -52,6 +52,37 @@ export class ReadyInfo implements Message {
   }
 }
 
+export class CircleReadyInfo implements Message {
+  msgType: string = 'ready'
+  os: string = 'HarmonyOS'
+  projectId: string
+  timestamp: number
+  domain: string
+  sdkVersion: string = SDK_VERSION
+  appVersion: string
+  screenWidth: number
+  screenHeight: number
+  urlScheme: string
+
+  constructor(
+    projectId: string,
+    timestamp: number,
+    domain: string,
+    screenWidth: number,
+    screenHeight: number,
+    urlScheme: string,
+    appVersion: string,
+  ) {
+    this.projectId = projectId
+    this.timestamp = timestamp
+    this.domain = domain
+    this.screenWidth = screenWidth
+    this.screenHeight = screenHeight
+    this.urlScheme = urlScheme
+    this.appVersion = appVersion
+  }
+}
+
 export class ClientInfo implements Message {
   msgType: string = 'client_info'
   sdkVersion: string = SDK_VERSION
@@ -233,11 +264,87 @@ export class RefreshScreenshot implements Message {
   screenHeight: number
   snapshotKey: number
   screenshot: string
+  pages?: Array<ScreenshotPage>
+  elements?: Array<ScreenshotElement>
 
   constructor(screenWidth: number, screenHeight: number, snapshotKey: number, screenshot: string) {
     this.screenWidth = screenWidth
     this.screenHeight = screenHeight
     this.snapshotKey = snapshotKey
     this.screenshot = screenshot
+  }
+}
+
+export class ScreenshotPage {
+  left: number
+  top: number
+  width: number
+  height: number
+  path: string
+  title?: string
+
+  constructor(
+    left: number,
+    top: number,
+    width: number,
+    height: number,
+    path: string,
+    title?: string,
+  ) {
+    this.left = left
+    this.top = top
+    this.width = width
+    this.height = height
+    this.path = path
+    this.title = title
+  }
+}
+
+export class ScreenshotElement {
+  nodeType: string
+  domain: string
+  isContainer: boolean
+  left: number
+  top: number
+  width: number
+  height: number
+  zLevel: number
+  xpath: string
+  xcontent: string
+  page: string
+  index?: number
+  parentXPath?: string
+  parentXContent?: string
+
+  constructor(
+    nodeType: string,
+    domain: string,
+    isContainer: boolean,
+    left: number,
+    top: number,
+    width: number,
+    height: number,
+    zLevel: number,
+    xpath: string,
+    xcontent: string,
+    page: string,
+    index?: number,
+    parentXPath?: string,
+    parentXContent?: string,
+  ) {
+    this.nodeType = nodeType
+    this.domain = domain
+    this.isContainer = isContainer
+    this.left = left
+    this.top = top
+    this.width = width
+    this.height = height
+    this.zLevel = zLevel
+    this.xpath = xpath
+    this.xcontent = xcontent
+    this.page = page
+    this.index = index
+    this.parentXPath = parentXPath
+    this.parentXContent = parentXContent
   }
 }

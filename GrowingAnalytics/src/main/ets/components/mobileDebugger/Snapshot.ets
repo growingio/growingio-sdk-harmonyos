@@ -61,6 +61,20 @@ export class SnapshotProvider {
     }
   }
 
+  onDomChanged() {
+    if (!this.observer) {
+      return
+    }
+
+    if (this.timer) {
+      clearTimeout(this.timer)
+      this.timer = undefined
+    }
+    this.timer = setTimeout(() => {
+      this.needRefreshSnapshot()
+    }, 300)
+  }
+
   needRefreshSnapshot() {
     AnalyticsCore.mainWindow.snapshot((error: BusinessError, pixmap: image.PixelMap) => {
       let errCode = error.code
