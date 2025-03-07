@@ -25,6 +25,7 @@ export class SnapshotProvider {
   sendSnapshot: (screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => void
   observer?: DidLayoutObserver
   timer?: number
+  lastRefreshTime: number = 0
   snapshotKey: number = 0
 
   constructor(sendSnapshot: (screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => void) {
@@ -37,16 +38,10 @@ export class SnapshotProvider {
     }
 
     this.observer = new DidLayoutObserver(() => {
-      if (this.timer) {
-        clearTimeout(this.timer)
-        this.timer = undefined
-      }
-      this.timer = setTimeout(() => {
-        this.needRefreshSnapshot()
-      }, 500)
+      this.refreshSnapshotIfNeeded()
     })
     this.observer.on()
-    this.needRefreshSnapshot()
+    this.refreshSnapshotIfNeeded()
   }
 
   stopObserver() {
@@ -61,7 +56,7 @@ export class SnapshotProvider {
     }
   }
 
-  onDomChanged() {
+  refreshSnapshotIfNeeded() {
     if (!this.observer) {
       return
     }
@@ -70,12 +65,29 @@ export class SnapshotProvider {
       clearTimeout(this.timer)
       this.timer = undefined
     }
-    this.timer = setTimeout(() => {
-      this.needRefreshSnapshot()
-    }, 100)
+
+    let separateTime = 1000
+    if (Date.now() - this.lastRefreshTime > separateTime) {
+      this.lastRefreshTime = Date.now()
+      this.refreshSnapshot()
+    } else {
+      this.timer = setTimeout(() => {
+        // clearTimeout 实测会可能性失效，此处加上保护性判断
+        if (Date.now() - this.lastRefreshTime < separateTime) {
+          return
+        }
+
+        this.lastRefreshTime = Date.now()
+        this.refreshSnapshot()
+      }, separateTime)
+    }
   }
 
-  needRefreshSnapshot() {
+  onDomChanged() {
+    this.refreshSnapshotIfNeeded()
+  }
+
+  refreshSnapshot() {
     AnalyticsCore.mainWindow.snapshot((error: BusinessError, pixmap: image.PixelMap) => {
       let errCode = error.code
       if (errCode) {
