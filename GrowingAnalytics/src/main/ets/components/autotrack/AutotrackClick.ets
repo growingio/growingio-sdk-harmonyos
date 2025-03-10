@@ -180,6 +180,9 @@ export default class AutotrackClick {
       f = f.getParent()
     }
 
+    info.xpath.push('root')
+    info.xcontent.push('0')
+    
     return info
   }
 

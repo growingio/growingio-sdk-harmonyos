@@ -96,10 +96,6 @@ export class SnapshotProvider {
       let size = pixmap.getImageInfoSync().size
       this.pixmapToBase64(pixmap).then(snapshot => {
         pixmap.release()
-        if (!this.timer) {
-          return
-        }
-        this.timer = undefined
         this.snapshotKey += 1
         this.sendSnapshot(px2vp(size.width), px2vp(size.height), this.snapshotKey, snapshot)
       })
