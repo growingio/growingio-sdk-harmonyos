@@ -34,6 +34,24 @@ export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
 export const Event_DURATION = "event_duration"
 
 export const PATH_SEPARATOR = '/'
+export const BUTTON_COMPONENTS: Array<string> = [
+  "Button",
+  "Toggle",
+  "Checkbox",
+  "CheckboxGroup",
+  "CalendarPicker",
+  "DatePicker",
+  "TextPicker",
+  "TimePicker",
+  "Radio",
+  "Rating",
+  "Select",
+  "Slider",
+  "DownloadFileButton",
+  "ProgressButton",
+  "SegmentButton",
+  "Filter"
+]
 export const TEXT_COMPONENTS: Array<string> = [
   "Text",
   "Span",
@@ -55,9 +73,21 @@ export const LIST_COMPONENTS: Array<string> = [
   "ListItem",
   "GridItem",
   "GridCol",
+  "FlowItem",
 ]
 export const WEB_COMPONENTS: Array<string> = [
   "Web",
+]
+export const DIALOG_PATH_PREFIXES: Array<string> = [
+  "/root/AlertDialog",
+  "/root/Dialog",
+  "/root/Keyboard",
+  "/root/MenuWrapper",
+  "/root/ModalPage",
+  "/root/Popup",
+  "/root/SheetWrapper",
+  "/root/SelectOverlay",
+  "/root/Video",
 ]
 
 export type ValueType = string | number | boolean | string[] | number[] | boolean[]

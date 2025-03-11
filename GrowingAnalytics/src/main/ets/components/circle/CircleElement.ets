@@ -23,8 +23,12 @@ import AppInfo from "../core/AppInfo"
 import GrowingContext from "../core/Context"
 import { ConfigMode } from "../interfaces/GrowingConfig"
 import { RefreshScreenshot } from "../mobileDebugger/Model"
-import { INPUT_COMPONENTS, LIST_COMPONENTS, PATH_SEPARATOR, TEXT_COMPONENTS, WEB_COMPONENTS } from "../utils/Constants"
+import {
+  BUTTON_COMPONENTS,
+  DIALOG_PATH_PREFIXES,
+  INPUT_COMPONENTS, LIST_COMPONENTS, PATH_SEPARATOR, TEXT_COMPONENTS, WEB_COMPONENTS } from "../utils/Constants"
 import Util from '../utils/Util'
+import AutotrackPage from '../autotrack/AutotrackPage'
 
 export default class CircleElement {
   static setPagesAndElements(screenshot: RefreshScreenshot) {
@@ -56,8 +60,7 @@ export default class CircleElement {
     if (json["$attrs"] !== undefined) {
       element.attrs = new _ElementAttrs()
       if (json["$attrs"].id !== undefined) {
-        element.attrs.id = json["$attrs"].id === "" ? undefined :
-          isNaN(Number(json["$attrs"].id)) ? json["$attrs"].id : Number(json["$attrs"].id)
+        element.attrs.id = json["$attrs"].id
       }
       if (json["$attrs"].content !== undefined) {
         element.attrs.content = json["$attrs"].content
@@ -83,7 +86,7 @@ export default class CircleElement {
     let context = GrowingContext.getDefaultContext() as GrowingContext
 
     CircleElement._traverseAllNodes(elementsTree, (e) => {
-      let nodeType = CircleElement._getNodeType(e.type ?? '')
+      let nodeType = e.nodeType
       let domain = AppInfo.domain
       let zLevel = 0
       let xpath = ''
@@ -125,6 +128,13 @@ export default class CircleElement {
       )
       if (e.rect) {
         CircleElement._parseRectString(e.rect, element)
+        if (element.left >= screenshot.screenWidth
+          || element.top >= screenshot.screenHeight
+          || (element.width >= screenshot.screenWidth && element.height >= screenshot.screenHeight)
+          || (element.width == 0 && element.height == 0)
+        ) {
+          return
+        }
       }
       if (e.inList) {
         element.index = index
@@ -169,6 +179,16 @@ export default class CircleElement {
           )
           pages.push(page)
         }
+      } else {
+        // 该frameNode所在页面并不是通过Navigation或Router跳转，可能是弹窗视图
+        for (let i = 0; i < DIALOG_PATH_PREFIXES.length; i++) {
+          let prefix = DIALOG_PATH_PREFIXES[i]
+          if (element.xpath.startsWith(prefix)) {
+            let lastPage = AutotrackPage.lastPage
+            element.page = lastPage?.path ?? ''
+            break
+          }
+        }
       }
 
       // TODO Real Content
@@ -190,22 +210,23 @@ export default class CircleElement {
   }
 
   private static _traverseAllNodes(rootElement: _Element, callback: (element: _Element) => void) {
-    let queue: _Element[] = [rootElement]
+    let stack: _Element[] = [rootElement]
 
-    while (queue.length > 0) {
-      let element = queue.shift()!
-      if (element.type != 'root') {
-        // 暂时用focusable判断元素可点击
-        if (element.attrs && element.attrs.focusable) {
-          callback(element)
-        }
-      } else {
+    while (stack.length > 0) {
+      let element = stack.pop()!
+
+      if (element.type == 'root') {
         element.xpath.push('root')
         element.xcontent.push('0')
       }
 
+      if (CircleElement._isClickable(element)) {
+        callback(element)
+      }
+
       let parent = element
       if (parent.children && parent.children.length > 0) {
+        let children: _Element[] = []
         let previousSiblingCount: Map<string, number> = new Map()
 
         for (let i = 0; i < parent.children.length; i++) {
@@ -213,6 +234,7 @@ export default class CircleElement {
           if (!e.type) {
             continue
           }
+          e.nodeType = CircleElement._getNodeType(e.type)
           e.xpath = [...parent.xpath]
           e.xcontent = [...parent.xcontent]
 
@@ -255,8 +277,11 @@ export default class CircleElement {
 
           // reserve
           e.parent = new WeakRef(parent)
-          queue.push(e)
+          children.push(e)
         }
+
+        children = children.reverse()
+        stack.push(...children)
       }
     }
   }
@@ -285,8 +310,10 @@ export default class CircleElement {
     let nodeList = 'LIST'
     let nodeWebView = 'WEB_VIEW'
 
-    let result = nodeButton
-    if (TEXT_COMPONENTS.includes(nodeType)) {
+    let result = nodeText
+    if (BUTTON_COMPONENTS.includes(nodeType)) {
+      result = nodeButton
+    } else if (TEXT_COMPONENTS.includes(nodeType)) {
       result = nodeText
     } else if (INPUT_COMPONENTS.includes(nodeType)) {
       result = nodeInput
@@ -296,6 +323,20 @@ export default class CircleElement {
       result = nodeWebView
     }
     return result
+  }
+
+  private static _isClickable(element: _Element): boolean {
+    if (element.type == 'overlay') {
+      return false
+    }
+    if (element.nodeType && element.nodeType == 'BUTTON') {
+      return true
+    }
+    if (element.attrs && element.attrs.focusable) {
+      // 没有clickable，用focusable代替
+      return true
+    }
+    return false
   }
 }
 
@@ -313,6 +354,7 @@ class _Element {
   inList: boolean = false
 
   content?: string
+  nodeType: string = 'TEXT'
 
   // reserve
   parent?: WeakRef<_Element>
