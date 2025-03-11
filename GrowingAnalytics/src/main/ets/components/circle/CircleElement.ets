@@ -16,25 +16,30 @@
  */
 
 import JSON from '@ohos.util.json'
+import router from '@ohos.router'
 
 import AnalyticsCore from "../core/AnalyticsCore"
 import AppInfo from "../core/AppInfo"
 import GrowingContext from "../core/Context"
 import { ConfigMode } from "../interfaces/GrowingConfig"
 import { RefreshScreenshot } from "../mobileDebugger/Model"
-import { PATH_SEPARATOR } from "../utils/Constants"
+import { INPUT_COMPONENTS, LIST_COMPONENTS, PATH_SEPARATOR, TEXT_COMPONENTS, WEB_COMPONENTS } from "../utils/Constants"
+import Util from '../utils/Util'
 
 export default class CircleElement {
   static setPagesAndElements(screenshot: RefreshScreenshot) {
-    let inspectorTreeString = AnalyticsCore.uiContent.getFilteredInspectorTree(['id', 'content', 'focusable'])
-    let inspectorTree = JSON.parse(inspectorTreeString)
-    if (!inspectorTree) {
-      return
+    try {
+      let inspectorTreeString = AnalyticsCore.uiContent.getFilteredInspectorTree(['id', 'content', 'label', 'focusable'])
+      let inspectorTree = JSON.parse(inspectorTreeString)
+      if (!inspectorTree) {
+        return
+      }
+
+      let elementsTree = CircleElement._parseJsonTreeToElementsTree(inspectorTree)
+      CircleElement._parseElementsTreeAndSetToScreenshot(elementsTree, screenshot)
+    } catch (e) {
+
     }
-    let elementsTree = CircleElement._parseJsonTreeToElementsTree(inspectorTree)
-    let elements = CircleElement._parseElementsTreeToElements(elementsTree)
-    screenshot.elements = [...elements]
-    screenshot.pages = []
   }
 
   private static _parseJsonTreeToElementsTree(json: object): _Element {
@@ -56,6 +61,8 @@ export default class CircleElement {
       }
       if (json["$attrs"].content !== undefined) {
         element.attrs.content = json["$attrs"].content
+      } else if (json["$attrs"].label !== undefined) {
+        element.attrs.content = json["$attrs"].label
       }
       if (json["$attrs"].focusable !== undefined) {
         element.attrs.focusable = json["$attrs"].focusable
@@ -69,12 +76,14 @@ export default class CircleElement {
     return element
   }
 
-  private static _parseElementsTreeToElements(elementsTree: _Element): Array<_ScreenshotElement> {
+  private static _parseElementsTreeAndSetToScreenshot(elementsTree: _Element, screenshot: RefreshScreenshot) {
+    let pages: Array<_ScreenshotPage> = []
+    let paths: Set<string> = new Set<string>()
     let elements: Array<_ScreenshotElement> = []
     let context = GrowingContext.getDefaultContext() as GrowingContext
 
     CircleElement._traverseAllNodes(elementsTree, (e) => {
-      let nodeType = e.type ?? ''
+      let nodeType = CircleElement._getNodeType(e.type ?? '')
       let domain = AppInfo.domain
       let zLevel = 0
       let xpath = ''
@@ -113,9 +122,7 @@ export default class CircleElement {
         zLevel,
         xpath,
         xcontent,
-        '',
       )
-
       if (e.rect) {
         CircleElement._parseRectString(e.rect, element)
       }
@@ -124,6 +131,47 @@ export default class CircleElement {
       }
       element.content = e.content
 
+      // getPageInfo
+      let pageInfo = AnalyticsCore.uiContent.getPageInfoByUniqueId(e.ID)
+      let realPath: string | undefined = undefined
+      let alias: string = ''
+      if (pageInfo.navDestinationInfo) {
+        realPath = PATH_SEPARATOR + pageInfo.navDestinationInfo.name.toString()
+        alias = Util.getAliasFromNavInfoParameter(pageInfo.navDestinationInfo.param)
+      } else if (pageInfo.routerPageInfo) {
+        realPath = PATH_SEPARATOR + pageInfo.routerPageInfo.name.toString()
+        alias = Util.getAliasFromNavInfoParameter(router.getParams())
+      }
+
+      // set element.page
+      if (realPath) {
+        let pagePath = realPath
+        if (alias.length > 0) {
+          pagePath = PATH_SEPARATOR + alias
+        }
+        element.page = pagePath
+
+        // set pages
+        if (!paths.has(realPath)) {
+          paths.add(realPath)
+
+          let title = realPath
+          if (title.includes(PATH_SEPARATOR)) {
+            title = title.substring(title.lastIndexOf(PATH_SEPARATOR) + 1)
+          }
+          let page = new _ScreenshotPage(
+            0,
+            0,
+            screenshot.screenWidth,
+            screenshot.screenHeight,
+            pagePath,
+            title
+          )
+          pages.push(page)
+        }
+      }
+
+      // TODO Real Content
       // TODO ZLevel
 
       // unused
@@ -137,17 +185,12 @@ export default class CircleElement {
       elements.push(element)
     })
 
-    return elements
+    screenshot.pages = pages
+    screenshot.elements = elements
   }
 
   private static _traverseAllNodes(rootElement: _Element, callback: (element: _Element) => void) {
     let queue: _Element[] = [rootElement]
-
-    let listComponents: Array<string> = [
-      "ListItem",
-      "GridItem",
-      "GridCol",
-    ]
 
     while (queue.length > 0) {
       let element = queue.shift()!
@@ -183,7 +226,7 @@ export default class CircleElement {
 
           // setXpathInfo
           e.xpath.push(e.type)
-          if (listComponents.includes(e.type)) {
+          if (LIST_COMPONENTS.includes(e.type)) {
             if (parent.inList) {
               let j = e.xcontent.indexOf('-')
               if (j !== -1) {
@@ -233,6 +276,26 @@ export default class CircleElement {
     element.left = px2vp(left)
     element.width = px2vp(right - left)
     element.height = px2vp(bottom - top)
+  }
+
+  private static _getNodeType(nodeType: string): string {
+    let nodeText = 'TEXT'
+    let nodeButton = 'BUTTON'
+    let nodeInput = 'INPUT'
+    let nodeList = 'LIST'
+    let nodeWebView = 'WEB_VIEW'
+
+    let result = nodeButton
+    if (TEXT_COMPONENTS.includes(nodeType)) {
+      result = nodeText
+    } else if (INPUT_COMPONENTS.includes(nodeType)) {
+      result = nodeInput
+    } else if (LIST_COMPONENTS.includes(nodeType)) {
+      result = nodeList
+    } else if (WEB_COMPONENTS.includes(nodeType)) {
+      result = nodeWebView
+    }
+    return result
   }
 }
 
@@ -292,7 +355,6 @@ class _ScreenshotElement {
   zLevel: number
   xpath: string
   xcontent: string
-  page: string
   index?: number
   content?: string
   parentXPath?: string
@@ -303,6 +365,7 @@ class _ScreenshotElement {
   top: number = 0
   width: number = 0
   height: number = 0
+  page: string = ''
 
   constructor(
     nodeType: string,
@@ -310,13 +373,11 @@ class _ScreenshotElement {
     zLevel: number,
     xpath: string,
     xcontent: string,
-    page: string,
   ) {
     this.nodeType = nodeType
     this.domain = domain
     this.zLevel = zLevel
     this.xpath = xpath
     this.xcontent = xcontent
-    this.page = page
   }
 }

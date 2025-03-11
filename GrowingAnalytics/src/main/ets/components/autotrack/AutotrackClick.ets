@@ -24,16 +24,11 @@ import GrowingContext from '../core/Context'
 import { EventType } from '../event/Event'
 import ViewElementEvent from '../event/ViewElementEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
-import { PATH_SEPARATOR } from '../utils/Constants'
+import { PATH_SEPARATOR, LIST_COMPONENTS } from '../utils/Constants'
 import Util from '../utils/Util'
 
 export default class AutotrackClick {
   private static uiContent: UIContext
-  private static listComponents: Array<string> = [
-    "ListItem",
-    "GridItem",
-    "GridCol",
-  ]
 
   private static dialogPathPrefixes: Array<string> = [
     "/root",
@@ -191,7 +186,7 @@ export default class AutotrackClick {
     info.xpath.push(curNodeType)
 
     let xcontent = AutotrackClick.getXcontent(frameNode)
-    if (!info.inList && AutotrackClick.listComponents.includes(curNodeType)) {
+    if (!info.inList && LIST_COMPONENTS.includes(curNodeType)) {
       info.xcontent.push('-')
       info.index = xcontent
       info.inList = true

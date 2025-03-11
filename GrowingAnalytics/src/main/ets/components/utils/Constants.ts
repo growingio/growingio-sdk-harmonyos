@@ -34,6 +34,31 @@ export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
 export const Event_DURATION = "event_duration"
 
 export const PATH_SEPARATOR = '/'
+export const TEXT_COMPONENTS: Array<string> = [
+  "Text",
+  "Span",
+  "ImageSpan",
+  "ContainerSpan",
+  "SymbolSpan",
+  "SymbolGlyph",
+  "Hyperlink",
+  "RichText",
+  "SelectionMenu",
+]
+export const INPUT_COMPONENTS: Array<string> = [
+  "TextArea",
+  "TextInput",
+  "RichEditor",
+  "Search",
+]
+export const LIST_COMPONENTS: Array<string> = [
+  "ListItem",
+  "GridItem",
+  "GridCol",
+]
+export const WEB_COMPONENTS: Array<string> = [
+  "Web",
+]
 
 export type ValueType = string | number | boolean | string[] | number[] | boolean[]
 export type AttributesType = { [key: string]: ValueType }
