@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import uiObserver from '@ohos.arkui.observer'
 import image from '@ohos.multimedia.image'
 import buffer from '@ohos.buffer'
 import { BusinessError } from '@ohos.base'
@@ -27,6 +28,7 @@ export class SnapshotProvider {
   timer?: number
   lastRefreshTime: number = 0
   snapshotKey: number = 0
+  onScroll: boolean = false
 
   constructor(sendSnapshot: (screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => void) {
     this.sendSnapshot = sendSnapshot
@@ -37,9 +39,14 @@ export class SnapshotProvider {
       return
     }
 
-    this.observer = new DidLayoutObserver(() => {
+    let didLayoutCallback = () => {
       this.refreshSnapshotIfNeeded()
-    })
+    }
+    let onScrollEventCallback = (info: uiObserver.ScrollEventInfo) => {
+      this.onScroll = info.scrollEvent == uiObserver.ScrollEventType.SCROLL_START
+    }
+
+    this.observer = new DidLayoutObserver(didLayoutCallback, onScrollEventCallback)
     this.observer.on()
     this.refreshSnapshotIfNeeded()
   }
@@ -88,6 +95,9 @@ export class SnapshotProvider {
   }
 
   refreshSnapshot() {
+    if (this.onScroll) {
+      return
+    }
     AnalyticsCore.mainWindow.snapshot((error: BusinessError, pixmap: image.PixelMap) => {
       let errCode = error.code
       if (errCode) {
@@ -117,16 +127,20 @@ export class SnapshotProvider {
 
 class DidLayoutObserver {
   didLayoutCallback: () => void
+  onScrollEventCallback: (info: uiObserver.ScrollEventInfo) => void
 
-  constructor(didLayoutCallback: () => void) {
+  constructor(didLayoutCallback: () => void, onScrollEventCallback: (info: uiObserver.ScrollEventInfo) => void) {
     this.didLayoutCallback = didLayoutCallback
+    this.onScrollEventCallback = onScrollEventCallback
   }
 
   on() {
     AnalyticsCore.uiContent.getUIObserver().on('didLayout', this.didLayoutCallback)
+    AnalyticsCore.uiContent.getUIObserver().on('scrollEvent', this.onScrollEventCallback)
   }
 
   off() {
     AnalyticsCore.uiContent.getUIObserver().off('didLayout', this.didLayoutCallback)
+    AnalyticsCore.uiContent.getUIObserver().off('scrollEvent', this.onScrollEventCallback)
   }
 }

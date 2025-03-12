@@ -78,6 +78,24 @@ export const LIST_COMPONENTS: Array<string> = [
 export const WEB_COMPONENTS: Array<string> = [
   "Web",
 ]
+export const CONTAINER_COMPONENTS: Array<string> = [
+  "RelativeContainer",
+  "GridRow",
+  "ColumnSplit",
+  "RowSplit",
+  "SplitLayout",
+  "FoldSplitContainer",
+  "SideBarContainer",
+  "List",
+  "Grid",
+  "Scroll",
+  "WaterFlow",
+  "Refresh",
+  "Navigation",
+  "NavigationContent",
+  "NavDestination",
+  "NavDestinationContent",
+]
 export const DIALOG_PATH_PREFIXES: Array<string> = [
   "/root/AlertDialog",
   "/root/Dialog",

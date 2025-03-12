@@ -26,9 +26,15 @@ import { RefreshScreenshot } from "../mobileDebugger/Model"
 import {
   BUTTON_COMPONENTS,
   DIALOG_PATH_PREFIXES,
-  INPUT_COMPONENTS, LIST_COMPONENTS, PATH_SEPARATOR, TEXT_COMPONENTS, WEB_COMPONENTS } from "../utils/Constants"
+  INPUT_COMPONENTS,
+  LIST_COMPONENTS,
+  PATH_SEPARATOR,
+  TEXT_COMPONENTS,
+  WEB_COMPONENTS,
+  CONTAINER_COMPONENTS } from "../utils/Constants"
 import Util from '../utils/Util'
 import AutotrackPage from '../autotrack/AutotrackPage'
+import AutotrackClick from '../autotrack/AutotrackClick'
 
 export default class CircleElement {
   static setPagesAndElements(screenshot: RefreshScreenshot) {
@@ -130,8 +136,9 @@ export default class CircleElement {
         CircleElement._parseRectString(e.rect, element)
         if (element.left >= screenshot.screenWidth
           || element.top >= screenshot.screenHeight
+          || element.width == 0
+          || element.height == 0
           || (element.width >= screenshot.screenWidth && element.height >= screenshot.screenHeight)
-          || (element.width == 0 && element.height == 0)
         ) {
           return
         }
@@ -214,20 +221,23 @@ export default class CircleElement {
 
     while (stack.length > 0) {
       let element = stack.pop()!
+      if (CircleElement._isClickable(element)) {
+        callback(element)
+      }
 
       if (element.type == 'root') {
         element.xpath.push('root')
         element.xcontent.push('0')
       }
 
-      if (CircleElement._isClickable(element)) {
-        callback(element)
-      }
-
       let parent = element
       if (parent.children && parent.children.length > 0) {
         let children: _Element[] = []
-        let previousSiblingCount: Map<string, number> = new Map()
+        // without offset
+        let previousSiblingXContents: Map<string, number> = new Map()
+        // offset of children that parse from InspectorTree
+        let childOffset = 0
+        let parentFrameNode = AnalyticsCore.uiContent.getFrameNodeByUniqueId(parent.ID)
 
         for (let i = 0; i < parent.children.length; i++) {
           let e = parent.children[i]
@@ -239,12 +249,28 @@ export default class CircleElement {
           e.xcontent = [...parent.xcontent]
 
           // getXcontent
-          let n = previousSiblingCount.get(e.type)
+          let n = previousSiblingXContents.get(e.type)
           if (n == undefined) {
             n = -1
           }
+          // fast getXcontent
           let xcontent = n + 1
-          previousSiblingCount.set(e.type, xcontent)
+          previousSiblingXContents.set(e.type, xcontent)
+
+          xcontent = xcontent + childOffset
+          if (parent.type != 'root') {
+            let frameNode = AnalyticsCore.uiContent.getFrameNodeByUniqueId(e.ID)
+            if (!frameNode || !parentFrameNode) {
+              continue
+            }
+            // 当children皆为同种组件时，可以不调用AutotrackClick.getXcontent而加快速度
+            if (parentFrameNode.getChild(i + childOffset) != frameNode) {
+              // slow getXcontent
+              let actualXContent = AutotrackClick.getXcontent(frameNode)
+              childOffset = actualXContent - xcontent
+              xcontent = actualXContent
+            }
+          }
 
           // setXpathInfo
           e.xpath.push(e.type)
@@ -332,9 +358,12 @@ export default class CircleElement {
     if (element.nodeType && element.nodeType == 'BUTTON') {
       return true
     }
+    // 没有clickable，用focusable代替
     if (element.attrs && element.attrs.focusable) {
-      // 没有clickable，用focusable代替
-      return true
+      // 容器组件不可点击
+      if (!CONTAINER_COMPONENTS.includes(element.type ?? '')) {
+        return true
+      }
     }
     return false
   }
