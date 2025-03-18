@@ -31,7 +31,12 @@ import {
   PATH_SEPARATOR,
   TEXT_COMPONENTS,
   WEB_COMPONENTS,
-  CONTAINER_COMPONENTS } from "../utils/Constants"
+  CONTAINER_COMPONENTS,
+  CIRCLE_NODE_TEXT,
+  CIRCLE_NODE_BUTTON,
+  CIRCLE_NODE_INPUT,
+  CIRCLE_NODE_LIST,
+  CIRCLE_NODE_WEBVIEW } from "../utils/Constants"
 import Util from '../utils/Util'
 import AutotrackPage from '../autotrack/AutotrackPage'
 import AutotrackClick from '../autotrack/AutotrackClick'
@@ -93,6 +98,11 @@ export default class CircleElement {
 
     CircleElement._traverseAllNodes(elementsTree, (e) => {
       let nodeType = e.nodeType
+      if (nodeType == CIRCLE_NODE_INPUT) {
+        // 目前不支持VIEW_CHANGE事件，都以VIEW_CLICK来圈选
+        nodeType = CIRCLE_NODE_BUTTON
+      }
+
       let domain = AppInfo.domain
       let zLevel = 0
       let xpath = ''
@@ -330,23 +340,17 @@ export default class CircleElement {
   }
 
   private static _getNodeType(nodeType: string): string {
-    let nodeText = 'TEXT'
-    let nodeButton = 'BUTTON'
-    let nodeInput = 'INPUT'
-    let nodeList = 'LIST'
-    let nodeWebView = 'WEB_VIEW'
-
-    let result = nodeText
+    let result = CIRCLE_NODE_TEXT
     if (BUTTON_COMPONENTS.includes(nodeType)) {
-      result = nodeButton
+      result = CIRCLE_NODE_BUTTON
     } else if (TEXT_COMPONENTS.includes(nodeType)) {
-      result = nodeText
+      result = CIRCLE_NODE_TEXT
     } else if (INPUT_COMPONENTS.includes(nodeType)) {
-      result = nodeInput
+      result = CIRCLE_NODE_INPUT
     } else if (LIST_COMPONENTS.includes(nodeType)) {
-      result = nodeList
+      result = CIRCLE_NODE_LIST
     } else if (WEB_COMPONENTS.includes(nodeType)) {
-      result = nodeWebView
+      result = CIRCLE_NODE_WEBVIEW
     }
     return result
   }
@@ -355,7 +359,7 @@ export default class CircleElement {
     if (element.type == 'overlay') {
       return false
     }
-    if (element.nodeType && element.nodeType == 'BUTTON') {
+    if (element.nodeType && element.nodeType == CIRCLE_NODE_BUTTON) {
       return true
     }
     // 没有clickable，用focusable代替
@@ -383,7 +387,7 @@ class _Element {
   inList: boolean = false
 
   content?: string
-  nodeType: string = 'TEXT'
+  nodeType: string = CIRCLE_NODE_TEXT
 
   // reserve
   parent?: WeakRef<_Element>

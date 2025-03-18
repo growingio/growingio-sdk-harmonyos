@@ -34,6 +34,11 @@ export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
 export const Event_DURATION = "event_duration"
 
 export const PATH_SEPARATOR = '/'
+export const CIRCLE_NODE_TEXT = 'TEXT'
+export const CIRCLE_NODE_BUTTON = 'BUTTON'
+export const CIRCLE_NODE_INPUT = 'INPUT'
+export const CIRCLE_NODE_LIST = 'LIST'
+export const CIRCLE_NODE_WEBVIEW = 'WEB_VIEW'
 export const BUTTON_COMPONENTS: Array<string> = [
   "Button",
   "Toggle",
