@@ -44,7 +44,8 @@ import AutotrackClick from '../autotrack/AutotrackClick'
 export default class CircleElement {
   static setPagesAndElements(screenshot: RefreshScreenshot) {
     try {
-      let inspectorTreeString = AnalyticsCore.uiContent.getFilteredInspectorTree(['id', 'content', 'label', 'focusable'])
+      let filter = ['id', 'content', 'focusable', 'label', 'opacity', 'visibility']
+      let inspectorTreeString = AnalyticsCore.uiContent.getFilteredInspectorTree(filter)
       let inspectorTree = JSON.parse(inspectorTreeString)
       if (!inspectorTree) {
         return
@@ -80,6 +81,12 @@ export default class CircleElement {
       }
       if (json["$attrs"].focusable !== undefined) {
         element.attrs.focusable = json["$attrs"].focusable
+      }
+      if (json["$attrs"].visibility !== undefined) {
+        element.attrs.visibility = json["$attrs"].visibility
+      }
+      if (json["$attrs"].opacity !== undefined) {
+        element.attrs.opacity = json["$attrs"].opacity
       }
     }
 
@@ -231,7 +238,7 @@ export default class CircleElement {
 
     while (stack.length > 0) {
       let element = stack.pop()!
-      if (CircleElement._isClickable(element)) {
+      if (CircleElement._isVisible(element) && CircleElement._isClickable(element)) {
         callback(element)
       }
 
@@ -241,7 +248,7 @@ export default class CircleElement {
       }
 
       let parent = element
-      if (parent.children && parent.children.length > 0) {
+      if (CircleElement._isVisible(parent) && parent.children && parent.children.length > 0) {
         let children: _Element[] = []
         // without offset
         let previousSiblingXContents: Map<string, number> = new Map()
@@ -355,18 +362,44 @@ export default class CircleElement {
     return result
   }
 
+  private static _isVisible(element: _Element): boolean {
+    if (element.type == 'root') {
+      return true
+    }
+    let visibility = element.attrs?.visibility ?? ''
+    let opacity = element.attrs?.opacity ?? 0
+    return visibility == 'Visibility.Visible' && opacity > 0
+  }
+
   private static _isClickable(element: _Element): boolean {
-    if (element.type == 'overlay') {
+    let type = element.type ?? ''
+    if (type == 'overlay') {
       return false
     }
     if (element.nodeType && element.nodeType == CIRCLE_NODE_BUTTON) {
       return true
     }
+    if (element.type == '__Common__') {
+      // 自定义组件默认可点击
+      return true
+    }
     // 没有clickable，用focusable代替
-    if (element.attrs && element.attrs.focusable) {
-      // 容器组件不可点击
-      if (!CONTAINER_COMPONENTS.includes(element.type ?? '')) {
-        return true
+    if (element.attrs) {
+      if (element.attrs.focusable) {
+        // 容器组件不可点击
+        if (!CONTAINER_COMPONENTS.includes(type)) {
+          return true
+        }
+      } else {
+        if (type == 'Column') {
+          // 在TabBar下的子组件focusable为false，以下将子组件Column返回true，以匹配点击事件xpath
+          if (element.xpath.length >= 4) { //最少也是 /root/Tabs/TabBar/Column
+            let parentType = element.xpath[element.xpath.length - 2]
+            if (parentType == 'TabBar') {
+              return true
+            }
+          }
+        }
       }
     }
     return false
@@ -397,6 +430,8 @@ class _ElementAttrs {
   id?: string // custom id
   content?: string
   focusable?: boolean
+  visibility: string = 'Visibility.Visible'
+  opacity: number = 1
 }
 
 class _ScreenshotPage {

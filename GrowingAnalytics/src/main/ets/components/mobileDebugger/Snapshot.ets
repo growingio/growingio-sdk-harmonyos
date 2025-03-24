@@ -113,7 +113,7 @@ export class SnapshotProvider {
   }
 
   pixmapToBase64(pixmap: image.PixelMap): Promise<string> {
-    let packOpts: image.PackingOption = { format: 'image/jpeg', quality: 98 }
+    let packOpts: image.PackingOption = { format: 'image/png', quality: 50 }
     let imagePackerApi = image.createImagePacker()
     return imagePackerApi.packing(pixmap, packOpts).then((data: ArrayBuffer) => {
       let result = buffer.from(data).toString('base64')
