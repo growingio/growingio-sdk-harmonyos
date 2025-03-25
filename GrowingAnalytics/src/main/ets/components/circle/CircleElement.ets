@@ -69,8 +69,9 @@ export default class CircleElement {
     if (json["$rect"] !== undefined) {
       element.rect = json["$rect"]
     }
+
+    element.attrs = new _ElementAttrs()
     if (json["$attrs"] !== undefined) {
-      element.attrs = new _ElementAttrs()
       if (json["$attrs"].id !== undefined) {
         element.attrs.id = json["$attrs"].id
       }
@@ -149,16 +150,14 @@ export default class CircleElement {
         xpath,
         xcontent,
       )
-      if (e.rect) {
-        CircleElement._parseRectString(e.rect, element)
-        if (element.left >= screenshot.screenWidth
-          || element.top >= screenshot.screenHeight
-          || element.width == 0
-          || element.height == 0
-          || (element.width >= screenshot.screenWidth && element.height >= screenshot.screenHeight)
-        ) {
-          return
-        }
+      CircleElement._parseRectString(e.rect, element)
+      if (element.left >= screenshot.screenWidth
+        || element.top >= screenshot.screenHeight
+        || element.width == 0
+        || element.height == 0
+        || (element.width >= screenshot.screenWidth && element.height >= screenshot.screenHeight)
+      ) {
+        return
       }
       if (e.inList) {
         element.index = index
@@ -248,6 +247,7 @@ export default class CircleElement {
       }
 
       let parent = element
+      let parentType = parent.type
       if (CircleElement._isVisible(parent) && parent.children && parent.children.length > 0) {
         let children: _Element[] = []
         // without offset
@@ -258,9 +258,6 @@ export default class CircleElement {
 
         for (let i = 0; i < parent.children.length; i++) {
           let e = parent.children[i]
-          if (!e.type) {
-            continue
-          }
           e.nodeType = CircleElement._getNodeType(e.type)
           e.xpath = [...parent.xpath]
           e.xcontent = [...parent.xcontent]
@@ -275,7 +272,7 @@ export default class CircleElement {
           previousSiblingXContents.set(e.type, xcontent)
 
           xcontent = xcontent + childOffset
-          if (parent.type != 'root') {
+          if (parentType != 'root') {
             let frameNode = AnalyticsCore.uiContent.getFrameNodeByUniqueId(e.ID)
             if (!frameNode || !parentFrameNode) {
               continue
@@ -286,6 +283,13 @@ export default class CircleElement {
               let actualXContent = AutotrackClick.getXcontent(frameNode)
               childOffset = actualXContent - xcontent
               xcontent = actualXContent
+            }
+          }
+
+          if (parentType == 'TabBar') {
+            // 在TabBar下的子组件focusable为false，将子组件Column的focusable改为true
+            if (e.type == 'Column') {
+              e.attrs.focusable = true
             }
           }
 
@@ -307,16 +311,14 @@ export default class CircleElement {
 
             // getCustomId
             let customId = ''
-            if (e.attrs) {
-              if (e.attrs.id && e.attrs.id.length > 0) {
-                customId = '#' + e.attrs.id.replace(/\//g, '')
-              }
+            if (e.attrs.id && e.attrs.id.length > 0) {
+              customId = '#' + e.attrs.id.replace(/\//g, '')
             }
             e.xcontent.push(String(xcontent) + customId)
           }
 
           // content
-          e.content = e.attrs?.content
+          e.content = e.attrs.content
 
           // reserve
           e.parent = new WeakRef(parent)
@@ -366,40 +368,29 @@ export default class CircleElement {
     if (element.type == 'root') {
       return true
     }
-    let visibility = element.attrs?.visibility ?? ''
-    let opacity = element.attrs?.opacity ?? 0
+    let visibility = element.attrs.visibility
+    let opacity = element.attrs.opacity
     return visibility == 'Visibility.Visible' && opacity > 0
   }
 
   private static _isClickable(element: _Element): boolean {
-    let type = element.type ?? ''
+    let type = element.type
     if (type == 'overlay') {
       return false
     }
     if (element.nodeType && element.nodeType == CIRCLE_NODE_BUTTON) {
+      // Button类型组件默认可点击
       return true
     }
-    if (element.type == '__Common__') {
+    if (type == '__Common__') {
       // 自定义组件默认可点击
       return true
     }
     // 没有clickable，用focusable代替
-    if (element.attrs) {
-      if (element.attrs.focusable) {
-        // 容器组件不可点击
-        if (!CONTAINER_COMPONENTS.includes(type)) {
-          return true
-        }
-      } else {
-        if (type == 'Column') {
-          // 在TabBar下的子组件focusable为false，以下将子组件Column返回true，以匹配点击事件xpath
-          if (element.xpath.length >= 4) { //最少也是 /root/Tabs/TabBar/Column
-            let parentType = element.xpath[element.xpath.length - 2]
-            if (parentType == 'TabBar') {
-              return true
-            }
-          }
-        }
+    if (element.attrs.focusable) {
+      // 容器组件不可点击
+      if (!CONTAINER_COMPONENTS.includes(type)) {
+        return true
       }
     }
     return false
@@ -407,11 +398,11 @@ export default class CircleElement {
 }
 
 class _Element {
-  ID?: number // unique id
-  type?: string
-  rect?: string
-  attrs?: _ElementAttrs
-  children?: Array<_Element>
+  ID: number = 0 // unique id
+  type: string = ''
+  rect: string = '[0.00, 0.00],[0.00, 0.00]'
+  children: Array<_Element> = []
+  attrs: _ElementAttrs = new _ElementAttrs()
 
   // XpathInfo
   xpath: Array<string> = []
@@ -429,7 +420,7 @@ class _Element {
 class _ElementAttrs {
   id?: string // custom id
   content?: string
-  focusable?: boolean
+  focusable: boolean = false
   visibility: string = 'Visibility.Visible'
   opacity: number = 1
 }
