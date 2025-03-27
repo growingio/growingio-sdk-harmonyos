@@ -36,7 +36,8 @@ import {
   CIRCLE_NODE_BUTTON,
   CIRCLE_NODE_INPUT,
   CIRCLE_NODE_LIST,
-  CIRCLE_NODE_WEBVIEW } from "../utils/Constants"
+  CIRCLE_NODE_WEBVIEW,
+  AUTOTRACK_ELEMENT_ID } from "../utils/Constants"
 import Util from '../utils/Util'
 import AutotrackPage from '../autotrack/AutotrackPage'
 import AutotrackClick from '../autotrack/AutotrackClick'
@@ -313,6 +314,10 @@ export default class CircleElement {
             let customId = ''
             if (e.attrs.id && e.attrs.id.length > 0) {
               customId = '#' + e.attrs.id.replace(/\//g, '')
+              if (customId.includes(AUTOTRACK_ELEMENT_ID)) {
+                // 如果该组件标记为可点击，将该组件的focusable改为true
+                e.attrs.focusable = true
+              }
             }
             e.xcontent.push(String(xcontent) + customId)
           }

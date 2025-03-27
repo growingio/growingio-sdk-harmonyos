@@ -34,6 +34,7 @@ export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
 export const Event_DURATION = "event_duration"
 
 export const PATH_SEPARATOR = '/'
+export const AUTOTRACK_ELEMENT_ID = 'GROWING_AUTOTRACK_ELEMENT'
 export const CIRCLE_NODE_TEXT = 'TEXT'
 export const CIRCLE_NODE_BUTTON = 'BUTTON'
 export const CIRCLE_NODE_INPUT = 'INPUT'
