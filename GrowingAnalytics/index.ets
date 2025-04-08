@@ -18,6 +18,7 @@
 export {
   GrowingAnalytics,
   GrowingAttrType,
+  GrowingAutotrackElementID,
   GrowingAnalyticsInterface,
 } from './src/main/ets/components/interfaces/GrowingAnalytics'
 export { GrowingConfig } from './src/main/ets/components/interfaces/GrowingConfig'

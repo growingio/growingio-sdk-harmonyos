@@ -35,6 +35,7 @@ export interface PluginsInterface {
   onEventsRemoveFromDisk?(events: string[]): void
   onResponseReceive?(response: rcp.Response): void
   onEventsDidSend?(events: EventPersistence[], request: rcp.Request): void
+  onWebViewDomTreeChanged?(): void
 }
 
 export default class Plugins {
@@ -153,6 +154,14 @@ export default class Plugins {
     Plugins.plugins.forEach(plugin => {
       if (plugin.onEventsDidSend) {
         plugin.onEventsDidSend(events, request)
+      }
+    })
+  }
+
+  static onWebViewDomTreeChanged() {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onWebViewDomTreeChanged) {
+        plugin.onWebViewDomTreeChanged()
       }
     })
   }

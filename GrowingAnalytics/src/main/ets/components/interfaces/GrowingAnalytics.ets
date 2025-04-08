@@ -25,11 +25,18 @@ import Autotrack from '../autotrack/Autotrack'
 import AnalyticsCore from '../core/AnalyticsCore'
 import Flutter from '../core/Flutter'
 import GeneralProps from '../core/GeneralProps'
-import { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType,
-  SaaSJavaScriptConfigType } from '../utils/Constants'
+import {
+  AttributesType as GrowingAttrType,
+  JavaScriptProxyType as GrowingJSProxyType,
+  SaaSJavaScriptConfigType
+} from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
-export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
+export {
+  AttributesType as GrowingAttrType,
+  JavaScriptProxyType as GrowingJSProxyType,
+  AUTOTRACK_ELEMENT_ID as GrowingAutotrackElementID
+} from '../utils/Constants'
 
 export interface GrowingAnalyticsInterface {
   isInitializedSuccessfully(): boolean

@@ -34,6 +34,85 @@ export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
 export const Event_DURATION = "event_duration"
 
 export const PATH_SEPARATOR = '/'
+export const AUTOTRACK_ELEMENT_ID = 'GROWING_AUTOTRACK_ELEMENT'
+export const CIRCLE_NODE_TEXT = 'TEXT'
+export const CIRCLE_NODE_BUTTON = 'BUTTON'
+export const CIRCLE_NODE_INPUT = 'INPUT'
+export const CIRCLE_NODE_LIST = 'LIST'
+export const CIRCLE_NODE_WEBVIEW = 'WEB_VIEW'
+export const BUTTON_COMPONENTS: Array<string> = [
+  "Button",
+  "Toggle",
+  "Checkbox",
+  "CheckboxGroup",
+  "CalendarPicker",
+  "DatePicker",
+  "TextPicker",
+  "TimePicker",
+  "Radio",
+  "Rating",
+  "Select",
+  "Slider",
+  "DownloadFileButton",
+  "ProgressButton",
+  "SegmentButton",
+  "Filter"
+]
+export const TEXT_COMPONENTS: Array<string> = [
+  "Text",
+  "Span",
+  "ImageSpan",
+  "ContainerSpan",
+  "SymbolSpan",
+  "SymbolGlyph",
+  "Hyperlink",
+  "RichText",
+  "SelectionMenu",
+]
+export const INPUT_COMPONENTS: Array<string> = [
+  "TextArea",
+  "TextInput",
+  "RichEditor",
+  "Search",
+]
+export const LIST_COMPONENTS: Array<string> = [
+  "ListItem",
+  "GridItem",
+  "GridCol",
+  "FlowItem",
+]
+export const WEB_COMPONENTS: Array<string> = [
+  "Web",
+]
+export const CONTAINER_COMPONENTS: Array<string> = [
+  "RelativeContainer",
+  "GridRow",
+  "ColumnSplit",
+  "RowSplit",
+  "SplitLayout",
+  "FoldSplitContainer",
+  "SideBarContainer",
+  "List",
+  "Grid",
+  "Scroll",
+  "WaterFlow",
+  "Refresh",
+  "Navigation",
+  "NavigationContent",
+  "NavDestination",
+  "NavDestinationContent",
+]
+export const DIALOG_PATH_PREFIXES: Array<string> = [
+  "/root/AlertDialog",
+  "/root/Dialog",
+  "/root/Keyboard",
+  "/root/MenuWrapper",
+  "/root/ModalPage",
+  "/root/Popup",
+  "/root/SheetWrapper",
+  "/root/SelectOverlay",
+  "/root/Video",
+]
 
 export type ValueType = string | number | boolean | string[] | number[] | boolean[]
 export type AttributesType = { [key: string]: ValueType }

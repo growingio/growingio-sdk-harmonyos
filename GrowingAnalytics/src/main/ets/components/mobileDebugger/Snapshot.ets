@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import uiObserver from '@ohos.arkui.observer'
 import image from '@ohos.multimedia.image'
 import buffer from '@ohos.buffer'
 import { BusinessError } from '@ohos.base'
@@ -25,7 +26,9 @@ export class SnapshotProvider {
   sendSnapshot: (screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => void
   observer?: DidLayoutObserver
   timer?: number
+  lastRefreshTime: number = 0
   snapshotKey: number = 0
+  onScroll: boolean = false
 
   constructor(sendSnapshot: (screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => void) {
     this.sendSnapshot = sendSnapshot
@@ -36,17 +39,16 @@ export class SnapshotProvider {
       return
     }
 
-    this.observer = new DidLayoutObserver(() => {
-      if (this.timer) {
-        clearTimeout(this.timer)
-        this.timer = undefined
-      }
-      this.timer = setTimeout(() => {
-        this.needRefreshSnapshot()
-      }, 300)
-    })
+    let didLayoutCallback = () => {
+      this.refreshSnapshotIfNeeded()
+    }
+    let onScrollEventCallback = (info: uiObserver.ScrollEventInfo) => {
+      this.onScroll = info.scrollEvent == uiObserver.ScrollEventType.SCROLL_START
+    }
+
+    this.observer = new DidLayoutObserver(didLayoutCallback, onScrollEventCallback)
     this.observer.on()
-    this.needRefreshSnapshot()
+    this.refreshSnapshotIfNeeded()
   }
 
   stopObserver() {
@@ -61,7 +63,41 @@ export class SnapshotProvider {
     }
   }
 
-  needRefreshSnapshot() {
+  refreshSnapshotIfNeeded() {
+    if (!this.observer) {
+      return
+    }
+
+    if (this.timer) {
+      clearTimeout(this.timer)
+      this.timer = undefined
+    }
+
+    let separateTime = 1000
+    if (Date.now() - this.lastRefreshTime > separateTime) {
+      this.lastRefreshTime = Date.now()
+      this.refreshSnapshot()
+    } else {
+      this.timer = setTimeout(() => {
+        // clearTimeout 实测会可能性失效，此处加上保护性判断
+        if (Date.now() - this.lastRefreshTime < separateTime) {
+          return
+        }
+
+        this.lastRefreshTime = Date.now()
+        this.refreshSnapshot()
+      }, separateTime)
+    }
+  }
+
+  onDomChanged() {
+    this.refreshSnapshotIfNeeded()
+  }
+
+  refreshSnapshot() {
+    if (this.onScroll) {
+      return
+    }
     AnalyticsCore.mainWindow.snapshot((error: BusinessError, pixmap: image.PixelMap) => {
       let errCode = error.code
       if (errCode) {
@@ -70,10 +106,6 @@ export class SnapshotProvider {
       let size = pixmap.getImageInfoSync().size
       this.pixmapToBase64(pixmap).then(snapshot => {
         pixmap.release()
-        if (!this.timer) {
-          return
-        }
-        this.timer = undefined
         this.snapshotKey += 1
         this.sendSnapshot(px2vp(size.width), px2vp(size.height), this.snapshotKey, snapshot)
       })
@@ -81,7 +113,7 @@ export class SnapshotProvider {
   }
 
   pixmapToBase64(pixmap: image.PixelMap): Promise<string> {
-    let packOpts: image.PackingOption = { format: 'image/jpeg', quality: 98 }
+    let packOpts: image.PackingOption = { format: 'image/jpeg', quality: 50 }
     let imagePackerApi = image.createImagePacker()
     return imagePackerApi.packing(pixmap, packOpts).then((data: ArrayBuffer) => {
       let result = buffer.from(data).toString('base64')
@@ -95,16 +127,20 @@ export class SnapshotProvider {
 
 class DidLayoutObserver {
   didLayoutCallback: () => void
+  onScrollEventCallback: (info: uiObserver.ScrollEventInfo) => void
 
-  constructor(didLayoutCallback: () => void) {
+  constructor(didLayoutCallback: () => void, onScrollEventCallback: (info: uiObserver.ScrollEventInfo) => void) {
     this.didLayoutCallback = didLayoutCallback
+    this.onScrollEventCallback = onScrollEventCallback
   }
 
   on() {
     AnalyticsCore.uiContent.getUIObserver().on('didLayout', this.didLayoutCallback)
+    AnalyticsCore.uiContent.getUIObserver().on('scrollEvent', this.onScrollEventCallback)
   }
 
   off() {
     AnalyticsCore.uiContent.getUIObserver().off('didLayout', this.didLayoutCallback)
+    AnalyticsCore.uiContent.getUIObserver().off('scrollEvent', this.onScrollEventCallback)
   }
 }

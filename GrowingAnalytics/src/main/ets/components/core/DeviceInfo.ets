@@ -77,6 +77,15 @@ export default class DeviceInfo {
       DeviceInfo.networkState = 'UNKNOWN'
     })
     DeviceInfo.netConnection.on("netCapabilitiesChange", (data) => {
+      if (!data.netCap) {
+        return
+      }
+      if (!data.netCap.bearerTypes) {
+        return
+      }
+      if (data.netCap.bearerTypes.length == 0) {
+        return
+      }
       if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_CELLULAR) {
         LogUtil.info(() => 'NetCapability change to 5G')
         DeviceInfo.networkState = '5G'

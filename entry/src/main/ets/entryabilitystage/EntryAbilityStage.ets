@@ -36,6 +36,7 @@ export default class EntryAbilityStage extends AbilityStage {
     config.idMappingEnabled = true
     config.requestOptions.connectTimeout = 10
     config.requestOptions.transferTimeout = 10
+    config.autotrackEnabled = true
     config.autotrackAllPages = true
     config.plugins = [new GrowingToolsKit()]
     GrowingAnalytics.start(this.context, config)
