@@ -3,7 +3,12 @@
 ### Features 功能
 
 * feat: 支持 UseInRelease
+* feat: 增加显示是否延迟初始化，是否正确集成无埋点
 * chore: buildOption.arkOptions.byteCodeHar 改为 false，不再作为字节码 har 发布
+
+### Bug Fixes 修复
+
+* fix: 修复 GioKit Window 占用焦点导致 router 跳转等功能异常
 
 ## [1.1.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.1.1) (2025-01-03)
 
