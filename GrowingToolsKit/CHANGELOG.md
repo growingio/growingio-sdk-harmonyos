@@ -1,3 +1,10 @@
+## [1.2.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.2.0) (2025-04-08)
+
+### Features 功能
+
+* feat: 支持 UseInRelease
+* chore: buildOption.arkOptions.byteCodeHar 改为 false，不再作为字节码 har 发布
+
 ## [1.1.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.1.1) (2025-01-03)
 
 ### Bug Fixes 修复

@@ -1,3 +1,16 @@
+## [2.2.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.2.0) (2025-04-08)
+
+### Features 功能
+
+* feat: 支持 Mobile Debugger
+* chore: buildOption.arkOptions.byteCodeHar 改为 false，不再作为字节码 har 发布
+
+### Bug Fixes 修复
+
+* fix: Debug 调试模式下，dataUploadInterval 默认为 1000ms
+* fix: SaaS 模式下，移除部分不必要的日志输出
+* fix: 修复首次 VISIT 事件偶现多发
+
 ## [2.1.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.1.0) (2024-11-14)
 
 ### Features 功能

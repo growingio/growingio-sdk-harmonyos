@@ -11,7 +11,7 @@
   "main": "Index.ets",
   "type": "module",
   "repository": "https://github.com/growingio/growingio-sdk-harmonyos",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "dependencies": {
     "snappyjs": "^0.7.0",
     "@ohos/protobufjs": "^2.1.0",
