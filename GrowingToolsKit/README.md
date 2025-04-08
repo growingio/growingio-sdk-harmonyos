@@ -22,25 +22,6 @@ ohpm install @growingio/tools
 ohpm install <您所下载的 har 文件路径>
 ```
 
-### 配置标准化 OHMUrl
-
-在工程级 build-profile.json5 中配置 useNormalizedOHMUrl 为 true
-```typescript
-{
-  "app": {
-    "products": [
-      {
-        "buildOption": {
-          "strictMode": {
-            "useNormalizedOHMUrl": true
-          }
-        }
-      }
-    ]
-  }
-}
-```
-
 ### 初始化
 在初始化 GrowingIO HarmonyOS NEXT SDK 时添加 GrowingToolsKit：
 
