@@ -35,8 +35,9 @@ struct Hybrid {
       Web({ src: $rawfile('newDemo.html'), controller: this.controller})
         .javaScriptAccess(true)
         .domStorageAccess(true)
-        .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+        .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller, 'Web1'))
         .height('90%')
+        .id('Web1')
       Button('Back')
         .onClick(() => {
           // let context = getContext(this) as AppContext.UIAbilityContext
