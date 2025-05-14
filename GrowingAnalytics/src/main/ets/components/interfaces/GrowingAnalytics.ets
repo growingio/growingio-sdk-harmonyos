@@ -53,7 +53,7 @@ export interface GrowingAnalyticsInterface {
   removeTimer(timerId: string): void
   clearTrackTimer(): void
 
-  createHybridProxy(controller: webview.WebviewController): GrowingJSProxyType | undefined
+  createHybridProxy(controller: webview.WebviewController, webviewId?: string): GrowingJSProxyType | undefined
 
   // mode SaaS
   setPeopleVariable(attributes: GrowingAttrType): void
@@ -101,8 +101,8 @@ export class GrowingAnalytics {
     return tracker
   }
 
-  static createHybridProxy(controller: webview.WebviewController): GrowingJSProxyType | undefined {
-    return AnalyticsCore.core.createHybridProxy(controller)
+  static createHybridProxy(controller: webview.WebviewController, webviewId?: string): GrowingJSProxyType | undefined {
+    return AnalyticsCore.core.createHybridProxy(controller, webviewId)
   }
 
   static javaScriptOnDocumentStart(

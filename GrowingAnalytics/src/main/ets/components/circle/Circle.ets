@@ -58,9 +58,9 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
     }
   }
 
-  sendScreenshot(screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) {
+  async sendScreenshot(screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) {
     let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
-    CircleElement.setPagesAndElements(screenshot)
+    await CircleElement.setPagesAndElements(screenshot)
     this.ws.sendScreenshot(screenshot)
   }
 
