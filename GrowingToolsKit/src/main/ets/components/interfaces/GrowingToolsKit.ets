@@ -61,7 +61,7 @@ export class GrowingToolsKit {
     let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
     let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleFlags)
     let appInfo = bundleInfo.appInfo
-    GrowingToolsKit.debug = (appInfo.debug || useInRelease)
+    GrowingToolsKit.debug = (appInfo?.debug || useInRelease)
   }
 
   static show(): Promise<void> {

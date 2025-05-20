@@ -18,37 +18,20 @@
 import webSocket from "@ohos.net.webSocket"
 import { BusinessError } from '@ohos.base'
 import url from "@ohos.url"
-import rcp from "@hms.collaboration.rcp"
 
-import { LogData, Message, EventData, RefreshScreenshot } from './Model'
-import { WebSocket, WebSocketCallbackInterface } from './WebSocket'
+import { Message, RefreshScreenshot } from '../mobileDebugger/Model'
+import { WebSocket, WebSocketCallbackInterface } from '../mobileDebugger/WebSocket'
 import { PluginsInterface } from "../plugins/Plugins"
-import EventPersistence from "../event/EventPersistence"
-import { Queue } from "./Queue"
-import { LogUtil } from "../utils/LogUtil"
-import { StatusView } from "./StatusView"
+import { StatusView } from "../mobileDebugger/StatusView"
 import AppInfo from "../core/AppInfo"
 import AnalyticsCore, { SDK_VERSION } from "../core/AnalyticsCore"
-import { SnapshotProvider } from "./Snapshot"
+import { SnapshotProvider } from "../mobileDebugger/Snapshot"
+import CircleElement from "./CircleElement"
 
-export default class MobileDebugger implements PluginsInterface, WebSocketCallbackInterface {
+export default class Circle implements PluginsInterface, WebSocketCallbackInterface {
   ws: WebSocket = new WebSocket()
-  eventQueue: Queue<EventData> = new Queue<EventData>(50)
-  logQueue: Queue<LogData> = new Queue<LogData>(100)
   statusView?: StatusView
   snapshotProvider?: SnapshotProvider
-
-  timer: number = -1
-  loggerOpen: boolean = false
-
-  constructor() {
-    if (!LogUtil.logDebugger) {
-      LogUtil.logDebugger = (type: string, message: string) => {
-        let log = new LogData(type, message)
-        this.logQueue.enqueue(log)
-      }
-    }
-  }
 
   connect(url: string) {
     if (AnalyticsCore.mainWindow && AnalyticsCore.uiContent) {
@@ -61,6 +44,8 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
   }
 
   stop(error?: string) {
+    // TODO 关闭 Flutter 圈选数据监听和上报
+
     this.snapshotProvider?.stopObserver()
     this.statusView?.hide()
 
@@ -71,26 +56,12 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
         buttons: [{ text: '知道了', color: '#000000' }]
       })
     }
-
-    this.eventQueue.isLimit = true
-    this.logQueue.isLimit = true
-    clearInterval(this.timer)
-    this.timer = -1
   }
 
-  startSendDebuggerData() {
-    if (this.timer > 0) {
-      return
-    }
-    this.timer = setInterval(() => {
-      let events = this.eventQueue.dequeue()
-      this.ws.sendEvents(events)
-
-      if (this.loggerOpen) {
-        let logs = this.logQueue.dequeue()
-        this.ws.sendLogs(logs)
-      }
-    }, 1000)
+  sendScreenshot(screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) {
+    let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
+    CircleElement.setPagesAndElements(screenshot)
+    this.ws.sendScreenshot(screenshot)
   }
 
   // PluginsInterface
@@ -100,7 +71,7 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
       let urlObject = url.URL.parseURL(uri)
       let serviceType = urlObject.params.get('serviceType')
       let wsUrl = urlObject.params.get('wsUrl')
-      if (serviceType && serviceType == 'debugger' && wsUrl && wsUrl.length > 0) {
+      if (serviceType && serviceType == 'circle' && wsUrl && wsUrl.length > 0) {
         this.connect(wsUrl)
         return true
       }
@@ -109,13 +80,8 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
     return false
   }
 
-  onEventsDidSend(events: EventPersistence[], request: rcp.Request) {
-    let url = request.url.toString()
-    for (let i = 0; i < events.length; i++) {
-      let e = events[i]
-      let eventData = new EventData(url, e.data)
-      this.eventQueue.enqueue(eventData)
-    }
+  onWebViewDomTreeChanged() {
+    this.snapshotProvider?.onDomChanged()
   }
 
   // WebSocketCallbackInterface
@@ -124,7 +90,7 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
     if (err) {
       return
     }
-    this.ws.sendReadyInfo()
+    this.ws.sendCircleReadyInfo()
   }
 
   onWebSocketReceive(err: BusinessError, value: string | ArrayBuffer) {
@@ -136,25 +102,18 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
         let message: Message = JSON.parse(value)
         if (message.msgType == 'ready') {
           // web端ready
-          this.ws.sendClientInfo()
-
           if (!this.snapshotProvider) {
             this.snapshotProvider = new SnapshotProvider(
               (screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => {
-                let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
-                this.ws.sendScreenshot(screenshot)
+                this.sendScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
               })
           }
           this.snapshotProvider.startObserver()
 
-          this.eventQueue.isLimit = false
-          this.logQueue.isLimit = false
-          this.startSendDebuggerData()
-
           if (!this.statusView) {
-            this.statusView = new StatusView('正在进行Debugger(上下拖曳移动)', () => {
+            this.statusView = new StatusView('正在进行圈选(上下拖曳移动)', () => {
               StatusView.showDialog({
-                title: '正在进行Debugger',
+                title: '正在进行圈选',
                 message: `APP版本: ${AppInfo.appVersion}\nSDK版本: ${SDK_VERSION}`,
                 buttons: [
                   { text: '继续', color: '#000000' },
@@ -168,12 +127,8 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
             })
           }
           this.statusView.show()
-        } else if (message.msgType == 'logger_open') {
-          // 发送log信息
-          this.loggerOpen = true
-        } else if (message.msgType == 'logger_close') {
-          // 停止发送log信息
-          this.loggerOpen = false
+
+          // TODO 开启 Flutter 圈选数据监听和上报
         } else if (message.msgType == 'incompatible_version') {
           // 版本号不适配
           StatusView.showDialog({
@@ -191,7 +146,7 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
   }
 
   onWebSocketClose(err: BusinessError, value: webSocket.CloseResult) {
-    this.stop('当前设备已与Web端断开连接，如需继续调试请扫码重新连接')
+    this.stop('当前设备已与Web端断开连接，如需继续圈选请扫码重新连接')
   }
 
   onWebSocketError(err: BusinessError) {

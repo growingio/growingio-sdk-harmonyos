@@ -51,6 +51,7 @@ import DummyTracker from './DummyTracker'
 import { HAR_VERSION } from '../../../../../BuildProfile'
 import Plugins from '../plugins/Plugins'
 import MobileDebugger from '../mobileDebugger/MobileDebugger'
+import Circle from '../circle/Circle'
 
 class Location {
   latitude: number = 0
@@ -79,6 +80,9 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     if (config.mode != ConfigMode.SaaS) {
       // 仅支持 NewSaaS 和 CDP
       plugins.push(new MobileDebugger())
+    }
+    if (config.mode == ConfigMode.NewSaaS && config.autotrackEnabled) {
+      plugins.push(new Circle())
     }
     Plugins.registerPlugins(plugins)
     Plugins.onSDKWillInitialize()

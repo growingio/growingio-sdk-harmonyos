@@ -24,29 +24,11 @@ import GrowingContext from '../core/Context'
 import { EventType } from '../event/Event'
 import ViewElementEvent from '../event/ViewElementEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
-import { PATH_SEPARATOR } from '../utils/Constants'
+import { PATH_SEPARATOR, LIST_COMPONENTS, DIALOG_PATH_PREFIXES } from '../utils/Constants'
 import Util from '../utils/Util'
 
 export default class AutotrackClick {
   private static uiContent: UIContext
-  private static listComponents: Array<string> = [
-    "ListItem",
-    "GridItem",
-    "GridCol",
-  ]
-
-  private static dialogPathPrefixes: Array<string> = [
-    "/root",
-    // "/root/AlertDialog",
-    // "/root/Dialog",
-    // "/root/Keyboard",
-    // "/root/MenuWrapper",
-    // "/root/ModalPage",
-    // "/root/Popup",
-    // "/root/SheetWrapper",
-    // "/root/SelectOverlay",
-    // "/root/Video",
-  ]
 
   static startObserver(context: UIContext) {
     AutotrackClick.uiContent = context
@@ -104,8 +86,8 @@ export default class AutotrackClick {
 
     if (!path || path.length == 0) {
       // 该frameNode所在页面并不是通过Navigation或Router跳转，可能是弹窗视图
-      for (let i = 0; i < AutotrackClick.dialogPathPrefixes.length; i++) {
-        let prefix = AutotrackClick.dialogPathPrefixes[i]
+      for (let i = 0; i < DIALOG_PATH_PREFIXES.length; i++) {
+        let prefix = DIALOG_PATH_PREFIXES[i]
         if (xpath.startsWith(prefix)) {
           let lastPage = AutotrackPage.lastPage
           path = lastPage?.path ?? ''
@@ -180,6 +162,11 @@ export default class AutotrackClick {
       f = f.getParent()
     }
 
+    if (info.xpath.length > 0 && info.xpath[info.xpath.length - 1] != 'root') {
+      info.xpath.push('root')
+      info.xcontent.push('0')
+    }
+    
     return info
   }
 
@@ -188,7 +175,7 @@ export default class AutotrackClick {
     info.xpath.push(curNodeType)
 
     let xcontent = AutotrackClick.getXcontent(frameNode)
-    if (!info.inList && AutotrackClick.listComponents.includes(curNodeType)) {
+    if (!info.inList && LIST_COMPONENTS.includes(curNodeType)) {
       info.xcontent.push('-')
       info.index = xcontent
       info.inList = true

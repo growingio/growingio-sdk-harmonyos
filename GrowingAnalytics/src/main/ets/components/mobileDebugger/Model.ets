@@ -52,6 +52,37 @@ export class ReadyInfo implements Message {
   }
 }
 
+export class CircleReadyInfo implements Message {
+  msgType: string = 'ready'
+  os: string = 'HarmonyOS'
+  projectId: string
+  timestamp: number
+  domain: string
+  sdkVersion: string = SDK_VERSION
+  appVersion: string
+  screenWidth: number
+  screenHeight: number
+  urlScheme: string
+
+  constructor(
+    projectId: string,
+    timestamp: number,
+    domain: string,
+    screenWidth: number,
+    screenHeight: number,
+    urlScheme: string,
+    appVersion: string,
+  ) {
+    this.projectId = projectId
+    this.timestamp = timestamp
+    this.domain = domain
+    this.screenWidth = screenWidth
+    this.screenHeight = screenHeight
+    this.urlScheme = urlScheme
+    this.appVersion = appVersion
+  }
+}
+
 export class ClientInfo implements Message {
   msgType: string = 'client_info'
   sdkVersion: string = SDK_VERSION
@@ -233,6 +264,8 @@ export class RefreshScreenshot implements Message {
   screenHeight: number
   snapshotKey: number
   screenshot: string
+  pages?: Array<object>
+  elements?: Array<object>
 
   constructor(screenWidth: number, screenHeight: number, snapshotKey: number, screenshot: string) {
     this.screenWidth = screenWidth
