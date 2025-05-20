@@ -1,6 +1,7 @@
 GrowingIO HarmonyOS NEXT SDK
 ======
 ![GrowingIO](https://www.growingio.com/vassets/images/home_v3/gio-logo-primary.svg)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/growingio/growingio-sdk-harmonyos)
 
 ## GrowingIO简介
 创立于 2015 年，GrowingIO 是国内领先的一站式数据增长引擎方案服务商，属 StartDT 奇点云集团旗下品牌。**以数据智能分析为核心，GrowingIO 通过构建客户数据平台，打造增长营销闭环**，帮助企业提升数据驱动能力，赋能商业决策、实现业务增长。   
