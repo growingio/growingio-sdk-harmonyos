@@ -19,6 +19,8 @@ import webSocket from "@ohos.net.webSocket"
 import { BusinessError } from '@ohos.base'
 import url from "@ohos.url"
 
+import AutotrackPage from "../autotrack/AutotrackPage"
+import { EventScene } from "../event/Event"
 import { Message, RefreshScreenshot } from '../mobileDebugger/Model'
 import { WebSocket, WebSocketCallbackInterface } from '../mobileDebugger/WebSocket'
 import { PluginsInterface } from "../plugins/Plugins"
@@ -59,6 +61,9 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   }
 
   async sendScreenshot(screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) {
+    if (AutotrackPage.lastPage?.eventScene != EventScene.Native) {
+      return
+    }
     let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
     await CircleElement.setPagesAndElements(screenshot)
     this.ws.sendScreenshot(screenshot)
