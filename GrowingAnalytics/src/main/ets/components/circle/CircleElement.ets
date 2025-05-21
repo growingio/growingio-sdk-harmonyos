@@ -217,8 +217,8 @@ export default class CircleElement {
         for (let i = 0; i < DIALOG_PATH_PREFIXES.length; i++) {
           let prefix = DIALOG_PATH_PREFIXES[i]
           if (element.xpath.startsWith(prefix)) {
-            let lastPage = AutotrackPage.lastPage
-            element.page = lastPage?.path ?? ''
+            let lastNativePage = AutotrackPage.lastNativePage
+            element.page = lastNativePage?.path ?? ''
             break
           }
         }
