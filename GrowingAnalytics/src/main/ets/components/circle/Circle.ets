@@ -27,6 +27,7 @@ import { PluginsInterface } from "../plugins/Plugins"
 import { StatusView } from "../mobileDebugger/StatusView"
 import AppInfo from "../core/AppInfo"
 import AnalyticsCore, { SDK_VERSION } from "../core/AnalyticsCore"
+import { Flutter } from "../core/Flutter"
 import { SnapshotProvider } from "../mobileDebugger/Snapshot"
 import CircleElement from "./CircleElement"
 
@@ -46,8 +47,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   }
 
   stop(error?: string) {
-    // TODO 关闭 Flutter 圈选数据监听和上报
-
+    Flutter.onCircleClosed()
     this.snapshotProvider?.stopObserver()
     this.statusView?.hide()
 
@@ -72,6 +72,29 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
     let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
     await CircleElement.setPagesAndElements(screenshot)
     this.ws.sendScreenshot(screenshot)
+  }
+
+  sendScreenshotForFlutter(data: Map<string, Object>) {
+    this.snapshotProvider?.getSnapshot((screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => {
+      let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
+      let width = data["width"] as number | undefined
+      let height = data["height"] as number | undefined
+      let scale = data["scale"] as number | undefined
+      let elements = data["elements"] as Array<object> | undefined
+      let pages = data["pages"] as Array<object> | undefined
+      if (width != undefined) {
+        screenshot.screenWidth = width
+      }
+      if (height != undefined) {
+        screenshot.screenHeight = height
+      }
+      if (scale != undefined) {
+        screenshot.scale = scale
+      }
+      screenshot.elements = elements ?? []
+      screenshot.pages = pages ?? []
+      this.ws.sendScreenshot(screenshot)
+    })
   }
 
   // PluginsInterface
@@ -141,7 +164,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
           }
           this.statusView.show()
 
-          // TODO 开启 Flutter 圈选数据监听和上报
+          Flutter.onCircleOpen()
         } else if (message.msgType == 'incompatible_version') {
           // 版本号不适配
           StatusView.showDialog({
