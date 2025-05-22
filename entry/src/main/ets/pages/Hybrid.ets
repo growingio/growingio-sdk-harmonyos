@@ -1,5 +1,5 @@
 import web_webview from '@ohos.web.webview'
-import { GrowingAnalytics } from '@growingio/analytics'
+import { GrowingAnalytics, GrowingAnalyticsInterface } from '@growingio/analytics'
 import router from '@ohos.router'
 
 @Entry
@@ -43,7 +43,7 @@ struct Hybrid {
       Web({ src: $rawfile('newDemo.html'), controller: this.controller})
         .javaScriptAccess(true)
         .domStorageAccess(true)
-        .javaScriptProxy(GrowingAnalytics.tracker(this.getTrackerId()).createHybridProxy(this.controller, 'Web1'))
+        .javaScriptProxy(this.getJavaScriptProxy('Web1'))
         .height('90%')
         .id('Web1')
       Button('Back')
@@ -55,6 +55,19 @@ struct Hybrid {
     }
     .height('100%')
     .width('100%')
+  }
+
+  getJavaScriptProxy(webviewId: string): JavaScriptProxy | undefined {
+    let trackerId = this.getTrackerId()
+    if (trackerId && trackerId.length > 0) {
+      return this.subTracker().createHybridProxy(this.controller, webviewId)
+    } else {
+      return GrowingAnalytics.createHybridProxy(this.controller, webviewId)
+    }
+  }
+
+  subTracker(): GrowingAnalyticsInterface {
+    return GrowingAnalytics.tracker(this.getTrackerId()) as GrowingAnalyticsInterface
   }
 
   getTrackerId(): string {

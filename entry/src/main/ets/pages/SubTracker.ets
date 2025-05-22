@@ -112,7 +112,7 @@ struct SubTracker {
   createSubTracker(): string {
     let trackerId = Util.getRandomString()
     let config = new GrowingConfig().NewSaaS(
-      '1111111111111',
+      '0a1b4118dd954ec3bcc69da5138bdb96',
       trackerId,
       'growing.33333333333',
       "http://117.50.84.75:8080"
