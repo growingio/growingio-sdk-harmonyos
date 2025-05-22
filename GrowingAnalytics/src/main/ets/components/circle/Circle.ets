@@ -61,8 +61,13 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   }
 
   async sendScreenshot(screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) {
-    if (AutotrackPage.lastPage?.eventScene != EventScene.Native) {
-      return
+    if (AutotrackPage.lastPage) {
+      // 当有页面浏览事件生成时，需判断当前页面是否是原生页面
+      // 而flutter页面，则应该由flutter sdk触发sendScreenshotForFlutter
+      let lastPage = AutotrackPage.lastPage
+      if (lastPage.eventScene != EventScene.Native) {
+        return
+      }
     }
     let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
     await CircleElement.setPagesAndElements(screenshot)
