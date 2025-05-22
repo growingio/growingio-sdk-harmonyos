@@ -98,6 +98,11 @@ export class SnapshotProvider {
     if (this.onScroll) {
       return
     }
+
+    this.getSnapshot(this.sendSnapshot)
+  }
+
+  getSnapshot(callback: (screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => void) {
     AnalyticsCore.mainWindow.snapshot((error: BusinessError, pixmap: image.PixelMap) => {
       let errCode = error.code
       if (errCode) {
@@ -107,7 +112,9 @@ export class SnapshotProvider {
       this.pixmapToBase64(pixmap).then(snapshot => {
         pixmap.release()
         this.snapshotKey += 1
-        this.sendSnapshot(px2vp(size.width), px2vp(size.height), this.snapshotKey, snapshot)
+        if (callback) {
+          callback(px2vp(size.width), px2vp(size.height), this.snapshotKey, snapshot)
+        }
       })
     })
   }

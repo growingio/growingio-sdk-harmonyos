@@ -18,14 +18,42 @@
 import AnalyticsCore from './AnalyticsCore'
 import GrowingContext from './Context'
 import AutotrackPage, { PageInfo } from '../autotrack/AutotrackPage'
+import Circle from '../circle/Circle'
 import { EventScene, EventType } from '../event/Event'
 import ViewElementEvent from '../event/ViewElementEvent'
 import { AttributesType, ValueType } from '../utils/Constants'
 import { ConfigMode } from '../interfaces/GrowingConfig'
+import Plugins from '../plugins/Plugins'
 import { LogUtil } from '../utils/LogUtil'
 
-export default class Flutter {
-  constructor() {}
+export class Flutter {
+  static isCircleOpen: boolean = false
+  static onCircleStatusChanged: ((isRunning: boolean) => void) | undefined = undefined
+
+  static onCircleOpen() {
+    Flutter.isCircleOpen = true
+    if (Flutter.onCircleStatusChanged) {
+      Flutter.onCircleStatusChanged(true)
+    }
+  }
+
+  static onCircleClosed() {
+    Flutter.isCircleOpen = false
+    if (Flutter.onCircleStatusChanged) {
+      Flutter.onCircleStatusChanged(false)
+    }
+  }
+
+  static trackFlutterCircleData(data: Map<string, Object>) {
+    if (!Flutter.isCircleOpen) {
+      return
+    }
+    Flutter._getCircle()?.sendScreenshotForFlutter(data)
+  }
+
+  private static _getCircle(): Circle | undefined {
+    return Plugins.plugins.find(p => p instanceof Circle) as Circle | undefined
+  }
 
   static trackFlutterPage(argument: Map<string, Object>) {
     let context = GrowingContext.getDefaultContext() as GrowingContext
