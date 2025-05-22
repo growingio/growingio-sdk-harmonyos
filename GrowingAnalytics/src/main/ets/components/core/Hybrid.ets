@@ -105,6 +105,10 @@ export default class Hybrid {
     if (hybrid == null || hybrid == undefined) {
       return '{}'
     }
+    if (!GrowingContext.isDefaultContext(hybrid.context)) {
+      // 只有主实例可以打通hybrid无埋点圈选，子实例只能发不能圈
+      return '{}'
+    }
     let controller = hybrid.controller
     let zLevel = 100
     let js = `window.GrowingWebViewJavascriptBridge.getDomTree(${left}, ${top}, ${width}, ${height}, ${zLevel})`
