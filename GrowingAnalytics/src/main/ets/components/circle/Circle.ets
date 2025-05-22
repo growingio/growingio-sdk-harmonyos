@@ -99,6 +99,9 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
     }
     try {
       if (typeof value == 'string') {
+        if (value.trim().length == 0) {
+          return
+        }
         let message: Message = JSON.parse(value)
         if (message.msgType == 'ready') {
           // web端ready

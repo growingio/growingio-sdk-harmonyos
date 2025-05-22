@@ -103,7 +103,7 @@ export default class Hybrid {
   static async getDomTreeById(webviewId: string, left: number, top: number, width: number, height: number): Promise<string> {
     let hybrid = Hybrid._hybrids[webviewId]
     if (hybrid == null || hybrid == undefined) {
-      return ''
+      return '{}'
     }
     let controller = hybrid.controller
     let zLevel = 100
