@@ -5,6 +5,10 @@ import router from '@ohos.router'
 @Entry
 @Component
 struct Hybrid {
+  @LocalStorageProp('trackerId') trackerIdFromStorage: string = ''
+  @State trackerIdFromRouterParams: string = router.getParams()
+    ? ((router.getParams() as Record<string, Object>)['trackerId'] as string)
+    : ''
   controller: web_webview.WebviewController = new web_webview.WebviewController()
 
   aboutToAppear() {
@@ -14,6 +18,10 @@ struct Hybrid {
 
   build() {
     Column() {
+      if (this.getTrackerId().length > 0) {
+        Text('trackerId = ' + this.getTrackerId())
+      }
+
       // 运行时执行hybrid注入，需要refresh webView使当前页面生效
       // Button('refresh')
       //   .onClick(() => {
@@ -35,7 +43,7 @@ struct Hybrid {
       Web({ src: $rawfile('newDemo.html'), controller: this.controller})
         .javaScriptAccess(true)
         .domStorageAccess(true)
-        .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller, 'Web1'))
+        .javaScriptProxy(GrowingAnalytics.tracker(this.getTrackerId()).createHybridProxy(this.controller, 'Web1'))
         .height('90%')
         .id('Web1')
       Button('Back')
@@ -47,5 +55,14 @@ struct Hybrid {
     }
     .height('100%')
     .width('100%')
+  }
+
+  getTrackerId(): string {
+    if (this.trackerIdFromStorage && this.trackerIdFromStorage.length > 0) {
+      return this.trackerIdFromStorage
+    } else if (this.trackerIdFromRouterParams && this.trackerIdFromRouterParams.length > 0) {
+      return this.trackerIdFromRouterParams
+    }
+    return ''
   }
 }
