@@ -242,7 +242,11 @@ export default class CircleElement {
         if (e.attrs.id && e.attrs.id.length > 0) {
           webviewId = e.attrs.id
           let domTree = await Hybrid.getDomTreeById(webviewId, element.left, element.top, element.width, element.height)
-          element.webView = JSON.parse(domTree) ?? undefined
+          try {
+            element.webView = JSON.parse(domTree) ?? undefined
+          } catch {
+            element.webView = undefined
+          }
         }
       }
       elements.push(element)
