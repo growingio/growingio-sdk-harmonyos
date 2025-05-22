@@ -72,6 +72,13 @@ struct SubTracker {
           }
           Util.startAbility(getContext(this), 'TrackTimerAbility', 'pages/TrackTimer', {'trackerId': this.curTrackerId})
         }).margin({ top: 15 })
+      Button('Hybrid')
+        .onClick(() => {
+          if (this.curTrackerId.length == 0) {
+            return
+          }
+          Util.startAbility(getContext(this), 'HybridAbility', 'pages/Hybrid', {'trackerId': this.curTrackerId})
+        }).margin({ top: 15 })
       List({space: 15}) {
         ForEach(this.trackerIds, (trackerId: string) => {
           ListItem() {
@@ -105,15 +112,17 @@ struct SubTracker {
   createSubTracker(): string {
     let trackerId = Util.getRandomString()
     let config = new GrowingConfig().NewSaaS(
-      '1111111111111',
+      '0a1b4118dd954ec3bcc69da5138bdb96',
       trackerId,
       'growing.33333333333',
-      "https://www.baidu.com"
+      "http://117.50.84.75:8080"
     )
     config.debugEnabled = true
     config.sessionInterval = 30
     config.dataUploadInterval = 15
     config.idMappingEnabled = true
+    config.autotrackEnabled=true
+    config.autotrackAllPages=true
     GrowingAnalytics.startSubTracker(trackerId, config)
     return GrowingAnalytics.tracker(trackerId).isInitializedSuccessfully() ? trackerId : ''
   }
