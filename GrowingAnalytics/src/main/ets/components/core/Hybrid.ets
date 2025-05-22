@@ -103,11 +103,11 @@ export default class Hybrid {
   static async getDomTreeById(webviewId: string, left: number, top: number, width: number, height: number): Promise<string> {
     let hybrid = Hybrid._hybrids[webviewId]
     if (hybrid == null || hybrid == undefined) {
-      return '{}'
+      return ''
     }
     if (!GrowingContext.isDefaultContext(hybrid.context)) {
       // 只有主实例可以打通hybrid无埋点圈选，子实例只能发不能圈
-      return '{}'
+      return ''
     }
     let controller = hybrid.controller
     let zLevel = 100
