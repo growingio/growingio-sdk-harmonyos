@@ -20,6 +20,7 @@ export {
   GrowingAttrType,
   GrowingAutotrackElementID,
   GrowingAnalyticsInterface,
+  GrowingFlutterPlugin,
 } from './src/main/ets/components/interfaces/GrowingAnalytics'
 export { GrowingConfig } from './src/main/ets/components/interfaces/GrowingConfig'
 
