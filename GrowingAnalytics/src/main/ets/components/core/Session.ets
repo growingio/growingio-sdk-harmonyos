@@ -68,9 +68,7 @@ export default class Session {
       session.latestOnBackgroundTime = 0
     })
 
-    emitter.emit({
-      eventId: EMIT_EVENT_SESSION_STATE_FOREGROUND
-    })
+    emitter.emit(EMIT_EVENT_SESSION_STATE_FOREGROUND)
   }
 
   static onBackground() {
