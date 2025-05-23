@@ -108,9 +108,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       EventSender.sendEvent(gContext)
     }, delay)
 
-    emitter.emit({
-      eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE
-    })
+    emitter.emit(EMIT_EVENT_MAIN_TRACKER_INITIALIZE)
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
       + 'GrowingIO version: ' + SDK_VERSION)
     Plugins.onSDKDidInitialize(config, SDK_VERSION)

@@ -46,7 +46,7 @@ export default class EventSender {
       case EventSenderType.NewSaaS:
         this.urlPath = URL_PATH_NEW_SAAS
         // 保证首个VISIT及时发送
-        emitter.once({eventId: EMIT_EVENT_DATABASE_FLUSH}, () => {
+        emitter.once(EMIT_EVENT_DATABASE_FLUSH, () => {
           this.sendEvent()
         })
         break
@@ -54,7 +54,7 @@ export default class EventSender {
         this.urlPath = URL_PATH_SAAS_PV
         this.eventTypes = [EventType.Visit, EventType.Page, EventType.AppClosed]
         // 保证首个VISIT及时发送
-        emitter.once({eventId: EMIT_EVENT_DATABASE_FLUSH}, () => {
+        emitter.once(EMIT_EVENT_DATABASE_FLUSH, () => {
           this.sendEvent()
         })
         break
