@@ -78,9 +78,7 @@ export default class EventDatabase {
         JSON.parse('[' + events.map((e: relationalStore.ValuesBucket) => {
           return e['DATA'] as string
         }).join(',') + ']'), null, 4))
-      emitter.emit({
-        eventId: EMIT_EVENT_DATABASE_FLUSH
-      })
+      emitter.emit(EMIT_EVENT_DATABASE_FLUSH)
     } catch (e) {
       LogUtil.error(() => "Failed to write cached events to disk. code = " + e.code + ", message = " + e.message)
     }

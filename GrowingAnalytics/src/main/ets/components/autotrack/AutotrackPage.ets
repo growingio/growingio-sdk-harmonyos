@@ -49,8 +49,8 @@ export default class AutotrackPage {
   }
 
   static startSubscribeToEvent() {
-    emitter.once({eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE}, AutotrackPage.resendPageFromCacheOnBackground)
-    emitter.on({eventId: EMIT_EVENT_SESSION_STATE_FOREGROUND}, AutotrackPage.resendPageFromCacheOnBackground)
+    emitter.once(EMIT_EVENT_MAIN_TRACKER_INITIALIZE, AutotrackPage.resendPageFromCacheOnBackground)
+    emitter.on(EMIT_EVENT_SESSION_STATE_FOREGROUND, AutotrackPage.resendPageFromCacheOnBackground)
   }
 
   static onPageUpdate(info: NavDestinationInfo | uiObserver.NavDestinationSwitchInfo | RouterPageInfo) {
