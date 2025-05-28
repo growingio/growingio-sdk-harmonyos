@@ -37,7 +37,7 @@ export default class DummyTracker implements GrowingAnalyticsInterface {
   removeTimer(timerId: string): void {}
   clearTrackTimer(): void {}
 
-  createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {
+  createHybridProxy(controller: webview.WebviewController, webviewId?: string): JavaScriptProxyType | undefined {
     return undefined
   }
   javaScriptOnDocumentStart(
