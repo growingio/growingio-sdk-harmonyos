@@ -77,22 +77,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   sendScreenshotForFlutter(data: Map<string, Object>) {
     this.snapshotProvider?.getSnapshot((screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => {
       let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
-      let width = data["width"] as number | undefined
-      let height = data["height"] as number | undefined
-      let scale = data["scale"] as number | undefined
-      let elements = data["elements"] as Array<object> | undefined
-      let pages = data["pages"] as Array<object> | undefined
-      if (width != undefined) {
-        screenshot.screenWidth = width
-      }
-      if (height != undefined) {
-        screenshot.screenHeight = height
-      }
-      if (scale != undefined) {
-        screenshot.scale = scale
-      }
-      screenshot.elements = elements ?? []
-      screenshot.pages = pages ?? []
+      CircleElement.setPagesAndElementsForFlutter(screenshot, data)
       this.ws.sendScreenshot(screenshot)
     })
   }
