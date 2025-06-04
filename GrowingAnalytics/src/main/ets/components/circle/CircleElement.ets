@@ -60,6 +60,104 @@ export default class CircleElement {
     }
   }
 
+  static setPagesAndElementsForFlutter(screenshot: RefreshScreenshot, data: Map<string, Object>) {
+    try {
+      let width = data.get("width") as number | undefined
+      let height = data.get("height") as number | undefined
+      let scale = data.get("scale") as number | undefined
+      if (width != undefined) {
+        screenshot.screenWidth = width
+      }
+      if (height != undefined) {
+        screenshot.screenHeight = height
+      }
+      if (scale != undefined) {
+        screenshot.scale = scale
+      }
+
+      let pages: Array<_ScreenshotPage> = []
+      let pagesData = data.get("pages") as Array<Map<string, Object>> | undefined
+      if (pagesData != undefined) {
+        for (let i = 0; i < pagesData.length; i++) {
+          let pageData = pagesData[i]
+          let left = pageData.get("left") as number | undefined
+          let top = pageData.get("top") as number | undefined
+          let width = pageData.get("width") as number | undefined
+          let height = pageData.get("height") as number | undefined
+          let path = pageData.get("path") as string | undefined
+          let title = pageData.get("title") as string | undefined
+
+          if (left != undefined && top != undefined && width != undefined && height != undefined && path != undefined) {
+            let page = new _ScreenshotPage(left, top, width, height, path, title)
+            pages.push(page)
+          }
+        }
+      }
+      screenshot.pages = pages
+
+      let elements: Array<_ScreenshotElement> = []
+      let elementsData = data.get("elements") as Array<Map<string, Object>> | undefined
+      if (elementsData != undefined) {
+        for (let i = 0; i < elementsData.length; i++) {
+          let elementData = elementsData[i]
+          let nodeType = elementData.get("nodeType") as string | undefined
+          let domain = elementData.get("domain") as string | undefined
+          let zLevel = elementData.get("zLevel") as number | undefined
+          let xpath = elementData.get("xpath") as string | undefined
+          let xcontent = elementData.get("xcontent") as string | undefined
+          let index = elementData.get("index") as number | undefined
+          let content = elementData.get("content") as string | undefined
+          let parentXPath = elementData.get("parentXPath") as string | undefined
+          let parentXContent = elementData.get("parentXContent") as string | undefined
+          let isContainer = elementData.get("isContainer") as boolean | undefined
+          let left = elementData.get("left") as number | undefined
+          let top = elementData.get("top") as number | undefined
+          let width = elementData.get("width") as number | undefined
+          let height = elementData.get("height") as number | undefined
+          let page = elementData.get("page") as string | undefined
+
+          if (nodeType != undefined && zLevel != undefined && xpath != undefined && xcontent != undefined) {
+            let element = new _ScreenshotElement(nodeType, domain ?? AppInfo.domain, zLevel, xpath, xcontent)
+            if (index != undefined) {
+              element.index = index
+            }
+            if (content != undefined) {
+              element.content = content
+            }
+            if (parentXPath != undefined) {
+              element.parentXPath = parentXPath
+            }
+            if (parentXContent != undefined) {
+              element.parentXContent = parentXContent
+            }
+            if (isContainer != undefined) {
+              element.isContainer = isContainer
+            }
+            if (left != undefined) {
+              element.left = left
+            }
+            if (top != undefined) {
+              element.top = top
+            }
+            if (width != undefined) {
+              element.width = width
+            }
+            if (height != undefined) {
+              element.height = height
+            }
+            if (page != undefined) {
+              element.page = page
+            }
+            elements.push(element)
+          }
+        }
+      }
+      screenshot.elements = elements
+    } catch (e) {
+
+    }
+  }
+
   private static _parseJsonTreeToElementsTree(json: object): _Element {
     let element = new _Element()
     if (json["$ID"] !== undefined) {
