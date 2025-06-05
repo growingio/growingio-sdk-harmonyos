@@ -1,4 +1,4 @@
-## HarmonyOS NEXT 无埋点
+## HarmonyOS 5 无埋点 (仅支持 New SaaS)
 
 ### 如何集成
 
@@ -134,5 +134,3 @@ router.pushUrl({
 #### 设置页面别名
 
 如果您的应用中有 NavDestination 页面名称相同，或 Router 目标命名路由页面名称相同的情况，请通过设置页面别名来避免数据分析异常
-
-### 进行无埋点圈选（即将发布，敬请期待）
