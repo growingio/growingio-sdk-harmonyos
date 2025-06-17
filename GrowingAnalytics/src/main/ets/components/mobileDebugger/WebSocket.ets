@@ -31,6 +31,7 @@ import {
   Quit,
   ReadyInfo,
   RefreshScreenshot } from './Model'
+import { StatusView } from "./StatusView"
 
 export interface WebSocketCallbackInterface {
   onWebSocketOpen(err: BusinessError, value: Object): void
@@ -43,8 +44,10 @@ export class WebSocket {
   ws?: webSocket.WebSocket
   queue: string[] = []
   isUploading: boolean = false
+  lastNetworkDialogTime: number = 0
 
   connect(url: string, callback: WebSocketCallbackInterface): Promise<boolean> {
+    this.lastNetworkDialogTime = 0
     this.disconnect()
 
     let ws = webSocket.createWebSocket()
@@ -87,14 +90,30 @@ export class WebSocket {
 
     let message = this.queue.shift()
     if (message && message.length > 0) {
+      let startTime = Date.now()
       this.ws?.send(message).then(() => {
         this.isUploading = false
+        this.showBadNetworkDialogIfNeeded(startTime)
+
         if (this.queue.length > 0) {
           this.sendIfNeeded()
         }
       }).catch((e: Error) => {
         this.isUploading = false
       })
+    }
+  }
+
+  showBadNetworkDialogIfNeeded(startTime: number) {
+    let endTime = Date.now()
+    if ((endTime - startTime > 3 * 1000 || this.queue.length > 5) // 当某条message发送超过限时，或队列中有多条message等待
+        && endTime - this.lastNetworkDialogTime > 20 * 60 * 1000) { // 20分钟内最多展示一次
+      StatusView.showDialog({
+        title: '提示',
+        message: '检测到当前网络环境较差，请检查网络连接',
+        buttons: [{ text: '知道了', color: '#000000' }]
+      })
+      this.lastNetworkDialogTime = endTime
     }
   }
 
