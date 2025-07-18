@@ -18,15 +18,9 @@
 import Event, { EventType, AttributesType } from './Event'
 import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
-import PageEvent from './PageEvent'
-import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export default class CustomEvent extends Event {
   eventName: string = ''
-
-  // mode SaaS
-  path: string | undefined = undefined
-  pageShowTimestamp: number | undefined = undefined
 
   static create(
     eventName: string,
@@ -37,15 +31,6 @@ export default class CustomEvent extends Event {
     event.eventName = eventName
     event.attributes = attributes
     event.eventType = EventType.Custom
-
-    if (context.config.mode == ConfigMode.SaaS) {
-      let lastPage = PageEvent.getLastPage(context)
-      if (lastPage) {
-        event.path = lastPage.path ?? ''
-        event.pageShowTimestamp = lastPage.timestamp ?? 0
-      }
-    }
-
     return EventBuilder.build(event, context)
   }
 }

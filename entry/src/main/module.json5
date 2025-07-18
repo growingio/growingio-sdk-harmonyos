@@ -46,15 +46,6 @@
         ]
       },
       {
-        "name": "TrackTimerAbility",
-        "srcEntry": "./ets/tracktimerability/TrackTimerAbility.ets",
-        "description": "$string:TrackTimerAbility_desc",
-        "icon": "$media:layered_image",
-        "label": "$string:TrackTimerAbility_label",
-        "startWindowIcon": "$media:startIcon",
-        "startWindowBackground": "$color:start_window_background"
-      },
-      {
         "name": "SubTrackerAbility",
         "srcEntry": "./ets/subtrackerability/SubTrackerAbility.ets",
         "description": "$string:SubTrackerAbility_desc",
@@ -64,29 +55,11 @@
         "startWindowBackground": "$color:start_window_background"
       },
       {
-        "name": "GeneralPropsAbility",
-        "srcEntry": "./ets/generalpropsability/GeneralPropsAbility.ets",
-        "description": "$string:GeneralPropsAbility_desc",
-        "icon": "$media:layered_image",
-        "label": "$string:GeneralPropsAbility_label",
-        "startWindowIcon": "$media:startIcon",
-        "startWindowBackground": "$color:start_window_background"
-      },
-      {
         "name": "TrackAbility",
         "srcEntry": "./ets/trackability/TrackAbility.ets",
         "description": "$string:TrackAbility_desc",
         "icon": "$media:layered_image",
         "label": "$string:TrackAbility_label",
-        "startWindowIcon": "$media:startIcon",
-        "startWindowBackground": "$color:start_window_background"
-      },
-      {
-        "name": "HybridAbility",
-        "srcEntry": "./ets/hybridability/HybridAbility.ets",
-        "description": "$string:HybridAbility_desc",
-        "icon": "$media:layered_image",
-        "label": "$string:HybridAbility_label",
         "startWindowIcon": "$media:startIcon",
         "startWindowBackground": "$color:start_window_background"
       }

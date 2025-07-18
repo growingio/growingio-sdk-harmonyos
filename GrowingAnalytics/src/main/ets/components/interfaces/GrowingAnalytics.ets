@@ -16,49 +16,20 @@
  */
 
 import common from '@ohos.app.ability.common'
-import UIAbility from '@ohos.app.ability.UIAbility'
-import window from '@ohos.window'
-import webview from '@ohos.web.webview'
 
 import { GrowingConfig } from './GrowingConfig'
-import Autotrack from '../autotrack/Autotrack'
 import AnalyticsCore from '../core/AnalyticsCore'
-import Flutter from '../core/Flutter'
-import GeneralProps from '../core/GeneralProps'
-import {
-  AttributesType as GrowingAttrType,
-  JavaScriptProxyType as GrowingJSProxyType,
-  SaaSJavaScriptConfigType
-} from '../utils/Constants'
+import { AttributesType as GrowingAttrType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
-export {
-  AttributesType as GrowingAttrType,
-  JavaScriptProxyType as GrowingJSProxyType,
-  AUTOTRACK_ELEMENT_ID as GrowingAutotrackElementID
-} from '../utils/Constants'
+export { AttributesType as GrowingAttrType } from '../utils/Constants'
 
 export interface GrowingAnalyticsInterface {
   isInitializedSuccessfully(): boolean
   setDataCollectionEnabled(enabled: boolean): void
   setLoginUserId(userId: string, userKey?: string): void
   cleanLoginUserId(): void
-
-  setLoginUserAttributes(attributes: GrowingAttrType): void
   track(eventName: string, attributes?: GrowingAttrType, sendTo?: string[]): void
-  trackTimerStart(eventName: string): string
-  trackTimerPause(timerId: string): void
-  trackTimerResume(timerId: string): void
-  trackTimerEnd(timerId: string, attributes?: GrowingAttrType, sendTo?: string[]): void
-  removeTimer(timerId: string): void
-  clearTrackTimer(): void
-
-  createHybridProxy(controller: webview.WebviewController): GrowingJSProxyType | undefined
-
-  // mode SaaS
-  setPeopleVariable(attributes: GrowingAttrType): void
-  setEvar(attributes: GrowingAttrType): void
-  setVisitor(attributes: GrowingAttrType): void
 }
 
 export class GrowingAnalytics {
@@ -74,10 +45,6 @@ export class GrowingAnalytics {
   static deferStart(context: common.UIAbilityContext, configuration: GrowingConfig) {
     // In the case of delayed initialization, avoid users calling start and ensure that the context is UIAbilityContext
     GrowingAnalytics.start(context, configuration)
-  }
-
-  static onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
-    Autotrack.startObserver(windowStage)
   }
 
   static startSubTracker(trackerId: string, configuration: GrowingConfig) {
@@ -99,20 +66,6 @@ export class GrowingAnalytics {
       LogUtil.error(() => 'Please start a subTracker with the trackerId ' + trackerId + ' first')
     }
     return tracker
-  }
-
-  static createHybridProxy(controller: webview.WebviewController): GrowingJSProxyType | undefined {
-    return AnalyticsCore.core.createHybridProxy(controller)
-  }
-
-  static javaScriptOnDocumentStart(
-    scriptRules?: Array<string>,
-    saasJavaScriptConfig?: SaaSJavaScriptConfigType): Array<ScriptItem> {
-    return AnalyticsCore.core.javaScriptOnDocumentStart(scriptRules, saasJavaScriptConfig)
-  }
-
-  static javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem> {
-    return AnalyticsCore.core.javaScriptOnDocumentEnd(scriptRules)
   }
 
   static isInitializedSuccessfully(trackerId?: string): boolean {
@@ -138,10 +91,6 @@ export class GrowingAnalytics {
     AnalyticsCore.core.setLoginUserId('')
   }
 
-  static setLoginUserAttributes(attributes: GrowingAttrType) {
-    AnalyticsCore.core.setLoginUserAttributes(attributes)
-  }
-
   static getDeviceId(): string {
     return AnalyticsCore.core.getDeviceId()
   }
@@ -154,50 +103,6 @@ export class GrowingAnalytics {
     AnalyticsCore.core.track(eventName, attributes, sendTo)
   }
 
-  static trackTimerStart(eventName: string): string {
-    return AnalyticsCore.core.trackTimerStart(eventName)
-  }
-
-  static trackTimerPause(timerId: string) {
-    AnalyticsCore.core.trackTimerPause(timerId)
-  }
-
-  static trackTimerResume(timerId: string) {
-    AnalyticsCore.core.trackTimerResume(timerId)
-  }
-
-  static trackTimerEnd(
-    timerId: string,
-    attributes?: GrowingAttrType,
-    sendTo?: string[]
-  ) {
-    AnalyticsCore.core.trackTimerEnd(timerId, attributes, sendTo)
-  }
-
-  static removeTimer(timerId: string) {
-    AnalyticsCore.core.removeTimer(timerId)
-  }
-
-  static clearTrackTimer() {
-    AnalyticsCore.core.clearTrackTimer()
-  }
-
-  static setGeneralProps(props: GrowingAttrType) {
-    GeneralProps.setGeneralProps(props)
-  }
-
-  static removeGeneralProps(keys: string[]) {
-    GeneralProps.removeGeneralProps(keys)
-  }
-
-  static clearGeneralProps() {
-    GeneralProps.clearGeneralProps()
-  }
-
-  static setDynamicGeneralProps(generator: () => GrowingAttrType) {
-    GeneralProps.setDynamicGeneralProps(generator)
-  }
-
   static setLocation(
     latitude: number,
     longitude: number
@@ -207,43 +112,5 @@ export class GrowingAnalytics {
 
   static cleanLocation() {
     AnalyticsCore.setLocation(0, 0)
-  }
-
-  static setPeopleVariable(attributes: GrowingAttrType) {
-    AnalyticsCore.core.setPeopleVariable(attributes)
-  }
-
-  static setEvar(attributes: GrowingAttrType) {
-    AnalyticsCore.core.setEvar(attributes)
-  }
-
-  static setVisitor(attributes: GrowingAttrType) {
-    AnalyticsCore.core.setVisitor(attributes)
-  }
-
-  static trackFlutterPage(argument: Map<string, Object>) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      LogUtil.error(() => 'Must call GrowingAnalytics.start(context, configuration) first')
-      return
-    }
-    if (argument == null || argument == undefined) {
-      return
-    }
-    Flutter.trackFlutterPage(argument)
-  }
-
-  static trackFlutterClickEvent(argument: Map<string, Object>) {
-    if (!GrowingAnalytics.isInitializedSuccessfully()) {
-      LogUtil.error(() => 'Must call GrowingAnalytics.start(context, configuration) first')
-      return
-    }
-    if (argument == null || argument == undefined) {
-      return
-    }
-    Flutter.trackFlutterClickEvent(argument)
-  }
-
-  static handleOpenURL(uri: string): boolean {
-    return AnalyticsCore.handleOpenURL(uri)
   }
 }

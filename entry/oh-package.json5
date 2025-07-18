@@ -7,7 +7,6 @@
   "license": "",
   "dependencies": {
     "@growingio/analytics": "file:../GrowingAnalytics",
-    "@growingio/tools": "file:../GrowingToolsKit"
   },
   "devDependencies": {}
 }

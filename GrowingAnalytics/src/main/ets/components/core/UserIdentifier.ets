@@ -20,7 +20,6 @@ import { PREFERENCE_USER_ID, PREFERENCE_USER_IDENTIFIER, PREFERENCE_USER_KEY } f
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import GrowingContext from './Context'
-import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export default class UserIdentifier {
   userId: string
@@ -49,10 +48,8 @@ export default class UserIdentifier {
     UserIdentifier.users.set(context.trackerId, user)
 
     let message = 'UserId from preferences is ' + userId
-    if (context.config.mode == ConfigMode.NewSaaS || context.config.mode == ConfigMode.CDP) {
-      if (context.config.idMappingEnabled == true) {
-        message += ', userKey from preferences is ' + userKey
-      }
+    if (context.config.idMappingEnabled == true) {
+      message += ', userKey from preferences is ' + userKey
     }
     LogUtil.info(() => message)
   }
@@ -67,10 +64,8 @@ export default class UserIdentifier {
     UserIdentifier.users.set(context.trackerId, user)
 
     let message = 'UserId for ' + context.trackerId + ' from preferences is ' + userId
-    if (context.config.mode == ConfigMode.NewSaaS || context.config.mode == ConfigMode.CDP) {
-      if (context.config.idMappingEnabled == true) {
-        message += ', userKey from preferences is ' + userKey
-      }
+    if (context.config.idMappingEnabled == true) {
+      message += ', userKey from preferences is ' + userKey
     }
     LogUtil.info(() => message)
   }
@@ -106,12 +101,10 @@ export default class UserIdentifier {
       let message = 'LoginUserId for ' + context.trackerId + ' did changed, userId from '
         + ((user.userId == null || user.userId.length == 0) ? 'undefined' : user.userId)
         + ' to ' + userId
-      if (context.config.mode == ConfigMode.NewSaaS || context.config.mode == ConfigMode.CDP) {
-        if (context.config.idMappingEnabled == true) {
-          message += ', userKey from '
-            + ((user.userKey == null || user.userKey.length == 0) ? 'undefined' : user.userKey)
-            + ' to ' + userKey
-        }
+      if (context.config.idMappingEnabled == true) {
+        message += ', userKey from '
+          + ((user.userKey == null || user.userKey.length == 0) ? 'undefined' : user.userKey)
+          + ' to ' + userKey
       }
       LogUtil.info(() => message)
 
@@ -141,10 +134,6 @@ export default class UserIdentifier {
     // A=>B
     if (oldUserId && oldUserId.length > 0 && oldUserId != userId) {
       Session.refreshSession(context)
-    } else if (context.config.mode == ConfigMode.CDP) {
-      if (oldUserId == null || oldUserId.length == 0) {
-        Session.generateVisit(context)
-      }
     }
   }
 }

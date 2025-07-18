@@ -49,7 +49,7 @@ export default class EventPersistence {
     context: GrowingContext
   ): EventPersistence {
     let uuid = util.generateRandomUUID(false)
-    let data = event.toSerialize(context)
+    let data = event.toSerialize()
     let eventType = event.eventType
     let sdkVersion = event.sdkVersion
     let accountId = context.config.accountId

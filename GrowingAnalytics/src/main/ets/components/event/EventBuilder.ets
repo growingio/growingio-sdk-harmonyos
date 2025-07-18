@@ -20,7 +20,6 @@ import AnalyticsCore, { SDK_VERSION } from '../core/AnalyticsCore'
 import AppInfo from '../core/AppInfo'
 import DeviceInfo from '../core/DeviceInfo'
 import GrowingContext from '../core/Context'
-import GrowingGeneralProps from '../core/GeneralProps'
 import Session, { SessionState } from '../core/Session'
 import UserIdentifier from '../core/UserIdentifier'
 import { PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
@@ -70,10 +69,7 @@ export default class EventBuilder {
       event.userKey = undefined
     }
 
-    let attributes = GrowingGeneralProps.getGeneralProps()
-    if (event.attributes) {
-      attributes = Util.concatObject(attributes, event.attributes)
-    }
+    let attributes = event.attributes ?? {}
     event.attributes = Util.serializableAttributes(attributes)
 
     event.eventSequenceId = EventBuilder.updateEventSequenceId(context)

@@ -18,25 +18,12 @@
 import Event, { EventType } from './Event'
 import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
-import PageEvent from './PageEvent'
-import { ConfigMode } from '../interfaces/GrowingConfig'
 
 export default class AppClosedEvent extends Event {
-
-  // mode SaaS
-  path: string | undefined = undefined
 
   static create(context: GrowingContext): AppClosedEvent {
     let event = new AppClosedEvent()
     event.eventType = EventType.AppClosed
-
-    if (context.config.mode == ConfigMode.SaaS) {
-      let lastPage = PageEvent.getLastPage(context)
-      if (lastPage) {
-        event.path = lastPage.path ?? ''
-      }
-    }
-
     return EventBuilder.build(event, context)
   }
 }

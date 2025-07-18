@@ -15,12 +15,7 @@
  * limitations under the License.
  */
 
-import GrowingContext from '../core/Context'
-import DeviceInfo from '../core/DeviceInfo'
-import { ConfigMode } from '../interfaces/GrowingConfig'
-import Util from '../utils/Util'
 import { AttributesType } from '../utils/Constants'
-
 export { AttributesType } from '../utils/Constants'
 
 export default abstract class Event {
@@ -58,35 +53,13 @@ export default abstract class Event {
   appVersion: string = ''
   appChannel: string | undefined = undefined
 
-  toSerialize(context: GrowingContext): string {
-    let mode = context.config.mode
-    if (mode == ConfigMode.SaaS) {
-      return Util.toSerializeByMeasurementProtocolV2(this, DeviceInfo.networkState)
-    } else if (mode == ConfigMode.CDP) {
-      return Util.toSerializeByMeasurementProtocolV3(this)
-    } else {
-      return JSON.stringify(this)
-    }
+  toSerialize(): string {
+    return JSON.stringify(this)
   }
 }
 
 export enum EventType {
   Visit = 'VISIT',
   Custom = 'CUSTOM',
-  LoginUserAttributes = 'LOGIN_USER_ATTRIBUTES',
-  Page = 'PAGE',
-  ViewClick = 'VIEW_CLICK',
-  ViewChange = 'VIEW_CHANGE',
   AppClosed = 'APP_CLOSED',
-
-  // mode SaaS
-  SaaS_Evar = 'evar',
-  SaaS_Vstr = 'vstr',
-  SaaS_Pvar = 'pvar',
-}
-
-export enum EventScene {
-  Native = 0,
-  Hybrid,
-  Flutter
 }

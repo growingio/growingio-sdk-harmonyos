@@ -33,7 +33,6 @@ export default class AppInfo {
       let r_id = bundleInfo.appInfo.labelResource.id
       AppInfo.appName = context.resourceManager.getStringSync(r_id)
       AppInfo.appVersion = bundleInfo.versionName
-      // AppInfo.appChannel = '应用市场'
       AppInfo.debug = bundleInfo.appInfo.debug
     } catch (e) {
     }

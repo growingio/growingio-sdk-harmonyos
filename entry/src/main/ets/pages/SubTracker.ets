@@ -51,27 +51,6 @@ struct SubTracker {
           }
           Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track', {'trackerId': this.curTrackerId})
         }).margin({ top: 15 })
-      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
-        Button('loginUserAttributes')
-          .onClick(() => {
-            this.loginUserAttributes()
-          }).margin({ top: 15 })
-        Button('setEvar(SaaS)')
-          .onClick(() => {
-            this.setEvar()
-          }).margin({ top: 15 })
-        Button('setVisitor(SaaS)')
-          .onClick(() => {
-            this.setVisitor()
-          }).margin({ top: 15 })
-      }
-      Button('trackTimer')
-        .onClick(() => {
-          if (this.curTrackerId.length == 0) {
-            return
-          }
-          Util.startAbility(getContext(this), 'TrackTimerAbility', 'pages/TrackTimer', {'trackerId': this.curTrackerId})
-        }).margin({ top: 15 })
       List({space: 15}) {
         ForEach(this.trackerIds, (trackerId: string) => {
           ListItem() {
@@ -129,27 +108,6 @@ struct SubTracker {
 
   cleanLoginUserId() {
     this.subTracker().cleanLoginUserId()
-  }
-
-  loginUserAttributes() {
-    this.subTracker().setLoginUserAttributes({
-      'name': 'ben',
-      'age': 30
-    })
-  }
-
-  setEvar() {
-    this.subTracker().setEvar({
-      'product': 'apple',
-      'age': 30
-    })
-  }
-
-  setVisitor() {
-    this.subTracker().setVisitor({
-      'visitor': 'david',
-      'age': 30
-    })
   }
 
   subTracker(): GrowingAnalyticsInterface {

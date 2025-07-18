@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import { PluginsInterface } from '../plugins/Plugins'
-
 class RequestOptions {
   _connectTimeout: number = 30 * 1000
   _transferTimeout: number = 30 * 1000
@@ -47,14 +45,7 @@ class RequestOptions {
   }
 }
 
-export enum ConfigMode {
-  NewSaaS = 0,
-  SaaS,
-  CDP
-}
-
 export class GrowingConfig {
-  mode: ConfigMode = ConfigMode.NewSaaS
   accountId: string = ''
   dataSourceId: string = ''
   dataCollectionServerHost: string = ''
@@ -69,11 +60,7 @@ export class GrowingConfig {
   requestOptions: RequestOptions = new RequestOptions()
   _dataValidityPeriod: number = 7 * 86400000
   trackerId: string = ''
-  hybridAutotrackEnabled: boolean = true
-  autotrackEnabled: boolean = false
-  autotrackAllPages: boolean = false
   useProtobuf: boolean = true
-  plugins: Array<PluginsInterface> = []
 
   constructor() {}
 
@@ -108,39 +95,12 @@ export class GrowingConfig {
     return this._dataValidityPeriod / 86400000
   }
 
-  SaaS(
-    accountId: string,
-    urlScheme: string,
-    dataCollectionServerHost: string = 'https://api.growingio.com'
-  ): GrowingConfig {
-    this.mode = ConfigMode.SaaS
-    this.accountId = accountId
-    this.urlScheme = urlScheme
-    this.dataCollectionServerHost = dataCollectionServerHost
-    return this
-  }
-
   NewSaaS(
     accountId: string,
     dataSourceId: string,
     urlScheme: string,
     dataCollectionServerHost: string = 'https://napi.growingio.com'
   ): GrowingConfig {
-    this.mode = ConfigMode.NewSaaS
-    this.accountId = accountId
-    this.dataSourceId = dataSourceId
-    this.urlScheme = urlScheme
-    this.dataCollectionServerHost = dataCollectionServerHost
-    return this
-  }
-
-  CDP(
-    accountId: string,
-    dataSourceId: string,
-    urlScheme: string,
-    dataCollectionServerHost: string
-  ): GrowingConfig {
-    this.mode = ConfigMode.CDP
     this.accountId = accountId
     this.dataSourceId = dataSourceId
     this.urlScheme = urlScheme
@@ -153,10 +113,8 @@ export class GrowingConfig {
       throw new Error('[GrowingAnalytics] 请在初始化配置中传入 accountId')
     }
 
-    if (this.mode === ConfigMode.NewSaaS || this.mode === ConfigMode.CDP) {
-      if (!(typeof this.dataSourceId === 'string') || this.dataSourceId.trim() === '') {
-        throw new Error('[GrowingAnalytics] 请在初始化配置中传入 dataSourceId')
-      }
+    if (!(typeof this.dataSourceId === 'string') || this.dataSourceId.trim() === '') {
+      throw new Error('[GrowingAnalytics] 请在初始化配置中传入 dataSourceId')
     }
 
     if (!(typeof this.urlScheme === 'string') || this.urlScheme.trim() === '') {
@@ -173,7 +131,6 @@ export class GrowingConfig {
     }
 
     let config = new GrowingConfig()
-    config.mode = this.mode
     config.accountId = this.accountId
     config.dataSourceId = this.dataSourceId
     config.urlScheme = this.urlScheme
@@ -188,11 +145,7 @@ export class GrowingConfig {
     config.requestOptions = this.requestOptions.copy()
     config._dataValidityPeriod = this._dataValidityPeriod
     config.trackerId = this.trackerId
-    config.hybridAutotrackEnabled = this.hybridAutotrackEnabled
-    config.autotrackEnabled = this.autotrackEnabled
-    config.autotrackAllPages = this.autotrackAllPages
     config.useProtobuf = this.useProtobuf
-    config.plugins = [...this.plugins]
 
     return config
   }

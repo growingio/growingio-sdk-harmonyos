@@ -20,7 +20,6 @@ import display from '@ohos.display'
 import I18n from '@ohos.i18n'
 import connection from '@ohos.net.connection'
 import util from '@ohos.util'
-// import radio from '@ohos.telephony.radio'
 
 import { PREFERENCE_DEVICE_ID } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -89,26 +88,6 @@ export default class DeviceInfo {
       if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_CELLULAR) {
         LogUtil.info(() => 'NetCapability change to 5G')
         DeviceInfo.networkState = '5G'
-        // radio.getPrimarySlotId().then((slotId) => {
-        //   let infos: Array<radio.SignalInformation> = radio.getSignalInformationSync(slotId)
-        //   if (infos.length > 0) {
-        //     let signalInfo = infos[0]
-        //     let networkType = signalInfo.signalType
-        //     if (networkType == radio.NetworkType.NETWORK_TYPE_UNKNOWN) {
-        //       DeviceInfo.networkState = 'UNKNOWN'
-        //     } else if (networkType == radio.NetworkType.NETWORK_TYPE_GSM ||
-        //       networkType == radio.NetworkType.NETWORK_TYPE_CDMA) {
-        //       DeviceInfo.networkState = '2G'
-        //     } else if (networkType == radio.NetworkType.NETWORK_TYPE_WCDMA ||
-        //       networkType == radio.NetworkType.NETWORK_TYPE_TDSCDMA) {
-        //       DeviceInfo.networkState = '3G'
-        //     } else if (networkType == radio.NetworkType.NETWORK_TYPE_LTE) {
-        //       DeviceInfo.networkState = '4G'
-        //     } else if (networkType == radio.NetworkType.NETWORK_TYPE_NR) {
-        //       DeviceInfo.networkState = '5G'
-        //     }
-        //   }
-        // })
       } else if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_WIFI) {
         LogUtil.info(() => 'NetCapability change to WiFi')
         DeviceInfo.networkState = 'WIFI'

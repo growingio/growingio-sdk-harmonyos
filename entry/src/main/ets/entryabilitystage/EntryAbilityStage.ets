@@ -1,7 +1,6 @@
 import AbilityStage from '@ohos.app.ability.AbilityStage'
 import type Want from '@ohos.app.ability.Want'
 import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
-import { GrowingToolsKit } from '@growingio/tools'
 
 export default class EntryAbilityStage extends AbilityStage {
   onCreate(): void {
@@ -36,9 +35,6 @@ export default class EntryAbilityStage extends AbilityStage {
     config.idMappingEnabled = true
     config.requestOptions.connectTimeout = 10
     config.requestOptions.transferTimeout = 10
-    config.autotrackEnabled = true
-    config.autotrackAllPages = true
-    config.plugins = [new GrowingToolsKit()]
     GrowingAnalytics.start(this.context, config)
 
     // ---------------- CDP ----------------

@@ -16,8 +16,7 @@
  */
 
 import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
-import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '../utils/Constants'
-import webview from '@ohos.web.webview'
+import { AttributesType } from '../utils/Constants'
 
 export default class DummyTracker implements GrowingAnalyticsInterface {
   constructor() {}
@@ -27,33 +26,8 @@ export default class DummyTracker implements GrowingAnalyticsInterface {
   setDataCollectionEnabled(enabled: boolean): void {}
   setLoginUserId(userId: string, userKey?: string): void {}
   cleanLoginUserId(): void {}
-
-  setLoginUserAttributes(attributes: AttributesType): void {}
   track(eventName: string, attributes?: AttributesType, sendTo?: string[]): void {}
-  trackTimerStart(eventName: string): string { return '' }
-  trackTimerPause(timerId: string): void {}
-  trackTimerResume(timerId: string): void {}
-  trackTimerEnd(timerId: string, attributes?: AttributesType, sendTo?: string[]): void {}
-  removeTimer(timerId: string): void {}
-  clearTrackTimer(): void {}
-
-  createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {
-    return undefined
-  }
-  javaScriptOnDocumentStart(
-    scriptRules?: Array<string>,
-    saasJavaScriptConfig?: SaaSJavaScriptConfigType): Array<ScriptItem> {
-    return []
-  }
-  javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem> {
-    return []
-  }
 
   // Main tracker only
   getDeviceId(): string { return '' }
-
-  // mode SaaS
-  setPeopleVariable(attributes: AttributesType): void {}
-  setEvar(attributes: AttributesType): void {}
-  setVisitor(attributes: AttributesType): void {}
 }

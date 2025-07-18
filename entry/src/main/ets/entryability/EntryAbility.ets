@@ -8,18 +8,9 @@ import { GrowingAnalytics } from '@growingio/analytics'
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
-
-    let uri = want?.uri
-    if (uri) {
-      GrowingAnalytics.handleOpenURL(uri)
-    }
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-    let uri = want?.uri
-    if (uri) {
-      GrowingAnalytics.handleOpenURL(uri)
-    }
   }
 
   onDestroy(): void {
@@ -36,7 +27,6 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
-      GrowingAnalytics.onWindowStageCreate(this, windowStage)
     });
   }
 

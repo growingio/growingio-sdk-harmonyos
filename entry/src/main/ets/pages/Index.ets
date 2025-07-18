@@ -41,20 +41,6 @@ struct Index {
             this.cleanLocation()
           }).margin({ top: 15 })
       }
-      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
-        Button('loginUserAttributes')
-          .onClick(() => {
-            this.loginUserAttributes()
-          }).margin({ top: 15 })
-        Button('setEvar(SaaS)')
-          .onClick(() => {
-            this.setEvar()
-          }).margin({ top: 15 })
-        Button('setVisitor(SaaS)')
-          .onClick(() => {
-            this.setVisitor()
-          }).margin({ top: 15 })
-      }
       Button('track')
         .onClick(() => {
           Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track', {
@@ -69,21 +55,9 @@ struct Index {
           "timestamp": Date.now(),
           "where": "index_track_button"
         })
-      Button('generalProps')
-        .onClick(() => {
-          Util.startAbility(getContext(this), 'GeneralPropsAbility', 'pages/GeneralProps')
-        }).margin({ top: 15 })
-      Button('trackTimer')
-        .onClick(() => {
-          Util.startAbility(getContext(this), 'TrackTimerAbility', 'pages/TrackTimer')
-        }).margin({ top: 15 })
       Button('subTracker')
         .onClick(() => {
           Util.startAbility(getContext(this), 'SubTrackerAbility', 'pages/SubTracker')
-        }).margin({ top: 15 })
-      Button('hybrid')
-        .onClick(() => {
-          Util.startAbility(getContext(this), 'HybridAbility', 'pages/Hybrid')
         }).margin({ top: 15 })
     }
     .width('100%')
@@ -115,26 +89,5 @@ struct Index {
 
   cleanLocation() {
     GrowingAnalytics.cleanLocation()
-  }
-
-  loginUserAttributes() {
-    GrowingAnalytics.setLoginUserAttributes({
-      'name': 'ben',
-      'age': 30
-    })
-  }
-
-  setEvar() {
-    GrowingAnalytics.setEvar({
-      'product': 'apple',
-      'age': 30
-    })
-  }
-
-  setVisitor() {
-    GrowingAnalytics.setVisitor({
-      'visitor': 'david',
-      'age': 30
-    })
   }
 }
