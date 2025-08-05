@@ -287,4 +287,16 @@ export default class Util {
       return ''
     }
   }
+
+  static getTitleFromNavInfoParameter(param: any): string {
+    try {
+      if (param) {
+        return param['growing_title'] || ''
+      } else {
+        return ''
+      }
+    } catch (e) {
+      return ''
+    }
+  }
 }
