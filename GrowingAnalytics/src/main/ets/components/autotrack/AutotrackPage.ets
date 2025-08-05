@@ -157,8 +157,12 @@ export default class AutotrackPage {
       let param = router.getParams()
       let attributes = Util.getAttributesFromNavInfoParameter(param)
       let alias = Util.getAliasFromNavInfoParameter(param)
+      let customTitle = Util.getTitleFromNavInfoParameter(param)
       if (alias.length > 0) {
         path = PATH_SEPARATOR + alias
+      }
+      if (customTitle.length > 0) {
+        title = customTitle
       }
       let pageInfo = new PageInfo(path, title, attributes, alias)
       AutotrackPage.sendNativePage(pageInfo)
@@ -208,8 +212,12 @@ export default class AutotrackPage {
     }
     let attributes = Util.getAttributesFromNavInfoParameter(navInfo.param)
     let alias = Util.getAliasFromNavInfoParameter(navInfo.param)
+    let customTitle = Util.getTitleFromNavInfoParameter(navInfo.param)
     if (alias.length > 0) {
       path = PATH_SEPARATOR + alias
+    }
+    if (customTitle.length > 0) {
+      title = customTitle
     }
     let pageInfo = new PageInfo(path, title, attributes, alias, navInfo.navDestinationId)
     return pageInfo

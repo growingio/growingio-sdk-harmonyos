@@ -288,6 +288,18 @@ export default class Util {
     }
   }
 
+  static getTitleFromNavInfoParameter(param: any): string {
+    try {
+      if (param) {
+        return param['growing_title'] || ''
+      } else {
+        return ''
+      }
+    } catch (e) {
+      return ''
+    }
+  }
+
   static validateEventSize(event: any): { isValid: boolean, attributes: AttributesType } {
     let MAX_SIZE_BYTES = 1.8 * 1024 * 1024
     let serialize = JSON.stringify(event)
