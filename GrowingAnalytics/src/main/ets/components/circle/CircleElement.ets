@@ -238,8 +238,6 @@ export default class CircleElement {
 
       // webview
       if (nodeType == CIRCLE_NODE_WEBVIEW) {
-        element.zLevel = 10
-
         let webviewId = ''
         if (e.attrs.id && e.attrs.id.length > 0) {
           webviewId = e.attrs.id
