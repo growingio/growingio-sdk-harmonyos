@@ -87,9 +87,9 @@ struct TrackTimer {
   async trackTimerStart() {
     let trackerId = this.getTrackerId()
     if (trackerId && trackerId.length > 0) {
-      return await this.subTracker().trackTimerStart("timer")
+      return this.subTracker().trackTimerStart("timer")
     } else {
-      return await GrowingAnalytics.trackTimerStart("timer")
+      return GrowingAnalytics.trackTimerStart("timer")
     }
   }
 

@@ -31,7 +31,7 @@ export default class AutotrackPage {
   static pagesCache: Array<PageInfo> = []
 
   static initAutotrackPage() {
-    emitter.on({eventId: EMIT_EVENT_SESSION_STATE_FOREGROUND}, AutotrackPage.resendPageFromCache)
+    emitter.on(EMIT_EVENT_SESSION_STATE_FOREGROUND, AutotrackPage.resendPageFromCache)
   }
 
   static sendPage(pageInfo: PageInfo, eventScene: EventScene = EventScene.Native) {

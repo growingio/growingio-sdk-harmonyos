@@ -48,7 +48,7 @@ export default class MyAbilityStage extends AbilityStage {
       'Your AccountId',
       'Your UrlScheme'
     )
-    await GrowingAnalytics.start(this.context, config)
+    GrowingAnalytics.start(this.context, config)
   }
 }
 ```
@@ -219,7 +219,7 @@ GrowingAnalytics.track('buyProduct2', {
 ##### 示例
 
 ```typescript
-let timerId = await GrowingAnalytics.trackTimerStart('eventName')
+let timerId = GrowingAnalytics.trackTimerStart('eventName')
 GrowingAnalytics.trackTimerPause(timerId)
 GrowingAnalytics.trackTimerResume(timerId)
 GrowingAnalytics.trackTimerEnd(timerId)

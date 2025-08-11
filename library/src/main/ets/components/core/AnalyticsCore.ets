@@ -16,6 +16,7 @@
  */
 
 import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback'
+import ApplicationStateChangeCallback from '@ohos.app.ability.ApplicationStateChangeCallback'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import emitter from '@ohos.events.emitter'
 import window from '@ohos.window'
@@ -67,23 +68,20 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     this.context = context
   }
 
-  static async startCore(context: Context, config: GrowingConfig) {
+  static startCore(context: Context, config: GrowingConfig) {
     GrowingContext.setDefaultContext(config)
     let gContext = GrowingContext.getDefaultContext() as GrowingContext
     let core = new AnalyticsCore(gContext)
     AnalyticsCore.core = core
     AnalyticsCore.trackers.push(core)
     LogUtil.debugEnabled = config.debugEnabled
-    AnalyticsCore.setAbilityLifecycleCallback(context)
+    AnalyticsCore.setAppStateChangeCallback(context)
     AutotrackPage.initAutotrackPage()
-    await SharedPreferences.initWithContext(context)
-    await Promise.all<Promise<void>>([
-      AppInfo.initAppInfo(context),
-      DeviceInfo.initDeviceInfo(),
-      UserIdentifier.initUser(gContext),
-      EventBuilder.initEventBuilder(),
-      EventDatabase.initDatabase(context)
-    ])
+    SharedPreferences.initWithContext(context)
+    AppInfo.initAppInfo(context)
+    DeviceInfo.initDeviceInfo()
+    UserIdentifier.initUser(gContext)
+    EventDatabase.initDatabase(context)
     Session.refreshSession(gContext)
 
     let delay = config._dataUploadInterval
@@ -95,12 +93,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     }
     setInterval(runner, delay)
 
-    core._isInitializedSuccessfully = true
-    emitter.emit({
-      eventId: EMIT_EVENT_MAIN_TRACKER_INITIALIZE
-    })
+    emitter.emit(EMIT_EVENT_MAIN_TRACKER_INITIALIZE)
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
       + 'GrowingIO version: ' + SDK_VERSION)
+    core._isInitializedSuccessfully = true
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
@@ -110,8 +106,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     GrowingContext.setContext(trackerId, config)
     let context = GrowingContext.getContext(trackerId) as GrowingContext
-    let core = new AnalyticsCore(context)
-    AnalyticsCore.trackers.push(core)
+    let subTracker = new AnalyticsCore(context)
+    AnalyticsCore.trackers.push(subTracker)
     UserIdentifier.initMultiUser(context)
     Session.refreshSession(context)
 
@@ -124,7 +120,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     }
     setInterval(runner, delay)
 
-    core._isInitializedSuccessfully = true
+    subTracker._isInitializedSuccessfully = true
     return true
   }
 
@@ -137,33 +133,19 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     return AnalyticsCore.dummyTracker
   }
 
-  static setAbilityLifecycleCallback(context: Context) {
-    let gContext = GrowingContext.getDefaultContext() as GrowingContext
-    let abilityLifecycleCallback: AbilityLifecycleCallback = {
-      onAbilityCreate(ability: UIAbility) {
-      },
-      onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
-      },
-      onWindowStageActive(ability: UIAbility, windowStage: window.WindowStage) {
+  static setAppStateChangeCallback(context: Context) {
+    let applicationStateChangeCallback: ApplicationStateChangeCallback = {
+      onApplicationForeground() {
         Session.onForeground()
         EventTimer.handleAllTimersResume()
       },
-      onWindowStageInactive(ability: UIAbility, windowStage: window.WindowStage) {
+      onApplicationBackground() {
         Session.onBackground()
         EventTimer.handleAllTimersPause()
-      },
-      onWindowStageDestroy(ability: UIAbility, windowStage: window.WindowStage) {
-      },
-      onAbilityDestroy(ability: UIAbility) {
-      },
-      onAbilityForeground(ability: UIAbility) {
-      },
-      onAbilityBackground(ability: UIAbility) {
-      },
-      onAbilityContinue(ability: UIAbility) {
       }
     }
-    context.getApplicationContext().on('abilityLifecycle', abilityLifecycleCallback)
+
+    context.getApplicationContext().on('applicationStateChange', applicationStateChangeCallback)
   }
 
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
@@ -257,24 +239,24 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     })
   }
 
-  async trackTimerStart(eventName: string): Promise<string> {
-    return await EventTimer.trackTimerStart(eventName, this.context)
+  trackTimerStart(eventName: string): string {
+    return EventTimer.trackTimerStart(eventName, this.context)
   }
 
-  async trackTimerPause(timerId: string) {
-    await EventTimer.trackTimerPause(timerId)
+  trackTimerPause(timerId: string) {
+    EventTimer.trackTimerPause(timerId)
   }
 
-  async trackTimerResume(timerId: string) {
-    await EventTimer.trackTimerResume(timerId)
+  trackTimerResume(timerId: string) {
+    EventTimer.trackTimerResume(timerId)
   }
 
-  async trackTimerEnd(
+  trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {},
     sendTo?: string[]
   ) {
-    await EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context, sendTo)
+    EventTimer.trackTimerEnd(timerId, Util.cloneObject(attributes), this.context, sendTo)
   }
 
   removeTimer(timerId: string) {

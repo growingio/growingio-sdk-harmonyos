@@ -28,11 +28,7 @@ import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 
 export default class EventBuilder {
-  private static _eventSequenceId: number
-
-  static async initEventBuilder() {
-    EventBuilder._eventSequenceId = await SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, 0) as number
-  }
+  private static _eventSequenceIds: Record<string, number>
 
   static build<T extends Event>(event: T, context: GrowingContext): T {
     event.sessionId = Session.getSessionId(context)!
@@ -80,13 +76,26 @@ export default class EventBuilder {
     }
     event.attributes = Util.serializableAttributes(attributes)
 
-    EventBuilder.updateEventSequenceId()
-    event.eventSequenceId = EventBuilder._eventSequenceId
+    event.eventSequenceId = EventBuilder.updateEventSequenceId(context)
     return event
   }
 
-  private static updateEventSequenceId() {
-    EventBuilder._eventSequenceId = EventBuilder._eventSequenceId + 1
-    SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, EventBuilder._eventSequenceId)
+  private static updateEventSequenceId(context: GrowingContext): number {
+    let sequenceId = EventBuilder.getEventSequenceId(context) + 1
+    let key = context.config.accountId + '_' + context.config.dataSourceId
+    EventBuilder._eventSequenceIds[key] = sequenceId
+    SharedPreferences.put(PREFERENCE_EVENT_SEQUENCE_ID, JSON.stringify(EventBuilder._eventSequenceIds))
+    return sequenceId
+  }
+
+  private static getEventSequenceId(context: GrowingContext): number {
+    if (!EventBuilder._eventSequenceIds) {
+      let sequenceIdsString = SharedPreferences.getValue(PREFERENCE_EVENT_SEQUENCE_ID, '{}') as string
+      let sequenceIds = JSON.parse(sequenceIdsString) as Record<string, number>
+      EventBuilder._eventSequenceIds = sequenceIds
+    }
+
+    let key = context.config.accountId + '_' + context.config.dataSourceId
+    return EventBuilder._eventSequenceIds[key] ?? 0
   }
 }

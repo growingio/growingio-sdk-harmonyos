@@ -35,7 +35,7 @@ export default class EntryAbilityStage extends AbilityStage {
     config.idMappingEnabled = true
     config.requestOptions.connectTimeout = 10
     config.requestOptions.readTimeout = 10
-    await GrowingAnalytics.start(this.context, config)
+    GrowingAnalytics.start(this.context, config)
 
     // ---------------- CDP ----------------
 
@@ -51,7 +51,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.idMappingEnabled = true
     // config.requestOptions.connectTimeout = 10
     // config.requestOptions.readTimeout = 10
-    // await GrowingAnalytics.start(this.context, config)
+    // GrowingAnalytics.start(this.context, config)
 
     // ---------------- SaaS ----------------
 
@@ -64,6 +64,6 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.dataUploadInterval = 15
     // config.requestOptions.connectTimeout = 10
     // config.requestOptions.readTimeout = 10
-    // await GrowingAnalytics.start(this.context, config)
+    // GrowingAnalytics.start(this.context, config)
   }
 }

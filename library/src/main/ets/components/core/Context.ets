@@ -16,6 +16,7 @@
  */
 
 import { GrowingConfig } from '../interfaces/GrowingConfig'
+import { MAIN_TRACKER_ID } from '../utils/Constants'
 
 export default class GrowingContext {
   trackerId: string
@@ -55,7 +56,7 @@ export default class GrowingContext {
   }
 
   static setDefaultContext(configuration: GrowingConfig) {
-    let trackerId = '__GrowingAnalyticsCore'
+    let trackerId = MAIN_TRACKER_ID
     let context = new GrowingContext(trackerId, configuration)
     GrowingContext.defaultContext = context
     GrowingContext.contexts.set(trackerId, context)

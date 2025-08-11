@@ -26,6 +26,8 @@ import { PREFERENCE_DEVICE_ID } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
+export const SDK_PLATFORM: string = 'HarmonyOS'
+
 export default class DeviceInfo {
   static deviceId: string = ''
   static platform: string = ''
@@ -40,8 +42,8 @@ export default class DeviceInfo {
   static networkState: string = ''
   static netConnection = connection.createNetConnection()
 
-  static async initDeviceInfo() {
-    DeviceInfo.platform = 'HarmonyOS'
+  static initDeviceInfo() {
+    DeviceInfo.platform = SDK_PLATFORM
     DeviceInfo.platformVersion = deviceInfo.displayVersion
 
     let displayInfo = display.getDefaultDisplaySync()
@@ -102,11 +104,11 @@ export default class DeviceInfo {
       }
     })
 
-    let deviceId = await SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
+    let deviceId = SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
     LogUtil.info(() => 'DeviceId from preferences is ' + deviceId)
     if (deviceId == '') {
       deviceId = util.generateRandomUUID(false)
-      await SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)
+      SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)
     }
     DeviceInfo.deviceId = deviceId
   }

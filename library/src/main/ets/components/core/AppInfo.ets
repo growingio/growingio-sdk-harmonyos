@@ -23,14 +23,17 @@ export default class AppInfo {
   static appVersion: string = ''
   static appChannel: string | undefined = undefined
 
-  static async initAppInfo(context: Context) {
-    let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
-    let bundleInfo = await bundleManager.getBundleInfoForSelf(bundleFlags)
+  static initAppInfo(context: Context) {
+    try {
+      let bundleFlags = bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION
+      let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleFlags)
 
-    AppInfo.domain = bundleInfo.name
-    let r_id = bundleInfo.appInfo.labelResource.id
-    AppInfo.appName = context.resourceManager.getStringSync(r_id)
-    AppInfo.appVersion = bundleInfo.versionName
-    // AppInfo.appChannel = '应用市场'
+      AppInfo.domain = bundleInfo.name
+      let r_id = bundleInfo.appInfo.labelResource.id
+      AppInfo.appName = context.resourceManager.getStringSync(r_id)
+      AppInfo.appVersion = bundleInfo.versionName
+      // AppInfo.appChannel = '应用市场'
+    } catch (e) {
+    }
   }
 }

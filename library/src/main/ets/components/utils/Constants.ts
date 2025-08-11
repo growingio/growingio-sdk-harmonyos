@@ -22,9 +22,11 @@ export const PREFERENCE_USER_ID = "growing_user_id"
 export const PREFERENCE_USER_KEY = "growing_user_key"
 export const PREFERENCE_USER_IDENTIFIER = "growing_user_identifier"
 export const PREFERENCE_DEVICE_ID = "growing_device_id"
-export const PREFERENCE_EVENT_SEQUENCE_ID = "growing_event_sequence_id"
+export const PREFERENCE_EVENT_SEQUENCE_ID = "growing_event_sequence_ids"
 
 export const DATABASE_NAME = 'growing_analytics_database'
+
+export const MAIN_TRACKER_ID = '__GrowingAnalyticsCore'
 
 export const REQUEST_MAX_EVENT_COUNT = 500
 export const REQUEST_MAX_EVENT_SIZE = 2 * 1024 * 1024
@@ -40,5 +42,5 @@ export type JavaScriptProxyType = {
   controller: webview.WebviewController;
 }
 
-export const EMIT_EVENT_MAIN_TRACKER_INITIALIZE = 1
-export const EMIT_EVENT_SESSION_STATE_FOREGROUND = 2
+export const EMIT_EVENT_MAIN_TRACKER_INITIALIZE = "GROWING_EMIT_EVENT_MAIN_TRACKER_INITIALIZE"
+export const EMIT_EVENT_SESSION_STATE_FOREGROUND = "GROWING_EMIT_EVENT_SESSION_STATE_FOREGROUND"

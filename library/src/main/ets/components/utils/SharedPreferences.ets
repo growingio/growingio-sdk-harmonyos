@@ -23,10 +23,10 @@ import { LogUtil } from './LogUtil'
 export default class SharedPreferences {
   private static preferences: preferences.Preferences
 
-  static async initWithContext(context: Context) {
+  static initWithContext(context: Context) {
     let appContext = context.getApplicationContext()
     try {
-      SharedPreferences.preferences = await preferences.getPreferences(appContext, PREFERENCE_NAME)
+      SharedPreferences.preferences = preferences.getPreferencesSync(appContext, { name: PREFERENCE_NAME })
     } catch (e) {
       LogUtil.error(() => "Failed to get preferences. code = " + e.code + ", message = " + e.message)
     }
@@ -36,17 +36,17 @@ export default class SharedPreferences {
     if (!SharedPreferences.preferences) {
       return
     }
-    await SharedPreferences.preferences.put(key, value)
+    SharedPreferences.preferences.putSync(key, value)
     await SharedPreferences.preferences.flush()
   }
 
-  static async getValue(key: string, defValue: preferences.ValueType = ''): Promise<preferences.ValueType> {
+  static getValue(key: string, defValue: preferences.ValueType = ''): preferences.ValueType {
     let value: preferences.ValueType = defValue
     if (!SharedPreferences.preferences) {
       return value
     }
     try {
-      let result = await SharedPreferences.preferences.get(key, defValue)
+      let result = SharedPreferences.preferences.getSync(key, defValue)
       value = result as preferences.ValueType
     } catch (e) {
       LogUtil.error(() => "Failed to get value of " + key + ". code = " + e.code + ", message = " + e.message)

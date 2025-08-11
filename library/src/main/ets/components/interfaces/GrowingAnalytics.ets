@@ -21,7 +21,7 @@ import { GrowingConfig } from './GrowingConfig'
 import AnalyticsCore from '../core/AnalyticsCore'
 import Flutter from '../core/Flutter'
 import GeneralProps from '../core/GeneralProps'
-import { AttributesType, JavaScriptProxyType } from '../utils/Constants'
+import { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 
 export { AttributesType as GrowingAttrType, JavaScriptProxyType as GrowingJSProxyType } from '../utils/Constants'
@@ -32,20 +32,20 @@ export interface GrowingAnalyticsInterface {
   setLoginUserId(userId: string, userKey?: string): void
   cleanLoginUserId(): void
 
-  setLoginUserAttributes(attributes: AttributesType): void
-  track(eventName: string, attributes: AttributesType, sendTo?: string[]): void
-  trackTimerStart(eventName: string): Promise<string>
+  setLoginUserAttributes(attributes: GrowingAttrType): void
+  track(eventName: string, attributes?: GrowingAttrType, sendTo?: string[]): void
+  trackTimerStart(eventName: string): string
   trackTimerPause(timerId: string): void
   trackTimerResume(timerId: string): void
-  trackTimerEnd(timerId: string, attributes: AttributesType, sendTo?: string[]): void
+  trackTimerEnd(timerId: string, attributes?: GrowingAttrType, sendTo?: string[]): void
   removeTimer(timerId: string): void
   clearTrackTimer(): void
 
-  createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined
+  createHybridProxy(controller: webview.WebviewController): GrowingJSProxyType | undefined
 }
 
 export class GrowingAnalytics {
-  static async start(context: Context, configuration: GrowingConfig): Promise<void> {
+  static start(context: Context, configuration: GrowingConfig) {
     if (GrowingAnalytics.isInitializedSuccessfully()) {
       LogUtil.warn(() => '[GrowingAnalytics] Do not initialize GrowingAnalytics repeatedly')
       return
@@ -55,7 +55,7 @@ export class GrowingAnalytics {
       return
     }
     let config = configuration.copy()
-    await AnalyticsCore.startCore(context, config)
+    AnalyticsCore.startCore(context, config)
   }
 
   static startSubTracker(trackerId: string, configuration: GrowingConfig) {
@@ -79,7 +79,7 @@ export class GrowingAnalytics {
     return tracker
   }
 
-  static createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType | undefined {
+  static createHybridProxy(controller: webview.WebviewController): GrowingJSProxyType | undefined {
     return AnalyticsCore.core.createHybridProxy(controller)
   }
 
@@ -106,7 +106,7 @@ export class GrowingAnalytics {
     AnalyticsCore.core.setLoginUserId('')
   }
 
-  static setLoginUserAttributes(attributes: AttributesType) {
+  static setLoginUserAttributes(attributes: GrowingAttrType) {
     AnalyticsCore.core.setLoginUserAttributes(attributes)
   }
 
@@ -116,30 +116,30 @@ export class GrowingAnalytics {
 
   static track(
     eventName: string,
-    attributes: AttributesType = {},
+    attributes?: GrowingAttrType,
     sendTo?: string[]
   ) {
     AnalyticsCore.core.track(eventName, attributes, sendTo)
   }
 
-  static async trackTimerStart(eventName: string): Promise<string> {
-    return await AnalyticsCore.core.trackTimerStart(eventName)
+  static trackTimerStart(eventName: string): string {
+    return AnalyticsCore.core.trackTimerStart(eventName)
   }
 
-  static async trackTimerPause(timerId: string) {
-    await AnalyticsCore.core.trackTimerPause(timerId)
+  static trackTimerPause(timerId: string) {
+    AnalyticsCore.core.trackTimerPause(timerId)
   }
 
-  static async trackTimerResume(timerId: string) {
-    await AnalyticsCore.core.trackTimerResume(timerId)
+  static trackTimerResume(timerId: string) {
+    AnalyticsCore.core.trackTimerResume(timerId)
   }
 
-  static async trackTimerEnd(
+  static trackTimerEnd(
     timerId: string,
-    attributes: AttributesType = {},
+    attributes?: GrowingAttrType,
     sendTo?: string[]
   ) {
-    await AnalyticsCore.core.trackTimerEnd(timerId, attributes, sendTo)
+    AnalyticsCore.core.trackTimerEnd(timerId, attributes, sendTo)
   }
 
   static removeTimer(timerId: string) {
@@ -150,7 +150,7 @@ export class GrowingAnalytics {
     AnalyticsCore.core.clearTrackTimer()
   }
 
-  static setGeneralProps(props: AttributesType) {
+  static setGeneralProps(props: GrowingAttrType) {
     GeneralProps.setGeneralProps(props)
   }
 
@@ -162,7 +162,7 @@ export class GrowingAnalytics {
     GeneralProps.clearGeneralProps()
   }
 
-  static setDynamicGeneralProps(generator: () => AttributesType) {
+  static setDynamicGeneralProps(generator: () => GrowingAttrType) {
     GeneralProps.setDynamicGeneralProps(generator)
   }
 

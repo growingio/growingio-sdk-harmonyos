@@ -38,8 +38,8 @@ export default class UserIdentifier {
     this.latestNonnullUserId = userId
   }
 
-  static async initUser(context: GrowingContext) {
-    let userInfoString = await SharedPreferences.getValue(PREFERENCE_USER_IDENTIFIER, '{}') as string
+  static initUser(context: GrowingContext) {
+    let userInfoString = SharedPreferences.getValue(PREFERENCE_USER_IDENTIFIER, '{}') as string
     let userInfo = JSON.parse(userInfoString) as object
     UserIdentifier.userInfo = userInfo
 
@@ -121,7 +121,7 @@ export default class UserIdentifier {
     }
   }
 
-  async saveToPreferences(context: GrowingContext) {
+  saveToPreferences(context: GrowingContext) {
     let userInfo = UserIdentifier.userInfo
     if (GrowingContext.isDefaultContext(context)) {
       userInfo[PREFERENCE_USER_ID] = String(this.userId)
