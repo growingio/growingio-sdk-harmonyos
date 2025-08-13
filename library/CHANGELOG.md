@@ -1,3 +1,60 @@
+# [1.3.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/1.3.0) (2025-08-13)
+
+### Refactor (BREAKING CHANGE)
+
+* SDK 初始化接口从异步调用方式改为同步，需要更换集成方式 (在数据库创建或连接成功之前产生的事件将先在内存中缓存)
+* 事件计时器相关外部接口从异步调用方式改为同步，需要更换集成方式 (内部接口更换已废弃的 API systemDatetime.getRealTime 为 systemDatetime.getUptime)
+
+### Bug Fixes
+
+* 使用 applicationStateChange 监听应用前后台变化，兼容子窗口存在的场景
+* 修复多实例下，事件的 eventSequenceId 字段未进行区分，现在各个实例单独计数
+* start、track、trackTimerEnd 方法签名修正
+* 内部 emit 机制中，eventId 使用 string 类型替代原先的 number 类型，避免误触发
+
+> 以上改动皆取自 2.3.0 最新版本
+
+### 数据影响
+
+* 由于使用了新的键值，所有 1.3.0 生成的新事件event.eventSequenceId 将从 0 开始
+
+### 附：HarmonyOS SDK 1.3.0 升级说明
+
+> 以 CDP 项目举例
+
+#### 初始化
+
+调整 SDK 初始化代码从异步改为同步：
+
+```typescript
+startAnalytics() {
+  let config = new GrowingConfig().CDP(
+    'Your AccountId',
+    'Your DataSourceId',
+    'Your UrlScheme',
+    'Your DataCollectionServerHost'
+  )
+  GrowingAnalytics.start(this.context, config)
+}
+```
+
+#### 事件计时器
+
+若您的应用中使用了事件计时器相关接口，将调用方式从异步修改为同步：
+
+```typescript
+let timerId = GrowingAnalytics.trackTimerStart('eventName')
+GrowingAnalytics.trackTimerPause(timerId)
+GrowingAnalytics.trackTimerResume(timerId)
+GrowingAnalytics.trackTimerEnd(timerId)
+GrowingAnalytics.trackTimerEnd(timerId, {
+  'property': 'value',
+  'property2': 100
+})
+GrowingAnalytics.removeTimer(timerId)
+GrowingAnalytics.clearTrackTimer()
+```
+
 # [1.2.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/1.2.0) (2024-07-26)
 
 ### Features
