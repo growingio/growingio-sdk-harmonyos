@@ -287,4 +287,23 @@ export default class Util {
       return ''
     }
   }
+
+  static validateEventSize(event: any): { isValid: boolean, attributes: AttributesType } {
+    let MAX_SIZE_BYTES = 1.8 * 1024 * 1024
+    let serialize = JSON.stringify(event)
+    let sizeInBytes = Util.sizeOfEventString(serialize)
+    
+    if (sizeInBytes > MAX_SIZE_BYTES) {
+      let errorMessage = `Event size (${(sizeInBytes / 1024 / 1024).toFixed(2)}MB) exceeds maximum limit (1.8MB)`
+      return {
+        isValid: false,
+        attributes: { 'growing_error_msg' : errorMessage }
+      }
+    }
+    
+    return {
+      isValid: true,
+      attributes: event.attributes
+    }
+  }
 }

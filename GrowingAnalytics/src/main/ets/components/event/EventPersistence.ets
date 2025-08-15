@@ -19,6 +19,8 @@ import util from '@ohos.util'
 
 import Event from './Event'
 import GrowingContext from '../core/Context'
+import Util from '../utils/Util'
+import { LogUtil } from '../utils/LogUtil'
 
 export default class EventPersistence {
   uuid: string
@@ -48,6 +50,12 @@ export default class EventPersistence {
     event: T,
     context: GrowingContext
   ): EventPersistence {
+    let validation = Util.validateEventSize(event)
+    if (!validation.isValid) {
+      LogUtil.warn(() => `Event size exceeds limit: ${validation.attributes['growing_error_msg']}`)
+      event.attributes = validation.attributes
+    }
+
     let uuid = util.generateRandomUUID(false)
     let data = event.toSerialize(context)
     let eventType = event.eventType
