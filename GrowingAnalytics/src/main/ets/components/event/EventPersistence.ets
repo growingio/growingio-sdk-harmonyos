@@ -22,6 +22,7 @@ import GrowingContext from '../core/Context'
 import Util from '../utils/Util'
 import { LogUtil } from '../utils/LogUtil'
 
+@Sendable
 export default class EventPersistence {
   uuid: string
   data: string

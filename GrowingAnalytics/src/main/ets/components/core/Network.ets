@@ -16,48 +16,62 @@
  */
 
 import rcp from '@hms.collaboration.rcp'
-import EventPersistence from '../event/EventPersistence'
+import taskpool from '@ohos.taskpool'
+
 import GrowingContext from './Context'
-import Util from '../utils/Util'
+import EventPersistence from '../event/EventPersistence'
 import { ConfigMode } from '../interfaces/GrowingConfig'
+import { processEvents } from '../utils/Concurrent'
+import Util from '../utils/Util'
+import { LogUtil } from '../utils/LogUtil'
 
 export default class Network {
   static session: rcp.Session
 
   static initNetwork(context: GrowingContext) {
-    Network.session = rcp.createSession()
+    try {
+      Network.session = rcp.createSession()
+    } catch (error) {
+      LogUtil.error(() =>'Failed to create RCP session:' + error)
+    }
   }
 
-  static request(events: EventPersistence[], urlPath: string, context: GrowingContext): Promise<rcp.Response> {
+  static async request(events: EventPersistence[], urlPath: string, context: GrowingContext): Promise<rcp.Response> {
+    if (!Network.session) {
+      return Promise.reject(new Error('Network session not initialized'))
+    }
+
     let curTime = Date.now()
     let url = Network.generateUrl(curTime, urlPath, context)
-    let request = Network.generateRequest(curTime, url, events, context)
-    return Network.session.fetch(request)
+    try {
+      let request = await Network.generateRequest(curTime, url, events, context)
+      return Network.session.fetch(request)
+    } catch (error) {
+      LogUtil.error(() => 'Failed to generate request: ' + error)
+      return Promise.reject(error)
+    }
   }
 
-  static generateRequest(time: number, url: string, events: EventPersistence[], context: GrowingContext): rcp.Request {
+  static async generateRequest(time: number, url: string, events: EventPersistence[], context: GrowingContext): Promise<rcp.Request> {
     let useProtobuf = context.config.useProtobuf
     if (context.config.mode == ConfigMode.SaaS) {
       // SaaS mode have not protobuf support
       useProtobuf = false
     }
-    let serialize = Util.toSerialize(useProtobuf, events)
-    let headers: Record<string, string> = {
-      "Content-Type": useProtobuf ? "application/protobuf" : "application/json",
-      "Accept": "application/json",
-      "X-Timestamp": time + ''
-    }
 
-    if (context.config.compressEnabled) {
-      serialize = Util.compress(serialize)
-      headers['X-Compress-Codec'] = '2'
+    let processTask = new taskpool.Task(processEvents, events, useProtobuf, context.config.compressEnabled)
+    let serialize: ArrayBuffer
+    try {
+      serialize = await taskpool.execute(processTask) as ArrayBuffer
+    } catch (error) {
+      LogUtil.error(() => 'Failed to execute taskpool task: ' + error)
+      return Promise.reject(error)
     }
-
     if (context.config.encryptEnabled) {
       serialize = Util.encrypt(serialize, time)
-      headers['X-Crypt-Codec'] = '1'
     }
 
+    let headers = Network.generateHeaders(time, useProtobuf, context)
     let request = new rcp.Request(url, "POST", headers, serialize)
     const tracingConfig: rcp.TracingConfiguration = {
       collectTimeInfo: true
@@ -74,6 +88,24 @@ export default class Network {
     }
     request.configuration = requestConfig
     return request
+  }
+
+  static generateHeaders(time: number, useProtobuf: boolean, context: GrowingContext): Record<string, string> {
+    let headers: Record<string, string> = {
+      "Content-Type": useProtobuf ? "application/protobuf" : "application/json",
+      "Accept": "application/json",
+      "X-Timestamp": time + ''
+    }
+
+    if (context.config.compressEnabled) {
+      headers['X-Compress-Codec'] = '2'
+    }
+
+    if (context.config.encryptEnabled) {
+      headers['X-Crypt-Codec'] = '1'
+    }
+
+    return headers
   }
 
   static generateUrl(time: number, urlPath: string, context: GrowingContext): string {
