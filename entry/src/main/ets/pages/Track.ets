@@ -60,6 +60,10 @@ struct Track {
         .onClick(() => {
           this.track()
         }).margin({ top: 15 })
+      Button('Test 2MB Limit')
+        .onClick(() => {
+          this.testSizeLimit()
+        }).margin({ top: 15 })
       Button('Back')
         .onClick(() => {
           // let context = getContext(this) as AppContext.UIAbilityContext
@@ -108,6 +112,24 @@ struct Track {
     //   'num': 100,
     //   'from': ['sichuan', 'guizhou', 'hunan']
     // })
+  }
+
+  testSizeLimit() {
+    // 生成一个超过2MB的大字符串
+    let largeString = 'x'.repeat(1024 * 1024) // 1MB的字符串
+    let attributes: GrowingAttrType = {
+      'test_field_1': largeString,
+      'test_field_3': largeString // 总共约2MB的数据，超过2MB限制
+    }
+
+    let trackerId = this.getTrackerId()
+    if (trackerId && trackerId.length > 0) {
+      this.subTracker().track('test_size_limit_event', attributes)
+    } else {
+      GrowingAnalytics.track('test_size_limit_event', attributes)
+    }
+    
+    console.info('[Track Test] Sent event with ~2MB data to test 1.8MB limit')
   }
 
   subTracker(): GrowingAnalyticsInterface {
