@@ -15,15 +15,34 @@
  * limitations under the License.
  */
 
+import ArkTSUtils from '@arkts.utils'
+
 import { EventScene, GTKEventPersistence } from '../utils/Constants'
 
-export default class EventPersistence {
+export interface IEventPersistence {
   uuid: string
   data: string
   eventType: string
   accountId: string
   dataSourceId: string
-  eventScene: EventScene
+  eventScene: number
+  createAt: number
+  isSend: boolean
+
+  sequenceId(): string
+  path(): string | undefined
+  time(): string
+  day(): string
+}
+
+@Sendable
+export default class EventPersistence implements IEventPersistence {
+  uuid: string
+  data: string
+  eventType: string
+  accountId: string
+  dataSourceId: string
+  eventScene: number
   createAt: number
   isSend: boolean
   private _event: Event | undefined = undefined
@@ -34,7 +53,7 @@ export default class EventPersistence {
     eventType: string,
     accountId: string,
     dataSourceId: string,
-    eventScene: EventScene,
+    eventScene: number,
     createAt: number = Date.now(),
     isSend: boolean = false
   ) {
@@ -57,7 +76,8 @@ export default class EventPersistence {
     let eventType = event.eventType
     let accountId = event.accountId
     let dataSourceId = event.dataSourceId
-    let e = new EventPersistence(uuid, data, eventType, accountId, dataSourceId, eventScene)
+    let eventSceneNumber = typeof eventScene === 'number' ? eventScene : (isNaN(Number(eventScene)) ? 0 : Number(eventScene))
+    let e = new EventPersistence(uuid, data, eventType, accountId, dataSourceId, eventSceneNumber)
     return e
   }
 
@@ -67,7 +87,7 @@ export default class EventPersistence {
     eventType: string,
     accountId: string,
     dataSourceId: string,
-    eventScene: EventScene,
+    eventScene: number,
     createAt: number,
     isSend: boolean
   ): EventPersistence {
@@ -109,34 +129,17 @@ export default class EventPersistence {
   getEvent(): Event {
     if (!this._event) {
       try {
-        this._event = JSON.parse(this.data) as Event
+        this._event = ArkTSUtils.ASON.parse(this.data) as Event
       }catch (e) {
-        return {
-          eventName: '',
-          path: '',
-          eventSequenceId: 0,
-          timestamp: 0,
-          eventType: '',
-
-          // autotrack
-          xpath: '',
-          xcontent: '',
-          textValue: '',
-          index: 0,
-
-          // mode SaaS
-          n: '',
-          p: '',
-          esid: 0,
-          tm: 0,
-        }
+        return new Event()
       }
     }
     return this._event
   }
 }
 
-interface Event {
+@Sendable
+class Event {
   eventName: string
   path: string
   eventSequenceId: number
@@ -154,4 +157,34 @@ interface Event {
   p: string
   esid: number
   tm: number
+
+  constructor(
+    eventName: string = '',
+    path: string = '',
+    eventSequenceId: number = 0,
+    timestamp: number = 0,
+    eventType: string = '',
+    xpath: string = '',
+    xcontent: string = '',
+    textValue: string = '',
+    index: number = 0,
+    n: string = '',
+    p: string = '',
+    esid: number = 0,
+    tm: number = 0,
+  ) {
+    this.eventName = eventName
+    this.path = path
+    this.eventSequenceId = eventSequenceId
+    this.timestamp = timestamp
+    this.eventType = eventType
+    this.xpath = xpath
+    this.xcontent = xcontent
+    this.textValue = textValue
+    this.index = index
+    this.n = n
+    this.p = p
+    this.esid = esid
+    this.tm = tm
+  }
 }

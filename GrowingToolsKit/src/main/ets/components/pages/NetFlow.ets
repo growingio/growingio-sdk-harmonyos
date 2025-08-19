@@ -18,7 +18,7 @@
 import { PullToRefresh } from '../views/PullToRefresh'
 import EventDatabase from '../event/EventDatabase'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
-import RequestPersistence from '../network/RequestPersistence'
+import { IRequestPersistence } from '../network/RequestPersistence'
 import { NavTitle } from '../views/Common'
 import { GTKColor } from '../utils/Constants'
 import Util from '../utils/Util'
@@ -73,7 +73,7 @@ export default struct NetFlow {
   @Builder
   private getListView() {
     List({ space: 3, scroller: this.scroller }) {
-      LazyForEach(this.dataSource, (request: RequestPersistence | string) => {
+      LazyForEach(this.dataSource, (request: IRequestPersistence | string) => {
         ListItem() {
           if (typeof request == 'string') {
             Row() {
@@ -160,7 +160,7 @@ export default struct NetFlow {
             })
           }
         }
-      }, (request: RequestPersistence | string) => typeof request == 'string' ? request : request.uuid)
+      }, (request: IRequestPersistence | string) => typeof request == 'string' ? request : request.uuid)
     }
     .backgroundColor(GTKColor.secondaryWhite)
     .width('100%')
@@ -203,7 +203,7 @@ export default struct NetFlow {
   }
 
   @Builder
-  private getDetailView(request: RequestPersistence) {
+  private getDetailView(request: IRequestPersistence) {
     Column() {
       if (this.isShowRequestDetail) {
         this.getDetailHeader('消息体')
@@ -294,13 +294,13 @@ export default struct NetFlow {
   }
 
   @Builder
-  private getDetailRequestBody(request: RequestPersistence) {
+  private getDetailRequestBody(request: IRequestPersistence) {
     this.getDetailText(JSON.stringify(
-      JSON.parse(Util.getRequestBodyText(request.info.requestHeader, request.requestBody)), null, 4))
+      JSON.parse(Util.getRequestBodyText(request.info.requestHeader, request.getRequestBody())), null, 4))
   }
 
   @Builder
-  private getDetailResponseBody(request: RequestPersistence) {
+  private getDetailResponseBody(request: IRequestPersistence) {
     this.getDetailText(JSON.stringify(request.responseBody, null, 4))
   }
 
@@ -308,7 +308,7 @@ export default struct NetFlow {
     let pageSize = 50
     if (loadMore) {
       let originDataSource = this.dataSource.getAllData()
-      let createAt = (originDataSource[originDataSource.length - 1] as RequestPersistence).info.startTimestamp
+      let createAt = (originDataSource[originDataSource.length - 1] as IRequestPersistence).info.startTimestamp
       let requests = await EventDatabase.getRequestsByCount(pageSize, createAt)
       let dataSource = this.recalculateData(requests, originDataSource)
       this.dataSource.pushData(dataSource)
@@ -320,9 +320,9 @@ export default struct NetFlow {
   }
 
   recalculateData(
-    data: RequestPersistence[],
-    originData?: (RequestPersistence | string)[]
-  ): (RequestPersistence | string)[] {
+    data: IRequestPersistence[],
+    originData?: (IRequestPersistence | string)[]
+  ): (IRequestPersistence | string)[] {
     let today = new Date().toISOString().split('T')[0]
     let yesterday = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     let currentLabel: string = ''
@@ -353,26 +353,26 @@ export default struct NetFlow {
 
 class NetFlowDataSource implements IDataSource {
   private listeners: DataChangeListener[] = []
-  private dataSource: (RequestPersistence | string)[] = []
+  private dataSource: (IRequestPersistence | string)[] = []
 
   public totalCount(): number {
     return this.dataSource.length
   }
 
-  public getData(index: number): RequestPersistence | string {
+  public getData(index: number): IRequestPersistence | string {
     return this.dataSource[index]
   }
 
-  public getAllData(): (RequestPersistence | string)[] {
+  public getAllData(): (IRequestPersistence | string)[] {
     return [...this.dataSource]
   }
 
-  public reloadData(data: (RequestPersistence | string)[]): void {
+  public reloadData(data: (IRequestPersistence | string)[]): void {
     this.dataSource = data
     this.notifyDataReload()
   }
 
-  public pushData(data: (RequestPersistence | string)[]): void {
+  public pushData(data: (IRequestPersistence | string)[]): void {
     let index = this.dataSource.length - 1
     this.dataSource = [...this.dataSource, ...data]
     this.notifyDataAdd(index, data.length)

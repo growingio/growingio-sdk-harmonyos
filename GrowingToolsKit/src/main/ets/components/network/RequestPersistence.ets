@@ -18,7 +18,22 @@
 import rcp from '@hms.collaboration.rcp'
 import buffer from '@ohos.buffer'
 import util from '@ohos.util'
+import collections from '@arkts.collections'
 
+export interface IRequestPersistence {
+  info: RequestPersistenceInfo
+  uuid: string
+  requestBody: collections.ArrayBuffer
+  responseBody?: collections.ArrayBuffer
+  requestBodyLength: number
+  responseBodyLength: number
+  uploadFlow: number
+  downFlow: number
+
+  getRequestBody(): ArrayBuffer
+}
+
+@Sendable
 class RequestPersistenceInfo {
   url: string = ''
   method: string = ''
@@ -27,6 +42,9 @@ class RequestPersistenceInfo {
   statusCode: number = 0
   totalDuration: number = 0
   startTimestamp: number = 0
+  status: string = ''
+  time: string = ''
+  day: string = ''
 
   static fromResponse(response: rcp.Response): RequestPersistenceInfo {
     let info = new RequestPersistenceInfo()
@@ -37,6 +55,10 @@ class RequestPersistenceInfo {
     info.statusCode = response.statusCode
     info.totalDuration = response.timeInfo!.totalTimeMs
     info.startTimestamp = Math.floor(Date.now() - info.totalDuration)
+
+    info.status = info._getStatus()
+    info.time = info._getTime()
+    info.day = info._getDay()
     return info
   }
 
@@ -50,10 +72,14 @@ class RequestPersistenceInfo {
     info.statusCode = json.statusCode
     info.totalDuration = json.totalDuration
     info.startTimestamp = json.startTimestamp
+
+    info.status = info._getStatus()
+    info.time = info._getTime()
+    info.day = info._getDay()
     return info
   }
 
-  get status(): string {
+  private _getStatus(): string {
     let status = ''
     switch (this.statusCode) {
       case 200:
@@ -126,7 +152,7 @@ class RequestPersistenceInfo {
     return status
   }
 
-  get time(): string {
+  private _getTime(): string {
     let date = new Date(this.startTimestamp)
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -137,17 +163,22 @@ class RequestPersistenceInfo {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
-  get day(): string {
+  private _getDay(): string {
     let date = new Date(this.startTimestamp)
     return date.toISOString().split('T')[0]
   }
 }
 
+@Sendable
 export default class RequestPersistence {
   info: RequestPersistenceInfo
   uuid: string = ''
-  requestBody: ArrayBuffer = new ArrayBuffer(0)
-  responseBody?: ArrayBuffer
+  requestBody: collections.ArrayBuffer = new collections.ArrayBuffer(0)
+  responseBody?: collections.ArrayBuffer
+  requestBodyLength: number = 0
+  responseBodyLength: number = 0
+  uploadFlow: number = 0
+  downFlow: number = 0
 
   constructor(info: RequestPersistenceInfo) {
     this.info = info
@@ -162,8 +193,13 @@ export default class RequestPersistence {
     if (typeof requestBody == 'string') {
       requestBody = buffer.from(requestBody, 'utf-8').buffer
     }
-    r.requestBody = requestBody
-    r.responseBody = response.body
+
+    r.requestBody = r._toCollectionsArrayBuffer(requestBody)
+    r.responseBody = response.body ? r._toCollectionsArrayBuffer(response.body) : undefined
+    r.requestBodyLength = r._getRequestBodyLength()
+    r.responseBodyLength = r._getResponseBodyLength()
+    r.uploadFlow = r._getUploadFlow()
+    r.downFlow = r._getDownFlow()
     return r
   }
 
@@ -180,31 +216,59 @@ export default class RequestPersistence {
     if (typeof requestBody == 'string') {
       requestBody = buffer.from(requestBody, 'utf-8').buffer
     }
-    r.requestBody = requestBody
-    r.responseBody = responseBody
+    r.requestBody = r._toCollectionsArrayBuffer(requestBody)
+    r.responseBody = responseBody ? r._toCollectionsArrayBuffer(responseBody) : undefined
+    r.requestBodyLength = r._getRequestBodyLength()
+    r.responseBodyLength = r._getResponseBodyLength()
+    r.uploadFlow = r._getUploadFlow()
+    r.downFlow = r._getDownFlow()
     return r
   }
 
-  get requestBodyLength(): number {
+  getRequestBody(): ArrayBuffer {
+    return this._toArrayBuffer(this.requestBody)
+}
+
+  private _toCollectionsArrayBuffer(buffer: ArrayBuffer): collections.ArrayBuffer {
+    const collectionsBuffer = new collections.ArrayBuffer(buffer.byteLength)
+    const sourceView = new Uint8Array(buffer)
+    const targetView = new collections.Uint8Array(collectionsBuffer)
+    try {
+      targetView.set(sourceView)
+    } catch (e) {
+
+    }
+    return collectionsBuffer
+  }
+
+  private _toArrayBuffer(collectionsBuffer: collections.ArrayBuffer): ArrayBuffer {
+    const buffer = new ArrayBuffer(collectionsBuffer.byteLength)
+    const sourceView = new collections.Uint8Array(collectionsBuffer)
+    const targetView = new Uint8Array(buffer)
+    try {
+      targetView.set(sourceView)
+    } catch (e) {
+
+    }
+    return buffer
+  }
+
+  private _getUploadFlow(): number {
+    return this.requestBodyLength + this.info.requestHeader.length
+  }
+
+  private _getDownFlow(): number {
+    return this.responseBodyLength + this.info.responseHeader.length
+  }
+
+  private _getRequestBodyLength(): number {
     if (this.requestBody) {
-      if (typeof this.requestBody == 'string') {
-        return (this.requestBody as string).length
-      } else {
-        return (this.requestBody as ArrayBuffer).byteLength
-      }
+      return this.requestBody.byteLength
     }
     return 0
   }
 
-  get uploadFlow(): number {
-    return this.requestBodyLength + this.info.requestHeader.length
-  }
-
-  get downFlow(): number {
-    return this.responseBodyLength + this.info.responseHeader.length
-  }
-
-  get responseBodyLength(): number {
+  private _getResponseBodyLength(): number {
     if (this.responseBody) {
       return this.responseBody.byteLength
     }
