@@ -98,9 +98,6 @@ struct EntryIcon {
         .height(this.entrySideLength)
         .onClick(event => {
           let subWindow = this.subWindow()
-          if (canIUse('SystemCapability.Window.SessionManager')) {
-            subWindow.minimize()
-          }
           let screenWidth = display.getDefaultDisplaySync().width
           let screenHeight = display.getDefaultDisplaySync().height
           let avoidArea = this.mainWindow().getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
@@ -114,9 +111,7 @@ struct EntryIcon {
               subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
               subWindow.resize(curSizeWidth, curSizeHeight)
             })
-            this.pageStack.pushDestination(destination, false).then(() => {
-              subWindow.showWindow()
-            })
+            this.pageStack.pushDestination(destination, false)
           })
         })
         .gesture(
