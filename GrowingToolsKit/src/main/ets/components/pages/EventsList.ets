@@ -23,6 +23,16 @@ import { NavTitle } from '../views/Common'
 import { GTKColor, EventScene, MAIN_TRACKER_ID } from '../utils/Constants'
 import TrackerTabBar from '../views/TrackerTabBar'
 import TrackersInfo from '../core/TrackersInfo'
+import { taskpool } from '@kit.ArkTS'
+
+@Concurrent
+function serializeEventDataTask(eventData: string): string {
+  try {
+    return JSON.stringify(JSON.parse(eventData), null, 4)
+  } catch (e) {
+    return '解析事件数据失败'
+  }
+}
 
 @ComponentV2
 export default struct EventsList {
@@ -184,8 +194,7 @@ export default struct EventsList {
   @Builder
   private getDetailView(event: IEventPersistence) {
     Column() {
-      Text(JSON.stringify(JSON.parse(event.data), null, 4))
-        .copyOption(CopyOptions.LocalDevice)
+      AsyncDetailText({ eventData: event.data })
     }
   }
 
@@ -292,5 +301,46 @@ class EventsListDataSource implements IDataSource {
         count: count
       }])
     })
+  }
+}
+
+@ComponentV2
+struct AsyncDetailText {
+  @Param eventData: string = ''
+  @Local serializedData: string = ''
+  @Local isLoading: boolean = true
+
+  aboutToAppear(): void {
+    this.serializeData()
+  }
+
+  private async serializeData() {
+    try {
+      const task = new taskpool.Task(serializeEventDataTask, this.eventData)
+      this.serializedData = await taskpool.execute(task) as string
+    } catch (e) {
+      this.serializedData = '解析事件数据失败'
+    } finally {
+      this.isLoading = false
+    }
+  }
+
+  build() {
+    if (this.isLoading) {
+      Text('正在解析事件数据...')
+        .fontSize(14)
+        .fontColor(GTKColor.secondaryBlack)
+        .width('100%')
+        .padding({ left: 8, right: 8 })
+    } else {
+      Text(this.serializedData.length > 10000
+        ? this.serializedData.substring(0, 10000) + '...\n\n[出于性能考虑，内容已截取，完整内容请通过抓包/MobileDebugger功能查看]\n'
+        : this.serializedData)
+        .fontSize(14)
+        .fontColor(GTKColor.primaryBlack)
+        .copyOption(CopyOptions.LocalDevice)
+        .width('100%')
+        .padding({ left: 8, right: 8 })
+    }
   }
 }
