@@ -95,3 +95,10 @@ export interface Position {
   y: number
 }
 export const PREFERENCE_ENTRY_POSITION = 'growingtk_entry_position'
+
+// FPS 显示窗口尺寸常量
+export const FPS_WINDOW_WIDTH = 160
+export const FPS_WINDOW_HEIGHT = 80
+
+// small icon 显示窗口尺寸常量
+export const SMALL_ICON_WINDOW_SIDE_LENGTH = 56

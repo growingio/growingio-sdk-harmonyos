@@ -23,17 +23,18 @@ export default struct ModuleButton {
 
   @Require @Prop name: string
   @Require @Prop image: string
+  @Prop isActive: boolean = false
 
   build() {
     Button() {
       Column() {
         Stack() {
           Image($r(this.image))
-            .backgroundColor('#FF9167')
+            .backgroundColor(this.isActive ? '#E5732C' : '#FF9167')
             .width(this.imageSideLength)
             .height(this.imageSideLength)
         }
-        .backgroundColor('#FF9167')
+        .backgroundColor(this.isActive ? '#E5732C' : '#FF9167')
         .borderRadius(this.entrySideLength / 2)
         .width(this.entrySideLength)
         .height(this.entrySideLength)

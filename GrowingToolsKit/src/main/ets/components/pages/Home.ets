@@ -18,18 +18,19 @@
 import window from '@ohos.window'
 import ModuleButton from '../views/ModuleButton'
 import NavStackManager from '../core/NavStackManager'
-import { ConfigMode, GTKColor, NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
+import { GTKColor, NAV_PATH_PREFIX, SUB_WINDOW_NAME } from '../utils/Constants'
 import { HAR_VERSION } from '../../../../../BuildProfile'
-import SharedPreferences from '../utils/SharedPreferences'
-import EventDatabase from '../event/EventDatabase'
-import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
-
-import promptAction from '@ohos.promptAction'
+import { EntryIconManager } from './EntryIcon'
 
 @ComponentV2
 export default struct Home {
   pageStack: NavPathStack = NavStackManager.pageStack
   window: window.Window = window.findWindow(SUB_WINDOW_NAME)
+  @Local isFPSEnabled: boolean = false
+
+  aboutToAppear() {
+    this.isFPSEnabled = EntryIconManager.getInstance().isFPSEnabled()
+  }
 
   build() {
     NavDestination() {
@@ -62,6 +63,22 @@ export default struct Home {
               if (event.type ==  TouchType.Up) {
                 let destination = new NavPathInfo(NAV_PATH_PREFIX + 'NetFlow', '')
                 this.pageStack.pushDestination(destination)
+              }
+            })
+          ModuleButton({ 
+            name: this.isFPSEnabled ? 'FPS监控中' : 'FPS监控', 
+            image: 'app.media.growingtk_fps',
+            isActive: this.isFPSEnabled
+          })
+            .onClick(() => {
+              let entryManager = EntryIconManager.getInstance()
+              if (entryManager.isFPSEnabled()) {
+                entryManager.disableFPSMode()
+                this.isFPSEnabled = false
+              } else {
+                entryManager.enableFPSMode()
+                this.isFPSEnabled = true
+                this.pageStack.pop('', false)
               }
             })
         }
