@@ -29,9 +29,11 @@ export default struct FPSCanvas {
   private readonly maxHistoryForChartLength: number = 20
   private readonly canvasWidth: number = FPS_WINDOW_WIDTH
   private readonly canvasHeight: number = FPS_WINDOW_HEIGHT
-  private readonly maxFPS: number = 100
   private readonly fpsGood: number = 50
   private readonly fpsOk: number = 30
+  private dynamicMaxFPS: number = 100
+  private dynamicMinFPS: number = 0
+  private readonly smoothingFactor: number = 0.3
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D({ antialias: true })
   private displaySync: displaySync.DisplaySync | undefined
 
@@ -73,6 +75,9 @@ export default struct FPSCanvas {
           this.fpsHistory.shift()
         }
 
+        // 动态更新 Y 轴范围
+        this.updateDynamicRange()
+
         this.frameCount = 0
         this.lastTime = currentTime
       }
@@ -87,6 +92,44 @@ export default struct FPSCanvas {
     if (this.fpsTimer !== undefined) {
       clearInterval(this.fpsTimer)
       this.fpsTimer = undefined
+    }
+  }
+
+  private updateDynamicRange() {
+    if (this.fpsHistory.length < 2) {
+      return
+    }
+
+    const recentHistory = this.fpsHistory.slice(-this.maxHistoryForChartLength)
+    const minFPS = Math.min(...recentHistory)
+    const maxFPS = Math.max(...recentHistory)
+    const range = maxFPS - minFPS
+
+    // 添加 10% 的边距使线条更居中
+    const padding = Math.max(range * 0.1, 5)
+    const targetMinFPS = Math.max(0, minFPS - padding)
+    const targetMaxFPS = maxFPS + padding
+
+    // 使用指数移动平均进行平滑过渡，但对新极值快速响应
+    let minSmoothingFactor = this.smoothingFactor
+    let maxSmoothingFactor = this.smoothingFactor
+    
+    // 如果目标值超出当前范围，加快响应速度
+    if (targetMinFPS < this.dynamicMinFPS) {
+      minSmoothingFactor = 0.6  // 新低值快速响应
+    }
+    if (targetMaxFPS > this.dynamicMaxFPS) {
+      maxSmoothingFactor = 0.6  // 新高值快速响应
+    }
+    
+    this.dynamicMinFPS = this.dynamicMinFPS + (targetMinFPS - this.dynamicMinFPS) * minSmoothingFactor
+    this.dynamicMaxFPS = this.dynamicMaxFPS + (targetMaxFPS - this.dynamicMaxFPS) * maxSmoothingFactor
+
+    // 确保最小范围，避免除零错误
+    if (this.dynamicMaxFPS - this.dynamicMinFPS < 1) {
+      const center = (this.dynamicMaxFPS + this.dynamicMinFPS) / 2
+      this.dynamicMinFPS = center - 0.5
+      this.dynamicMaxFPS = center + 0.5
     }
   }
 
@@ -109,7 +152,8 @@ export default struct FPSCanvas {
       context.fillStyle = '#888888'
       context.font = '8px sans-serif'
       for (let i = 0; i <= gridLines; i++) {
-        const fpsValue = this.maxFPS - (i * 10)
+        // 从上到下：dynamicMaxFPS -> dynamicMinFPS
+        const fpsValue = Math.round(this.dynamicMaxFPS - (i * (this.dynamicMaxFPS - this.dynamicMinFPS) / gridLines))
         const y = (i / gridLines) * this.canvasHeight + 3
         context.fillText(`${fpsValue}`, 2, y)
       }
@@ -124,10 +168,12 @@ export default struct FPSCanvas {
 
         let firstPoint = true
         let fpsHistory = this.fpsHistory.slice(-20) // 取最近的 20个 fps 进行绘制
+        
         for (let i = 0; i < fpsHistory.length; i++) {
           const x = i * stepX
-          const normalizedFPS = Math.max(0, Math.min(1, fpsHistory[i] / this.maxFPS))
-          const y = this.canvasHeight - (normalizedFPS * this.canvasHeight)
+          const normalizedFPS = (fpsHistory[i] - this.dynamicMinFPS) / (this.dynamicMaxFPS - this.dynamicMinFPS)
+          const clampedFPS = Math.max(0, Math.min(1, normalizedFPS))
+          const y = this.canvasHeight - (clampedFPS * this.canvasHeight)
 
           if (firstPoint) {
             context.moveTo(x, y)
