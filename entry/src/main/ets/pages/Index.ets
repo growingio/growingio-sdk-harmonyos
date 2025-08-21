@@ -5,44 +5,9 @@ import Util from '../Util'
 @Component
 struct Index {
   @State deviceId: string = '请点击下方按钮获取'
-  @State rotationAngle: number = 0
-  private timer: number = -1
-
-  aboutToAppear() {
-    this.startRotationAnimation()
-  }
-
-  aboutToDisappear() {
-    if (this.timer !== -1) {
-      clearInterval(this.timer)
-    }
-  }
-
-  startRotationAnimation() {
-    this.timer = setInterval(() => {
-      this.rotationAngle = (this.rotationAngle + 6) % 360
-    }, 16)
-  }
 
   build() {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
-      Row() {
-        Stack() {
-          Circle({ width: 40, height: 40 })
-            .fill(Color.Gray)
-          Rect({ width: 36, height: 4 })
-            .fill(Color.Red)
-            .borderRadius(2)
-            .rotate({ angle: this.rotationAngle })
-          Circle({ width: 8, height: 8 })
-            .fill(Color.White)
-        }
-        Text('UI线程监测器 (红条旋转)')
-          .fontSize(16)
-          .margin({ left: 10 })
-      }
-      .margin({ bottom: 20 })
-      .alignItems(VerticalAlign.Center)
       
       Text('DeviceId = ' + this.deviceId)
       Button('getDeviceId')
