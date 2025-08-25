@@ -21,7 +21,7 @@ import AppInfo from '../core/AppInfo'
 import DeviceInfo from '../core/DeviceInfo'
 import GrowingContext from '../core/Context'
 import GrowingGeneralProps from '../core/GeneralProps'
-import Session, { SessionState } from '../core/Session'
+import Session from '../core/Session'
 import UserIdentifier from '../core/UserIdentifier'
 import { PREFERENCE_EVENT_SEQUENCE_ID } from '../utils/Constants'
 import SharedPreferences from '../utils/SharedPreferences'
@@ -32,7 +32,7 @@ export default class EventBuilder {
 
   static build<T extends Event>(event: T, context: GrowingContext): T {
     event.sessionId = Session.getSessionId(context)!
-    event.appState = Session.sessionState === SessionState.Foreground ? 'FOREGROUND' : 'BACKGROUND'
+    event.appState = Session.isOnForeground ? 'FOREGROUND' : 'BACKGROUND'
     event.timestamp = event.timestamp > 0 ? event.timestamp : Date.now()
     event.sdkVersion = SDK_VERSION
 

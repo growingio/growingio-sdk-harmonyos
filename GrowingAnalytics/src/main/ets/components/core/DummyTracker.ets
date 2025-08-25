@@ -19,6 +19,7 @@ import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
 import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '../utils/Constants'
 import webview from '@ohos.web.webview'
 
+@Sendable
 export default class DummyTracker implements GrowingAnalyticsInterface {
   constructor() {}
 

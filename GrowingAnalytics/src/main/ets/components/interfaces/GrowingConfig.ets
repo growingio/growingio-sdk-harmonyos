@@ -15,8 +15,11 @@
  * limitations under the License.
  */
 
-import { PluginsInterface } from '../plugins/Plugins'
+import collections from '@arkts.collections'
 
+import { SendablePluginsInterface } from '../plugins/Plugins'
+
+@Sendable
 class RequestOptions {
   _connectTimeout: number = 30 * 1000
   _transferTimeout: number = 30 * 1000
@@ -47,14 +50,15 @@ class RequestOptions {
   }
 }
 
-export enum ConfigMode {
-  NewSaaS = 0,
-  SaaS,
-  CDP
+export class ConfigMode {
+  static NewSaaS: number = 0
+  static SaaS: number = 1
+  static CDP: number = 2
 }
 
+@Sendable
 export class GrowingConfig {
-  mode: ConfigMode = ConfigMode.NewSaaS
+  mode: number = ConfigMode.NewSaaS
   accountId: string = ''
   dataSourceId: string = ''
   dataCollectionServerHost: string = ''
@@ -73,7 +77,7 @@ export class GrowingConfig {
   autotrackEnabled: boolean = false
   autotrackAllPages: boolean = false
   useProtobuf: boolean = true
-  plugins: Array<PluginsInterface> = []
+  plugins: collections.Array<SendablePluginsInterface> = new collections.Array()
 
   constructor() {}
 
@@ -192,7 +196,9 @@ export class GrowingConfig {
     config.autotrackEnabled = this.autotrackEnabled
     config.autotrackAllPages = this.autotrackAllPages
     config.useProtobuf = this.useProtobuf
-    config.plugins = [...this.plugins]
+    try {
+      config.plugins = collections.Array.from(this.plugins)
+    } catch { }
 
     return config
   }

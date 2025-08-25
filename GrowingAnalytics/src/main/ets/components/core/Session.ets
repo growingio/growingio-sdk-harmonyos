@@ -17,6 +17,7 @@
 
 import util from '@ohos.util'
 import emitter from '@ohos.events.emitter'
+import collections from '@arkts.collections'
 
 import AnalyticsCore from './AnalyticsCore'
 import GrowingContext from './Context'
@@ -28,17 +29,15 @@ import { EMIT_EVENT_SESSION_STATE_FOREGROUND } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import { SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
 
-export enum SessionState {
-  Foreground,
-  Background
-}
+"use shared"
 
+@Sendable
 export default class Session {
   sessionId: string
   trackerId: string
   latestOnBackgroundTime: number
-  static sessionState: SessionState = SessionState.Foreground
-  static sessions: Array<Session> = []
+  static isOnForeground: boolean = true
+  static sessions: collections.Array<Session> = new collections.Array()
 
   constructor(
     sessionId: string,
@@ -52,7 +51,7 @@ export default class Session {
 
   static onForeground() {
     LogUtil.info(() => 'Session state set to foreground')
-    Session.sessionState = SessionState.Foreground
+    Session.isOnForeground = true
     Session.sessions.forEach(session => {
       if (session.latestOnBackgroundTime == 0) {
         // 1.首次初始化
@@ -73,7 +72,7 @@ export default class Session {
 
   static onBackground() {
     LogUtil.info(() => 'Session state set to background')
-    Session.sessionState = SessionState.Background
+    Session.isOnForeground = false
     Session.sessions.forEach(session => {
       session.latestOnBackgroundTime = Date.now()
 

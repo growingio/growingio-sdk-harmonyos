@@ -16,19 +16,25 @@
  */
 
 import relationalStore from '@ohos.data.relationalStore'
+import sendableRelationalStore from '@ohos.data.sendableRelationalStore'
 import emitter from '@ohos.events.emitter'
 import taskpool from '@ohos.taskpool'
+import sendableContextManager from '@ohos.app.ability.sendableContextManager'
+import collections from '@arkts.collections'
 
 import EventPersistence from './EventPersistence'
+import { insertTask, batchInsertTask, batchDeleteTask, queryEventsTask, countOfEventsTask } from './EventDatabaseAsync'
 import GrowingContext from '../core/Context'
 import { DATABASE_NAME, EMIT_EVENT_DATABASE_FLUSH } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
-import Util from '../utils/Util'
 
+"use shared"
+
+@Sendable
 export default class EventDatabase {
-  static store: relationalStore.RdbStore
-  static context: Context
-  static eventsCache: relationalStore.ValuesBucket[] = []
+  static isDatabaseCreated: boolean = false
+  static context: sendableContextManager.SendableContext
+  static eventsCache: collections.Array<sendableRelationalStore.ValuesBucket> = new collections.Array<sendableRelationalStore.ValuesBucket>()
   static tableName: string = 'EVENTS'
 
   static async initDatabase(context: Context) {
@@ -50,13 +56,13 @@ export default class EventDatabase {
       + 'SDK_VERSION TEXT NOT NULL)'
 
     let appContext = context.getApplicationContext()
-    EventDatabase.context = appContext
+    EventDatabase.context = sendableContextManager.convertFromContext(appContext)
 
     try {
       let store = await relationalStore.getRdbStore(appContext, config)
       await store.executeSql(SQL_CREATE_TABLE)
       await EventDatabase.cleanExpiredEventIfNeeded(store)
-      EventDatabase.store = store
+      EventDatabase.isDatabaseCreated = true
       await EventDatabase.flushCacheIfNeeded()
     } catch (e) {
       LogUtil.error(() => "Failed to create database. code = " + e.code + ", message = " + e.message)
@@ -64,7 +70,7 @@ export default class EventDatabase {
   }
 
   static async flushCacheIfNeeded() {
-    if (!EventDatabase.store) {
+    if (!EventDatabase.isDatabaseCreated) {
       return
     }
 
@@ -74,16 +80,17 @@ export default class EventDatabase {
 
     try {
       let events = [...EventDatabase.eventsCache]
-      EventDatabase.eventsCache = []
+      EventDatabase.eventsCache = new collections.Array<sendableRelationalStore.ValuesBucket>()
       await taskpool.execute(batchInsertTask, EventDatabase.tableName, events, EventDatabase.context, DATABASE_NAME)
       LogUtil.info(() => 'Write events that were created before database initialization to disk = '
         + JSON.stringify(
-        JSON.parse('[' + events.map((e: relationalStore.ValuesBucket) => {
-          return e['DATA'] as string
+        JSON.parse('[' + events.map((e: sendableRelationalStore.ValuesBucket) => {
+          let nonSendableValueBucket = sendableRelationalStore.fromSendableValuesBucket(e)
+          return nonSendableValueBucket['DATA'] as string
         }).join(',') + ']'), null, 4))
       emitter.emit(EMIT_EVENT_DATABASE_FLUSH)
     } catch (e) {
-      LogUtil.error(() => "Failed to write cached events to disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to flush cached events: " + e.message)
     }
   }
 
@@ -98,17 +105,19 @@ export default class EventDatabase {
       'DATASOURCE_ID': event.dataSourceId
     }
 
-    if (!EventDatabase.store) {
-      EventDatabase.eventsCache.push(valueBucket)
+    const sendableValueBucket = sendableRelationalStore.toSendableValuesBucket(valueBucket)
+
+    if (!EventDatabase.isDatabaseCreated) {
+      EventDatabase.eventsCache.push(sendableValueBucket)
       return
     }
 
     try {
       await EventDatabase.flushCacheIfNeeded()
-      await EventDatabase.store.insert(EventDatabase.tableName, valueBucket)
+      await taskpool.execute(insertTask, EventDatabase.tableName, sendableValueBucket, EventDatabase.context, DATABASE_NAME)
       LogUtil.info(() => 'Write event to disk = ' + JSON.stringify(JSON.parse(event.data), null, 4))
     } catch (e) {
-      LogUtil.error(() => "Failed to write event to disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to write event: " + e.message)
     }
   }
 
@@ -136,13 +145,13 @@ export default class EventDatabase {
       }
       return events
     } catch (e) {
-      LogUtil.error(() => "Failed to get events from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to query events: " + e.message)
       return []
     }
   }
 
   static async removeEvents(events: EventPersistence[]) {
-    if (!EventDatabase.store || events.length === 0) {
+    if (!EventDatabase.isDatabaseCreated || events.length === 0) {
       return
     }
 
@@ -155,28 +164,28 @@ export default class EventDatabase {
       await taskpool.execute(batchDeleteTask, EventDatabase.tableName, uuids, EventDatabase.context, DATABASE_NAME)
       LogUtil.info(() => `Batch deleted ${events.length} events from disk in background thread`)
     } catch (e) {
-      LogUtil.error(() => "Failed to batch remove events from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to remove events: " + e.message)
     }
   }
 
   static async countOfEvents(context: GrowingContext, eventTypes?: string[]): Promise<number> {
-    if (!EventDatabase.store) {
+    if (!EventDatabase.isDatabaseCreated) {
       return 0
     }
 
     let count = 0
     try {
-      let predicates = new relationalStore.RdbPredicates(EventDatabase.tableName)
-      if (eventTypes && eventTypes.length > 0) {
-        predicates.in('TYPE', eventTypes)
-      }
-      predicates.equalTo('ACCOUNT_ID', context.config.accountId)
-      predicates.equalTo('DATASOURCE_ID', context.config.dataSourceId)
-      let r = await EventDatabase.store.query(predicates)
-      count = r.rowCount
-      r.close()
+      count = await taskpool.execute(
+        countOfEventsTask,
+        EventDatabase.tableName,
+        context.config.accountId,
+        context.config.dataSourceId,
+        EventDatabase.context,
+        DATABASE_NAME,
+        eventTypes
+      ) as number
     } catch (e) {
-      LogUtil.error(() => "Failed to get event count from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to count events: " + e.message)
     }
 
     return count
@@ -195,111 +204,7 @@ export default class EventDatabase {
       predicates.lessThanOrEqualTo('CREATE_AT', daysAgo)
       await store.delete(predicates)
     } catch (e) {
-      LogUtil.error(() => "Failed to clean expired event from disk. code = " + e.code + ", message = " + e.message)
+      LogUtil.error(() => "Failed to clean expired events: " + e.message)
     }
   }
-}
-
-@Concurrent
-async function batchInsertTask(
-  tableName: string, 
-  events: relationalStore.ValuesBucket[],
-  context: Context,
-  dbName: string
-): Promise<void> {
-  if (events.length === 0) {
-    return
-  }
-
-  const config: relationalStore.StoreConfig = {
-    name: dbName + '.db',
-    securityLevel: relationalStore.SecurityLevel.S1,
-    encrypt: true
-  }
-
-  try {
-    let store = await relationalStore.getRdbStore(context, config)
-    await store.batchInsert(tableName, events)
-  } catch (e) {
-    LogUtil.error(() => "Failed to batch insert events. code = " + e.code + ", message = " + e.message)
-    throw new Error(`Database insert failed: ${e.message}`)
-  }
-}
-
-@Concurrent
-async function batchDeleteTask(
-  tableName: string, 
-  uuids: string[],
-  context: Context,
-  dbName: string
-): Promise<void> {
-  if (uuids.length === 0) {
-    return
-  }
-
-  const config: relationalStore.StoreConfig = {
-    name: dbName + '.db',
-    securityLevel: relationalStore.SecurityLevel.S1,
-    encrypt: true
-  }
-
-  try {
-    let store = await relationalStore.getRdbStore(context, config)
-    let predicates = new relationalStore.RdbPredicates(tableName)
-    predicates.in('EVENT_UUID', uuids)
-    await store.delete(predicates)
-  } catch (e) {
-    LogUtil.error(() => "Failed to batch delete events. code = " + e.code + ", message = " + e.message)
-    throw new Error(`Database delete failed: ${e.message}`)
-  }
-}
-
-@Concurrent
-async function queryEventsTask(
-  tableName: string,
-  count: number,
-  size: number,
-  accountId: string,
-  dataSourceId: string,
-  context: Context,
-  dbName: string,
-  eventTypes?: string[]
-): Promise<EventPersistence[]> {
-  const events: EventPersistence[] = []
-  
-  const config: relationalStore.StoreConfig = {
-    name: dbName + '.db',
-    securityLevel: relationalStore.SecurityLevel.S1,
-    encrypt: true
-  }
-
-  try {
-    let store = await relationalStore.getRdbStore(context, config)
-    let predicates = new relationalStore.RdbPredicates(tableName)
-    if (eventTypes && eventTypes.length > 0) {
-      predicates.in('TYPE', eventTypes)
-    }
-    predicates.orderByAsc('CREATE_AT')
-    predicates.equalTo('ACCOUNT_ID', accountId)
-    predicates.equalTo('DATASOURCE_ID', dataSourceId)
-    
-    let eventsSize = 0
-    let r = await store.query(predicates)
-    while (r.goToNextRow() && events.length < count && eventsSize < size) {
-      const uuid = r.getString(r.getColumnIndex('EVENT_UUID'))
-      const data = r.getString(r.getColumnIndex('DATA'))
-      const eventType = r.getString(r.getColumnIndex('TYPE'))
-      const sdkVersion = r.getString(r.getColumnIndex('SDK_VERSION'))
-      const accountId = r.getString(r.getColumnIndex('ACCOUNT_ID'))
-      const dataSourceId = r.getString(r.getColumnIndex('DATASOURCE_ID'))
-      let e = EventPersistence.fromDatabase(uuid, data, eventType, sdkVersion, accountId, dataSourceId)
-      events.push(e)
-      eventsSize += Util.sizeOfEventString(String(data))
-    }
-    r.close()
-  } catch (e) {
-    LogUtil.error(() => "Failed to query events from disk. code = " + e.code + ", message = " + e.message)
-  }
-
-  return events
 }

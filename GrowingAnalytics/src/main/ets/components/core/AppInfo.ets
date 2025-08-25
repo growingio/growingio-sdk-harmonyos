@@ -17,6 +17,9 @@
 
 import bundleManager from '@ohos.bundle.bundleManager'
 
+"use shared"
+
+@Sendable
 export default class AppInfo {
   static domain: string = ''
   static appName: string = ''

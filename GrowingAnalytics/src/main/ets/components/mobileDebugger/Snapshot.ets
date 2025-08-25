@@ -19,6 +19,8 @@ import uiObserver from '@ohos.arkui.observer'
 import image from '@ohos.multimedia.image'
 import buffer from '@ohos.buffer'
 import { BusinessError } from '@ohos.base'
+import common from '@ohos.app.ability.common'
+import sendableContextManager from '@ohos.app.ability.sendableContextManager'
 
 import AnalyticsCore from "../core/AnalyticsCore"
 
@@ -98,7 +100,9 @@ export class SnapshotProvider {
     if (this.onScroll) {
       return
     }
-    AnalyticsCore.mainWindow.snapshot((error: BusinessError, pixmap: image.PixelMap) => {
+    let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
+    let mainWindow = context.windowStage.getMainWindowSync()
+    mainWindow.snapshot((error: BusinessError, pixmap: image.PixelMap) => {
       let errCode = error.code
       if (errCode) {
         return
@@ -135,12 +139,18 @@ class DidLayoutObserver {
   }
 
   on() {
-    AnalyticsCore.uiContent.getUIObserver().on('didLayout', this.didLayoutCallback)
-    AnalyticsCore.uiContent.getUIObserver().on('scrollEvent', this.onScrollEventCallback)
+    let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
+    let mainWindow = context.windowStage.getMainWindowSync()
+    let currentUIContext = mainWindow.getUIContext()
+    currentUIContext.getUIObserver().on('didLayout', this.didLayoutCallback)
+    currentUIContext.getUIObserver().on('scrollEvent', this.onScrollEventCallback)
   }
 
   off() {
-    AnalyticsCore.uiContent.getUIObserver().off('didLayout', this.didLayoutCallback)
-    AnalyticsCore.uiContent.getUIObserver().off('scrollEvent', this.onScrollEventCallback)
+    let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
+    let mainWindow = context.windowStage.getMainWindowSync()
+    let currentUIContext = mainWindow.getUIContext()
+    currentUIContext.getUIObserver().off('didLayout', this.didLayoutCallback)
+    currentUIContext.getUIObserver().off('scrollEvent', this.onScrollEventCallback)
   }
 }

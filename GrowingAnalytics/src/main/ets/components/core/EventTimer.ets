@@ -17,6 +17,7 @@
 
 import systemDatetime from '@ohos.systemDateTime'
 import util from '@ohos.util'
+import collections from '@arkts.collections'
 
 import AnalyticsCore from './AnalyticsCore'
 import GrowingContext from './Context'
@@ -26,8 +27,11 @@ import { LogUtil } from '../utils/LogUtil'
 import FakePageEvent from '../event/saas/FakePageEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 
+"use shared"
+
+@Sendable
 export default class EventTimer {
-  static timers: Map<string, EventTimer> = new Map()
+  static timers: collections.Map<string, EventTimer> = new collections.Map()
   eventName: string
   startTime: number
   duration: number

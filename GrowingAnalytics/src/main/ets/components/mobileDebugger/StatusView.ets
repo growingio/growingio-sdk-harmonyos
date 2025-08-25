@@ -20,6 +20,8 @@ import display from '@ohos.display'
 import { OverlayManager } from '@ohos.arkui.UIContext'
 import window from '@ohos.window'
 import promptAction from "@ohos.promptAction"
+import common from '@ohos.app.ability.common'
+import sendableContextManager from '@ohos.app.ability.sendableContextManager'
 
 import AnalyticsCore from "../core/AnalyticsCore"
 
@@ -29,20 +31,23 @@ export class StatusView {
   params?: Params
 
   constructor(text: string, onClick: () => void) {
-    if (!AnalyticsCore.uiContent) {
+    if (!AnalyticsCore.abContext) {
       return
     }
-    this.params = new Params(
-      text,
+
+    let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
+    let window = context.windowStage.getMainWindowSync()
+    this.params = new Params(text, window,
       () => {
         this._update()
       },
       () => {
         onClick()
       })
-    this.overlayNode = AnalyticsCore.uiContent.getOverlayManager()
+    let uiContext = window.getUIContext()
+    this.overlayNode = uiContext.getOverlayManager()
     this.componentContent = new ComponentContent(
-      AnalyticsCore.uiContent,
+      uiContext,
       wrapBuilder<[Params]>(builderStatusView),
       this.params
     )
@@ -50,11 +55,14 @@ export class StatusView {
   }
 
   static showDialog(options: promptAction.ShowDialogOptions): Promise<promptAction.ShowDialogSuccessResponse> {
-    if (!AnalyticsCore.uiContent) {
-      return Promise.reject(new Error('AnalyticsCore.uiContent is not available'))
+    if (!AnalyticsCore.abContext) {
+      return Promise.reject(new Error('Current UIContext is not available'))
     }
     try {
-      let promptAction = AnalyticsCore.uiContent.getPromptAction()
+      let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
+      let window = context.windowStage.getMainWindowSync()
+      let uiContext = window.getUIContext()
+      let promptAction = uiContext.getPromptAction()
       return promptAction.showDialog(options)
     } catch (error) {
       return Promise.reject(error)
@@ -78,18 +86,25 @@ class Params {
   text: string
   positionY: number
   offsetY: number
+  minY: number
+  maxY: number
   updateComponent: () => void
   onClick: () => void
 
-  constructor(text: string, updateComponent: () => void, onClick: () => void) {
+  constructor(text: string, mainWindow: window.Window, updateComponent: () => void, onClick: () => void) {
     let screenHeight = display.getDefaultDisplaySync().height
-    let avoidArea = AnalyticsCore.mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
+    let avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
     let avoidTop = Math.max(avoidArea.topRect.height, 150)
+    let avoidBottom = Math.max(avoidArea.bottomRect.height, 150)
+
     let minY = px2vp(avoidTop - screenHeight / 2)
+    let maxY = px2vp(screenHeight / 2 - avoidBottom - 15)
 
     this.positionY = minY
     this.offsetY = minY
     this.text = text
+    this.minY = minY
+    this.maxY = maxY
     this.updateComponent = updateComponent
     this.onClick = onClick
   }
@@ -114,13 +129,8 @@ function builderStatusView(params: Params) {
         params.updateComponent()
       })
       .onActionEnd(event => {
-        let screenHeight = display.getDefaultDisplaySync().height
-        let avoidArea = AnalyticsCore.mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
-        let avoidTop = Math.max(avoidArea.topRect.height, 150)
-        let avoidBottom = Math.max(avoidArea.bottomRect.height, 150)
-
-        let minY = px2vp(avoidTop - screenHeight / 2)
-        let maxY = px2vp(screenHeight / 2 - avoidBottom - 15)
+        let minY = params.minY
+        let maxY = params.maxY
         if (params.offsetY > maxY) {
           params.offsetY = maxY
         } else if (params.offsetY < minY) {

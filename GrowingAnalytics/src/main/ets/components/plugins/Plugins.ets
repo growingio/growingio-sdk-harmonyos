@@ -18,10 +18,13 @@
 import common from '@ohos.app.ability.common'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
+import lang from '@arkts.lang'
 
 import AnalyticsCore from '../core/AnalyticsCore'
 import EventPersistence from '../event/EventPersistence'
 import { GrowingConfig } from '../interfaces/GrowingConfig'
+
+export interface SendablePluginsInterface extends lang.ISendable, PluginsInterface { }
 
 export interface PluginsInterface {
   onSDKWillInitialize?(): void

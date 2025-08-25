@@ -17,6 +17,8 @@
 
 import JSON from '@ohos.util.json'
 import router from '@ohos.router'
+import common from '@ohos.app.ability.common'
+import sendableContextManager from '@ohos.app.ability.sendableContextManager'
 
 import AnalyticsCore from "../core/AnalyticsCore"
 import AppInfo from "../core/AppInfo"
@@ -46,14 +48,19 @@ export default class CircleElement {
   static setPagesAndElements(screenshot: RefreshScreenshot) {
     try {
       let filter = ['id', 'content', 'focusable', 'label', 'opacity', 'visibility']
-      let inspectorTreeString = AnalyticsCore.uiContent.getFilteredInspectorTree(filter)
-      let inspectorTree = JSON.parse(inspectorTreeString)
-      if (!inspectorTree) {
-        return
-      }
+      if (AnalyticsCore.abContext) {
+        let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
+        let mainWindow = context.windowStage.getMainWindowSync()
+        let currentUIContext = mainWindow.getUIContext()
+        let inspectorTreeString = currentUIContext.getFilteredInspectorTree(filter)
+        let inspectorTree = JSON.parse(inspectorTreeString)
+        if (!inspectorTree) {
+          return
+        }
 
-      let elementsTree = CircleElement._parseJsonTreeToElementsTree(inspectorTree)
-      CircleElement._parseElementsTreeAndSetToScreenshot(elementsTree, screenshot)
+        let elementsTree = CircleElement._parseJsonTreeToElementsTree(inspectorTree)
+        CircleElement._parseElementsTreeAndSetToScreenshot(elementsTree, screenshot, currentUIContext)
+      }
     } catch (e) {
 
     }
@@ -99,13 +106,13 @@ export default class CircleElement {
     return element
   }
 
-  private static _parseElementsTreeAndSetToScreenshot(elementsTree: _Element, screenshot: RefreshScreenshot) {
+  private static _parseElementsTreeAndSetToScreenshot(elementsTree: _Element, screenshot: RefreshScreenshot, currentContext: UIContext) {
     let pages: Array<_ScreenshotPage> = []
     let paths: Set<string> = new Set<string>()
     let elements: Array<_ScreenshotElement> = []
     let context = GrowingContext.getDefaultContext() as GrowingContext
 
-    CircleElement._traverseAllNodes(elementsTree, (e) => {
+    CircleElement._traverseAllNodes(elementsTree, currentContext, (e) => {
       let nodeType = e.nodeType
       if (nodeType == CIRCLE_NODE_INPUT) {
         // 目前不支持VIEW_CHANGE事件，都以VIEW_CLICK来圈选
@@ -166,7 +173,7 @@ export default class CircleElement {
       element.content = e.content
 
       // getPageInfo
-      let pageInfo = AnalyticsCore.uiContent.getPageInfoByUniqueId(e.ID)
+      let pageInfo = currentContext.getPageInfoByUniqueId(e.ID)
       let realPath: string | undefined = undefined
       let alias: string = ''
       if (pageInfo.navDestinationInfo) {
@@ -233,7 +240,7 @@ export default class CircleElement {
     screenshot.elements = elements
   }
 
-  private static _traverseAllNodes(rootElement: _Element, callback: (element: _Element) => void) {
+  private static _traverseAllNodes(rootElement: _Element, currentContext: UIContext, callback: (element: _Element) => void) {
     let stack: _Element[] = [rootElement]
 
     while (stack.length > 0) {
@@ -255,7 +262,7 @@ export default class CircleElement {
         let previousSiblingXContents: Map<string, number> = new Map()
         // offset of children that parse from InspectorTree
         let childOffset = 0
-        let parentFrameNode = AnalyticsCore.uiContent.getFrameNodeByUniqueId(parent.ID)
+        let parentFrameNode = currentContext.getFrameNodeByUniqueId(parent.ID)
 
         for (let i = 0; i < parent.children.length; i++) {
           let e = parent.children[i]
@@ -274,7 +281,7 @@ export default class CircleElement {
 
           xcontent = xcontent + childOffset
           if (parentType != 'root') {
-            let frameNode = AnalyticsCore.uiContent.getFrameNodeByUniqueId(e.ID)
+            let frameNode = currentContext.getFrameNodeByUniqueId(e.ID)
             if (!frameNode || !parentFrameNode) {
               continue
             }

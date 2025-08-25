@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import collections from '@arkts.collections'
+import ArkTSUtils from '@arkts.utils'
+
 import Session from './Session'
 import { PREFERENCE_USER_ID, PREFERENCE_USER_IDENTIFIER, PREFERENCE_USER_KEY } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -22,12 +25,15 @@ import SharedPreferences from '../utils/SharedPreferences'
 import GrowingContext from './Context'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 
+"use shared"
+
+@Sendable
 export default class UserIdentifier {
   userId: string
   userKey: string
   private latestNonnullUserId: string
-  static users: Map<string, UserIdentifier> = new Map()
-  static userInfo: object
+  static users: collections.Map<string, UserIdentifier> = new collections.Map()
+  static userInfo: collections.Map<string, string> = new collections.Map()
 
   constructor(
     userId: string,
@@ -40,11 +46,15 @@ export default class UserIdentifier {
 
   static initUser(context: GrowingContext) {
     let userInfoString = SharedPreferences.getValue(PREFERENCE_USER_IDENTIFIER, '{}') as string
-    let userInfo = JSON.parse(userInfoString) as object
+    let options: ArkTSUtils.ASON.ParseOptions = {
+      bigIntMode: ArkTSUtils.ASON.BigIntMode.PARSE_AS_BIGINT,
+      parseReturnType: ArkTSUtils.ASON.ParseReturnType.MAP,
+    }
+    let userInfo = (ArkTSUtils.ASON.parse(userInfoString, undefined, options) ?? new collections.Map()) as collections.Map<string, string>
     UserIdentifier.userInfo = userInfo
 
-    let userId = (userInfo[PREFERENCE_USER_ID] as string | undefined) ?? ''
-    let userKey = (userInfo[PREFERENCE_USER_KEY] as string | undefined) ?? ''
+    let userId = (userInfo.get(PREFERENCE_USER_ID) as string | undefined) ?? ''
+    let userKey = (userInfo.get(PREFERENCE_USER_KEY) as string | undefined) ?? ''
     let user = new UserIdentifier(userId, userKey)
     UserIdentifier.users.set(context.trackerId, user)
 
@@ -61,8 +71,8 @@ export default class UserIdentifier {
     let userInfo = UserIdentifier.userInfo
 
     let suffix = '_' + context.config.accountId + '_' + context.config.dataSourceId
-    let userId = (userInfo[PREFERENCE_USER_ID + suffix] as string | undefined) ?? ''
-    let userKey = (userInfo[PREFERENCE_USER_KEY + suffix] as string | undefined) ?? ''
+    let userId = (userInfo.get(PREFERENCE_USER_ID + suffix) as string | undefined) ?? ''
+    let userKey = (userInfo.get(PREFERENCE_USER_KEY + suffix) as string | undefined) ?? ''
     let user = new UserIdentifier(userId, userKey)
     UserIdentifier.users.set(context.trackerId, user)
 
@@ -125,12 +135,12 @@ export default class UserIdentifier {
   saveToPreferences(context: GrowingContext) {
     let userInfo = UserIdentifier.userInfo
     if (GrowingContext.isDefaultContext(context)) {
-      userInfo[PREFERENCE_USER_ID] = String(this.userId)
-      userInfo[PREFERENCE_USER_KEY] = String(this.userKey)
+      userInfo.set(PREFERENCE_USER_ID, String(this.userId))
+      userInfo.set(PREFERENCE_USER_KEY, String(this.userKey))
     } else {
       let suffix = '_' + context.config.accountId + '_' + context.config.dataSourceId
-      userInfo[PREFERENCE_USER_ID + suffix] = String(this.userId)
-      userInfo[PREFERENCE_USER_KEY + suffix] = String(this.userKey)
+      userInfo.set(PREFERENCE_USER_ID + suffix, String(this.userId))
+      userInfo.set(PREFERENCE_USER_KEY + suffix, String(this.userKey))
     }
     SharedPreferences.put(PREFERENCE_USER_IDENTIFIER, JSON.stringify(userInfo))
   }

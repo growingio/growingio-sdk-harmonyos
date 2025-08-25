@@ -2,6 +2,7 @@ import AbilityStage from '@ohos.app.ability.AbilityStage'
 import type Want from '@ohos.app.ability.Want'
 import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 import { GrowingToolsKit } from '@growingio/tools'
+import collections from '@arkts.collections'
 
 export default class EntryAbilityStage extends AbilityStage {
   onCreate(): void {
@@ -28,7 +29,8 @@ export default class EntryAbilityStage extends AbilityStage {
     let config = new GrowingConfig().NewSaaS(
       '0a1b4118dd954ec3bcc69da5138bdb96',
       '8eeb910e0db7a73b',
-      'growing.84ff920737d56b1d'
+      'growing.84ff920737d56b1d',
+      // 'https://www.baidu.com'
     )
     config.debugEnabled = true
     config.sessionInterval = 30
@@ -38,7 +40,7 @@ export default class EntryAbilityStage extends AbilityStage {
     config.requestOptions.transferTimeout = 10
     config.autotrackEnabled = true
     config.autotrackAllPages = true
-    config.plugins = [new GrowingToolsKit()]
+    // config.plugins = new collections.Array(new GrowingToolsKit())
     GrowingAnalytics.start(this.context, config)
 
     // ---------------- CDP ----------------

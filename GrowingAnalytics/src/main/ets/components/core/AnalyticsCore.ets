@@ -22,6 +22,8 @@ import UIAbility from '@ohos.app.ability.UIAbility'
 import emitter from '@ohos.events.emitter'
 import window from '@ohos.window'
 import webview from '@ohos.web.webview'
+import sendableContextManager from '@ohos.app.ability.sendableContextManager'
+import collections from '@arkts.collections'
 
 import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
 import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
@@ -49,10 +51,13 @@ import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
 import DummyTracker from './DummyTracker'
 import { HAR_VERSION } from '../../../../../BuildProfile'
-import Plugins from '../plugins/Plugins'
+import Plugins, { PluginsInterface } from '../plugins/Plugins'
 import MobileDebugger from '../mobileDebugger/MobileDebugger'
 import Circle from '../circle/Circle'
 
+"use shared"
+
+@Sendable
 class Location {
   latitude: number = 0
   longitude: number = 0
@@ -60,23 +65,22 @@ class Location {
 
 export const SDK_VERSION: string = HAR_VERSION
 
+@Sendable
 export default class AnalyticsCore implements GrowingAnalyticsInterface {
-  static uiContent: UIContext
-  static mainWindow: window.Window
+  static abContext: sendableContextManager.SendableContext
   static core: AnalyticsCore | DummyTracker = new DummyTracker()
-  static trackers: Array<AnalyticsCore> = []
+  static trackers: collections.Array<AnalyticsCore> = new collections.Array<AnalyticsCore>()
   static dummyTracker: DummyTracker = new DummyTracker()
   static location: Location = new Location()
   context: GrowingContext
   private _isInitializedSuccessfully: boolean = false
-  private static _mainWindowStage: window.WindowStage | undefined = undefined
 
   constructor(context: GrowingContext) {
     this.context = context
   }
 
   static startCore(context: Context, config: GrowingConfig) {
-    let plugins = [...config.plugins]
+    let plugins: PluginsInterface[] = [...config.plugins]
     if (config.mode != ConfigMode.SaaS) {
       // 仅支持 NewSaaS 和 CDP
       plugins.push(new MobileDebugger())
@@ -149,17 +153,12 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   static setLifecycleCallback(context: Context) {
     // 与Autotrack不同，插件的初始化需要保证在SDK的初始化之后
     // 而Autotrack的UI监听需要在应用启动之初，来保证page.path的正确性等
-    if (AnalyticsCore._mainWindowStage != undefined) {
+    if (AnalyticsCore.abContext != undefined) {
       return
     }
 
     let callback = (abilityContext: common.UIAbilityContext, windowStage: window.WindowStage) => {
-      AnalyticsCore._mainWindowStage = windowStage
-      windowStage.getMainWindow().then(mainWindow => {
-        let context = mainWindow.getUIContext()
-        AnalyticsCore.mainWindow = mainWindow
-        AnalyticsCore.uiContent = context
-      })
+      AnalyticsCore.abContext = sendableContextManager.convertFromContext(abilityContext)
 
       // 无法保证用户对SDK初始化和Autotrack的UI监听的执行顺序，因此使用匿名函数实时获取
       Plugins.setAutotrackStatusFetcher(() => {
@@ -320,13 +319,15 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       if (!tracker.isInitializedSuccessfully()) {
         return
       }
-      if (!(tracker as AnalyticsCore).context.config.dataCollectionEnabled) {
-        return
+      if (tracker instanceof AnalyticsCore) {
+        if (!tracker.context.config.dataCollectionEnabled) {
+          return
+        }
+        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), tracker.context)
+        AnalyticsCore.writeEventToDisk(e, tracker.context)
+        LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
+          + ', attributes: ' + JSON.stringify(attributes))
       }
-      let e = CustomEvent.create(eventName, Util.cloneObject(attributes), (tracker as AnalyticsCore).context)
-      AnalyticsCore.writeEventToDisk(e, (tracker as AnalyticsCore).context)
-      LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
-        + ', attributes: ' + JSON.stringify(attributes))
     })
   }
 

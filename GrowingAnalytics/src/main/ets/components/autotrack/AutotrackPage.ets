@@ -21,7 +21,7 @@ import router from '@ohos.router'
 
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
-import Session, { SessionState } from '../core/Session'
+import Session from '../core/Session'
 import { EventScene } from '../event/Event'
 import PageEvent from '../event/PageEvent'
 import {
@@ -246,7 +246,7 @@ export default class AutotrackPage {
       return
     }
     if (AnalyticsCore.core.isInitializedSuccessfully()
-      && Session.sessionState === SessionState.Foreground) {
+      && Session.isOnForeground) {
       if (!context.config.dataCollectionEnabled) {
         return
       }

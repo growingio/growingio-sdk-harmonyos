@@ -18,39 +18,44 @@
 import { AttributesType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import Util from '../utils/Util'
+import collections from '@arkts.collections'
 
+"use shared"
+
+@Sendable
 export default class GeneralProps {
-  private static _internalProps: AttributesType = {}
-  private static _dynamicGeneralPropsGenerator: () => AttributesType = () => {
-    return {}
-  }
+  // private static _internalProps: collections.Map<string, SendableValueType>
+  // private static _dynamicGeneralPropsGenerator: () => SendableAttributesType = () => {
+  //   return {}
+  // }
 
   static setGeneralProps(props: AttributesType) {
-    LogUtil.info(() => 'Set generalProps: ' + JSON.stringify(props))
-    GeneralProps._internalProps = Util.concatObject(GeneralProps._internalProps, props)
-    LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
+    // LogUtil.info(() => 'Set generalProps: ' + JSON.stringify(props))
+    // GeneralProps._internalProps = Util.concatObject(GeneralProps._internalProps, props)
+    // LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
   }
 
   static removeGeneralProps(keys: string[]) {
-    LogUtil.info(() => 'Remove generalProps by keys: ' + keys)
-    Util.removeKeysForObject(keys, GeneralProps._internalProps)
-    LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
+    // LogUtil.info(() => 'Remove generalProps by keys: ' + keys)
+    // Util.removeKeysForObject(keys, GeneralProps._internalProps)
+    // LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
   }
 
   static clearGeneralProps() {
-    LogUtil.info(() => 'Clear generalProps')
-    GeneralProps._internalProps = {}
+    // LogUtil.info(() => 'Clear generalProps')
+    // GeneralProps._internalProps = {}
   }
 
   static setDynamicGeneralProps(generator: () => AttributesType) {
-    LogUtil.info(() => 'Set dynamicGeneralProps')
-    GeneralProps._dynamicGeneralPropsGenerator = generator
+    // LogUtil.info(() => 'Set dynamicGeneralProps')
+    // GeneralProps._dynamicGeneralPropsGenerator = generator
   }
 
   static getGeneralProps(): AttributesType {
-    let dynamicProps = GeneralProps._dynamicGeneralPropsGenerator()
-    let props = Util.cloneObject(GeneralProps._internalProps)
-    let properties = Util.concatObject(props, dynamicProps)
-    return properties
+    // let dynamicProps = GeneralProps._dynamicGeneralPropsGenerator()
+    // let props = Util.cloneObject(GeneralProps._internalProps)
+    // let properties = Util.concatObject(props, dynamicProps)
+    // return properties
+    return {}
   }
 }

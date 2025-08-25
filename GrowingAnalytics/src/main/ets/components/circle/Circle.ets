@@ -34,7 +34,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   snapshotProvider?: SnapshotProvider
 
   connect(url: string) {
-    if (AnalyticsCore.mainWindow && AnalyticsCore.uiContent) {
+    if (AnalyticsCore.abContext) {
       this.ws.connect(url, this)
       return
     }

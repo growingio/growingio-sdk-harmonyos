@@ -51,7 +51,7 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
   }
 
   connect(url: string) {
-    if (AnalyticsCore.mainWindow && AnalyticsCore.uiContent) {
+    if (AnalyticsCore.abContext) {
       this.ws.connect(url, this)
       return
     }
