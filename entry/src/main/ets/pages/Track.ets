@@ -60,7 +60,11 @@ struct Track {
         .onClick(() => {
           this.track()
         }).margin({ top: 15 })
-      Button('Test 2MB Limit')
+      Button('track more')
+        .onClick(() => {
+          this.trackMore()
+        }).margin({ top: 15 })
+      Button('test 2MB limit')
         .onClick(() => {
           this.testSizeLimit()
         }).margin({ top: 15 })
@@ -112,6 +116,21 @@ struct Track {
     //   'num': 100,
     //   'from': ['sichuan', 'guizhou', 'hunan']
     // })
+  }
+
+  trackMore() {
+    // 同时触发多个埋点事件
+    for (let i = 1; i <= 100; i++) {
+      try {
+        GrowingAnalytics.track(`batch_custom_event_${i}`, {
+          'event_index': i,
+          'total_events': 100,
+          'generation_time': Date.now(),
+          'test_data': `This is test event number ${i} of 100`,
+        })
+      } catch (e) {
+      }
+    }
   }
 
   testSizeLimit() {

@@ -18,16 +18,29 @@
 import { PullToRefresh } from '../views/PullToRefresh'
 import EventDatabase from '../event/EventDatabase'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
-import RequestPersistence from '../network/RequestPersistence'
+import { IRequestPersistence } from '../network/RequestPersistence'
 import { NavTitle } from '../views/Common'
 import { GTKColor } from '../utils/Constants'
 import Util from '../utils/Util'
+import { taskpool } from '@kit.ArkTS'
+
+@Concurrent
+function serializeRequestBodyTask(requestHeader: string, requestBody: ArrayBuffer): string {
+  try {
+    const requestBodyText = Util.getRequestBodyText(requestHeader, requestBody)
+    return JSON.stringify(JSON.parse(requestBodyText), null, 4)
+  } catch (e) {
+    return '解析请求数据失败'
+  }
+}
 
 @ComponentV2
 export default struct NetFlow {
   @Local dataSource: NetFlowDataSource = new NetFlowDataSource()
   @Local isShowDetail: Map<string, boolean> = new Map()
   @Local isShowRequestDetail: boolean = true
+  @Local serializedRequestBodies: Map<string, string> = new Map()
+  @Local loadingRequestBodies: Set<string> = new Set()
   private scroller: Scroller = new Scroller()
 
   aboutToAppear(): void {
@@ -73,7 +86,7 @@ export default struct NetFlow {
   @Builder
   private getListView() {
     List({ space: 3, scroller: this.scroller }) {
-      LazyForEach(this.dataSource, (request: RequestPersistence | string) => {
+      LazyForEach(this.dataSource, (request: IRequestPersistence | string) => {
         ListItem() {
           if (typeof request == 'string') {
             Row() {
@@ -160,7 +173,7 @@ export default struct NetFlow {
             })
           }
         }
-      }, (request: RequestPersistence | string) => typeof request == 'string' ? request : request.uuid)
+      }, (request: IRequestPersistence | string) => typeof request == 'string' ? request : request.uuid)
     }
     .backgroundColor(GTKColor.secondaryWhite)
     .width('100%')
@@ -203,7 +216,7 @@ export default struct NetFlow {
   }
 
   @Builder
-  private getDetailView(request: RequestPersistence) {
+  private getDetailView(request: IRequestPersistence) {
     Column() {
       if (this.isShowRequestDetail) {
         this.getDetailHeader('消息体')
@@ -285,7 +298,9 @@ export default struct NetFlow {
 
   @Builder
   private getDetailText(text: string) {
-    Text(text)
+    Text(text.length > 10000
+      ? text.substring(0, 10000) + '...\n\n[出于性能考虑，内容已截取，完整内容请通过抓包/MobileDebugger功能查看]\n'
+      : text)
       .fontSize(14)
       .fontColor(GTKColor.primaryBlack)
       .copyOption(CopyOptions.LocalDevice)
@@ -294,13 +309,41 @@ export default struct NetFlow {
   }
 
   @Builder
-  private getDetailRequestBody(request: RequestPersistence) {
-    this.getDetailText(JSON.stringify(
-      JSON.parse(Util.getRequestBodyText(request.info.requestHeader, request.requestBody)), null, 4))
+  private getDetailRequestBody(request: IRequestPersistence) {
+    if (this.serializedRequestBodies.has(request.uuid)) {
+      this.getDetailText(this.serializedRequestBodies.get(request.uuid)!)
+    } else {
+      Text('正在解析请求数据...')
+        .fontSize(14)
+        .fontColor(GTKColor.secondaryBlack)
+        .width('100%')
+        .padding({ left: 8, right: 8 })
+        .onAttach(() => {
+          this.serializeRequestBody(request)
+        })
+    }
+  }
+
+  private async serializeRequestBody(request: IRequestPersistence) {
+    if (this.serializedRequestBodies.has(request.uuid) || this.loadingRequestBodies.has(request.uuid)) {
+      return
+    }
+    
+    this.loadingRequestBodies.add(request.uuid)
+    
+    try {
+      const task = new taskpool.Task(serializeRequestBodyTask, request.info.requestHeader, request.getRequestBody())
+      const serializedBody = await taskpool.execute(task) as string
+      this.serializedRequestBodies.set(request.uuid, serializedBody)
+    } catch (e) {
+      this.serializedRequestBodies.set(request.uuid, '解析请求数据失败')
+    } finally {
+      this.loadingRequestBodies.delete(request.uuid)
+    }
   }
 
   @Builder
-  private getDetailResponseBody(request: RequestPersistence) {
+  private getDetailResponseBody(request: IRequestPersistence) {
     this.getDetailText(JSON.stringify(request.responseBody, null, 4))
   }
 
@@ -308,11 +351,14 @@ export default struct NetFlow {
     let pageSize = 50
     if (loadMore) {
       let originDataSource = this.dataSource.getAllData()
-      let createAt = (originDataSource[originDataSource.length - 1] as RequestPersistence).info.startTimestamp
+      let createAt = (originDataSource[originDataSource.length - 1] as IRequestPersistence).info.startTimestamp
       let requests = await EventDatabase.getRequestsByCount(pageSize, createAt)
       let dataSource = this.recalculateData(requests, originDataSource)
       this.dataSource.pushData(dataSource)
     } else {
+      // Clear cached serialized data when doing full refresh
+      this.serializedRequestBodies.clear()
+      this.loadingRequestBodies.clear()
       let requests = await EventDatabase.getRequestsByCount(pageSize)
       let dataSource = this.recalculateData(requests)
       this.dataSource.reloadData(dataSource)
@@ -320,9 +366,9 @@ export default struct NetFlow {
   }
 
   recalculateData(
-    data: RequestPersistence[],
-    originData?: (RequestPersistence | string)[]
-  ): (RequestPersistence | string)[] {
+    data: IRequestPersistence[],
+    originData?: (IRequestPersistence | string)[]
+  ): (IRequestPersistence | string)[] {
     let today = new Date().toISOString().split('T')[0]
     let yesterday = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     let currentLabel: string = ''
@@ -353,26 +399,26 @@ export default struct NetFlow {
 
 class NetFlowDataSource implements IDataSource {
   private listeners: DataChangeListener[] = []
-  private dataSource: (RequestPersistence | string)[] = []
+  private dataSource: (IRequestPersistence | string)[] = []
 
   public totalCount(): number {
     return this.dataSource.length
   }
 
-  public getData(index: number): RequestPersistence | string {
+  public getData(index: number): IRequestPersistence | string {
     return this.dataSource[index]
   }
 
-  public getAllData(): (RequestPersistence | string)[] {
+  public getAllData(): (IRequestPersistence | string)[] {
     return [...this.dataSource]
   }
 
-  public reloadData(data: (RequestPersistence | string)[]): void {
+  public reloadData(data: (IRequestPersistence | string)[]): void {
     this.dataSource = data
     this.notifyDataReload()
   }
 
-  public pushData(data: (RequestPersistence | string)[]): void {
+  public pushData(data: (IRequestPersistence | string)[]): void {
     let index = this.dataSource.length - 1
     this.dataSource = [...this.dataSource, ...data]
     this.notifyDataAdd(index, data.length)

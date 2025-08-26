@@ -17,12 +17,22 @@
 
 import { PullToRefresh } from '../views/PullToRefresh'
 import EventDatabase from '../event/EventDatabase'
-import EventPersistence from '../event/EventPersistence'
+import { IEventPersistence } from '../event/EventPersistence'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 import { NavTitle } from '../views/Common'
 import { GTKColor, EventScene, MAIN_TRACKER_ID } from '../utils/Constants'
 import TrackerTabBar from '../views/TrackerTabBar'
 import TrackersInfo from '../core/TrackersInfo'
+import { taskpool } from '@kit.ArkTS'
+
+@Concurrent
+function serializeEventDataTask(eventData: string): string {
+  try {
+    return JSON.stringify(JSON.parse(eventData), null, 4)
+  } catch (e) {
+    return '解析事件数据失败'
+  }
+}
 
 @ComponentV2
 export default struct EventsList {
@@ -99,7 +109,7 @@ export default struct EventsList {
   @Builder
   private getListView() {
     List({ space: 3, scroller: this.scroller }) {
-      LazyForEach(this.dataSource, (event: EventPersistence | string) => {
+      LazyForEach(this.dataSource, (event: IEventPersistence | string) => {
         ListItem() {
           if (typeof event == 'string') {
             Row() {
@@ -172,7 +182,7 @@ export default struct EventsList {
             })
           }
         }
-      }, (event: EventPersistence | string) => typeof event == 'string' ? event : event.uuid + String(event.isSend))
+      }, (event: IEventPersistence | string) => typeof event == 'string' ? event : event.uuid + String(event.isSend))
     }
     .width('100%')
     .height('100%')
@@ -182,10 +192,9 @@ export default struct EventsList {
   }
 
   @Builder
-  private getDetailView(event: EventPersistence) {
+  private getDetailView(event: IEventPersistence) {
     Column() {
-      Text(JSON.stringify(JSON.parse(event.data), null, 4))
-        .copyOption(CopyOptions.LocalDevice)
+      AsyncDetailText({ eventData: event.data })
     }
   }
 
@@ -193,7 +202,7 @@ export default struct EventsList {
     let pageSize = 50
     if (loadMore) {
       let originDataSource = this.dataSource.getAllData()
-      let createAt = (originDataSource[originDataSource.length - 1] as EventPersistence).createAt
+      let createAt = (originDataSource[originDataSource.length - 1] as IEventPersistence).createAt
       let events = await EventDatabase.getEventsByCount(pageSize, createAt, this.accountId, this.dataSourceId)
       let dataSource = this.recalculateData(events, originDataSource)
       this.dataSource.pushData(dataSource)
@@ -205,9 +214,9 @@ export default struct EventsList {
   }
 
   recalculateData(
-    data: EventPersistence[],
-    originData?: (EventPersistence | string)[]
-  ): (EventPersistence | string)[] {
+    data: IEventPersistence[],
+    originData?: (IEventPersistence | string)[]
+  ): (IEventPersistence | string)[] {
     let today = new Date().toISOString().split('T')[0]
     let yesterday = new Date(new Date().getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     let currentLabel: string = ''
@@ -227,37 +236,37 @@ export default struct EventsList {
       if (currentLabel != dateLabel) {
         currentLabel = dateLabel
         if (originData && originData.indexOf(dateLabel) > 0) {
-          return [e]
+          return [e] as (IEventPersistence | string)[]
         }
-        return [dateLabel, e]
+        return [dateLabel, e] as (IEventPersistence | string)[]
       }
-      return [e]
+      return [e] as (IEventPersistence | string)[]
     })
   }
 }
 
 class EventsListDataSource implements IDataSource {
   private listeners: DataChangeListener[] = []
-  private dataSource: (EventPersistence | string)[] = []
+  private dataSource: (IEventPersistence | string)[] = []
 
   public totalCount(): number {
     return this.dataSource.length
   }
 
-  public getData(index: number): EventPersistence | string {
+  public getData(index: number): IEventPersistence | string {
     return this.dataSource[index]
   }
 
-  public getAllData(): (EventPersistence | string)[] {
+  public getAllData(): (IEventPersistence | string)[] {
     return [...this.dataSource]
   }
 
-  public reloadData(data: (EventPersistence | string)[]): void {
+  public reloadData(data: (IEventPersistence | string)[]): void {
     this.dataSource = data
     this.notifyDataReload()
   }
 
-  public pushData(data: (EventPersistence | string)[]): void {
+  public pushData(data: (IEventPersistence | string)[]): void {
     let index = this.dataSource.length - 1
     this.dataSource = [...this.dataSource, ...data]
     this.notifyDataAdd(index, data.length)
@@ -292,5 +301,46 @@ class EventsListDataSource implements IDataSource {
         count: count
       }])
     })
+  }
+}
+
+@ComponentV2
+struct AsyncDetailText {
+  @Param eventData: string = ''
+  @Local serializedData: string = ''
+  @Local isLoading: boolean = true
+
+  aboutToAppear(): void {
+    this.serializeData()
+  }
+
+  private async serializeData() {
+    try {
+      const task = new taskpool.Task(serializeEventDataTask, this.eventData)
+      this.serializedData = await taskpool.execute(task) as string
+    } catch (e) {
+      this.serializedData = '解析事件数据失败'
+    } finally {
+      this.isLoading = false
+    }
+  }
+
+  build() {
+    if (this.isLoading) {
+      Text('正在解析事件数据...')
+        .fontSize(14)
+        .fontColor(GTKColor.secondaryBlack)
+        .width('100%')
+        .padding({ left: 8, right: 8 })
+    } else {
+      Text(this.serializedData.length > 10000
+        ? this.serializedData.substring(0, 10000) + '...\n\n[出于性能考虑，内容已截取，完整内容请通过抓包/MobileDebugger功能查看]\n'
+        : this.serializedData)
+        .fontSize(14)
+        .fontColor(GTKColor.primaryBlack)
+        .copyOption(CopyOptions.LocalDevice)
+        .width('100%')
+        .padding({ left: 8, right: 8 })
+    }
   }
 }
