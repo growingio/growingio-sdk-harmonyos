@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the **GrowingIO HarmonyOS NEXT SDK** repository, a data analytics SDK for HarmonyOS applications. The project contains:
+This is the **GrowingIO HarmonyOS SDK** repository, a data analytics SDK for HarmonyOS applications. The project contains:
 
 - **GrowingAnalytics**: Core analytics SDK module for event tracking and data collection
 - **GrowingToolsKit**: Developer tools and debugging utilities for the SDK
