@@ -9,11 +9,11 @@
     "GrowingIO"
   ],
   "author": "GrowingIO",
-  "description": "GrowingAnalytics for HarmonyOS NEXT SDK.",
+  "description": "GrowingAnalytics for HarmonyOS SDK.",
   "main": "index.ets",
   "type": "module",
   "repository": "https://github.com/growingio/growingio-sdk-harmonyos",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "dependencies": {
     "snappyjs": "^0.7.0",
     "@ohos/protobufjs": "^2.1.0",

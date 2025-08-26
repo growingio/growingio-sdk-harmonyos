@@ -1,4 +1,4 @@
-GrowingIO HarmonyOS NEXT SDK
+GrowingIO HarmonyOS SDK
 ======
 ![GrowingIO](https://www.growingio.com/vassets/images/home_v3/gio-logo-primary.svg)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/growingio/growingio-sdk-harmonyos)
@@ -8,9 +8,7 @@ GrowingIO HarmonyOS NEXT SDK
 GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社区等行业，成立以来，累计服务超过 1500 家企业级客户，获得 LVMH 集团、百事、达能、老佛爷百货、戴尔、lululemon、美素佳儿、宜家、乐高、美的、海尔、安踏、汉光百货、中原地产、上汽集团、广汽蔚来、理想汽车、招商仁和人寿、飞鹤、红星美凯龙、东方航空、滴滴、新东方、喜茶、每日优鲜、奈雪的茶、永辉超市等客户的青睐。
 
 ## SDK 简介
-**GrowingIO HarmonyOS NEXT SDK** 自动采集用户访问事件，并支持手动调用相应埋点 APIs 采集埋点事件。
-
-> 支持 HarmonyOS NEXT，基于 OpenHarmony API 12
+**GrowingIO HarmonyOS SDK** 自动采集用户访问事件，并支持手动调用相应埋点 APIs 采集埋点事件。
 
 ## 集成文档
 ### 通过 ohpm 中心仓集成
