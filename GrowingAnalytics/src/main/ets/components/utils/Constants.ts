@@ -16,6 +16,7 @@
  */
 
 import webview from '@ohos.web.webview'
+import window from '@ohos.window'
 
 export const PREFERENCE_NAME = 'growing_analytics_sp'
 export const PREFERENCE_USER_ID = "growing_user_id"
@@ -130,3 +131,8 @@ export type SaaSJavaScriptConfigType = {
 export const EMIT_EVENT_MAIN_TRACKER_INITIALIZE = "GROWING_EMIT_EVENT_MAIN_TRACKER_INITIALIZE"
 export const EMIT_EVENT_SESSION_STATE_FOREGROUND = "GROWING_EMIT_EVENT_SESSION_STATE_FOREGROUND"
 export const EMIT_EVENT_DATABASE_FLUSH = "GROWING_EMIT_EVENT_DATABASE_FLUSH"
+
+export class GWindowStage {
+  windowStage?: window.WindowStage = undefined
+}
+export const STORAGE_WINDOW_STAGE = 'growing_window_stage'

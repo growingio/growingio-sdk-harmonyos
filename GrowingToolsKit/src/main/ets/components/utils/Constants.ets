@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import lang from '@arkts.lang'
+import window from '@ohos.window'
+
 export const ENTRY_PADDING = 5
 export const ENTRY_MARGIN = 8
 export const SUB_WINDOW_NAME = 'GrowingToolsKit'
@@ -43,18 +46,19 @@ export enum GTKColor {
   flutterTagLabel = '#027DFD',
 }
 
-export enum ConfigMode {
-  NewSaaS = 0,
-  SaaS,
-  CDP
+@Sendable
+export class ConfigMode {
+  static NewSaaS: number = 0
+  static SaaS: number = 1
+  static CDP: number = 2
 }
 
-export interface RequestOptions {
+export interface RequestOptions extends lang.ISendable {
   _connectTimeout: number
   _transferTimeout: number
 }
 
-export interface GTKConfig {
+export interface GTKConfig extends lang.ISendable {
   mode: ConfigMode
   accountId: string
   dataSourceId: string
@@ -90,10 +94,22 @@ export enum EventScene {
   Flutter
 }
 
-export interface Position {
+@Sendable
+export class Position {
   x: number
   y: number
+
+  constructor(x: number, y: number) {
+    this.x = x
+    this.y = y
+  }
 }
+
+export class GTKWindowStage {
+  windowStage?: window.WindowStage = undefined
+}
+export const STORAGE_WINDOW_STAGE = 'growingtk_window_stage'
+
 export const PREFERENCE_ENTRY_POSITION = 'growingtk_entry_position'
 
 // FPS 显示窗口尺寸常量

@@ -34,7 +34,7 @@ import EventTimer from './EventTimer'
 import Hybrid from './Hybrid'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
-import Autotrack from '../autotrack/Autotrack'
+import Autotrack, { AutotrackStatusFetcher } from '../autotrack/Autotrack'
 import CustomEvent from '../event/CustomEvent'
 import Event, { EventScene, EventType } from '../event/Event'
 import EventDatabase from '../event/EventDatabase'
@@ -44,8 +44,11 @@ import LoginUserAttributesEvent from '../event/LoginUserAttributesEvent'
 import { SaaSEvarEvent, SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
 import Network from './Network'
 import FakePageEvent from '../event/saas/FakePageEvent'
-import { AttributesType, EMIT_EVENT_MAIN_TRACKER_INITIALIZE, JavaScriptProxyType,
-  SaaSJavaScriptConfigType } from '../utils/Constants'
+import { AttributesType, EMIT_EVENT_MAIN_TRACKER_INITIALIZE,
+  GWindowStage,
+  JavaScriptProxyType,
+  SaaSJavaScriptConfigType,
+  STORAGE_WINDOW_STAGE} from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import Util from '../utils/Util'
@@ -54,6 +57,7 @@ import { HAR_VERSION } from '../../../../../BuildProfile'
 import Plugins, { PluginsInterface } from '../plugins/Plugins'
 import MobileDebugger from '../mobileDebugger/MobileDebugger'
 import Circle from '../circle/Circle'
+import { AppStorageV2 } from '@ohos.arkui.StateManagement'
 
 "use shared"
 
@@ -159,11 +163,13 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
     let callback = (abilityContext: common.UIAbilityContext, windowStage: window.WindowStage) => {
       AnalyticsCore.abContext = sendableContextManager.convertFromContext(abilityContext)
+      let prop = AppStorageV2.connect(GWindowStage, STORAGE_WINDOW_STAGE, () => new GWindowStage())
+      if (prop != undefined) {
+        prop.windowStage = windowStage
+      }
 
       // 无法保证用户对SDK初始化和Autotrack的UI监听的执行顺序，因此使用匿名函数实时获取
-      Plugins.setAutotrackStatusFetcher(() => {
-        return Autotrack.uiContent != undefined && Autotrack.uiContent != null
-      })
+      Plugins.setAutotrackStatusFetcher(AutotrackStatusFetcher)
       Plugins.afterWindowStageCreate(abilityContext, windowStage)
     }
 
@@ -216,6 +222,15 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     }
 
     context.getApplicationContext().on('applicationStateChange', applicationStateChangeCallback)
+  }
+
+  static mainWindow(): window.Window | undefined {
+    let prop = AppStorageV2.connect(GWindowStage, STORAGE_WINDOW_STAGE, () => new GWindowStage())
+    let windowStage = prop?.windowStage
+    if (windowStage) {
+      return windowStage.getMainWindowSync()
+    }
+    return undefined
   }
 
   createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {

@@ -20,8 +20,6 @@ import display from '@ohos.display'
 import { OverlayManager } from '@ohos.arkui.UIContext'
 import window from '@ohos.window'
 import promptAction from "@ohos.promptAction"
-import common from '@ohos.app.ability.common'
-import sendableContextManager from '@ohos.app.ability.sendableContextManager'
 
 import AnalyticsCore from "../core/AnalyticsCore"
 
@@ -35,16 +33,19 @@ export class StatusView {
       return
     }
 
-    let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
-    let window = context.windowStage.getMainWindowSync()
-    this.params = new Params(text, window,
+    let mainWindow = AnalyticsCore.mainWindow()
+    if (mainWindow ==  undefined) {
+      return
+    }
+
+    this.params = new Params(text, mainWindow,
       () => {
         this._update()
       },
       () => {
         onClick()
       })
-    let uiContext = window.getUIContext()
+    let uiContext = mainWindow.getUIContext()
     this.overlayNode = uiContext.getOverlayManager()
     this.componentContent = new ComponentContent(
       uiContext,
@@ -55,13 +56,12 @@ export class StatusView {
   }
 
   static showDialog(options: promptAction.ShowDialogOptions): Promise<promptAction.ShowDialogSuccessResponse> {
-    if (!AnalyticsCore.abContext) {
-      return Promise.reject(new Error('Current UIContext is not available'))
-    }
     try {
-      let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
-      let window = context.windowStage.getMainWindowSync()
-      let uiContext = window.getUIContext()
+      let mainWindow = AnalyticsCore.mainWindow()
+      if (mainWindow ==  undefined) {
+        return Promise.reject(new Error('Main window is not available'))
+      }
+      let uiContext = mainWindow.getUIContext()
       let promptAction = uiContext.getPromptAction()
       return promptAction.showDialog(options)
     } catch (error) {

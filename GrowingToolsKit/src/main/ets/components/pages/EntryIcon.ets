@@ -17,6 +17,8 @@
 
 import window from '@ohos.window'
 import display from '@ohos.display'
+import { AppStorageV2 } from '@ohos.arkui.StateManagement'
+
 import {
   SUB_WINDOW_NAME,
   ENTRY_MARGIN,
@@ -27,7 +29,9 @@ import {
   GTKColor,
   FPS_WINDOW_WIDTH,
   FPS_WINDOW_HEIGHT,
-  SMALL_ICON_WINDOW_SIDE_LENGTH} from '../utils/Constants'
+  SMALL_ICON_WINDOW_SIDE_LENGTH,
+  GTKWindowStage,
+  STORAGE_WINDOW_STAGE} from '../utils/Constants'
 import Home from './Home'
 import SdkInfo from './SdkInfo'
 import EventsList from './EventsList'
@@ -35,7 +39,6 @@ import Realtime from './Realtime'
 import NetFlow from './NetFlow'
 import FPSCanvas from './FPSCanvas'
 import NavStackManager from '../core/NavStackManager'
-import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
 
 export const routeName: string = "EntryIcon"
 
@@ -78,7 +81,7 @@ export class EntryIconManager {
 @Component
 struct EntryIcon {
   pageStack: NavPathStack = NavStackManager.pageStack
-  @LocalStorageProp(PREFERENCE_ENTRY_POSITION) windowPosition: Position = { x: 0, y: 0 }
+  @LocalStorageProp(PREFERENCE_ENTRY_POSITION) windowPosition: Position = new Position(0, 0)
   @State isFPSMode: boolean = false
 
   aboutToAppear() {
@@ -86,10 +89,13 @@ struct EntryIcon {
   }
 
   _mainWindow: window.Window | undefined = undefined
-  mainWindow(): window.Window {
+  mainWindow(): window.Window | undefined {
     if (this._mainWindow == undefined) {
-      let windowStage = GrowingToolsKit.mainWindowStage
-      this._mainWindow = windowStage!.getMainWindowSync()
+      let prop = AppStorageV2.connect(GTKWindowStage, STORAGE_WINDOW_STAGE, () => new GTKWindowStage())
+      let windowStage = prop?.windowStage
+      if (windowStage) {
+        this._mainWindow = windowStage.getMainWindowSync()
+      }
     }
 
     return this._mainWindow
@@ -121,29 +127,37 @@ struct EntryIcon {
   }
 
   private handleClick() {
-    let subWindow = this.subWindow()
-    let screenWidth = display.getDefaultDisplaySync().width
-    let screenHeight = display.getDefaultDisplaySync().height
-    let avoidArea = this.mainWindow().getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
-    let avoidTop = Math.max(avoidArea.topRect.height, 126)
+    try {
+      let mainWindow = this.mainWindow()
+      if (mainWindow == undefined) {
+        return
+      }
+      let subWindow = this.subWindow()
+      let screenWidth = display.getDefaultDisplaySync().width
+      let screenHeight = display.getDefaultDisplaySync().height
+      let avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
+      let avoidTop = Math.max(avoidArea.topRect.height, 126)
 
-    subWindow.moveWindowTo(0, avoidTop)
-    subWindow.resize(screenWidth, screenHeight - avoidTop).then(() => {
-      let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Home', '', popInfo => {
-        if (EntryIconManager.getInstance().isFPSEnabled()) {
-          this.windowPosition.x = 20
-          this.windowPosition.y = avoidTop + 20
+      subWindow.moveWindowTo(0, avoidTop)
+      subWindow.resize(screenWidth, screenHeight - avoidTop).then(() => {
+        let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Home', '', popInfo => {
+          if (EntryIconManager.getInstance().isFPSEnabled()) {
+            this.windowPosition.x = 20
+            this.windowPosition.y = avoidTop + 20
 
-          // FPS was enabled in Home, need to resize to large window
-          subWindow.resize(vp2px(FPS_WINDOW_WIDTH), vp2px(FPS_WINDOW_HEIGHT))
-        } else {
-          // FPS not enabled, restore small icon
-          subWindow.resize(vp2px(SMALL_ICON_WINDOW_SIDE_LENGTH), vp2px(SMALL_ICON_WINDOW_SIDE_LENGTH))
-        }
-        subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+            // FPS was enabled in Home, need to resize to large window
+            subWindow.resize(vp2px(FPS_WINDOW_WIDTH), vp2px(FPS_WINDOW_HEIGHT))
+          } else {
+            // FPS not enabled, restore small icon
+            subWindow.resize(vp2px(SMALL_ICON_WINDOW_SIDE_LENGTH), vp2px(SMALL_ICON_WINDOW_SIDE_LENGTH))
+          }
+          subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+        })
+        this.pageStack.pushDestination(destination, false)
       })
-      this.pageStack.pushDestination(destination, false)
-    })
+    } catch (e) {
+
+    }
   }
 
   private onPanActionUpdate(event: GestureEvent) {
@@ -153,33 +167,42 @@ struct EntryIcon {
   }
 
   private onPanActionEnd(event: GestureEvent) {
-    let subWindow = this.subWindow()
-    let screenWidth = display.getDefaultDisplaySync().width
-    let screenHeight = display.getDefaultDisplaySync().height
-    let entryWidth = subWindow.getWindowProperties().windowRect.width
-    let entryHeight = subWindow.getWindowProperties().windowRect.height
-    let padding = vp2px(ENTRY_PADDING)
-    let avoidArea = this.mainWindow().getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
-    let avoidTop = Math.max(avoidArea.topRect.height, 126)
-    let avoidBottom = Math.max(avoidArea.bottomRect.height, 100)
+    try {
+      let mainWindow = this.mainWindow()
+      if (mainWindow == undefined) {
+        return
+      }
 
-    let minY = avoidTop + padding
-    let maxY = screenHeight - avoidBottom - entryHeight - padding
-    if (this.windowPosition.y > maxY) {
-      this.windowPosition.y = maxY
-    } else if (this.windowPosition.y < minY) {
-      this.windowPosition.y = minY
+      let subWindow = this.subWindow()
+      let screenWidth = display.getDefaultDisplaySync().width
+      let screenHeight = display.getDefaultDisplaySync().height
+      let entryWidth = subWindow.getWindowProperties().windowRect.width
+      let entryHeight = subWindow.getWindowProperties().windowRect.height
+      let padding = vp2px(ENTRY_PADDING)
+      let avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
+      let avoidTop = Math.max(avoidArea.topRect.height, 126)
+      let avoidBottom = Math.max(avoidArea.bottomRect.height, 100)
+
+      let minY = avoidTop + padding
+      let maxY = screenHeight - avoidBottom - entryHeight - padding
+      if (this.windowPosition.y > maxY) {
+        this.windowPosition.y = maxY
+      } else if (this.windowPosition.y < minY) {
+        this.windowPosition.y = minY
+      }
+
+      let minX = padding
+      let maxX = screenWidth - entryWidth - padding
+      if (this.windowPosition.x > (screenWidth - entryWidth) / 2) {
+        this.windowPosition.x = maxX
+      } else {
+        this.windowPosition.x = minX
+      }
+
+      subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+    } catch (e) {
+
     }
-
-    let minX = padding
-    let maxX = screenWidth - entryWidth - padding
-    if (this.windowPosition.x > (screenWidth - entryWidth) / 2) {
-      this.windowPosition.x = maxX
-    } else {
-      this.windowPosition.x = minX
-    }
-
-    subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
   }
 
   @Builder

@@ -24,10 +24,13 @@ import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import { routeName } from '../pages/EntryIcon'
 import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_POSITION,
-  GTKConfig, GTKEventPersistence } from '../utils/Constants'
+  GTKConfig, GTKEventPersistence, GTKWindowStage, STORAGE_WINDOW_STAGE } from '../utils/Constants'
 import RequestPersistence from '../network/RequestPersistence'
 import TrackersInfo from '../core/TrackersInfo'
 import SharedPreferences from '../utils/SharedPreferences'
+import { AppStorageV2 } from '@ohos.arkui.StateManagement'
+
+"use shared"
 
 interface GrowingToolsKitOptions {
   x?: number
@@ -35,16 +38,20 @@ interface GrowingToolsKitOptions {
   useInRelease?: boolean
 }
 
+@Sendable
+type SendableFetcher = () => boolean
+
+@Sendable
 export class GrowingToolsKit {
   static debug: boolean = false
-  static mainWindowStage: window.WindowStage | undefined = undefined
+  static isSubWindowCreated: boolean = false
   static sdkConfig: GTKConfig
   static sdkVersion: string
   static sdkStartTime: number = 0
   static sdkEndTime: number = 0
   static gioKitStartTime: number = 0
-  private _position: Position = { x: 0, y: 0 }
-  static autotrackStatusFetcher: () => boolean
+  private _position: Position = new Position(0, 0)
+  static autotrackStatusFetcher: SendableFetcher
   static deferStart: boolean = false
 
   constructor(options?: GrowingToolsKitOptions) {
@@ -125,7 +132,7 @@ export class GrowingToolsKit {
     TrackersInfo.push(trackerId, config)
   }
 
-  setAutotrackStatusFetcher(fetcher: () => boolean) {
+  setAutotrackStatusFetcher(fetcher: SendableFetcher) {
     GrowingToolsKit.autotrackStatusFetcher = fetcher
   }
 
@@ -143,11 +150,16 @@ export class GrowingToolsKit {
       return
     }
 
-    if (GrowingToolsKit.mainWindowStage != undefined) {
-      return
+    let prop = AppStorageV2.connect(GTKWindowStage, STORAGE_WINDOW_STAGE, () => new GTKWindowStage())
+    if (prop != undefined) {
+      prop.windowStage = windowStage
     }
 
-    GrowingToolsKit.mainWindowStage = windowStage
+    if (GrowingToolsKit.isSubWindowCreated) {
+      return
+    }
+    GrowingToolsKit.isSubWindowCreated = true
+
     SharedPreferences.initWithContext(context)
     windowStage.createSubWindow(SUB_WINDOW_NAME).then(subWindow => {
       let localStorage = new LocalStorage()

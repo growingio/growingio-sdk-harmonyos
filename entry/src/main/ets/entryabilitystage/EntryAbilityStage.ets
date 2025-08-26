@@ -40,7 +40,7 @@ export default class EntryAbilityStage extends AbilityStage {
     config.requestOptions.transferTimeout = 10
     config.autotrackEnabled = true
     config.autotrackAllPages = true
-    // config.plugins = new collections.Array(new GrowingToolsKit())
+    config.plugins = new collections.Array(new GrowingToolsKit())
     GrowingAnalytics.start(this.context, config)
 
     // ---------------- CDP ----------------

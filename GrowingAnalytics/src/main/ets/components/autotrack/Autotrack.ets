@@ -45,3 +45,7 @@ export default class Autotrack {
   }
 }
 
+@Sendable
+export function AutotrackStatusFetcher(): boolean {
+  return Autotrack.uiContent != undefined && Autotrack.uiContent != null
+}

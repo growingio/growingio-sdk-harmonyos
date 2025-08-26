@@ -19,8 +19,6 @@ import uiObserver from '@ohos.arkui.observer'
 import image from '@ohos.multimedia.image'
 import buffer from '@ohos.buffer'
 import { BusinessError } from '@ohos.base'
-import common from '@ohos.app.ability.common'
-import sendableContextManager from '@ohos.app.ability.sendableContextManager'
 
 import AnalyticsCore from "../core/AnalyticsCore"
 
@@ -100,8 +98,12 @@ export class SnapshotProvider {
     if (this.onScroll) {
       return
     }
-    let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
-    let mainWindow = context.windowStage.getMainWindowSync()
+
+    let mainWindow = AnalyticsCore.mainWindow()
+    if (mainWindow == undefined) {
+      return
+    }
+
     mainWindow.snapshot((error: BusinessError, pixmap: image.PixelMap) => {
       let errCode = error.code
       if (errCode) {
@@ -139,16 +141,20 @@ class DidLayoutObserver {
   }
 
   on() {
-    let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
-    let mainWindow = context.windowStage.getMainWindowSync()
+    let mainWindow = AnalyticsCore.mainWindow()
+    if (mainWindow ==  undefined) {
+      return
+    }
     let currentUIContext = mainWindow.getUIContext()
     currentUIContext.getUIObserver().on('didLayout', this.didLayoutCallback)
     currentUIContext.getUIObserver().on('scrollEvent', this.onScrollEventCallback)
   }
 
   off() {
-    let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
-    let mainWindow = context.windowStage.getMainWindowSync()
+    let mainWindow = AnalyticsCore.mainWindow()
+    if (mainWindow ==  undefined) {
+      return
+    }
     let currentUIContext = mainWindow.getUIContext()
     currentUIContext.getUIObserver().off('didLayout', this.didLayoutCallback)
     currentUIContext.getUIObserver().off('scrollEvent', this.onScrollEventCallback)

@@ -24,6 +24,9 @@ import AnalyticsCore from '../core/AnalyticsCore'
 import EventPersistence from '../event/EventPersistence'
 import { GrowingConfig } from '../interfaces/GrowingConfig'
 
+@Sendable
+type SendableFetcher = () => boolean
+
 export interface SendablePluginsInterface extends lang.ISendable, PluginsInterface { }
 
 export interface PluginsInterface {
@@ -86,7 +89,7 @@ export default class Plugins {
     })
   }
 
-  static setAutotrackStatusFetcher(fetcher: () => boolean) {
+  static setAutotrackStatusFetcher(fetcher: SendableFetcher) {
     Plugins.plugins.forEach(plugin => {
       if (plugin.setAutotrackStatusFetcher) {
         plugin.setAutotrackStatusFetcher(fetcher)

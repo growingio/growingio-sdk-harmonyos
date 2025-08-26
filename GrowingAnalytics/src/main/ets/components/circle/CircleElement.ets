@@ -17,8 +17,6 @@
 
 import JSON from '@ohos.util.json'
 import router from '@ohos.router'
-import common from '@ohos.app.ability.common'
-import sendableContextManager from '@ohos.app.ability.sendableContextManager'
 
 import AnalyticsCore from "../core/AnalyticsCore"
 import AppInfo from "../core/AppInfo"
@@ -49,8 +47,10 @@ export default class CircleElement {
     try {
       let filter = ['id', 'content', 'focusable', 'label', 'opacity', 'visibility']
       if (AnalyticsCore.abContext) {
-        let context: common.UIAbilityContext = sendableContextManager.convertToUIAbilityContext(AnalyticsCore.abContext)
-        let mainWindow = context.windowStage.getMainWindowSync()
+        let mainWindow = AnalyticsCore.mainWindow()
+        if (mainWindow == undefined) {
+          return
+        }
         let currentUIContext = mainWindow.getUIContext()
         let inspectorTreeString = currentUIContext.getFilteredInspectorTree(filter)
         let inspectorTree = JSON.parse(inspectorTreeString)
