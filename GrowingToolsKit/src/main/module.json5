@@ -6,6 +6,12 @@
       "default",
       "tablet",
       "2in1"
+    ],
+    "metadata": [
+      {
+        "name": "UseTsHar",
+        "value": "true"
+      }
     ]
   }
 }
