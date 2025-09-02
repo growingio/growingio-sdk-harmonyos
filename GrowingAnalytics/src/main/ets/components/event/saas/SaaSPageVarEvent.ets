@@ -23,17 +23,17 @@ export default class SaaSPageVarEvent extends Event {
   path: string | undefined = undefined
   pageShowTimestamp: number | undefined = undefined
 
-  static create(
+  static async create(
     attributes: AttributesType,
     path: string,
     pageShowTimestamp: number,
     context: GrowingContext
-  ): SaaSPageVarEvent {
+  ): Promise<SaaSPageVarEvent> {
     let event = new SaaSPageVarEvent()
     event.attributes = attributes
     event.path = path
     event.pageShowTimestamp = Number(pageShowTimestamp ?? 0)
     event.eventType = EventType.SaaS_Pvar
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }

@@ -35,7 +35,7 @@ export default class AutotrackClick {
     context.getUIObserver().on('willClick', AutotrackClick.onWillClick)
   }
 
-  static onWillClick(event: ClickEvent, frameNode?: FrameNode) {
+  static async onWillClick(event: ClickEvent, frameNode?: FrameNode) {
     if (!frameNode) {
       return
     }
@@ -100,7 +100,7 @@ export default class AutotrackClick {
     }
 
     // send event
-    let e = ViewElementEvent.create(
+    let e = await ViewElementEvent.create(
       path,
       ptm,
       textValue,

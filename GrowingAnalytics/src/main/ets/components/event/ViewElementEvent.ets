@@ -30,7 +30,7 @@ export default class ViewElementEvent extends Event {
   // mode CDP
   pageShowTimestamp: number | undefined = undefined
 
-  static create(
+  static async create(
     path: string,
     pageShowTimestamp: number,
     textValue: string,
@@ -40,7 +40,7 @@ export default class ViewElementEvent extends Event {
     attributes: AttributesType,
     eventType: EventType,
     context: GrowingContext
-  ): ViewElementEvent {
+  ): Promise<ViewElementEvent> {
     let event = new ViewElementEvent()
     event.path = String(path ?? '')
     if (context.config.mode == ConfigMode.CDP) {
@@ -54,6 +54,6 @@ export default class ViewElementEvent extends Event {
     event.index = index && index > 0 ? index : undefined
     event.attributes = attributes
     event.eventType = eventType
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }

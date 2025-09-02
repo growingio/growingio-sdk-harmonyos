@@ -28,7 +28,7 @@ export default class HybridCustomEvent extends Event implements HybridEvent {
   // mode SaaS
   pageShowTimestamp: number | undefined = undefined
 
-  static create(
+  static async create(
     eventName: string,
     attributes: AttributesType,
     path: string,
@@ -36,7 +36,7 @@ export default class HybridCustomEvent extends Event implements HybridEvent {
     timestamp: number,
     domain: string,
     context: GrowingContext
-  ): HybridCustomEvent {
+  ): Promise<HybridCustomEvent> {
     let event = new HybridCustomEvent()
     event.eventName = eventName ?? ''
     event.attributes = attributes
@@ -45,6 +45,6 @@ export default class HybridCustomEvent extends Event implements HybridEvent {
     event.timestamp = Number(timestamp ?? 0)
     event.domain = String(domain ?? '')
     event.eventType = EventType.Custom
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }

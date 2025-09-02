@@ -29,7 +29,7 @@ export default class HybridPageEvent extends Event implements HybridEvent {
   query: string | undefined = undefined
   orientation: string | undefined = undefined
 
-  static create(
+  static async create(
     title: string,
     referralPage: string,
     protocolType: string,
@@ -39,7 +39,7 @@ export default class HybridPageEvent extends Event implements HybridEvent {
     timestamp: number,
     domain: string,
     context: GrowingContext
-  ): HybridPageEvent {
+  ): Promise<HybridPageEvent> {
     let event = new HybridPageEvent()
     event.title = title
     event.referralPage = referralPage
@@ -51,6 +51,6 @@ export default class HybridPageEvent extends Event implements HybridEvent {
     event.domain = String(domain ?? '')
     event.orientation = DeviceInfo.orientation
     event.eventType = EventType.Page
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }

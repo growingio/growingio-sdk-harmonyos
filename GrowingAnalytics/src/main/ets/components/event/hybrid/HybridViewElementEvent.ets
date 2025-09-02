@@ -29,7 +29,7 @@ export default class HybridViewElementEvent extends Event implements HybridEvent
   path: string | undefined = undefined
   query: string | undefined = undefined
 
-  static create(
+  static async create(
     textValue: string,
     xpath: string,
     xcontent: string,
@@ -42,7 +42,7 @@ export default class HybridViewElementEvent extends Event implements HybridEvent
     domain: string,
     eventType: EventType,
     context: GrowingContext
-  ): HybridViewElementEvent {
+  ): Promise<HybridViewElementEvent> {
     let event = new HybridViewElementEvent()
     event.textValue = textValue
     event.xpath = xpath
@@ -55,6 +55,6 @@ export default class HybridViewElementEvent extends Event implements HybridEvent
     event.timestamp = Number(timestamp ?? 0)
     event.domain = String(domain ?? '')
     event.eventType = eventType
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }

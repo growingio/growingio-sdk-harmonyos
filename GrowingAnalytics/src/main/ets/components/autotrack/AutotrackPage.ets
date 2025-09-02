@@ -240,7 +240,7 @@ export default class AutotrackPage {
     AutotrackPage.generatePage(pageInfo)
   }
 
-  static generatePage(pageInfo: PageInfo) {
+  static async generatePage(pageInfo: PageInfo) {
     let context = GrowingContext.getDefaultContext() as GrowingContext
     if (context == undefined) {
       return
@@ -250,7 +250,7 @@ export default class AutotrackPage {
       if (!context.config.dataCollectionEnabled) {
         return
       }
-      let e = PageEvent.create(
+      let e = await PageEvent.create(
         pageInfo.path,
         pageInfo.title,
         pageInfo.attributes,

@@ -51,7 +51,7 @@ export default class Flutter {
     AutotrackPage.sendPage(pageInfo)
   }
 
-  static trackFlutterClickEvent(argument: Map<string, Object>) {
+  static async trackFlutterClickEvent(argument: Map<string, Object>) {
     let context = GrowingContext.getDefaultContext() as GrowingContext
     if (!context.config.dataCollectionEnabled) {
       LogUtil.info(() => 'Failed to dispatch flutter event, dataCollectionEnabled is false')
@@ -96,7 +96,7 @@ export default class Flutter {
     let map = argument.get('attributes') as Map<string, ValueType>
     let attributes = Flutter.attributesFromMap(map)
     if (AnalyticsCore.core.isInitializedSuccessfully()) {
-      let e = ViewElementEvent.create(
+      let e = await ViewElementEvent.create(
         path,
         ptm,
         textValue,

@@ -29,21 +29,21 @@ export default class FakePageEvent extends Event implements Page {
   title: string | undefined = undefined
   referralPage: string | undefined = undefined
 
-  static create(context: GrowingContext): FakePageEvent {
+  static async create(context: GrowingContext): Promise<FakePageEvent> {
     let event = new FakePageEvent()
     event.eventType = EventType.Page
     PageEvent.setLastPage(event, context)
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 
-  static sendFakePageIfNeeded(context: GrowingContext) {
+  static async sendFakePageIfNeeded(context: GrowingContext) {
     if (GrowingContext.isDefaultContext(context) &&
         context.config.autotrackEnabled &&
         context.config.autotrackAllPages) {
       // 当前是主实例，且已开启PAGE无感埋点
       return
     }
-    let p = FakePageEvent.create(context)
+    let p = await FakePageEvent.create(context)
     AnalyticsCore.writeEventToDisk(p, context)
   }
 }

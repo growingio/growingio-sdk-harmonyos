@@ -29,6 +29,14 @@ export default class Util {
     return object
   }
 
+  static objectToMap(object: AttributesType): Map<string, ValueType> {
+    const map = new Map<string, ValueType>()
+    Object.keys(object).forEach((key) => {
+      map.set(key, object[key])
+    })
+    return map
+  }
+
   static concatObject(objA: AttributesType, objB: AttributesType): AttributesType {
     return { ...objA, ...objB }
   }

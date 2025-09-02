@@ -24,11 +24,11 @@ import AnalyticsCore from '../../core/AnalyticsCore'
 export class SaaSVisitorEvent extends Event {
   static visitorAttributes: Record<string, AttributesType> = {}
 
-  static create(
+  static async create(
     attributes: AttributesType,
     context: GrowingContext,
     shouldCacheAttributesInMemory: boolean = true
-  ): SaaSVisitorEvent {
+  ): Promise<SaaSVisitorEvent> {
     if (shouldCacheAttributesInMemory) {
       SaaSVisitorEvent.visitorAttributes[context.trackerId] = Util.cloneObject(attributes)
     }
@@ -36,27 +36,27 @@ export class SaaSVisitorEvent extends Event {
     let event = new SaaSVisitorEvent()
     event.attributes = attributes
     event.eventType = EventType.SaaS_Vstr
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 
-  static sendVisitorIfNeeded(context: GrowingContext) {
+  static async sendVisitorIfNeeded(context: GrowingContext) {
     let attributes = SaaSVisitorEvent.visitorAttributes[context.trackerId]
     if (!attributes) {
        return
     }
-    let p = SaaSVisitorEvent.create(attributes, context, false)
+    let p = await SaaSVisitorEvent.create(attributes, context, false)
     AnalyticsCore.writeEventToDisk(p, context)
   }
 }
 
 export class SaaSEvarEvent extends Event {
-  static create(
+  static async create(
     attributes: AttributesType,
     context: GrowingContext
-  ): SaaSEvarEvent {
+  ): Promise<SaaSEvarEvent> {
     let event = new SaaSEvarEvent()
     event.attributes = attributes
     event.eventType = EventType.SaaS_Evar
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }

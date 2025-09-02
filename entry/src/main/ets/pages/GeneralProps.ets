@@ -1,4 +1,4 @@
-import { GrowingAnalytics } from '@growingio/analytics'
+import { GrowingAnalytics, GrowingAttrType } from '@growingio/analytics'
 import AppContext from '@ohos.app.ability.common'
 import Util from '../Util'
 import router from '@ohos.router'
@@ -54,8 +54,11 @@ struct GeneralProps {
   }
 
   setDynamicGeneralProps() {
-    GrowingAnalytics.setDynamicGeneralProps(() => {
-      return {'dynamicProp' : Util.formatDate(new Date()) }
-    })
+    GrowingAnalytics.setDynamicGeneralProps(DynamicGeneralPropsGenerator)
   }
+}
+
+@Sendable
+function DynamicGeneralPropsGenerator(): GrowingAttrType {
+  return {'dynamicProp' : Util.formatDate(new Date()) }
 }

@@ -15,47 +15,110 @@
  * limitations under the License.
  */
 
-import { AttributesType } from '../utils/Constants'
+import collections from '@arkts.collections'
+import ArkTSUtils from '@arkts.utils'
+
+import { AttributesType, ValueType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import Util from '../utils/Util'
-import collections from '@arkts.collections'
 
 "use shared"
 
 @Sendable
+export type SendableDynamicGeneralPropsGenerator = () => AttributesType
+
+@Sendable
+function _DummyFunction(): AttributesType {
+  return {}
+}
+
+@Sendable
 export default class GeneralProps {
-  // private static _internalProps: collections.Map<string, SendableValueType>
-  // private static _dynamicGeneralPropsGenerator: () => SendableAttributesType = () => {
-  //   return {}
-  // }
+  private static _internalProps: collections.Map<string, string | number | boolean | collections.Array<string | number | boolean>> = new collections.Map()
+  private static _dynamicGeneralPropsGenerator: SendableDynamicGeneralPropsGenerator = _DummyFunction
+  private static _lock: ArkTSUtils.locks.AsyncLock = new ArkTSUtils.locks.AsyncLock()
 
-  static setGeneralProps(props: AttributesType) {
-    // LogUtil.info(() => 'Set generalProps: ' + JSON.stringify(props))
-    // GeneralProps._internalProps = Util.concatObject(GeneralProps._internalProps, props)
-    // LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
+  static async setGeneralProps(props: AttributesType) {
+    LogUtil.info(() => 'Set generalProps: ' + JSON.stringify(props))
+    try {
+      let map = Util.objectToMap(props)
+      await GeneralProps._lock.lockAsync(() => {
+        map.forEach((value, key) => {
+          if (value instanceof Array) {
+            let sendableValue = new collections.Array<string | number | boolean>()
+            value.forEach((v: string | number | boolean, index: number) => {
+              sendableValue.push(v)
+            })
+            GeneralProps._internalProps.set(key, sendableValue)
+          } else {
+            GeneralProps._internalProps.set(key, value)
+          }
+        })
+      })
+      LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
+    } catch(e) {
+      LogUtil.error(() => 'Failed to Set generalProps: ' + JSON.stringify(props))
+    }
   }
 
-  static removeGeneralProps(keys: string[]) {
-    // LogUtil.info(() => 'Remove generalProps by keys: ' + keys)
-    // Util.removeKeysForObject(keys, GeneralProps._internalProps)
-    // LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
+  static async removeGeneralProps(keys: string[]) {
+    LogUtil.info(() => 'Remove generalProps by keys: ' + keys)
+    try {
+      await GeneralProps._lock.lockAsync(() => {
+        keys.forEach((key) => {
+          GeneralProps._internalProps.delete(key)
+        })
+      })
+      LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
+    } catch(e) {
+      LogUtil.error(() => 'Failed to remove generalProps by keys: ' + keys)
+    }
   }
 
-  static clearGeneralProps() {
-    // LogUtil.info(() => 'Clear generalProps')
-    // GeneralProps._internalProps = {}
+  static async clearGeneralProps() {
+    LogUtil.info(() => 'Clear generalProps')
+    try {
+      await GeneralProps._lock.lockAsync(() => {
+        GeneralProps._internalProps = new collections.Map()
+      })
+    } catch(e) {
+
+    }
   }
 
-  static setDynamicGeneralProps(generator: () => AttributesType) {
-    // LogUtil.info(() => 'Set dynamicGeneralProps')
-    // GeneralProps._dynamicGeneralPropsGenerator = generator
+  static async setDynamicGeneralProps(generator: SendableDynamicGeneralPropsGenerator) {
+    LogUtil.info(() => 'Set dynamicGeneralProps')
+    try {
+      await GeneralProps._lock.lockAsync(() => {
+        GeneralProps._dynamicGeneralPropsGenerator = generator
+      })
+    } catch(e) {
+
+    }
   }
 
-  static getGeneralProps(): AttributesType {
-    // let dynamicProps = GeneralProps._dynamicGeneralPropsGenerator()
-    // let props = Util.cloneObject(GeneralProps._internalProps)
-    // let properties = Util.concatObject(props, dynamicProps)
-    // return properties
-    return {}
+  static async getGeneralProps(): Promise<AttributesType> {
+    try {
+      return await GeneralProps._lock.lockAsync(() => {
+        let dynamicProps = GeneralProps._dynamicGeneralPropsGenerator()
+        let map = new Map<string, ValueType>()
+        GeneralProps._internalProps.forEach((value, key) => {
+          if (value instanceof collections.Array) {
+            let nonSendableValue = new Array<string | number | boolean>()
+            value.forEach((v: string | number | boolean, index: number) => {
+              nonSendableValue.push(v)
+            })
+            map.set(key, nonSendableValue as ValueType)
+          } else {
+            map.set(key, value as ValueType)
+          }
+        })
+        let props = Util.cloneObject(Util.mapToObject(map))
+        let properties = Util.concatObject(props, dynamicProps)
+        return properties
+      })
+    } catch(e) {
+      return Promise.resolve({} as AttributesType)
+    }
   }
 }

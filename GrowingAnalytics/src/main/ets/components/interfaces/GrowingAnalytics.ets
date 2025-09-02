@@ -24,7 +24,7 @@ import { GrowingConfig } from './GrowingConfig'
 import Autotrack from '../autotrack/Autotrack'
 import AnalyticsCore from '../core/AnalyticsCore'
 import Flutter from '../core/Flutter'
-import GeneralProps from '../core/GeneralProps'
+import GeneralProps, { SendableDynamicGeneralPropsGenerator } from '../core/GeneralProps'
 import {
   AttributesType as GrowingAttrType,
   JavaScriptProxyType as GrowingJSProxyType,
@@ -194,7 +194,7 @@ export class GrowingAnalytics {
     GeneralProps.clearGeneralProps()
   }
 
-  static setDynamicGeneralProps(generator: () => GrowingAttrType) {
+  static setDynamicGeneralProps(generator: SendableDynamicGeneralPropsGenerator) {
     GeneralProps.setDynamicGeneralProps(generator)
   }
 

@@ -12,7 +12,8 @@
             "useNormalizedOHMUrl": true
           }
         },
-        "targetSdkVersion": "6.0.0(20)"
+        "targetSdkVersion": "6.0.0(20)",
+        "compatibleSdkVersionStage": "beta3"
       }
     ],
     "buildModeSet": [

@@ -28,11 +28,11 @@ export default class CustomEvent extends Event {
   path: string | undefined = undefined
   pageShowTimestamp: number | undefined = undefined
 
-  static create(
+  static async create(
     eventName: string,
     attributes: AttributesType,
     context: GrowingContext
-  ): CustomEvent {
+  ): Promise<CustomEvent> {
     let event = new CustomEvent()
     event.eventName = eventName
     event.attributes = attributes
@@ -46,6 +46,6 @@ export default class CustomEvent extends Event {
       }
     }
 
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }

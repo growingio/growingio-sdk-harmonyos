@@ -89,7 +89,7 @@ export default class EventTimer {
     LogUtil.info(() => 'Track timer resume, timerId is ' + timerId)
   }
 
-  static trackTimerEnd(
+  static async trackTimerEnd(
     timerId: string,
     attributes: AttributesType = {},
     context: GrowingContext,
@@ -121,7 +121,7 @@ export default class EventTimer {
     if (context.config.mode == ConfigMode.SaaS) {
       FakePageEvent.sendFakePageIfNeeded(context)
     }
-    let e = CustomEvent.create(eventName, attributes, context)
+    let e = await CustomEvent.create(eventName, attributes, context)
     AnalyticsCore.writeEventToDisk(e, context)
     LogUtil.info(() => 'Track timer end, eventName: ' + eventName + ', timerId: ' + timerId + ', attributes: '
       + JSON.stringify(attributes))

@@ -20,10 +20,10 @@ import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
 
 export default class LoginUserAttributesEvent extends Event {
-  static create(attributes: AttributesType, context: GrowingContext): LoginUserAttributesEvent {
+  static async create(attributes: AttributesType, context: GrowingContext): Promise<LoginUserAttributesEvent> {
     let event = new LoginUserAttributesEvent()
     event.attributes = attributes
     event.eventType = EventType.LoginUserAttributes
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }

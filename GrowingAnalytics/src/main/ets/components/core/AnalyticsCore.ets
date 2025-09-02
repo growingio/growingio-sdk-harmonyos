@@ -283,13 +283,13 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     UserIdentifier.setLoginUserId('', '', this.context)
   }
 
-  setLoginUserAttributes(attributes: AttributesType) {
+  async setLoginUserAttributes(attributes: AttributesType) {
     if (!this.context.config.dataCollectionEnabled) {
       LogUtil.info(() => 'Failed to set login user attributes, dataCollectionEnabled is false')
       return
     }
 
-    let e = LoginUserAttributesEvent.create(Util.cloneObject(attributes), this.context)
+    let e = await LoginUserAttributesEvent.create(Util.cloneObject(attributes), this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info(() => 'Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
@@ -298,7 +298,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     return DeviceInfo.deviceId
   }
 
-  track(
+  async track(
     eventName: string,
     attributes: AttributesType = {},
     sendTo?: string[]
@@ -311,7 +311,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     if (config.mode == ConfigMode.SaaS) {
       FakePageEvent.sendFakePageIfNeeded(this.context)
     }
-    let e = CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
+    let e = await CustomEvent.create(eventName, Util.cloneObject(attributes), this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info(() => 'Track custom event with eventName: ' + eventName + ', attributes: ' +
     JSON.stringify(attributes))
@@ -329,7 +329,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   ) {
     trackers = trackers.filter( trackerId => trackerId != curTrackerId )
     trackers = Array.from(new Set(trackers))
-    trackers.forEach(trackerId => {
+    trackers.forEach(async trackerId => {
       let tracker = AnalyticsCore.tracker(trackerId)
       if (!tracker.isInitializedSuccessfully()) {
         return
@@ -338,7 +338,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
         if (!tracker.context.config.dataCollectionEnabled) {
           return
         }
-        let e = CustomEvent.create(eventName, Util.cloneObject(attributes), tracker.context)
+        let e = await CustomEvent.create(eventName, Util.cloneObject(attributes), tracker.context)
         AnalyticsCore.writeEventToDisk(e, tracker.context)
         LogUtil.info(() => 'Send custom event to tracker(' + trackerId + ') with eventName: ' + eventName
           + ', attributes: ' + JSON.stringify(attributes))
@@ -434,7 +434,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     this.setLoginUserAttributes(attributes)
   }
 
-  setEvar(attributes: AttributesType) {
+  async setEvar(attributes: AttributesType) {
     if (this.context.config.mode != ConfigMode.SaaS) {
       LogUtil.info(() => 'Failed to set evar, only support on SaaS mode')
       return
@@ -444,12 +444,12 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       return
     }
 
-    let e = SaaSEvarEvent.create(Util.cloneObject(attributes), this.context)
+    let e = await SaaSEvarEvent.create(Util.cloneObject(attributes), this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info(() => 'Set evar: ' + JSON.stringify(attributes))
   }
 
-  setVisitor(attributes: AttributesType) {
+  async setVisitor(attributes: AttributesType) {
     if (this.context.config.mode != ConfigMode.SaaS) {
       LogUtil.info(() => 'Failed to set visitor, only support on SaaS mode')
       return
@@ -459,7 +459,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       return
     }
 
-    let e = SaaSVisitorEvent.create(Util.cloneObject(attributes), this.context)
+    let e = await SaaSVisitorEvent.create(Util.cloneObject(attributes), this.context)
     AnalyticsCore.writeEventToDisk(e, this.context)
     LogUtil.info(() => 'Set visitor: ' + JSON.stringify(attributes))
   }

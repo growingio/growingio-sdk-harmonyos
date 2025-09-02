@@ -113,13 +113,13 @@ export default class Session {
     return undefined
   }
 
-  static generateVisit(context: GrowingContext) {
+  static async generateVisit(context: GrowingContext) {
     if (!context.config.dataCollectionEnabled) {
       LogUtil.info(() => 'Failed to generate visit, dataCollectionEnabled is false')
       return
     }
     LogUtil.info(() => 'Generate visit for tracker = ' + context.trackerId)
-    let e = VisitEvent.create(context)
+    let e = await VisitEvent.create(context)
     AnalyticsCore.writeEventToDisk(e, context)
 
     if (context.config.mode == ConfigMode.SaaS) {
@@ -127,11 +127,11 @@ export default class Session {
     }
   }
 
-  static generateAppClosed(context: GrowingContext) {
+  static async generateAppClosed(context: GrowingContext) {
     if (!context.config.dataCollectionEnabled) {
       return
     }
-    let e = AppClosedEvent.create(context)
+    let e = await AppClosedEvent.create(context)
     AnalyticsCore.writeEventToDisk(e, context)
   }
 }

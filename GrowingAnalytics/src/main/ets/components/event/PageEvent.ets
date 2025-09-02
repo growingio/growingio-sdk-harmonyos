@@ -40,13 +40,13 @@ export default class PageEvent extends Event implements Page {
   private static lastPage: Record<string, Page> = {}
   referralPage: string | undefined = undefined
 
-  static create(
+  static async create(
     path: string,
     title: string,
     attributes: AttributesType,
     timestamp: number,
     context: GrowingContext
-  ): PageEvent {
+  ): Promise<PageEvent> {
     let event = new PageEvent()
     event.path = path
     event.title = title ?? undefined
@@ -63,7 +63,7 @@ export default class PageEvent extends Event implements Page {
       PageEvent.setLastPage(event, context)
     }
 
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 
   static getLastPage(context: GrowingContext): Page | undefined {

@@ -30,7 +30,7 @@ import Util from '../utils/Util'
 export default class EventBuilder {
   private static _eventSequenceIds: Record<string, number>
 
-  static build<T extends Event>(event: T, context: GrowingContext): T {
+  static async build<T extends Event>(event: T, context: GrowingContext): Promise<T> {
     event.sessionId = Session.getSessionId(context)!
     event.appState = Session.isOnForeground ? 'FOREGROUND' : 'BACKGROUND'
     event.timestamp = event.timestamp > 0 ? event.timestamp : Date.now()
@@ -70,7 +70,7 @@ export default class EventBuilder {
       event.userKey = undefined
     }
 
-    let attributes = GrowingGeneralProps.getGeneralProps()
+    let attributes = await GrowingGeneralProps.getGeneralProps()
     if (event.attributes) {
       attributes = Util.concatObject(attributes, event.attributes)
     }

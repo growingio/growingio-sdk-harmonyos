@@ -20,9 +20,9 @@ import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
 
 export default class VisitEvent extends Event {
-  static create(context: GrowingContext): VisitEvent {
+  static async create(context: GrowingContext): Promise<VisitEvent> {
     let event = new VisitEvent()
     event.eventType = EventType.Visit
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }

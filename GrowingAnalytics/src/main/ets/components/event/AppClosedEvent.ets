@@ -26,7 +26,7 @@ export default class AppClosedEvent extends Event {
   // mode SaaS
   path: string | undefined = undefined
 
-  static create(context: GrowingContext): AppClosedEvent {
+  static async create(context: GrowingContext): Promise<AppClosedEvent> {
     let event = new AppClosedEvent()
     event.eventType = EventType.AppClosed
 
@@ -37,6 +37,6 @@ export default class AppClosedEvent extends Event {
       }
     }
 
-    return EventBuilder.build(event, context)
+    return await EventBuilder.build(event, context)
   }
 }
