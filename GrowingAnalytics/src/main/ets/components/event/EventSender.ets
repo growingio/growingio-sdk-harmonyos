@@ -110,7 +110,7 @@ export default class EventSender {
           this.sendEvent(context)
         }
       } else {
-        LogUtil.info(() => 'Request Failure, responseCode: ' + String(response.statusCode))
+        LogUtil.info(() => 'Request Failure, Url = ' + response.request.url + ', responseCode: ' + String(response.statusCode))
         this.isUploading = false
       }
     } catch (e) {

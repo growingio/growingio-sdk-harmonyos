@@ -55,9 +55,9 @@ export default class GeneralProps {
           }
         })
       })
-      LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
+      LogUtil.info(() => 'Current generalProps: ' + ArkTSUtils.ASON.stringify(GeneralProps._internalProps))
     } catch(e) {
-      LogUtil.error(() => 'Failed to Set generalProps: ' + JSON.stringify(props))
+      LogUtil.error(() => 'Failed to Set generalProps: ' + JSON.stringify(props) + ', error: ' + JSON.stringify(e))
     }
   }
 
@@ -69,9 +69,9 @@ export default class GeneralProps {
           GeneralProps._internalProps.delete(key)
         })
       })
-      LogUtil.info(() => 'Current generalProps: ' + JSON.stringify(GeneralProps._internalProps))
+      LogUtil.info(() => 'Current generalProps: ' + ArkTSUtils.ASON.stringify(GeneralProps._internalProps))
     } catch(e) {
-      LogUtil.error(() => 'Failed to remove generalProps by keys: ' + keys)
+      LogUtil.error(() => 'Failed to remove generalProps by keys: ' + keys + ', error: ' + JSON.stringify(e))
     }
   }
 
@@ -82,7 +82,7 @@ export default class GeneralProps {
         GeneralProps._internalProps = new collections.Map()
       })
     } catch(e) {
-
+      LogUtil.error(() => 'Failed to clear generalProps, error: ' + JSON.stringify(e))
     }
   }
 
@@ -93,7 +93,7 @@ export default class GeneralProps {
         GeneralProps._dynamicGeneralPropsGenerator = generator
       })
     } catch(e) {
-
+      LogUtil.error(() => 'Failed to set dynamicGeneralProps, error: ' + JSON.stringify(e))
     }
   }
 
@@ -118,6 +118,7 @@ export default class GeneralProps {
         return properties
       })
     } catch(e) {
+      LogUtil.error(() => 'Failed to get generalProps, error: ' + JSON.stringify(e))
       return Promise.resolve({} as AttributesType)
     }
   }
