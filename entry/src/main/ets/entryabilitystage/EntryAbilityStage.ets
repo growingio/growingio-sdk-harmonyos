@@ -29,8 +29,7 @@ export default class EntryAbilityStage extends AbilityStage {
     let config = new GrowingConfig().NewSaaS(
       '0a1b4118dd954ec3bcc69da5138bdb96',
       '8eeb910e0db7a73b',
-      'growing.84ff920737d56b1d',
-      // 'https://www.baidu.com'
+      'growing.84ff920737d56b1d'
     )
     config.debugEnabled = true
     config.sessionInterval = 30

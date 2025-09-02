@@ -105,10 +105,10 @@ struct SubTracker {
   createSubTracker(): string {
     let trackerId = Util.getRandomString()
     let config = new GrowingConfig().NewSaaS(
-      '1111111111111',
+      'subTrackerAccountId',
       trackerId,
-      'growing.33333333333',
-      "https://www.baidu.com"
+      'growing.subTrackerUrlScheme',
+      "https://127.0.0.1:1082"
     )
     config.debugEnabled = true
     config.sessionInterval = 30

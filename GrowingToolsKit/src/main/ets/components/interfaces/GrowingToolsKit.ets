@@ -20,6 +20,8 @@ import common from '@ohos.app.ability.common'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
+import { AppStorageV2 } from '@ohos.arkui.StateManagement'
+
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import { routeName } from '../pages/EntryIcon'
@@ -28,7 +30,6 @@ import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_PO
 import RequestPersistence from '../network/RequestPersistence'
 import TrackersInfo from '../core/TrackersInfo'
 import SharedPreferences from '../utils/SharedPreferences'
-import { AppStorageV2 } from '@ohos.arkui.StateManagement'
 
 "use shared"
 

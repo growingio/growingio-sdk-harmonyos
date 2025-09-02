@@ -24,6 +24,7 @@ import window from '@ohos.window'
 import webview from '@ohos.web.webview'
 import sendableContextManager from '@ohos.app.ability.sendableContextManager'
 import collections from '@arkts.collections'
+import { AppStorageV2 } from '@ohos.arkui.StateManagement'
 
 import { GrowingAnalyticsInterface } from '../interfaces/GrowingAnalytics'
 import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
@@ -57,7 +58,6 @@ import { HAR_VERSION } from '../../../../../BuildProfile'
 import Plugins, { PluginsInterface } from '../plugins/Plugins'
 import MobileDebugger from '../mobileDebugger/MobileDebugger'
 import Circle from '../circle/Circle'
-import { AppStorageV2 } from '@ohos.arkui.StateManagement'
 
 "use shared"
 
