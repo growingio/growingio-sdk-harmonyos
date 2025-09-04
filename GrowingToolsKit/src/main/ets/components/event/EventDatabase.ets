@@ -18,6 +18,7 @@
 import relationalStore from '@ohos.data.relationalStore'
 import taskpool from '@ohos.taskpool'
 import collections from '@arkts.collections'
+import deviceInfo from '@ohos.deviceInfo'
 
 import EventPersistence from './EventPersistence'
 import { DATABASE_NAME } from '../utils/Constants'
@@ -406,18 +407,30 @@ async function updateEventsSendStatusTask(
 
   try {
     let store = await relationalStore.getRdbStore(context, config)
-    let transaction = await store.createTransaction()
-    try {
+    let sdkApiVersion = deviceInfo.sdkApiVersion
+    if (sdkApiVersion >= 14) {
+      let transaction = await store.createTransaction()
+      try {
+        for (let uuid of eventUuids) {
+          await transaction.execute(
+            `UPDATE ${tableName} SET IS_SEND = 1 WHERE EVENT_UUID = ?`,
+            [uuid]
+          )
+        }
+        await transaction.commit()
+      } catch (e) {
+        await transaction.rollback()
+        throw new Error(`Database transaction commit failed: ${e.message}`)
+      }
+    } else {
+      store.beginTransaction()
       for (let uuid of eventUuids) {
-        await transaction.execute(
+        await store.execute(
           `UPDATE ${tableName} SET IS_SEND = 1 WHERE EVENT_UUID = ?`,
           [uuid]
         )
       }
-      await transaction.commit()
-    } catch (e) {
-      await transaction.rollback()
-      throw new Error(`Database transaction commit failed: ${e.message}`)
+      store.commit()
     }
   } catch (e) {
     LogUtil.error(() => "Failed to update events send status. code = " + e.code + ", message = " + e.message)
