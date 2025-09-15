@@ -169,12 +169,17 @@ export default class CircleElement {
       let pageInfo = AnalyticsCore.uiContent.getPageInfoByUniqueId(e.ID)
       let realPath: string | undefined = undefined
       let alias: string = ''
+      let customTitle: string = ''
       if (pageInfo.navDestinationInfo) {
-        realPath = PATH_SEPARATOR + pageInfo.navDestinationInfo.name.toString()
-        alias = Util.getAliasFromNavInfoParameter(pageInfo.navDestinationInfo.param)
+        let navInfo = pageInfo.navDestinationInfo
+        realPath = PATH_SEPARATOR + navInfo.name.toString()
+        alias = Util.getAliasFromNavInfoParameter(navInfo.param)
+        customTitle = Util.getTitleFromNavInfoParameter(navInfo.param)
       } else if (pageInfo.routerPageInfo) {
+        let param = router.getParams()
         realPath = PATH_SEPARATOR + pageInfo.routerPageInfo.name.toString()
-        alias = Util.getAliasFromNavInfoParameter(router.getParams())
+        alias = Util.getAliasFromNavInfoParameter(param)
+        customTitle = Util.getTitleFromNavInfoParameter(param)
       }
 
       // set element.page
@@ -192,6 +197,9 @@ export default class CircleElement {
           let title = realPath
           if (title.includes(PATH_SEPARATOR)) {
             title = title.substring(title.lastIndexOf(PATH_SEPARATOR) + 1)
+          }
+          if (customTitle.length > 0) {
+            title = customTitle
           }
           let page = new _ScreenshotPage(
             0,
