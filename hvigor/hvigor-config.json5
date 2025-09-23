@@ -10,12 +10,15 @@
     // "typeCheck": false,                      /* Enable typeCheck. Value: [ true | false ]. Default: false */
   },
   "logging": {
-    // "level": "info"                          /* Define the log level. Value: [ "debug" | "info" | "warn" | "error" ]. Default: "info" */
+     "level": "debug"                          /* Define the log level. Value: [ "debug" | "info" | "warn" | "error" ]. Default: "info" */
   },
   "debugging": {
-    // "stacktrace": false                      /* Disable stacktrace compilation. Value: [ true | false ]. Default: false */
+     "stacktrace": true                      /* Disable stacktrace compilation. Value: [ true | false ]. Default: false */
   },
   "nodeOptions": {
     // "maxOldSpaceSize": 4096                  /* Enable nodeOptions maxOldSpaceSize compilation. Unit M. Used for the daemon process */
+  },
+  "properties": {
+    "ohos.sign.har": true
   }
 }
