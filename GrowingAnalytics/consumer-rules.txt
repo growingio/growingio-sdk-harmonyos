@@ -77,10 +77,5 @@ ACCOUNT_ID
 SDK_VERSION
 EVENT_UUID
 TYPE
-$protobuf
-Long
-$Reader
-$root
-$Writer
-$util
-event_pb
+roots
+fromBits
