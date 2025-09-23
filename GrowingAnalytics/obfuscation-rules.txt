@@ -43,7 +43,8 @@ eventName
 longitude
 deviceType
 hyperlink
-[key: string]
+key
+string
 query
 index
 $children
