@@ -1,1 +1,2 @@
--disable-obfuscation
+-keep
+./src/main/ets/components
