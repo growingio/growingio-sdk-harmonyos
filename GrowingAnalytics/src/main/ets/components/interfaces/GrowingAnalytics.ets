@@ -23,7 +23,7 @@ import webview from '@ohos.web.webview'
 import { GrowingConfig } from './GrowingConfig'
 import Autotrack from '../autotrack/Autotrack'
 import AnalyticsCore from '../core/AnalyticsCore'
-import Flutter from '../core/Flutter'
+import { Flutter } from '../core/Flutter'
 import GeneralProps from '../core/GeneralProps'
 import {
   AttributesType as GrowingAttrType,
@@ -37,6 +37,7 @@ export {
   JavaScriptProxyType as GrowingJSProxyType,
   AUTOTRACK_ELEMENT_ID as GrowingAutotrackElementID
 } from '../utils/Constants'
+export { Flutter as GrowingFlutterPlugin } from '../core/Flutter'
 
 export interface GrowingAnalyticsInterface {
   isInitializedSuccessfully(): boolean
@@ -241,6 +242,17 @@ export class GrowingAnalytics {
       return
     }
     Flutter.trackFlutterClickEvent(argument)
+  }
+
+  static trackFlutterCircleData(argument: Map<string, Object>) {
+    if (!GrowingAnalytics.isInitializedSuccessfully()) {
+      LogUtil.error(() => 'Must call GrowingAnalytics.start(context, configuration) first')
+      return
+    }
+    if (argument == null || argument == undefined) {
+      return
+    }
+    Flutter.trackFlutterCircleData(argument)
   }
 
   static handleOpenURL(uri: string): boolean {

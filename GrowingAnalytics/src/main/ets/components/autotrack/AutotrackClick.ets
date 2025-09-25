@@ -89,10 +89,10 @@ export default class AutotrackClick {
       for (let i = 0; i < DIALOG_PATH_PREFIXES.length; i++) {
         let prefix = DIALOG_PATH_PREFIXES[i]
         if (xpath.startsWith(prefix)) {
-          let lastPage = AutotrackPage.lastPage
-          path = lastPage?.path ?? ''
+          let lastNativePage = AutotrackPage.lastNativePage
+          path = lastNativePage?.path ?? ''
           if (context.config.mode == ConfigMode.CDP) {
-            ptm = lastPage?.timestamp ?? 0
+            ptm = lastNativePage?.timestamp ?? 0
           }
           break
         }
@@ -141,10 +141,10 @@ export default class AutotrackClick {
       let context = GrowingContext.getDefaultContext() as GrowingContext
       if (context.config.mode == ConfigMode.CDP) {
         // compare with last page in cache
-        let lastPage = AutotrackPage.lastPage
-        let path = lastPage?.path
+        let lastNativePage = AutotrackPage.lastNativePage
+        let path = lastNativePage?.path
         if (path == realPath) {
-          info.pageShowTimestamp = lastPage?.timestamp ?? 0
+          info.pageShowTimestamp = lastNativePage?.timestamp ?? 0
         }
       }
     }

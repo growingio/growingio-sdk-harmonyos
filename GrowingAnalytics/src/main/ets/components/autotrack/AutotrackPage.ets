@@ -39,7 +39,9 @@ export default class AutotrackPage {
   static navBarStack: Array<_NavBarInfo> = []
   // 存储监听Navigation路由触发的页面浏览事件 (主要是为了保证先发送routerPage，再发送deferNavDestinationPage)
   static deferNavDestinationPages: Array<PageInfo> = []
-  // 存储最后一个pageInfo，无论是否发送了该pageInfo对应的页面浏览事件 (主要是为了适配延迟初始化；与PageEvent.lastPage不同)
+  // 存储最后一个原生pageInfo，无论是否发送了该pageInfo对应的页面浏览事件 (主要是为了适配延迟初始化)
+  static lastNativePage: PageInfo | undefined = undefined
+  // 存储最后一个pageInfo，可能是由原生或Flutter生成 (逻辑与PageEvent.lastPage不同)
   static lastPage: PageInfo | undefined = undefined
 
   static startObserver(context: UIContext) {
@@ -105,10 +107,10 @@ export default class AutotrackPage {
         let toInfo = to as NavDestinationInfo
 
         if (typeof from == 'string' && from != null && from != undefined) {
-          let lastPage = AutotrackPage.lastPage
-          if (lastPage?.path != undefined) {
+          let lastNativePage = AutotrackPage.lastNativePage
+          if (lastNativePage?.path != undefined) {
             // 将当前navBar对应的首页入栈，并同时关联NavDestination，避免在返回到首页时发错事件
-            let navBarInfo = new _NavBarInfo(lastPage, toInfo)
+            let navBarInfo = new _NavBarInfo(lastNativePage, toInfo)
             AutotrackPage.navBarStack.push(navBarInfo)
           }
         } else {
@@ -225,7 +227,7 @@ export default class AutotrackPage {
 
   static sendNativePage(pageInfo: PageInfo) {
     pageInfo.timestamp = Date.now()
-    AutotrackPage.lastPage = pageInfo
+    AutotrackPage.lastNativePage = pageInfo
 
     let context = GrowingContext.getDefaultContext() as GrowingContext
     if (context == undefined) {
@@ -244,6 +246,7 @@ export default class AutotrackPage {
   }
 
   static sendPage(pageInfo: PageInfo) {
+    AutotrackPage.lastPage = pageInfo
     AutotrackPage.resendPageFromCacheOnBackground()
     AutotrackPage.generatePage(pageInfo)
   }

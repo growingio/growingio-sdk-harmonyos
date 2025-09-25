@@ -19,12 +19,15 @@ import webSocket from "@ohos.net.webSocket"
 import { BusinessError } from '@ohos.base'
 import url from "@ohos.url"
 
+import AutotrackPage from "../autotrack/AutotrackPage"
+import { EventScene } from "../event/Event"
 import { Message, RefreshScreenshot } from '../mobileDebugger/Model'
 import { WebSocket, WebSocketCallbackInterface } from '../mobileDebugger/WebSocket'
 import { PluginsInterface } from "../plugins/Plugins"
 import { StatusView } from "../mobileDebugger/StatusView"
 import AppInfo from "../core/AppInfo"
 import AnalyticsCore, { SDK_VERSION } from "../core/AnalyticsCore"
+import { Flutter } from "../core/Flutter"
 import { SnapshotProvider } from "../mobileDebugger/Snapshot"
 import CircleElement from "./CircleElement"
 
@@ -44,8 +47,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   }
 
   stop(error?: string) {
-    // TODO 关闭 Flutter 圈选数据监听和上报
-
+    Flutter.onCircleClosed()
     this.snapshotProvider?.stopObserver()
     this.statusView?.hide()
 
@@ -59,9 +61,25 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   }
 
   async sendScreenshot(screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) {
+    if (AutotrackPage.lastPage) {
+      // 当有页面浏览事件生成时，需判断当前页面是否是原生页面
+      // 而flutter页面，则应该由flutter sdk触发sendScreenshotForFlutter
+      let lastPage = AutotrackPage.lastPage
+      if (lastPage.eventScene != EventScene.Native) {
+        return
+      }
+    }
     let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
     await CircleElement.setPagesAndElements(screenshot)
     this.ws.sendScreenshot(screenshot)
+  }
+
+  sendScreenshotForFlutter(data: Map<string, Object>) {
+    this.snapshotProvider?.getSnapshot((screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => {
+      let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
+      CircleElement.setPagesAndElementsForFlutter(screenshot, data)
+      this.ws.sendScreenshot(screenshot)
+    })
   }
 
   // PluginsInterface
@@ -131,7 +149,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
           }
           this.statusView.show()
 
-          // TODO 开启 Flutter 圈选数据监听和上报
+          Flutter.onCircleOpen()
         } else if (message.msgType == 'incompatible_version') {
           // 版本号不适配
           StatusView.showDialog({
