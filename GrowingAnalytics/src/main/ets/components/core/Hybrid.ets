@@ -37,11 +37,12 @@ import SaaSPageVarEvent from '../event/saas/SaaSPageVarEvent'
 import Plugins from '../plugins/Plugins'
 
 export default class Hybrid {
+  private static _hybrids: Record<string, Hybrid> = {}
+
   name: string = 'GrowingWebViewJavascriptBridge'
   methodList: string[] = [
     'getConfiguration',
     'dispatchEvent',
-    'getDomTree',
     'onDomChanged',
     'setNativeUserId',
     'setNativeUserIdAndUserKey',
@@ -68,16 +69,51 @@ export default class Hybrid {
     })
   }
 
-  static createHybridProxy(controller: webview.WebviewController, context: GrowingContext): JavaScriptProxyType {
-    let hybrid = context.config.mode == ConfigMode.SaaS && context.config.hybridAutotrackEnabled
-      ? new SaaSHybrid(controller, context)
-      : new Hybrid(controller, context)
-    return {
-      object: hybrid,
-      name: hybrid.name,
-      methodList: hybrid.methodList,
-      controller: controller
+  static createHybridProxy(controller: webview.WebviewController, webviewId: string | undefined, context: GrowingContext): JavaScriptProxyType {
+    if (context.config.mode == ConfigMode.NewSaaS) {
+      let hybrid = new Hybrid(controller, context)
+      if (webviewId && webviewId.length > 0) {
+        Hybrid._hybrids[webviewId] = hybrid
+      }
+      return {
+        object: hybrid,
+        name: hybrid.name,
+        methodList: hybrid.methodList,
+        controller: controller
+      }
+    } else if (context.config.mode == ConfigMode.SaaS && context.config.hybridAutotrackEnabled) {
+      let hybrid = new SaaSHybrid(controller, context)
+      return {
+        object: hybrid,
+        name: hybrid.name,
+        methodList: hybrid.methodList,
+        controller: controller
+      }
+    } else {
+      let hybrid = new Hybrid(controller, context)
+      return {
+        object: hybrid,
+        name: hybrid.name,
+        methodList: hybrid.methodList,
+        controller: controller
+      }
     }
+  }
+
+  static async getDomTreeById(webviewId: string, left: number, top: number, width: number, height: number): Promise<string> {
+    let hybrid = Hybrid._hybrids[webviewId]
+    if (hybrid == null || hybrid == undefined) {
+      return ''
+    }
+    if (!GrowingContext.isDefaultContext(hybrid.context)) {
+      // 只有主实例可以打通hybrid无埋点圈选，子实例只能发不能圈
+      return ''
+    }
+    let controller = hybrid.controller
+    let zLevel = 100
+    let js = `window.GrowingWebViewJavascriptBridge.getDomTree(${left}, ${top}, ${width}, ${height}, ${zLevel})`
+    let elements = await controller.runJavaScript(js)
+    return elements
   }
 
   static javaScriptOnDocumentStart(
@@ -200,10 +236,6 @@ export default class Hybrid {
     } catch (e) {
       LogUtil.error(() => "Failed to dispatch event. code = " + e.code + ", message = " + e.message)
     }
-  }
-
-  getDomTree = (): void => {
-    LogUtil.info(() => "圈选获取节点信息失败！请集成 gioHybridCircle 插件后重试！")
   }
 
   onDomChanged = (): void => {

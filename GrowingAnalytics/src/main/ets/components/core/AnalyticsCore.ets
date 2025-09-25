@@ -219,8 +219,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     context.getApplicationContext().on('applicationStateChange', applicationStateChangeCallback)
   }
 
-  createHybridProxy(controller: webview.WebviewController): JavaScriptProxyType {
-    return Hybrid.createHybridProxy(controller, this.context)
+  createHybridProxy(controller: webview.WebviewController, webviewId?: string): JavaScriptProxyType {
+    return Hybrid.createHybridProxy(controller, webviewId, this.context)
   }
 
   javaScriptOnDocumentStart(

@@ -21,6 +21,7 @@ import router from '@ohos.router'
 import AnalyticsCore from "../core/AnalyticsCore"
 import AppInfo from "../core/AppInfo"
 import GrowingContext from "../core/Context"
+import Hybrid from '../core/Hybrid'
 import { ConfigMode } from "../interfaces/GrowingConfig"
 import { RefreshScreenshot } from "../mobileDebugger/Model"
 import {
@@ -43,7 +44,7 @@ import AutotrackPage from '../autotrack/AutotrackPage'
 import AutotrackClick from '../autotrack/AutotrackClick'
 
 export default class CircleElement {
-  static setPagesAndElements(screenshot: RefreshScreenshot) {
+  static async setPagesAndElements(screenshot: RefreshScreenshot) {
     try {
       let filter = ['id', 'content', 'focusable', 'label', 'opacity', 'visibility']
       let inspectorTreeString = AnalyticsCore.uiContent.getFilteredInspectorTree(filter)
@@ -53,7 +54,7 @@ export default class CircleElement {
       }
 
       let elementsTree = CircleElement._parseJsonTreeToElementsTree(inspectorTree)
-      CircleElement._parseElementsTreeAndSetToScreenshot(elementsTree, screenshot)
+      await CircleElement._parseElementsTreeAndSetToScreenshot(elementsTree, screenshot)
     } catch (e) {
 
     }
@@ -99,13 +100,13 @@ export default class CircleElement {
     return element
   }
 
-  private static _parseElementsTreeAndSetToScreenshot(elementsTree: _Element, screenshot: RefreshScreenshot) {
+  private static async _parseElementsTreeAndSetToScreenshot(elementsTree: _Element, screenshot: RefreshScreenshot) {
     let pages: Array<_ScreenshotPage> = []
     let paths: Set<string> = new Set<string>()
     let elements: Array<_ScreenshotElement> = []
     let context = GrowingContext.getDefaultContext() as GrowingContext
 
-    CircleElement._traverseAllNodes(elementsTree, (e) => {
+    await CircleElement._traverseAllNodes(elementsTree, async (e) => {
       let nodeType = e.nodeType
       if (nodeType == CIRCLE_NODE_INPUT) {
         // 目前不支持VIEW_CHANGE事件，都以VIEW_CLICK来圈选
@@ -234,6 +235,20 @@ export default class CircleElement {
         element.parentXPath = parentXPath
         element.isContainer = isContainer
       }
+
+      // webview
+      if (nodeType == CIRCLE_NODE_WEBVIEW) {
+        let webviewId = ''
+        if (e.attrs.id && e.attrs.id.length > 0) {
+          webviewId = e.attrs.id
+          let domTree = await Hybrid.getDomTreeById(webviewId, element.left, element.top, element.width, element.height)
+          try {
+            element.webView = JSON.parse(domTree) ?? undefined
+          } catch {
+            element.webView = undefined
+          }
+        }
+      }
       elements.push(element)
     })
 
@@ -241,13 +256,13 @@ export default class CircleElement {
     screenshot.elements = elements
   }
 
-  private static _traverseAllNodes(rootElement: _Element, callback: (element: _Element) => void) {
+  private static async _traverseAllNodes(rootElement: _Element, callback: (element: _Element) => Promise<void>) {
     let stack: _Element[] = [rootElement]
 
     while (stack.length > 0) {
       let element = stack.pop()!
       if (CircleElement._isVisible(element) && CircleElement._isClickable(element)) {
-        callback(element)
+        await callback(element)
       }
 
       if (element.type == 'root') {
@@ -480,6 +495,7 @@ class _ScreenshotElement {
   width: number = 0
   height: number = 0
   page: string = ''
+  webView?: object
 
   constructor(
     nodeType: string,
