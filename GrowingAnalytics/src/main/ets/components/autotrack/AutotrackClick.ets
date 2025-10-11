@@ -16,8 +16,8 @@
  */
 
 import { FrameNode } from '@ohos.arkui.node'
-import router from '@ohos.router'
 
+import Autotrack from './Autotrack'
 import AutotrackPage from './AutotrackPage'
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
@@ -28,10 +28,8 @@ import { PATH_SEPARATOR, LIST_COMPONENTS, DIALOG_PATH_PREFIXES } from '../utils/
 import Util from '../utils/Util'
 
 export default class AutotrackClick {
-  private static uiContent: UIContext
 
   static startObserver(context: UIContext) {
-    AutotrackClick.uiContent = context
     context.getUIObserver().on('willClick', AutotrackClick.onWillClick)
   }
 
@@ -118,7 +116,7 @@ export default class AutotrackClick {
     let info = new _PageInfo()
 
     // get real page
-    let pageInfo = AutotrackClick.uiContent.getPageInfoByUniqueId(frameNode.getUniqueId())
+    let pageInfo = Autotrack.uiContent.getPageInfoByUniqueId(frameNode.getUniqueId())
     let realPath: string | undefined = undefined
     if (pageInfo.navDestinationInfo) {
       realPath = PATH_SEPARATOR + pageInfo.navDestinationInfo.name.toString()
@@ -128,7 +126,7 @@ export default class AutotrackClick {
       }
     } else if (pageInfo.routerPageInfo) {
       realPath = PATH_SEPARATOR + pageInfo.routerPageInfo.name.toString()
-      let param = router.getParams()
+      let param = Autotrack.uiContent.getRouter().getParams()
       let alias = Util.getAliasFromNavInfoParameter(param)
       if (alias.length > 0) {
         realPath = PATH_SEPARATOR + alias

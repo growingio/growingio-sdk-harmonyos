@@ -85,7 +85,7 @@ class Params {
     let screenHeight = display.getDefaultDisplaySync().height
     let avoidArea = AnalyticsCore.mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
     let avoidTop = Math.max(avoidArea.topRect.height, 150)
-    let minY = px2vp(avoidTop - screenHeight / 2)
+    let minY = AnalyticsCore.uiContent.px2vp(avoidTop - screenHeight / 2)
 
     this.positionY = minY
     this.offsetY = minY
@@ -119,8 +119,8 @@ function builderStatusView(params: Params) {
         let avoidTop = Math.max(avoidArea.topRect.height, 150)
         let avoidBottom = Math.max(avoidArea.bottomRect.height, 150)
 
-        let minY = px2vp(avoidTop - screenHeight / 2)
-        let maxY = px2vp(screenHeight / 2 - avoidBottom - 15)
+        let minY = AnalyticsCore.uiContent.px2vp(avoidTop - screenHeight / 2)
+        let maxY = AnalyticsCore.uiContent.px2vp(screenHeight / 2 - avoidBottom - 15)
         if (params.offsetY > maxY) {
           params.offsetY = maxY
         } else if (params.offsetY < minY) {
