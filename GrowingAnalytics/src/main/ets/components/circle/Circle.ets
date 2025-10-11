@@ -30,6 +30,7 @@ import AnalyticsCore, { SDK_VERSION } from "../core/AnalyticsCore"
 import { Flutter } from "../core/Flutter"
 import { SnapshotProvider } from "../mobileDebugger/Snapshot"
 import CircleElement from "./CircleElement"
+import { niceTry } from "../utils/Util"
 
 export default class Circle implements PluginsInterface, WebSocketCallbackInterface {
   ws: WebSocket = new WebSocket()
@@ -86,7 +87,10 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
 
   handleOpenURL(uri: string): boolean {
     if (uri) {
-      let urlObject = url.URL.parseURL(uri)
+      let urlObject = niceTry(() => url.URL.parseURL(uri))
+      if (!urlObject) {
+        return false
+      }
       let serviceType = urlObject.params.get('serviceType')
       let wsUrl = urlObject.params.get('wsUrl')
       if (serviceType && serviceType == 'circle' && wsUrl && wsUrl.length > 0) {

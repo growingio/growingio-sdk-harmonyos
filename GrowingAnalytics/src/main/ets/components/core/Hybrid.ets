@@ -35,6 +35,7 @@ import { LogUtil } from '../utils/LogUtil'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import SaaSPageVarEvent from '../event/saas/SaaSPageVarEvent'
 import Plugins from '../plugins/Plugins'
+import { niceTryAsync } from '../utils/Util'
 
 export default class Hybrid {
   private static _hybrids: Record<string, Hybrid> = {}
@@ -112,8 +113,8 @@ export default class Hybrid {
     let controller = hybrid.controller
     let zLevel = 100
     let js = `window.GrowingWebViewJavascriptBridge.getDomTree(${left}, ${top}, ${width}, ${height}, ${zLevel})`
-    let elements = await controller.runJavaScript(js)
-    return elements
+    let elements = await niceTryAsync(() => controller.runJavaScript(js))
+    return elements ?? ''
   }
 
   static javaScriptOnDocumentStart(

@@ -30,6 +30,7 @@ import { StatusView } from "./StatusView"
 import AppInfo from "../core/AppInfo"
 import AnalyticsCore, { SDK_VERSION } from "../core/AnalyticsCore"
 import { SnapshotProvider } from "./Snapshot"
+import { niceTry } from "../utils/Util"
 
 export default class MobileDebugger implements PluginsInterface, WebSocketCallbackInterface {
   ws: WebSocket = new WebSocket()
@@ -97,7 +98,10 @@ export default class MobileDebugger implements PluginsInterface, WebSocketCallba
 
   handleOpenURL(uri: string): boolean {
     if (uri) {
-      let urlObject = url.URL.parseURL(uri)
+      let urlObject = niceTry(() => url.URL.parseURL(uri))
+      if (!urlObject) {
+        return false
+      }
       let serviceType = urlObject.params.get('serviceType')
       let wsUrl = urlObject.params.get('wsUrl')
       if (serviceType && serviceType == 'debugger' && wsUrl && wsUrl.length > 0) {

@@ -25,6 +25,7 @@ import util from '@ohos.util'
 import { PREFERENCE_DEVICE_ID } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
+import { niceTry } from '../utils/Util'
 
 export const SDK_PLATFORM: string = 'HarmonyOS'
 
@@ -47,12 +48,14 @@ export default class DeviceInfo {
     DeviceInfo.platform = SDK_PLATFORM
     DeviceInfo.platformVersion = deviceInfo.displayVersion
 
-    let displayInfo = display.getDefaultDisplaySync()
-    DeviceInfo.screenHeight = displayInfo.height
-    DeviceInfo.screenWidth = displayInfo.width
-    if (displayInfo.orientation != undefined) {
-      let isPortrait = displayInfo.orientation == 0 || displayInfo.orientation == 2
-      DeviceInfo.orientation = isPortrait ? 'PORTRAIT' : 'LANDSCAPE'
+    let displayInfo = niceTry(() => display.getDefaultDisplaySync())
+    if (displayInfo) {
+      DeviceInfo.screenHeight = displayInfo.height
+      DeviceInfo.screenWidth = displayInfo.width
+      if (displayInfo.orientation != undefined) {
+        let isPortrait = displayInfo.orientation == 0 || displayInfo.orientation == 2
+        DeviceInfo.orientation = isPortrait ? 'PORTRAIT' : 'LANDSCAPE'
+      }
     }
 
     DeviceInfo.deviceBrand = deviceInfo.brand
