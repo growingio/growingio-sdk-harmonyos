@@ -19,6 +19,7 @@ import preferences from '@ohos.data.preferences'
 
 import { PREFERENCE_NAME } from './Constants'
 import { LogUtil } from './LogUtil'
+import { niceTry, niceTryAsync } from './Util'
 
 export default class SharedPreferences {
   static shared: SharedPreferences
@@ -46,8 +47,8 @@ export default class SharedPreferences {
     if (!this.preferences) {
       return
     }
-    this.preferences.putSync(key, value)
-    await this.preferences.flush()
+    niceTry(() => this.preferences.putSync(key, value))
+    await niceTryAsync(() => this.preferences.flush())
   }
 
   getValue(key: string, defValue: preferences.ValueType = ''): preferences.ValueType {

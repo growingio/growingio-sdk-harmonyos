@@ -1,6 +1,5 @@
 import AppContext from '@ohos.app.ability.common'
 import Want from '@ohos.app.ability.Want'
-import router from '@ohos.router'
 
 export default class Util {
   static getRandomString(): string {
@@ -14,31 +13,32 @@ export default class Util {
     return random
   }
 
-  static startAbility(context: Context, name: string, path: string, params?: Record<string, Object>, isRouter: boolean = true) {
-    if (isRouter) {
-      if (params) {
-        router.pushUrl({
-          url: path,
-          params: params
-        })
+  static startAbility(context: UIContext, name: string, path: string, params?: Record<string, Object>, isRouter: boolean = true) {
+    try {
+      if (isRouter) {
+        if (params) {
+          context.getRouter().pushUrl({
+            url: path,
+            params: params
+          })
+        } else {
+          context.getRouter().pushUrl({
+            url: path
+          })
+        }
       } else {
-        router.pushUrl({
-          url: path
-        })
-      }
-    } else {
-      let appContext = context as AppContext.UIAbilityContext
-      const want: Want = {
-        bundleName: getContext(appContext).applicationInfo.name,
-        abilityName: name
-      }
-      if (params) {
-        want.parameters = params
-      }
-      try {
+        let appContext = context.getHostContext() as AppContext.UIAbilityContext
+        const want: Want = {
+          bundleName: appContext.applicationInfo.name,
+          abilityName: name
+        }
+        if (params) {
+          want.parameters = params
+        }
         appContext.startAbility(want)
-      } catch (error) {
       }
+    } catch {
+
     }
   }
 

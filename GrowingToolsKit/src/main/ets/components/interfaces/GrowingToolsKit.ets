@@ -23,11 +23,12 @@ import rcp from '@hms.collaboration.rcp'
 import EventDatabase from '../event/EventDatabase'
 import EventPersistence from '../event/EventPersistence'
 import { routeName } from '../pages/EntryIcon'
-import { SUB_WINDOW_NAME, ENTRY_PADDING, Position, GTKColor, PREFERENCE_ENTRY_POSITION,
+import { SUB_WINDOW_NAME, Position, GTKColor, PREFERENCE_ENTRY_POSITION,
   GTKConfig, GTKEventPersistence } from '../utils/Constants'
 import RequestPersistence from '../network/RequestPersistence'
 import TrackersInfo from '../core/TrackersInfo'
 import SharedPreferences from '../utils/SharedPreferences'
+import { niceTry } from '../utils/Util'
 
 interface GrowingToolsKitOptions {
   x?: number
@@ -48,7 +49,7 @@ export class GrowingToolsKit {
   static deferStart: boolean = false
 
   constructor(options?: GrowingToolsKitOptions) {
-    let x = options?.x ?? vp2px(ENTRY_PADDING)
+    let x = options?.x ?? 16
     let y = options?.y ?? 400
     let useInRelease = options?.useInRelease ? true : false
 
@@ -149,24 +150,28 @@ export class GrowingToolsKit {
 
     GrowingToolsKit.mainWindowStage = windowStage
     SharedPreferences.initWithContext(context)
-    windowStage.createSubWindow(SUB_WINDOW_NAME).then(subWindow => {
-      let localStorage = new LocalStorage()
-      localStorage.setOrCreate(PREFERENCE_ENTRY_POSITION, this._position)
-      subWindow.loadContentByName(routeName, localStorage).then(() => {
-        subWindow.setWindowBackgroundColor(GTKColor.blackAlpha)
-      })
-      subWindow.moveWindowTo(this._position.x, this._position.y)
-      subWindow.resize(vp2px(56), vp2px(56))
-      subWindow.showWindow()
-      subWindow.setWindowLayoutFullScreen(true)
 
-      subWindow.on("windowEvent", (windowEvent) => {
-        if (windowEvent == window.WindowEventType.WINDOW_ACTIVE) {
-          window.shiftAppWindowFocus(
-            subWindow.getWindowProperties().id,
-            windowStage.getMainWindowSync().getWindowProperties().id
-          )
-        }
+    niceTry(() => {
+      windowStage.createSubWindow(SUB_WINDOW_NAME).then(subWindow => {
+        let localStorage = new LocalStorage()
+        localStorage.setOrCreate(PREFERENCE_ENTRY_POSITION, this._position)
+        subWindow.loadContentByName(routeName, localStorage).then(() => {
+          subWindow.setWindowBackgroundColor(GTKColor.blackAlpha)
+        })
+        subWindow.moveWindowTo(this._position.x, this._position.y)
+        let context = windowStage.getMainWindowSync().getUIContext()
+        subWindow.resize(context.vp2px(56), context.vp2px(56))
+        subWindow.showWindow()
+        subWindow.setWindowLayoutFullScreen(true)
+
+        subWindow.on("windowEvent", (windowEvent) => {
+          if (windowEvent == window.WindowEventType.WINDOW_ACTIVE) {
+            window.shiftAppWindowFocus(
+              subWindow.getWindowProperties().id,
+              windowStage.getMainWindowSync().getWindowProperties().id
+            )
+          }
+        })
       })
     })
 

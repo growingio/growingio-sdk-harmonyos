@@ -36,6 +36,7 @@ import NetFlow from './NetFlow'
 import FPSCanvas from './FPSCanvas'
 import NavStackManager from '../core/NavStackManager'
 import { GrowingToolsKit } from '../interfaces/GrowingToolsKit'
+import { niceTry } from '../utils/Util'
 
 export const routeName: string = "EntryIcon"
 
@@ -74,7 +75,7 @@ export class EntryIconManager {
   }
 }
 
-@Entry({ routeName: routeName, storage: LocalStorage.getShared() })
+@Entry({ routeName: routeName, useSharedStorage: true })
 @Component
 struct EntryIcon {
   pageStack: NavPathStack = NavStackManager.pageStack
@@ -86,19 +87,19 @@ struct EntryIcon {
   }
 
   _mainWindow: window.Window | undefined = undefined
-  mainWindow(): window.Window {
+  mainWindow(): window.Window | undefined {
     if (this._mainWindow == undefined) {
       let windowStage = GrowingToolsKit.mainWindowStage
-      this._mainWindow = windowStage!.getMainWindowSync()
+      this._mainWindow = niceTry(() => windowStage!.getMainWindowSync())
     }
 
     return this._mainWindow
   }
 
   _window: window.Window | undefined = undefined
-  subWindow(): window.Window {
+  subWindow(): window.Window | undefined {
     if (this._window == undefined) {
-      this._window = window.findWindow(SUB_WINDOW_NAME)
+      this._window = niceTry(() => window.findWindow(SUB_WINDOW_NAME))
     }
 
     return this._window
@@ -121,65 +122,88 @@ struct EntryIcon {
   }
 
   private handleClick() {
-    let subWindow = this.subWindow()
-    let screenWidth = display.getDefaultDisplaySync().width
-    let screenHeight = display.getDefaultDisplaySync().height
-    let avoidArea = this.mainWindow().getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
-    let avoidTop = Math.max(avoidArea.topRect.height, 126)
+    niceTry(() => {
+      let subWindow = this.subWindow()
+      if (!subWindow) {
+        return
+      }
+      let mainWindow = this.mainWindow()
+      if (!mainWindow) {
+        return
+      }
+      let screenWidth = display.getDefaultDisplaySync().width
+      let screenHeight = display.getDefaultDisplaySync().height
+      let avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
+      let avoidTop = Math.max(avoidArea.topRect.height, 126)
 
-    subWindow.moveWindowTo(0, avoidTop)
-    subWindow.resize(screenWidth, screenHeight - avoidTop).then(() => {
-      let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Home', '', popInfo => {
-        if (EntryIconManager.getInstance().isFPSEnabled()) {
-          this.windowPosition.x = 20
-          this.windowPosition.y = avoidTop + 20
+      subWindow.moveWindowTo(0, avoidTop)
+      subWindow.resize(screenWidth, screenHeight - avoidTop).then(() => {
+        let destination = new NavPathInfo(NAV_PATH_PREFIX + 'Home', '', popInfo => {
+          if (!subWindow) {
+            return
+          }
+          if (EntryIconManager.getInstance().isFPSEnabled()) {
+            this.windowPosition.x = 20
+            this.windowPosition.y = avoidTop + 20
 
-          // FPS was enabled in Home, need to resize to large window
-          subWindow.resize(vp2px(FPS_WINDOW_WIDTH), vp2px(FPS_WINDOW_HEIGHT))
-        } else {
-          // FPS not enabled, restore small icon
-          subWindow.resize(vp2px(SMALL_ICON_WINDOW_SIDE_LENGTH), vp2px(SMALL_ICON_WINDOW_SIDE_LENGTH))
-        }
-        subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+            // FPS was enabled in Home, need to resize to large window
+            subWindow.resize(this.getUIContext().vp2px(FPS_WINDOW_WIDTH), this.getUIContext().vp2px(FPS_WINDOW_HEIGHT))
+          } else {
+            // FPS not enabled, restore small icon
+            subWindow.resize(this.getUIContext().vp2px(SMALL_ICON_WINDOW_SIDE_LENGTH), this.getUIContext().vp2px(SMALL_ICON_WINDOW_SIDE_LENGTH))
+          }
+          subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+        })
+        this.pageStack.pushDestination(destination, false)
       })
-      this.pageStack.pushDestination(destination, false)
     })
   }
 
   private onPanActionUpdate(event: GestureEvent) {
-    this.windowPosition.x += event.offsetX
-    this.windowPosition.y += event.offsetY
-    this.subWindow().moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+    niceTry(() => {
+      this.windowPosition.x += event.offsetX
+      this.windowPosition.y += event.offsetY
+      this.subWindow()?.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+    })
   }
 
   private onPanActionEnd(event: GestureEvent) {
-    let subWindow = this.subWindow()
-    let screenWidth = display.getDefaultDisplaySync().width
-    let screenHeight = display.getDefaultDisplaySync().height
-    let entryWidth = subWindow.getWindowProperties().windowRect.width
-    let entryHeight = subWindow.getWindowProperties().windowRect.height
-    let padding = vp2px(ENTRY_PADDING)
-    let avoidArea = this.mainWindow().getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
-    let avoidTop = Math.max(avoidArea.topRect.height, 126)
-    let avoidBottom = Math.max(avoidArea.bottomRect.height, 100)
+    niceTry(() => {
+      let subWindow = this.subWindow()
+      if (!subWindow) {
+        return
+      }
+      let mainWindow = this.mainWindow()
+      if (!mainWindow) {
+        return
+      }
+      let screenWidth = display.getDefaultDisplaySync().width
+      let screenHeight = display.getDefaultDisplaySync().height
+      let entryWidth = subWindow.getWindowProperties().windowRect.width
+      let entryHeight = subWindow.getWindowProperties().windowRect.height
+      let padding = this.getUIContext().vp2px(ENTRY_PADDING)
+      let avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
+      let avoidTop = Math.max(avoidArea.topRect.height, 126)
+      let avoidBottom = Math.max(avoidArea.bottomRect.height, 100)
 
-    let minY = avoidTop + padding
-    let maxY = screenHeight - avoidBottom - entryHeight - padding
-    if (this.windowPosition.y > maxY) {
-      this.windowPosition.y = maxY
-    } else if (this.windowPosition.y < minY) {
-      this.windowPosition.y = minY
-    }
+      let minY = avoidTop + padding
+      let maxY = screenHeight - avoidBottom - entryHeight - padding
+      if (this.windowPosition.y > maxY) {
+        this.windowPosition.y = maxY
+      } else if (this.windowPosition.y < minY) {
+        this.windowPosition.y = minY
+      }
 
-    let minX = padding
-    let maxX = screenWidth - entryWidth - padding
-    if (this.windowPosition.x > (screenWidth - entryWidth) / 2) {
-      this.windowPosition.x = maxX
-    } else {
-      this.windowPosition.x = minX
-    }
+      let minX = padding
+      let maxX = screenWidth - entryWidth - padding
+      if (this.windowPosition.x > (screenWidth - entryWidth) / 2) {
+        this.windowPosition.x = maxX
+      } else {
+        this.windowPosition.x = minX
+      }
 
-    subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+      subWindow.moveWindowTo(this.windowPosition.x, this.windowPosition.y)
+    })
   }
 
   @Builder

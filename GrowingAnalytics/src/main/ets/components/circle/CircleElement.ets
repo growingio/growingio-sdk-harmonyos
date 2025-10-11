@@ -16,7 +16,6 @@
  */
 
 import JSON from '@ohos.util.json'
-import router from '@ohos.router'
 
 import AnalyticsCore from "../core/AnalyticsCore"
 import AppInfo from "../core/AppInfo"

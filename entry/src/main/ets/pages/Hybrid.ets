@@ -1,13 +1,12 @@
 import web_webview from '@ohos.web.webview'
 import { GrowingAnalytics, GrowingAnalyticsInterface } from '@growingio/analytics'
-import router from '@ohos.router'
 
-@Entry
+@Entry({useSharedStorage: true})
 @Component
 struct Hybrid {
   @LocalStorageProp('trackerId') trackerIdFromStorage: string = ''
-  @State trackerIdFromRouterParams: string = router.getParams()
-    ? ((router.getParams() as Record<string, Object>)['trackerId'] as string)
+  @State trackerIdFromRouterParams: string = this.getUIContext().getRouter().getParams()
+    ? ((this.getUIContext().getRouter().getParams() as Record<string, Object>)['trackerId'] as string)
     : ''
   controller: web_webview.WebviewController = new web_webview.WebviewController()
 
@@ -50,7 +49,7 @@ struct Hybrid {
         .onClick(() => {
           // let context = getContext(this) as AppContext.UIAbilityContext
           // context.terminateSelf()
-          router.back()
+          this.getUIContext().getRouter().back()
         }).margin({ top: 15 })
     }
     .height('100%')
