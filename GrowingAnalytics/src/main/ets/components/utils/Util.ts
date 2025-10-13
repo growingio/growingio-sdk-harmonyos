@@ -235,47 +235,39 @@ export default class Util {
   }
 
   static getComponentLabel(inspectorInfo: any): string {
-    try {
+    return niceTry(() => {
       return inspectorInfo['$attrs']['label'] || inspectorInfo['$attrs']['content'] || ''
-    } catch (e) {
-      return ''
-    }
+    }, '')
   }
 
   static getAttributesFromNavInfoParameter(param: any): AttributesType {
-    try {
+    return niceTry(() => {
       if (param) {
         return param['growing_attributes'] || {}
       } else {
         return {}
       }
-    } catch (e) {
-      return {}
-    }
+    }, {})
   }
 
   static getAliasFromNavInfoParameter(param: any): string {
-    try {
+    return niceTry(() => {
       if (param) {
         return param['growing_alias'] || ''
       } else {
         return ''
       }
-    } catch (e) {
-      return ''
-    }
+    }, '')
   }
 
   static getTitleFromNavInfoParameter(param: any): string {
-    try {
+    return niceTry(() => {
       if (param) {
         return param['growing_title'] || ''
       } else {
         return ''
       }
-    } catch (e) {
-      return ''
-    }
+    }, '')
   }
 
   static validateEventSize(event: any): { isValid: boolean, attributes: AttributesType } {
