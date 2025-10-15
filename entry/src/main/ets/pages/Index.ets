@@ -58,7 +58,7 @@ struct Index {
       }
       Button('track')
         .onClick(() => {
-          Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track', {
+          Util.startAbility(this.getUIContext(), 'TrackAbility', 'pages/Track', {
             "growing_attributes": {
               "name": "kk",
               "age": 21
@@ -72,19 +72,19 @@ struct Index {
         })
       Button('generalProps')
         .onClick(() => {
-          Util.startAbility(getContext(this), 'GeneralPropsAbility', 'pages/GeneralProps')
+          Util.startAbility(this.getUIContext(), 'GeneralPropsAbility', 'pages/GeneralProps')
         }).margin({ top: 15 })
       Button('trackTimer')
         .onClick(() => {
-          Util.startAbility(getContext(this), 'TrackTimerAbility', 'pages/TrackTimer')
+          Util.startAbility(this.getUIContext(), 'TrackTimerAbility', 'pages/TrackTimer')
         }).margin({ top: 15 })
       Button('subTracker')
         .onClick(() => {
-          Util.startAbility(getContext(this), 'SubTrackerAbility', 'pages/SubTracker')
+          Util.startAbility(this.getUIContext(), 'SubTrackerAbility', 'pages/SubTracker')
         }).margin({ top: 15 })
       Button('hybrid')
         .onClick(() => {
-          Util.startAbility(getContext(this), 'HybridAbility', 'pages/Hybrid')
+          Util.startAbility(this.getUIContext(), 'HybridAbility', 'pages/Hybrid')
         }).margin({ top: 15 })
     }
     .width('100%')

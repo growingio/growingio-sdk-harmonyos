@@ -16,7 +16,6 @@
  */
 
 import JSON from '@ohos.util.json'
-import router from '@ohos.router'
 
 import AnalyticsCore from "../core/AnalyticsCore"
 import AppInfo from "../core/AppInfo"
@@ -275,7 +274,7 @@ export default class CircleElement {
         alias = Util.getAliasFromNavInfoParameter(navInfo.param)
         customTitle = Util.getTitleFromNavInfoParameter(navInfo.param)
       } else if (pageInfo.routerPageInfo) {
-        let param = router.getParams()
+        let param = AnalyticsCore.uiContent.getRouter().getParams()
         realPath = PATH_SEPARATOR + pageInfo.routerPageInfo.name.toString()
         alias = Util.getAliasFromNavInfoParameter(param)
         customTitle = Util.getTitleFromNavInfoParameter(param)
@@ -468,10 +467,10 @@ export default class CircleElement {
     let right = parseFloat(matches[3])
     let bottom = parseFloat(matches[4])
 
-    element.top = px2vp(top)
-    element.left = px2vp(left)
-    element.width = px2vp(right - left)
-    element.height = px2vp(bottom - top)
+    element.top = AnalyticsCore.uiContent.px2vp(top)
+    element.left = AnalyticsCore.uiContent.px2vp(left)
+    element.width = AnalyticsCore.uiContent.px2vp(right - left)
+    element.height = AnalyticsCore.uiContent.px2vp(bottom - top)
   }
 
   private static _getNodeType(nodeType: string): string {

@@ -113,7 +113,11 @@ export class SnapshotProvider {
         pixmap.release()
         this.snapshotKey += 1
         if (callback) {
-          callback(px2vp(size.width), px2vp(size.height), this.snapshotKey, snapshot)
+          callback(
+            AnalyticsCore.uiContent.px2vp(size.width),
+            AnalyticsCore.uiContent.px2vp(size.height),
+            this.snapshotKey,
+            snapshot)
         }
       })
     })

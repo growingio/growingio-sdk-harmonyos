@@ -1,17 +1,14 @@
 import { GrowingAnalytics, GrowingAnalyticsInterface, GrowingAttrType } from '@growingio/analytics'
-import AppContext from '@ohos.app.ability.common'
 import Util from '../Util'
-import router from '@ohos.router'
 
 type ValueType = string | number | boolean | string[] | number[] | boolean[]
-let storage: LocalStorage = LocalStorage.getShared()
 
-@Entry(storage)
+@Entry({useSharedStorage: true})
 @Component
 struct Track {
   @LocalStorageProp('trackerId') trackerIdFromStorage: string = ''
-  @State trackerIdFromRouterParams: string = router.getParams()
-    ? ((router.getParams() as Record<string, Object>)['trackerId'] as string)
+  @State trackerIdFromRouterParams: string = this.getUIContext().getRouter().getParams()
+    ? ((this.getUIContext().getRouter().getParams() as Record<string, Object>)['trackerId'] as string)
     : ''
   @State eventName: string = Util.getRandomString()
   @State attributesK: string[] = []
@@ -72,7 +69,7 @@ struct Track {
         .onClick(() => {
           // let context = getContext(this) as AppContext.UIAbilityContext
           // context.terminateSelf()
-          router.back()
+          this.getUIContext().getRouter().back()
         }).margin({ top: 15 })
     }
     .width('100%')

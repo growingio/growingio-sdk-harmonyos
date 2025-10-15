@@ -66,7 +66,7 @@ export default class Util {
 
   static decompress(serialize: ArrayBuffer): ArrayBuffer {
     let decompressed = new Uint8Array(snappy.uncompress(serialize))
-    return buffer.from(decompressed).buffer
+    return niceTry(() => buffer.from(decompressed).buffer, serialize)
   }
 
   static decrypt(serialize: ArrayBuffer, time: number): ArrayBuffer {
@@ -78,7 +78,7 @@ export default class Util {
       decrypted[i] = original[i] ^ hint[i % hint.length]
     }
 
-    return buffer.from(decrypted).buffer
+    return niceTry(() => buffer.from(decrypted).buffer, serialize)
   }
 
   static getHintFromTime(time: number): Uint8Array {
@@ -86,5 +86,25 @@ export default class Util {
     let lastByteHex: string = hexString.slice(-2)
     let lastByte: number = parseInt(lastByteHex, 16)
     return new Uint8Array([lastByte])
+  }
+}
+
+export function niceTry<T>(fn: () => T): T | undefined
+export function niceTry<T>(fn: () => T, fallback: T): T
+export function niceTry<T>(fn: () => T, fallback?: T): T | undefined {
+  try {
+    return fn()
+  } catch {
+    return fallback
+  }
+}
+
+export function niceTryAsync<T>(fn: () => Promise<T>): Promise<T | undefined>
+export function niceTryAsync<T>(fn: () => Promise<T>, fallback: T): Promise<T>
+export async function niceTryAsync<T>(fn: () => Promise<T>, fallback?: T): Promise<T | undefined> {
+  try {
+    return await fn()
+  } catch {
+    return fallback
   }
 }

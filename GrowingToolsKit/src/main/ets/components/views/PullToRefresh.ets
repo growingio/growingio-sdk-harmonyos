@@ -115,7 +115,7 @@ export struct PullToRefresh {
         .height('100%')
         .id('ptr_fix_no_full_screen_bug')
         .onAppear(() => {
-          this.actuallyHeight = px2vp(componentUtils.getRectangleById('ptr_fix_no_full_screen_bug').size.height)
+          this.actuallyHeight = this.getUIContext().px2vp(this.getUIContext().getComponentUtils().getRectangleById('ptr_fix_no_full_screen_bug').size.height)
           if (this.avoidAreaHeight) {
             this.actuallyHeight = this.actuallyHeight - this.avoidAreaHeight
           }
@@ -600,7 +600,7 @@ export struct PullToRefresh {
   public closeRefresh(): void {
     clearInterval(this.timer);
     if (this.refreshConfigurator !== undefined) {
-      animateTo({ duration: this.refreshConfigurator.getAnimDuration() }, () => {
+      this.getUIContext().animateTo({ duration: this.refreshConfigurator.getAnimDuration() }, () => {
         this.trYTop = 0;
       });
     }
@@ -615,7 +615,7 @@ export struct PullToRefresh {
   public closeLoad(): void {
     clearInterval(this.timer);
     if (this.refreshConfigurator !== undefined) {
-      animateTo({ duration: this.refreshConfigurator.getAnimDuration() }, () => {
+      this.getUIContext().animateTo({ duration: this.refreshConfigurator.getAnimDuration() }, () => {
         this.trYBottom = 0;
       });
     }

@@ -1,6 +1,4 @@
 import { GrowingAnalytics, GrowingConfig, GrowingAnalyticsInterface } from '@growingio/analytics'
-import AppContext from '@ohos.app.ability.common'
-import router from '@ohos.router'
 import Util from '../Util'
 
 @Entry
@@ -49,7 +47,7 @@ struct SubTracker {
           if (this.curTrackerId.length == 0) {
             return
           }
-          Util.startAbility(getContext(this), 'TrackAbility', 'pages/Track', {'trackerId': this.curTrackerId})
+          Util.startAbility(this.getUIContext(), 'TrackAbility', 'pages/Track', {'trackerId': this.curTrackerId})
         }).margin({ top: 15 })
       Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
         Button('loginUserAttributes')
@@ -70,14 +68,14 @@ struct SubTracker {
           if (this.curTrackerId.length == 0) {
             return
           }
-          Util.startAbility(getContext(this), 'TrackTimerAbility', 'pages/TrackTimer', {'trackerId': this.curTrackerId})
+          Util.startAbility(this.getUIContext(), 'TrackTimerAbility', 'pages/TrackTimer', {'trackerId': this.curTrackerId})
         }).margin({ top: 15 })
       Button('Hybrid')
         .onClick(() => {
           if (this.curTrackerId.length == 0) {
             return
           }
-          Util.startAbility(getContext(this), 'HybridAbility', 'pages/Hybrid', {'trackerId': this.curTrackerId})
+          Util.startAbility(this.getUIContext(), 'HybridAbility', 'pages/Hybrid', {'trackerId': this.curTrackerId})
         }).margin({ top: 15 })
       List({space: 15}) {
         ForEach(this.trackerIds, (trackerId: string) => {
@@ -102,7 +100,7 @@ struct SubTracker {
         .onClick(() => {
           // let context = getContext(this) as AppContext.UIAbilityContext
           // context.terminateSelf()
-          router.back()
+          this.getUIContext().getRouter().back()
         }).margin({ top: 15 })
     }
     .width('100%')

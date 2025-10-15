@@ -31,6 +31,7 @@ import {
   Quit,
   ReadyInfo,
   RefreshScreenshot } from './Model'
+import { niceTryAsync } from "../utils/Util"
 
 export interface WebSocketCallbackInterface {
   onWebSocketOpen(err: BusinessError, value: Object): void
@@ -61,7 +62,7 @@ export class WebSocket {
     ws.on('error', (err: BusinessError) => {
       callback.onWebSocketError(err)
     })
-    return ws.connect(url)
+    return niceTryAsync(() => ws.connect(url), false)
   }
 
   disconnect() {
@@ -71,7 +72,7 @@ export class WebSocket {
 
     let latestSocket = this.ws
     this.queue = []
-    latestSocket.send(JSON.stringify(new Quit()))
+    niceTryAsync(() => latestSocket.send(JSON.stringify(new Quit())))
   }
 
   send(message: string) {

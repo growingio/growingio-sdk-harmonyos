@@ -17,8 +17,8 @@
 
 import uiObserver from '@ohos.arkui.observer'
 import emitter from '@ohos.events.emitter'
-import router from '@ohos.router'
 
+import Autotrack from './Autotrack'
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
 import Session, { SessionState } from '../core/Session'
@@ -156,7 +156,7 @@ export default class AutotrackPage {
       if (title.includes(PATH_SEPARATOR)) {
         title = title.substring(title.lastIndexOf(PATH_SEPARATOR) + 1)
       }
-      let param = router.getParams()
+      let param = Autotrack.uiContent.getRouter().getParams()
       let attributes = Util.getAttributesFromNavInfoParameter(param)
       let alias = Util.getAliasFromNavInfoParameter(param)
       let customTitle = Util.getTitleFromNavInfoParameter(param)

@@ -69,28 +69,6 @@ export default class Util {
     return buf.byteLength
   }
 
-  static toSerialize(isProtobuf: boolean, events: any[]): ArrayBuffer {
-    if (isProtobuf) {
-      let values: event_pb.EventV3Dto[] = []
-      events.forEach(e => {
-        let event = JSON.parse(e.data)
-        let dto = event_pb.EventV3Dto.fromObject(event)
-        values.push(dto)
-      })
-      let list = event_pb.EventV3List.create({values: values})
-      let arrayBuffer: Uint8Array = event_pb.EventV3List.encode(list).finish()
-      return buffer.from(arrayBuffer).buffer
-    } else {
-      let json = '[' + events.map(event => String(event.data)).join(',') + ']'
-      return buffer.from(json, 'utf-8').buffer
-    }
-  }
-
-  static compress(serialize: ArrayBuffer): ArrayBuffer {
-    let compressed = snappy.compress(serialize) as ArrayBuffer
-    return compressed
-  }
-
   static encrypt(serialize: ArrayBuffer, time: number): ArrayBuffer {
     let buf: ArrayBuffer = serialize
     let hint = Util.getHintFromTime(time)
@@ -100,7 +78,7 @@ export default class Util {
       encrypted[i] = original[i] ^ hint[i % hint.length]
     }
 
-    return buffer.from(encrypted).buffer
+    return niceTry(() => buffer.from(encrypted).buffer, serialize)
   }
 
   static toSerializeByMeasurementProtocolV2(event: any, networkState: string): string {
@@ -257,47 +235,39 @@ export default class Util {
   }
 
   static getComponentLabel(inspectorInfo: any): string {
-    try {
+    return niceTry(() => {
       return inspectorInfo['$attrs']['label'] || inspectorInfo['$attrs']['content'] || ''
-    } catch (e) {
-      return ''
-    }
+    }, '')
   }
 
   static getAttributesFromNavInfoParameter(param: any): AttributesType {
-    try {
+    return niceTry(() => {
       if (param) {
         return param['growing_attributes'] || {}
       } else {
         return {}
       }
-    } catch (e) {
-      return {}
-    }
+    }, {})
   }
 
   static getAliasFromNavInfoParameter(param: any): string {
-    try {
+    return niceTry(() => {
       if (param) {
         return param['growing_alias'] || ''
       } else {
         return ''
       }
-    } catch (e) {
-      return ''
-    }
+    }, '')
   }
 
   static getTitleFromNavInfoParameter(param: any): string {
-    try {
+    return niceTry(() => {
       if (param) {
         return param['growing_title'] || ''
       } else {
         return ''
       }
-    } catch (e) {
-      return ''
-    }
+    }, '')
   }
 
   static validateEventSize(event: any): { isValid: boolean, attributes: AttributesType } {
@@ -317,5 +287,25 @@ export default class Util {
       isValid: true,
       attributes: event.attributes
     }
+  }
+}
+
+export function niceTry<T>(fn: () => T): T | undefined
+export function niceTry<T>(fn: () => T, fallback: T): T
+export function niceTry<T>(fn: () => T, fallback?: T): T | undefined {
+  try {
+    return fn()
+  } catch {
+    return fallback
+  }
+}
+
+export function niceTryAsync<T>(fn: () => Promise<T>): Promise<T | undefined>
+export function niceTryAsync<T>(fn: () => Promise<T>, fallback: T): Promise<T>
+export async function niceTryAsync<T>(fn: () => Promise<T>, fallback?: T): Promise<T | undefined> {
+  try {
+    return await fn()
+  } catch {
+    return fallback
   }
 }

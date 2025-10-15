@@ -1,7 +1,5 @@
 import { GrowingAnalytics } from '@growingio/analytics'
-import AppContext from '@ohos.app.ability.common'
 import Util from '../Util'
-import router from '@ohos.router'
 
 @Entry
 @Component
@@ -28,7 +26,7 @@ struct GeneralProps {
         .onClick(() => {
           // let context = getContext(this) as AppContext.UIAbilityContext
           // context.terminateSelf()
-          router.back()
+          this.getUIContext().getRouter().back()
         }).margin({ top: 15 })
     }
     .width('100%')

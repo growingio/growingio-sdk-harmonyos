@@ -1,15 +1,11 @@
 import { GrowingAnalytics, GrowingAnalyticsInterface } from '@growingio/analytics'
-import AppContext from '@ohos.app.ability.common'
-import router from '@ohos.router'
 
-let storage: LocalStorage = LocalStorage.getShared()
-
-@Entry(storage)
+@Entry({useSharedStorage: true})
 @Component
 struct TrackTimer {
   @LocalStorageProp('trackerId') trackerIdFromStorage: string = ''
-  @State trackerIdFromRouterParams: string = router.getParams()
-    ? ((router.getParams() as Record<string, Object>)['trackerId'] as string)
+  @State trackerIdFromRouterParams: string = this.getUIContext().getRouter().getParams()
+    ? ((this.getUIContext().getRouter().getParams() as Record<string, Object>)['trackerId'] as string)
     : ''
   @State timerIds: string[] = []
   @State curTimerId: string = ''
@@ -68,7 +64,7 @@ struct TrackTimer {
         .onClick(() => {
           // let context = getContext(this) as AppContext.UIAbilityContext
           // context.terminateSelf()
-          router.back()
+          this.getUIContext().getRouter().back()
         }).margin({ top: 15 })
     }
     .width('100%')
