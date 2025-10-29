@@ -24,6 +24,8 @@ import GrowingContext from '../core/Context'
 import Session, { SessionState } from '../core/Session'
 import { EventScene } from '../event/Event'
 import PageEvent from '../event/PageEvent'
+import FlutterPageEvent from '../event/flutter/FlutterPageEvent'
+import { ConfigMode } from '../interfaces/GrowingConfig'
 import {
   AttributesType,
   EMIT_EVENT_MAIN_TRACKER_INITIALIZE,
@@ -261,14 +263,28 @@ export default class AutotrackPage {
       if (!context.config.dataCollectionEnabled) {
         return
       }
-      let e = PageEvent.create(
-        pageInfo.path,
-        pageInfo.title,
-        pageInfo.attributes,
-        pageInfo.timestamp,
-        context
-      )
-      AnalyticsCore.writeEventToDisk(e, context, pageInfo.eventScene)
+
+      if (pageInfo.eventScene == EventScene.Flutter
+        && context.config.mode == ConfigMode.NewSaaS /* mode SaaS 保留先前的原生 page event 生成逻辑，rp 会混合 */) {
+        let e = FlutterPageEvent.create(
+          pageInfo.path,
+          pageInfo.title,
+          pageInfo.attributes,
+          pageInfo.timestamp,
+          pageInfo.referralPage,
+          context
+        )
+        AnalyticsCore.writeEventToDisk(e, context, pageInfo.eventScene)
+      } else {
+        let e = PageEvent.create(
+          pageInfo.path,
+          pageInfo.title,
+          pageInfo.attributes,
+          pageInfo.timestamp,
+          context
+        )
+        AnalyticsCore.writeEventToDisk(e, context, pageInfo.eventScene)
+      }
     } else {
       // 详见: https://github.com/growingio/growingio-sdk-harmonyos/pull/6#issuecomment-2232880146
       AutotrackPage.cachePageOnBackground(pageInfo)
@@ -295,6 +311,7 @@ export class PageInfo {
   alias?: string
   dstId?: string
   timestamp: number = 0
+  referralPage?: string
   eventScene: EventScene = EventScene.Native
 
   constructor(
