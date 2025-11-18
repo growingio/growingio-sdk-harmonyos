@@ -27,7 +27,7 @@ export interface Page {
   timestamp: number
   attributes: AttributesType | undefined
 
-  // mode SaaS
+  // mode CDP not support
   referralPage: string | undefined
 }
 
@@ -36,7 +36,7 @@ export default class PageEvent extends Event implements Page {
   title: string | undefined = undefined
   orientation: string | undefined = undefined
 
-  // mode SaaS
+  // mode CDP not support
   private static lastPage: Record<string, Page> = {}
   referralPage: string | undefined = undefined
 
@@ -55,7 +55,7 @@ export default class PageEvent extends Event implements Page {
     event.orientation = DeviceInfo.orientation
     event.eventType = EventType.Page
 
-    if (context.config.mode == ConfigMode.SaaS) {
+    if (context.config.mode == ConfigMode.SaaS || context.config.mode == ConfigMode.NewSaaS) {
       let lastPage = PageEvent.getLastPage(context)
       if (lastPage) {
         event.referralPage = lastPage.path
