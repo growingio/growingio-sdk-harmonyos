@@ -28,32 +28,60 @@ EventV3Dto
 ResourceItem
 
 -keep-property-name
+# --------- event properties ---------
 eventSequenceId
-X-Timestamp
+eventName
+timestamp
+eventType
+# --------- saas event properties ---------
+esid
+n
+p
+tm
+# --------- autotrack/hybrid event properties ---------
 xcontent
-responseHeader
 path
 xpath
-eventName
-day
-timestamp
-Content-Type
-totalDuration
 textValue
-method
-REQUEST_BLOB
-esid
 index
-eventType
-n
-url
-p
+# --------- protobuf ---------
+roots
+fromBits
+Reader
+util
+longs
+enums
+toLong
+LongBits
+emptyArray
+emptyObject
+toJSONOptions
+toJSON
+toObject
+create
+decode
+skipType
+string
+double
+uint32
+int32
+int64
+# --------- database ---------
+REQUEST_BLOB
 RESPONSE_BLOB
-X-Crypt-Codec
-tm
-X-Compress-Codec
+# --------- request ---------
+X-Timestamp
+responseHeader
 requestHeader
+status
+statusCode
+method
+url
+# --------- other/reserved ---------
+X-Crypt-Codec
+X-Compress-Codec
+day
 time
 startTimestamp
-statusCode
-status
+Content-Type
+totalDuration
