@@ -9,23 +9,6 @@ EventV3Dto
 ResourceItem
 
 -keep-property-name
-# --------- interface ---------
-context
-configuration
-ability
-windowStage
-trackerId
-scriptRules
-saasJavaScriptConfig
-enabled
-eventName
-sendTo
-timerId
-controller
-webviewId
-keys
-generator
-uri
 # --------- event properties ---------
 userId
 userKey
@@ -88,6 +71,11 @@ Writer
 util
 emptyArray
 emptyObject
+low
+high
+unsigned
+toNumber
+finish
 create
 encode
 fork
