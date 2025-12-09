@@ -85,6 +85,25 @@ $attrs
 # --------- protobuf ---------
 roots
 fromBits
+fromValue
+Writer
+util
+emptyArray
+emptyObject
+low
+high
+unsigned
+toNumber
+finish
+create
+encode
+fork
+ldelim
+string
+double
+uint32
+int32
+int64
 # --------- event database ---------
 EVENT_UUID
 DATA
@@ -100,6 +119,5 @@ oaid
 url
 source
 key
-string
 X-Compress-Codec
 X-Crypt-Codec

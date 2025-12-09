@@ -13,11 +13,11 @@
   "main": "index.ets",
   "type": "module",
   "repository": "https://github.com/growingio/growingio-sdk-harmonyos",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "dependencies": {
-    "snappyjs": "^0.7.0",
-    "@ohos/protobufjs": "^2.1.0",
-    "long": "^5.2.1"
+    "snappyjs": "0.7.0",
+    "@ohos/protobufjs": "2.1.0",
+    "long": "5.2.1",
   },
   "tags": [
     "Tool"
