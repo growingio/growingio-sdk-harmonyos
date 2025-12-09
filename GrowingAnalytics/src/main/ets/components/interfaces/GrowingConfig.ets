@@ -53,6 +53,19 @@ export enum ConfigMode {
   CDP
 }
 
+export enum IgnoreFields {
+  NetworkState = (1 << 0),
+  ScreenSize = (1 << 1),
+  DeviceBrand = (1 << 2),
+  DeviceModel = (1 << 3),
+  DeviceType = (1 << 4),
+  SystemLanguage = (1 << 5),
+  TimezoneOffset = (1 << 6)
+}
+
+export const IgnoreFieldsAll = (IgnoreFields.NetworkState | IgnoreFields.ScreenSize | IgnoreFields.DeviceBrand |
+IgnoreFields.DeviceModel | IgnoreFields.DeviceType | IgnoreFields.SystemLanguage | IgnoreFields.TimezoneOffset)
+
 export class GrowingConfig {
   mode: ConfigMode = ConfigMode.NewSaaS
   accountId: string = ''
@@ -74,6 +87,7 @@ export class GrowingConfig {
   autotrackAllPages: boolean = false
   useProtobuf: boolean = true
   plugins: Array<PluginsInterface> = []
+  ignoreField: number = 0
 
   constructor() {}
 
@@ -193,6 +207,7 @@ export class GrowingConfig {
     config.autotrackAllPages = this.autotrackAllPages
     config.useProtobuf = this.useProtobuf
     config.plugins = [...this.plugins]
+    config.ignoreField = this.ignoreField
 
     return config
   }
