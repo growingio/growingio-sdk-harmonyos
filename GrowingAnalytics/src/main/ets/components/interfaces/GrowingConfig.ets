@@ -60,11 +60,13 @@ export enum IgnoreFields {
   DeviceModel = (1 << 3),
   DeviceType = (1 << 4),
   SystemLanguage = (1 << 5),
-  TimezoneOffset = (1 << 6)
+  TimezoneOffset = (1 << 6),
+  PlatformVersion = (1 << 7)
 }
 
 export const IgnoreFieldsAll = (IgnoreFields.NetworkState | IgnoreFields.ScreenSize | IgnoreFields.DeviceBrand |
-IgnoreFields.DeviceModel | IgnoreFields.DeviceType | IgnoreFields.SystemLanguage | IgnoreFields.TimezoneOffset)
+IgnoreFields.DeviceModel | IgnoreFields.DeviceType | IgnoreFields.SystemLanguage | IgnoreFields.TimezoneOffset |
+IgnoreFields.PlatformVersion)
 
 export class GrowingConfig {
   mode: ConfigMode = ConfigMode.NewSaaS

@@ -40,6 +40,7 @@ export default class EntryAbilityStage extends AbilityStage {
     config.autotrackAllPages = true
     config.plugins = [new GrowingToolsKit()]
     // config.ignoreField = GrowingIgnoreFieldsAll
+    // config.ignoreField = GrowingIgnoreFields.NetworkState | GrowingIgnoreFields.PlatformVersion
     GrowingAnalytics.start(this.context, config)
 
     // ---------------- CDP ----------------

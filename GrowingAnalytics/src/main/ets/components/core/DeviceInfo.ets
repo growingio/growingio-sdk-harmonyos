@@ -48,7 +48,6 @@ export default class DeviceInfo {
 
   static initDeviceInfo(context: GrowingContext) {
     DeviceInfo.platform = SDK_PLATFORM
-    DeviceInfo.platformVersion = deviceInfo.displayVersion
 
     if ((context.config.ignoreField & IgnoreFields.ScreenSize) == 0) {
       let displayInfo = niceTry(() => display.getDefaultDisplaySync())
@@ -66,6 +65,7 @@ export default class DeviceInfo {
       DeviceInfo.orientation = 'PORTRAIT'
     }
 
+    DeviceInfo.platformVersion = (context.config.ignoreField & IgnoreFields.PlatformVersion) == 0 ? deviceInfo.displayVersion : '5.0.0'
     DeviceInfo.deviceBrand = (context.config.ignoreField & IgnoreFields.DeviceBrand) == 0 ? deviceInfo.brand : 'HUAWEI'
     DeviceInfo.deviceModel = (context.config.ignoreField & IgnoreFields.DeviceModel) == 0 ? deviceInfo.productModel : 'ALN-AL00'
     DeviceInfo.deviceType = (context.config.ignoreField & IgnoreFields.DeviceType) == 0 ? deviceInfo.deviceType : 'phone'
