@@ -36,7 +36,7 @@ export default class DeviceInfo {
   static defaultScreenWidth: number = 2720
   static defaultPlatformVersion: string = '5.0.0'
   static defaultDeviceBrand: string = 'HUAWEI'
-  static defaultDeviceModel: string = 'ALN-AL00'
+  static defaultDeviceModel: string = '-'
   static defaultDeviceType: string = 'phone'
 
   static deviceId: string = ''
