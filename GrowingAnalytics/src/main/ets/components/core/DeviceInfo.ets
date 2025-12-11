@@ -27,29 +27,36 @@ import { PREFERENCE_DEVICE_ID } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 import { niceTry } from '../utils/Util'
-import { IgnoreFields } from '../interfaces/GrowingConfig'
+import { ConfigMode, IgnoreFields } from '../interfaces/GrowingConfig'
 
 export const SDK_PLATFORM: string = 'HarmonyOS'
 
 export default class DeviceInfo {
+  static defaultScreenHeight: number = 1260
+  static defaultScreenWidth: number = 2720
+  static defaultPlatformVersion: string = '5.0.0'
+  static defaultDeviceBrand: string = 'HUAWEI'
+  static defaultDeviceModel: string = 'ALN-AL00'
+  static defaultDeviceType: string = 'phone'
+
   static deviceId: string = ''
   static platform: string = ''
-  static platformVersion: string = ''
-  static screenHeight: number = 0
-  static screenWidth: number = 0
-  static orientation: string = 'PORTRAIT'
-  static deviceBrand: string = ''
-  static deviceModel: string = ''
-  static deviceType: string = ''
-  static language: string = ''
-  static timezoneOffset: string = ''
-  static networkState: string = ''
+  static platformVersion?: string = ''
+  static screenHeight?: number = 0
+  static screenWidth?: number = 0
+  static orientation?: string = 'PORTRAIT'
+  static deviceBrand?: string = ''
+  static deviceModel?: string = ''
+  static deviceType?: string = ''
+  static language?: string = ''
+  static timezoneOffset?: string = ''
+  static networkState?: string = ''
   static netConnection = connection.createNetConnection()
 
   static initDeviceInfo(context: GrowingContext) {
     DeviceInfo.platform = SDK_PLATFORM
 
-    if ((context.config.ignoreField & IgnoreFields.ScreenSize) == 0) {
+    if (DeviceInfo.isNotIgnoreField(context, IgnoreFields.ScreenSize)) {
       let displayInfo = niceTry(() => display.getDefaultDisplaySync())
       if (displayInfo) {
         DeviceInfo.screenHeight = displayInfo.height
@@ -60,19 +67,19 @@ export default class DeviceInfo {
         }
       }
     } else {
-      DeviceInfo.screenHeight = 800
-      DeviceInfo.screenWidth = 600
-      DeviceInfo.orientation = 'PORTRAIT'
+      DeviceInfo.screenHeight = undefined
+      DeviceInfo.screenWidth = undefined
+      DeviceInfo.orientation = undefined
     }
 
-    DeviceInfo.platformVersion = (context.config.ignoreField & IgnoreFields.PlatformVersion) == 0 ? deviceInfo.displayVersion : '5.0.0'
-    DeviceInfo.deviceBrand = (context.config.ignoreField & IgnoreFields.DeviceBrand) == 0 ? deviceInfo.brand : 'HUAWEI'
-    DeviceInfo.deviceModel = (context.config.ignoreField & IgnoreFields.DeviceModel) == 0 ? deviceInfo.productModel : 'ALN-AL00'
-    DeviceInfo.deviceType = (context.config.ignoreField & IgnoreFields.DeviceType) == 0 ? deviceInfo.deviceType : 'phone'
-    DeviceInfo.language = (context.config.ignoreField & IgnoreFields.SystemLanguage) == 0 ? I18n.System.getSystemLanguage() : 'zh-Hans'
-    DeviceInfo.timezoneOffset = (context.config.ignoreField & IgnoreFields.TimezoneOffset) == 0 ? new Date().getTimezoneOffset() + '' : '-480'
+    DeviceInfo.platformVersion = DeviceInfo.isNotIgnoreField(context, IgnoreFields.PlatformVersion) ? deviceInfo.displayVersion : undefined
+    DeviceInfo.deviceBrand = DeviceInfo.isNotIgnoreField(context, IgnoreFields.DeviceBrand) ? deviceInfo.brand : undefined
+    DeviceInfo.deviceModel = DeviceInfo.isNotIgnoreField(context, IgnoreFields.DeviceModel) ? deviceInfo.productModel : undefined
+    DeviceInfo.deviceType = DeviceInfo.isNotIgnoreField(context, IgnoreFields.DeviceType) ? deviceInfo.deviceType : undefined
+    DeviceInfo.language = DeviceInfo.isNotIgnoreField(context, IgnoreFields.SystemLanguage) ? I18n.System.getSystemLanguage() : undefined
+    DeviceInfo.timezoneOffset = DeviceInfo.isNotIgnoreField(context, IgnoreFields.TimezoneOffset) ? new Date().getTimezoneOffset() + '' : undefined
 
-    if ((context.config.ignoreField & IgnoreFields.NetworkState) == 0) {
+    if (DeviceInfo.isNotIgnoreField(context, IgnoreFields.NetworkState)) {
       DeviceInfo.networkState = 'UNKNOWN'
       DeviceInfo.netConnection.register((e) => {
         if (e) {
@@ -130,7 +137,7 @@ export default class DeviceInfo {
         }
       })
     } else {
-      DeviceInfo.networkState = 'UNKNOWN'
+      DeviceInfo.networkState = undefined
     }
 
     let deviceId = SharedPreferences.getValue(PREFERENCE_DEVICE_ID) as string
@@ -140,5 +147,13 @@ export default class DeviceInfo {
       SharedPreferences.put(PREFERENCE_DEVICE_ID, deviceId)
     }
     DeviceInfo.deviceId = deviceId
+  }
+
+  static isNotIgnoreField(context: GrowingContext, field: IgnoreFields): boolean {
+    if (context.config.mode != ConfigMode.NewSaaS) {
+      return true
+    }
+
+    return (context.config.ignoreField & field) == 0
   }
 }

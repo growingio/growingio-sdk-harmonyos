@@ -105,8 +105,8 @@ export class WebSocket {
       context.config.accountId,
       Date.now(),
       AppInfo.domain,
-      DeviceInfo.screenWidth,
-      DeviceInfo.screenHeight,
+      DeviceInfo.screenWidth ?? DeviceInfo.defaultScreenWidth,
+      DeviceInfo.screenHeight ?? DeviceInfo.defaultScreenHeight,
       context.config.urlScheme
     )
     this.send(JSON.stringify(readyInfo))
@@ -118,8 +118,8 @@ export class WebSocket {
       context.config.accountId,
       Date.now(),
       AppInfo.domain,
-      DeviceInfo.screenWidth,
-      DeviceInfo.screenHeight,
+      DeviceInfo.screenWidth ?? DeviceInfo.defaultScreenWidth,
+      DeviceInfo.screenHeight ?? DeviceInfo.defaultScreenHeight,
       context.config.urlScheme,
       AppInfo.appVersion,
     )
@@ -128,12 +128,12 @@ export class WebSocket {
 
   sendClientInfo() {
     let clientInfoData = new ClientInfoData(
-      DeviceInfo.platformVersion,
+      DeviceInfo.platformVersion ?? DeviceInfo.defaultPlatformVersion,
       AppInfo.appVersion,
       AppInfo.appChannel ?? '',
-      DeviceInfo.deviceType,
-      DeviceInfo.deviceBrand,
-      DeviceInfo.deviceModel,
+      DeviceInfo.deviceType ?? DeviceInfo.defaultDeviceType,
+      DeviceInfo.deviceBrand ?? DeviceInfo.defaultDeviceBrand,
+      DeviceInfo.deviceModel ?? DeviceInfo.defaultDeviceModel,
     )
     let clientInfo = new ClientInfo(clientInfoData)
     this.send(JSON.stringify(clientInfo))
