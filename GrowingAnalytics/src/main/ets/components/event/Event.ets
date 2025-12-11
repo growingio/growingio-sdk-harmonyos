@@ -28,7 +28,6 @@ export default abstract class Event {
   userKey: string | undefined = undefined
   sessionId: string = ''
   eventSequenceId: number = 0
-  networkState: string = ''
   timestamp: number = 0
   latitude: number | undefined = undefined
   longitude: number | undefined = undefined
@@ -42,14 +41,15 @@ export default abstract class Event {
   // deviceInfo
   deviceId: string = ''
   platform: string = ''
-  platformVersion: string = ''
-  screenHeight: number = 0
-  screenWidth: number = 0
-  deviceBrand: string = ''
-  deviceModel: string = ''
-  deviceType: string = ''
-  language: string = ''
-  timezoneOffset: string = ''
+  platformVersion: string | undefined = undefined
+  screenHeight: number | undefined = undefined
+  screenWidth: number | undefined = undefined
+  deviceBrand: string | undefined = undefined
+  deviceModel: string | undefined = undefined
+  deviceType: string | undefined = undefined
+  language: string | undefined = undefined
+  timezoneOffset: string | undefined = undefined
+  networkState: string | undefined = undefined
 
   // appInfo
   domain: string = ''

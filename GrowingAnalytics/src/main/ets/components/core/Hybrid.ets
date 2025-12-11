@@ -129,8 +129,8 @@ export default class Hybrid {
       let config: AttributesType = {
         enableHT: saasJavaScriptConfig.hashTagEnabled,
         disableImp: !saasJavaScriptConfig.impEnabled,
-        phoneWidth: DeviceInfo.screenWidth,
-        phoneHeight: DeviceInfo.screenHeight,
+        phoneWidth: DeviceInfo.screenWidth ?? DeviceInfo.defaultScreenWidth,
+        phoneHeight: DeviceInfo.screenHeight ?? DeviceInfo.defaultScreenHeight,
         protocolVersion:  1
       }
       scripts.push({

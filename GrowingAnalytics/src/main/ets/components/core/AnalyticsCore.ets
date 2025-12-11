@@ -97,7 +97,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     AnalyticsCore.setAppStateChangeCallback(context)
     SharedPreferences.initWithContext(context)
     AppInfo.initAppInfo(context)
-    DeviceInfo.initDeviceInfo()
+    DeviceInfo.initDeviceInfo(gContext)
     UserIdentifier.initUser(gContext)
     EventDatabase.initDatabase(context)
     Network.initNetwork(gContext)

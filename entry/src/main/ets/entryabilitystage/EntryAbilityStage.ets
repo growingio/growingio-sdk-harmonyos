@@ -1,6 +1,6 @@
 import AbilityStage from '@ohos.app.ability.AbilityStage'
 import type Want from '@ohos.app.ability.Want'
-import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
+import { GrowingAnalytics, GrowingConfig, GrowingIgnoreFields, GrowingIgnoreFieldsAll } from '@growingio/analytics'
 import { GrowingToolsKit } from '@growingio/tools'
 
 export default class EntryAbilityStage extends AbilityStage {
@@ -39,6 +39,8 @@ export default class EntryAbilityStage extends AbilityStage {
     config.autotrackEnabled = true
     config.autotrackAllPages = true
     config.plugins = [new GrowingToolsKit()]
+    // config.ignoreField = GrowingIgnoreFieldsAll
+    // config.ignoreField = GrowingIgnoreFields.NetworkState | GrowingIgnoreFields.PlatformVersion
     GrowingAnalytics.start(this.context, config)
 
     // ---------------- CDP ----------------
