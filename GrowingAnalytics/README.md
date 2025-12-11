@@ -10,9 +10,9 @@ GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社�
 ## SDK 简介
 **GrowingIO HarmonyOS SDK** 自动采集用户访问事件，并支持手动调用相应埋点 APIs 采集埋点事件。
 
-> 开发者：GrowingIO SDK Team
-> 隐私协议：https://accounts.growingio.com/user-privacy
-> 合规指南：https://growingio.github.io/growingio-sdk-docs/knowledge/compliance/harmonyosCompliance
+> 开发者：GrowingIO SDK Team  
+> 隐私协议：https://accounts.growingio.com/user-privacy  
+> 合规指南：https://growingio.github.io/growingio-sdk-docs/knowledge/compliance/harmonyosCompliance  
 
 ## 集成文档
 ### 通过 ohpm 中心仓集成
