@@ -21,6 +21,7 @@ export {
   GrowingAutotrackElementID,
   GrowingAnalyticsInterface,
   GrowingFlutterPlugin,
+  GrowingUniAppPlugin,
 } from './src/main/ets/components/interfaces/GrowingAnalytics'
 export { GrowingConfig, IgnoreFields as GrowingIgnoreFields, IgnoreFieldsAll as GrowingIgnoreFieldsAll } from './src/main/ets/components/interfaces/GrowingConfig'
 
