@@ -88,5 +88,6 @@ export enum EventType {
 export enum EventScene {
   Native = 0,
   Hybrid,
-  Flutter
+  Flutter,
+  UniApp
 }
