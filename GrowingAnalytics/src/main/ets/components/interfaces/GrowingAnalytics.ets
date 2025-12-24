@@ -63,6 +63,24 @@ export interface GrowingAnalyticsInterface {
 }
 
 export class GrowingAnalytics {
+  private static _config?: GrowingConfig
+
+  static configure(configuration: GrowingConfig) {
+    if (GrowingAnalytics._config) {
+      LogUtil.warn(() => 'Do not configure GrowingAnalytics repeatedly')
+      return
+    }
+    GrowingAnalytics._config = configuration.copy()
+  }
+
+  static startAnalytics(context: Context) {
+    if (!GrowingAnalytics._config) {
+      LogUtil.warn(() => 'Must call GrowingAnalytics.configure(configuration) first')
+      return
+    }
+    GrowingAnalytics.start(context, GrowingAnalytics._config)
+  }
+
   static start(context: Context, configuration: GrowingConfig) {
     if (GrowingAnalytics.isInitializedSuccessfully()) {
       LogUtil.warn(() => 'Do not initialize GrowingAnalytics repeatedly')
@@ -72,9 +90,14 @@ export class GrowingAnalytics {
     AnalyticsCore.startCore(context, config)
   }
 
-  static deferStart(context: common.UIAbilityContext, configuration: GrowingConfig) {
+  static deferStart(context: common.UIAbilityContext, configuration?: GrowingConfig) {
     // In the case of delayed initialization, avoid users calling start and ensure that the context is UIAbilityContext
-    GrowingAnalytics.start(context, configuration)
+    let config = configuration ?? GrowingAnalytics._config
+    if (!config) {
+      LogUtil.warn(() => 'Must call GrowingAnalytics.configure(configuration) first')
+      return
+    }
+    GrowingAnalytics.start(context, config)
   }
 
   static onWindowStageCreate(ability: UIAbility, windowStage: window.WindowStage) {
