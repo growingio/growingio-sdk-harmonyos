@@ -5,24 +5,17 @@ import { GrowingToolsKit } from '@growingio/tools'
 
 export default class EntryAbilityStage extends AbilityStage {
   onCreate(): void {
-    // 应用的HAP在首次加载的时，为该Module初始化操作
+    // 初始化 SDK
+    this.setupAnalytics()
+
+    // 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据采集
     this.startAnalytics()
   }
   onAcceptWant(want: Want): string {
-    // 仅specified模式下触发
     return 'EntryAbilityStage'
   }
 
-  startAnalytics() {
-    // 在初始化 SDK 之前，可配置通用属性
-    // GrowingAnalytics.setGeneralProps({ 'defaultProps':'good' })
-    // let count = 0
-    // GrowingAnalytics.setDynamicGeneralProps(() => {
-    //   count++
-    //   return { 'count' : count}
-    // })
-    // GrowingAnalytics.setDynamicGeneralProps(() => ({}))
-
+  setupAnalytics() {
     // ---------------- NewSaaS ----------------
 
     let config = new GrowingConfig().NewSaaS(
@@ -41,7 +34,7 @@ export default class EntryAbilityStage extends AbilityStage {
     config.plugins = [new GrowingToolsKit()]
     // config.ignoreField = GrowingIgnoreFieldsAll
     // config.ignoreField = GrowingIgnoreFields.NetworkState | GrowingIgnoreFields.PlatformVersion
-    GrowingAnalytics.start(this.context, config)
+    GrowingAnalytics.configure(config)
 
     // ---------------- CDP ----------------
 
@@ -59,7 +52,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.requestOptions.transferTimeout = 10
     // config.autotrackAllPages = true
     // config.plugins = [new GrowingToolsKit()]
-    // GrowingAnalytics.start(this.context, config)
+    // GrowingAnalytics.configure(config)
 
     // ---------------- SaaS ----------------
 
@@ -74,6 +67,19 @@ export default class EntryAbilityStage extends AbilityStage {
     // config.requestOptions.transferTimeout = 10
     // config.autotrackAllPages = true
     // config.plugins = [new GrowingToolsKit()]
-    // GrowingAnalytics.start(this.context, config)
+    // GrowingAnalytics.configure(config)
+  }
+
+  startAnalytics() {
+    // 在初始化 SDK 之前，可配置通用属性
+    // GrowingAnalytics.setGeneralProps({ 'defaultProps':'good' })
+    // let count = 0
+    // GrowingAnalytics.setDynamicGeneralProps(() => {
+    //   count++
+    //   return { 'count' : count}
+    // })
+    // GrowingAnalytics.setDynamicGeneralProps(() => ({}))
+
+    GrowingAnalytics.startAnalytics(this.context)
   }
 }
