@@ -23,7 +23,7 @@ import { ConfigMode } from '../interfaces/GrowingConfig'
 import { LogUtil } from '../utils/LogUtil'
 
 export class UniApp {
-  static trackUniAppPage(argument: Map<string, Object>) {
+  static trackUniAppPage(path: string, attributes: AttributesType = {}) {
     let context = GrowingContext.getDefaultContext() as GrowingContext
     if (!context) {
       LogUtil.info(() => 'Failed to dispatch UniApp event, must call GrowingAnalytics.start(context, configuration) first')
@@ -38,25 +38,12 @@ export class UniApp {
       return
     }
 
-    let path = argument.get('path') as string
     if (path == null || path == undefined || path.length == 0) {
+      LogUtil.warn(() => 'Failed to dispatch UniApp event, path is undefined')
       return
     }
-    let map = argument.get('attributes') as Map<string, ValueType>
-    let attributes = UniApp.attributesFromMap(map)
     let pageInfo = new PageInfo(path, '', attributes)
     pageInfo.eventScene = EventScene.UniApp
     AutotrackPage.sendPage(pageInfo)
-  }
-
-  private static attributesFromMap(map: Map<string, ValueType>): AttributesType {
-    let attributes: AttributesType = {}
-    if (map == null || map == undefined) {
-      return {}
-    }
-    map.forEach((value, key) => {
-      attributes[key] = value
-    })
-    return attributes
   }
 }
