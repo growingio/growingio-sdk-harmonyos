@@ -84,7 +84,7 @@ export default class Util {
   static toSerializeByMeasurementProtocolV2(event: any, networkState: string): string {
     let basic = {
       esid: event.eventSequenceId,
-      gesid: 0,
+      gesid: event.eventSequenceId,
       u: event.deviceId,
       s: event.sessionId,
       d: event.domain,
