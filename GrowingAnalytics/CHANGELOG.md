@@ -1,4 +1,4 @@
-## [2.7.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.7.1) (2026-02-06)
+## [2.7.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.7.1) (2026-02-09)
 
 ### Bug Fixes 修复
 
