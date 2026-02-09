@@ -1,6 +1,7 @@
 GrowingIO HarmonyOS SDK
 ======
 ![GrowingIO](https://www.growingio.com/vassets/images/home_v3/gio-logo-primary.svg)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/growingio/growingio-sdk-harmonyos)
 
 ## GrowingIO简介
 创立于 2015 年，GrowingIO 是国内领先的一站式数据增长引擎方案服务商，属 StartDT 奇点云集团旗下品牌。**以数据智能分析为核心，GrowingIO 通过构建客户数据平台，打造增长营销闭环**，帮助企业提升数据驱动能力，赋能商业决策、实现业务增长。   
@@ -8,6 +9,12 @@ GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社�
 
 ## SDK 简介
 **GrowingIO HarmonyOS SDK** 自动采集用户访问事件，并支持手动调用相应埋点 APIs 采集埋点事件。
+
+> 最新版本：2.7.1  
+> MD5 值：5c8f615b1655ce8b692bb23c439b84ed  
+> 开发者：北京易数科技有限公司  
+> 隐私协议：https://accounts.growingio.com/user-privacy  
+> 合规指南：https://growingio.github.io/growingio-sdk-docs/knowledge/compliance/harmonyosCompliance  
 
 ## 集成文档
 ### 通过 ohpm 中心仓集成
@@ -78,55 +85,64 @@ import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 // Entry类型的module对应配置的srcEntry
 export default class MyAbilityStage extends AbilityStage {
   onCreate(): void {
-    // 应用的HAP在首次加载的时，为该Module初始化操作
+    // 初始化 SDK
+    this.setupAnalytics()
+    
+    // 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据统计分析
     this.startAnalytics()
   }
+  
   onAcceptWant(want: Want): string {
-    // 仅specified模式下触发
     return 'MyAbilityStage'
   }
 
-  startAnalytics() {
+  setupAnalytics() {
     let config = new GrowingConfig().CDP(
       'Your AccountId',
       'Your DataSourceId',
       'Your UrlScheme',
       'Your DataCollectionServerHost'
     )
-    GrowingAnalytics.start(this.context, config)
+    GrowingAnalytics.configure(config)
+  }
+
+  startAnalytics() {
+    GrowingAnalytics.startAnalytics(this.context)
   }
 }
 ```
 
 > 注意：其中 accountId/dataSourceId/urlScheme/dataCollectionServerHost 为必填项，若不清楚请联系您的专属项目经理或技术支持
 
-### 延迟初始化
+### 延迟数据统计分析
 
-若您的应用需要延迟初始化 SDK，请使用 deferStart 进行初始化，需确保传入的是 UIAbilityContext：
+若您的应用需要延迟 SDK 数据统计分析，请使用 deferStart 接口，需确保传入的是 UIAbilityContext：
 
 ```typescript
-GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext, config)
+// 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据统计分析
+GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext)
 ```
 
 其他初始化配置项见下表，在 start 方法调用前通过`config.<配置项> = 对应值`进行配置：
 
-| 配置项                        | 参数类型 | 默认值 | 说明                                                         |
-| ----------------------------- | -------- | ------ | ------------------------------------------------------------ |
-| accountId                     | string   | -      | 项目 ID (AccountID)，每个应用对应唯一值                      |
-| dataSourceId                  | string   | -      | 应用的 DataSourceId，唯一值                                  |
-| urlScheme                     | string   | -      | 自定义 URL Scheme                                            |
-| dataCollectionServerHost      | string   | -      | 服务端部署后的 ServerHost                                    |
-| debugEnabled                  | boolean  | false  | 调试模式，开启后会输出 SDK 日志，在线上环境请关闭            |
-| sessionInterval               | number   | 30     | 设置会话后台留存时长，指当前会话在应用进入后台后的最大留存时间，默认为 30 秒。另外，其他情况下也会重新生成一个新的会话，如设置用户 ID 等核心信息，重新打开数据收集等 |
-| dataUploadInterval            | number   | 15     | 数据发送的间隔，默认为 15 秒。SDK 会先将事件存入数据库中，然后以每隔默认时间 15 秒向服务器发送事件包 |
-| dataCollectionEnabled         | boolean  | true   | 数据收集，当数据收集关闭时，SDK 将不会再产生事件和上报事件   |
-| idMappingEnabled              | boolean  | false  | 是否开启多用户身份上报                                       |
-| requestOptions.connectTimeout | number   | 30     | 事件请求尝试建立连接的最大等待时间，默认为 30 秒             |
-| requestOptions.transferTimeout| number   | 30     | 事件请求允许传输数据的最大等待时间，默认为 30 秒           |
-| dataValidityPeriod            | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                    |
-| useProtobuf                   | boolean  | true   | 事件请求是否采用 Protobuf 数据格式                            |
-| encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示           |
-| compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                            |
+| 配置项                         | 参数类型 | 默认值 | 说明                                                         |
+| ------------------------------ | -------- | ------ | ------------------------------------------------------------ |
+| accountId                      | string   | -      | 项目 ID (AccountID)，每个应用对应唯一值                      |
+| dataSourceId                   | string   | -      | 应用的 DataSourceId，唯一值                                  |
+| urlScheme                      | string   | -      | 自定义 URL Scheme                                            |
+| dataCollectionServerHost       | string   | -      | 服务端部署后的 ServerHost                                    |
+| debugEnabled                   | boolean  | false  | 调试模式，开启后会输出 SDK 日志，在线上环境请关闭            |
+| sessionInterval                | number   | 30     | 设置会话后台留存时长，指当前会话在应用进入后台后的最大留存时间，默认为 30 秒。另外，其他情况下也会重新生成一个新的会话，如设置用户 ID 等核心信息，重新打开数据收集等 |
+| dataUploadInterval             | number   | 15     | 数据发送的间隔，默认为 15 秒。SDK 会先将事件存入数据库中，然后以每隔默认时间 15 秒向服务器发送事件包 |
+| dataCollectionEnabled          | boolean  | true   | 数据收集，当数据收集关闭时，SDK 将不会再产生事件和上报事件   |
+| idMappingEnabled               | boolean  | false  | 是否开启多用户身份上报                                       |
+| requestOptions.connectTimeout  | number   | 30     | 事件请求尝试建立连接的最大等待时间，默认为 30 秒             |
+| requestOptions.transferTimeout | number   | 30     | 事件请求允许传输数据的最大等待时间，默认为 30 秒             |
+| dataValidityPeriod             | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                    |
+| useProtobuf                    | boolean  | true   | 事件请求是否采用 Protobuf 数据格式                           |
+| encryptEnabled                 | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示           |
+| compressEnabled                | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                            |
+| ignoreField                    | number   | 0      | 可配置事件基础属性中的个人信息相关属性是否进行采集，默认采集；可选择过滤网络类型 (NetworkState)、屏幕分辨率及方向 (ScreenSize)、操作系统版本 (PlatformVersion)、设备型号 (DeviceModel) 等等事件基础属性 |
 
 ### 添加 URL Scheme
 
@@ -405,7 +421,7 @@ let deviceId = GrowingAnalytics.getDeviceId()
 
 `static setGeneralProps(props: GrowingAttrType)`
 
-为所有事件设置通用属性，多次调用，相同字段的新值将覆盖旧值；；需在分析云平台事件管理界面进行事件属性的创建并设置为全局属性
+为所有事件设置通用属性，多次调用，相同字段的新值将覆盖旧值；需在分析云平台事件管理界面进行事件属性的创建并设置为全局属性
 
 `static removeGeneralProps(keys: string[])`
 
@@ -451,7 +467,7 @@ GrowingAnalytics.setDynamicGeneralProps(() => ({}))
 ### Hybrid 打通
 
 ```typescript
-static createHybridProxy(controller: webview.WebviewController): {
+static createHybridProxy(controller: webview.WebviewController, webviewId?: string): {
 object: object;
 name: string;
 methodList: Array<string>;
@@ -459,27 +475,31 @@ controller: WebviewController;
 } | undefined
 ```
 
-在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)：
+在 Web 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)：
 ```typescript
 let url = 'https://www.example.com'
+let webviewId = 'customWebviewId'
 Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
-  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller, webviewId))
+  .id(webviewId)
 ```
 
 > 对应的 H5 页面需要集成 Web JS SDK 以及 App 内嵌页打通插件才能生效
+> webviewId 为可选参数，该配置目的在于进行无埋点圈选时，可以圈选 hybrid 页面；如需使用该功能，请将对应的 Web 控件的唯一标识 (id) 设为相同值，并保证 webviewId 全局唯一
 
 如果您需要注入多个 JavaScript 对象或者通过 permission 配置权限管控，请在 `onControllerAttached` 回调中使用 `registerJavaScriptProxy` 进行注入 hybrid：
 ```typescript
 let url = 'https://www.example.com'
 // 通过permission配置权限管控
 let permission = 'Your Permission'
+let webviewId = 'customWebviewId'
 Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
   .onControllerAttached(() => {
-    let proxy = GrowingAnalytics.createHybridProxy(this.controller)
+    let proxy = GrowingAnalytics.createHybridProxy(this.controller, webviewId)
     if (proxy) {
       this.controller.registerJavaScriptProxy(proxy.object, proxy.name, proxy.methodList, [], permission)
     }
@@ -490,6 +510,7 @@ Web({ src: url, controller: this.controller})
       this.controller.registerJavaScriptProxy(yourProxy.object, yourProxy.name, yourProxy.methodList, yourProxy.asyncMethodList, permission)
     }
   })
+  .id(webviewId)
 ```
 
 ## License

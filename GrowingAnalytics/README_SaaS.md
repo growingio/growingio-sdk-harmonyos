@@ -1,6 +1,7 @@
 GrowingIO HarmonyOS SDK
 ======
 ![GrowingIO](https://www.growingio.com/vassets/images/home_v3/gio-logo-primary.svg)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/growingio/growingio-sdk-harmonyos)
 
 ## GrowingIO简介
 创立于 2015 年，GrowingIO 是国内领先的一站式数据增长引擎方案服务商，属 StartDT 奇点云集团旗下品牌。**以数据智能分析为核心，GrowingIO 通过构建客户数据平台，打造增长营销闭环**，帮助企业提升数据驱动能力，赋能商业决策、实现业务增长。   
@@ -8,6 +9,12 @@ GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社�
 
 ## SDK 简介
 **GrowingIO HarmonyOS SDK** 自动采集用户访问事件，并支持手动调用相应埋点 APIs 采集埋点事件。
+
+> 最新版本：2.7.1  
+> MD5 值：5c8f615b1655ce8b692bb23c439b84ed  
+> 开发者：北京易数科技有限公司  
+> 隐私协议：https://accounts.growingio.com/user-privacy  
+> 合规指南：https://growingio.github.io/growingio-sdk-docs/knowledge/compliance/harmonyosCompliance  
 
 ## 集成文档
 ### 通过 ohpm 中心仓集成
@@ -78,30 +85,40 @@ import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 // Entry类型的module对应配置的srcEntry
 export default class MyAbilityStage extends AbilityStage {
   onCreate(): void {
-    // 应用的HAP在首次加载的时，为该Module初始化操作
+    // 初始化 SDK
+    this.setupAnalytics()
+    
+    // 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据统计分析
     this.startAnalytics()
   }
+  
   onAcceptWant(want: Want): string {
-    // 仅specified模式下触发
     return 'MyAbilityStage'
   }
 
-  startAnalytics() {
+  setupAnalytics() {
     let config = new GrowingConfig().SaaS(
       'Your AccountId',
       'Your UrlScheme'
     )
-    GrowingAnalytics.start(this.context, config)
+    GrowingAnalytics.configure(config)
+  }
+
+  startAnalytics() {
+    GrowingAnalytics.startAnalytics(this.context)
   }
 }
 ```
 
-### 延迟初始化
+> 注意：其中 accountId/urlScheme 为必填项，若不清楚请联系您的专属项目经理或技术支持
 
-若您的应用需要延迟初始化 SDK，请使用 deferStart 进行初始化，需确保传入的是 UIAbilityContext：
+### 延迟数据统计分析
+
+若您的应用需要延迟 SDK 数据统计分析，请使用 deferStart 接口，需确保传入的是 UIAbilityContext：
 
 ```typescript
-GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext, config)
+// 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据统计分析
+GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext)
 ```
 
 其他初始化配置项见下表，在 start 方法调用前通过`config.<配置项> = 对应值`进行配置：
@@ -121,6 +138,57 @@ GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext, config)
 | encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示                                                            |
 | compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                                                                |
 | hybridAutotrackEnabled        | boolean  | true   | 是否集成无埋点对应的 Hybrid JS SDK                                                             |
+
+### 添加 URL Scheme
+
+URL Scheme 是您在 GrowingIO 平台创建应用时生成的该应用的唯一标识。把 URL Scheme 添加到您的项目，以便使用 Mobile Debugger 等功能时唤醒您的应用。
+
+1. 在 module.json5 中 EntryAbility 对应的 skills 添加 URL Scheme：
+```typescript
+{
+  "module": {
+    "abilities": [
+      {
+        "name": "EntryAbility",
+        "skills": [
+          
+          // -- 添加 URL Scheme --
+          {
+            "actions": [
+              "ohos.want.action.viewData"
+            ],
+            "uris": [
+              {
+                "scheme":"Your URL Scheme", // 替换为您的应用的 URL Scheme
+                "host": "growingio/webservice"
+              }
+            ]
+          }
+          // -- 添加 URL Scheme --
+          
+        ]
+      },
+    ],
+  }
+}
+```
+
+2. 在 EntryAbility.ets 添加 URL Scheme 跳转处理方法
+```typescript
+onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  let uri = want?.uri
+  if (uri) {
+    GrowingAnalytics.handleOpenURL(uri)
+  }
+}
+
+onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  let uri = want?.uri
+  if (uri) {
+    GrowingAnalytics.handleOpenURL(uri)
+  }
+}
+```
 
 ### 数据采集 API
 
@@ -468,13 +536,13 @@ Web({ src: url, controller: this.controller})
 如果您的 H5 页面集成的是仅埋点的 Hybrid JS SDK (`gio_hybrid_track.js`)，那么需要修改 SDK 的初始化配置项 `hybridAutotrackEnabled` 为 `false`, 且仅注入 hybrid：
 ```typescript
 // 初始化配置项hybridAutotrackEnabled设置为false
-startAnalytics() {
+setupAnalytics() {
   let config = new GrowingConfig().SaaS(
     'Your AccountId',
     'Your UrlScheme'
   )
   config.hybridAutotrackEnabled = false
-  GrowingAnalytics.start(this.context, config)
+  GrowingAnalytics.configure(config)
 }
 
 //仅注入hybrid
