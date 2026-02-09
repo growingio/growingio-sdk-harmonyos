@@ -1,3 +1,10 @@
+## [2.7.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.7.1) (2026-02-06)
+
+### Bug Fixes 修复
+
+* fix(SaaS): gesid 使用 eventSequenceId 代替固定值 0
+* fix(SaaS): 事件字段被混淆导致上报出错
+
 ## [2.7.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.7.0) (2025-12-26)
 
 ### Features 功能

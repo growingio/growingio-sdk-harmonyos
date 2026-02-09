@@ -83,13 +83,13 @@ export default class Util {
 
   static toSerializeByMeasurementProtocolV2(event: any, networkState: string): string {
     let basic = {
-      esid: event.eventSequenceId,
-      gesid: 0,
-      u: event.deviceId,
-      s: event.sessionId,
-      d: event.domain,
-      tm: event.timestamp,
-      cs1: event.userId
+      'esid': event.eventSequenceId,
+      'gesid': event.eventSequenceId,
+      'u': event.deviceId,
+      's': event.sessionId,
+      'd': event.domain,
+      'tm': event.timestamp,
+      'cs1': event.userId
     }
 
     let r = 'NONE'
@@ -105,11 +105,11 @@ export default class Util {
     if (eventType == 'CUSTOM') {
       let custom = {
         ...basic,
-        t: 'cstm',
-        n: event.eventName,
-        var: event.attributes,
-        p: event.path,
-        ptm: event.pageShowTimestamp
+        't': 'cstm',
+        'n': event.eventName,
+        'var': event.attributes,
+        'p': event.path,
+        'ptm': event.pageShowTimestamp
       }
 
       return JSON.stringify(custom)
@@ -117,14 +117,14 @@ export default class Util {
     } else if (eventType == 'PAGE') {
       let page = {
         ...basic,
-        t: 'page',
-        var: event.attributes,
-        p: event.path,
-        q: event.query,
-        o: 'portrait',
-        tl: event.title,
-        rp: event.referralPage,
-        r: r
+        't': 'page',
+        'var': event.attributes,
+        'p': event.path,
+        'q': event.query,
+        'o': 'portrait',
+        'tl': event.title,
+        'rp': event.referralPage,
+        'r': r
       }
 
       return JSON.stringify(page)
@@ -132,10 +132,10 @@ export default class Util {
     } else if (eventType == 'pvar') {
       let pvar = {
         ...basic,
-        t: 'pvar',
-        var: event.attributes,
-        p: event.path,
-        ptm: event.pageShowTimestamp
+        't': 'pvar',
+        'var': event.attributes,
+        'p': event.path,
+        'ptm': event.pageShowTimestamp
       }
 
       return JSON.stringify(pvar)
@@ -143,8 +143,8 @@ export default class Util {
     } else if (eventType == 'LOGIN_USER_ATTRIBUTES') {
       let ppl = {
         ...basic,
-        t: 'ppl',
-        var: event.attributes
+        't': 'ppl',
+        'var': event.attributes
       }
 
       return JSON.stringify(ppl)
@@ -152,8 +152,8 @@ export default class Util {
     } else if (eventType == 'vstr') {
       let vstr = {
         ...basic,
-        t: 'vstr',
-        var: event.attributes
+        't': 'vstr',
+        'var': event.attributes
       }
 
       return JSON.stringify(vstr)
@@ -161,8 +161,8 @@ export default class Util {
     } else if (eventType == 'evar') {
       let evar = {
         ...basic,
-        t: 'evar',
-        var: event.attributes
+        't': 'evar',
+        'var': event.attributes
       }
 
       return JSON.stringify(evar)
@@ -170,22 +170,22 @@ export default class Util {
     } else if (eventType == 'VISIT') {
       let vst = {
         ...basic,
-        t: 'vst',
-        av: event.sdkVersion,
-        sh: event.screenHeight,
-        sw: event.screenWidth,
-        db: event.deviceBrand,
-        dm: event.deviceModel,
-        ph: 1,
-        os: event.platform,
-        osv: event.platformVersion,
-        cv: event.appVersion,
-        sn: event.appName,
-        v: event.urlScheme,
-        l: event.language,
-        lat: event.latitude,
-        lng: event.longitude,
-        fv: '{}'
+        't': 'vst',
+        'av': event.sdkVersion,
+        'sh': event.screenHeight,
+        'sw': event.screenWidth,
+        'db': event.deviceBrand,
+        'dm': event.deviceModel,
+        'ph': 1,
+        'os': event.platform,
+        'osv': event.platformVersion,
+        'cv': event.appVersion,
+        'sn': event.appName,
+        'v': event.urlScheme,
+        'l': event.language,
+        'lat': event.latitude,
+        'lng': event.longitude,
+        'fv': '{}'
       }
 
       return JSON.stringify(vst)
@@ -193,9 +193,9 @@ export default class Util {
     } else if (eventType == 'APP_CLOSED') {
       let cls = {
         ...basic,
-        t: 'cls',
-        p: event.path,
-        r: r
+        't': 'cls',
+        'p': event.path,
+        'r': r
       }
 
       return JSON.stringify(cls)
