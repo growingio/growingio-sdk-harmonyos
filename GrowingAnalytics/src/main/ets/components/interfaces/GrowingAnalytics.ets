@@ -38,6 +38,7 @@ export {
   AUTOTRACK_ELEMENT_ID as GrowingAutotrackElementID
 } from '../utils/Constants'
 export { Flutter as GrowingFlutterPlugin } from '../core/Flutter'
+export { UniApp as GrowingUniAppPlugin } from '../core/UniApp'
 
 export interface GrowingAnalyticsInterface {
   isInitializedSuccessfully(): boolean

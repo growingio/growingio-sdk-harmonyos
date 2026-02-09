@@ -10,6 +10,8 @@ GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社�
 ## SDK 简介
 **GrowingIO HarmonyOS SDK** 自动采集用户访问事件，并支持手动调用相应埋点 APIs 采集埋点事件。
 
+> 最新版本：2.7.0  
+> MD5 值：6b2a41374d0bdd81f9fab7b49a599aa8  
 > 开发者：北京易数科技有限公司  
 > 隐私协议：https://accounts.growingio.com/user-privacy  
 > 合规指南：https://growingio.github.io/growingio-sdk-docs/knowledge/compliance/harmonyosCompliance  
@@ -85,7 +87,7 @@ export default class MyAbilityStage extends AbilityStage {
     // 初始化 SDK
     this.setupAnalytics()
     
-    // 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据采集
+    // 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据统计分析
     this.startAnalytics()
   }
   
@@ -111,12 +113,12 @@ export default class MyAbilityStage extends AbilityStage {
 
 > 注意：其中 accountId/dataSourceId/urlScheme 为必填项，dataCollectionServerHost 为可选项，若不清楚请联系您的专属项目经理或技术支持
 
-### 延迟数据采集
+### 延迟数据统计分析
 
-若您的应用需要延迟 SDK 数据采集，请使用 deferStart 接口，需确保传入的是 UIAbilityContext：
+若您的应用需要延迟 SDK 数据统计分析，请使用 deferStart 接口，需确保传入的是 UIAbilityContext：
 
 ```typescript
-// 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据采集
+// 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据统计分析
 GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext)
 ```
 

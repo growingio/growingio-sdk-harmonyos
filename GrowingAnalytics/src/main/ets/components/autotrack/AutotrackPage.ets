@@ -25,6 +25,7 @@ import Session, { SessionState } from '../core/Session'
 import { EventScene } from '../event/Event'
 import PageEvent from '../event/PageEvent'
 import FlutterPageEvent from '../event/flutter/FlutterPageEvent'
+import UniAppPageEvent from '../event/uniapp/UniAppPageEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import {
   AttributesType,
@@ -272,6 +273,13 @@ export default class AutotrackPage {
           pageInfo.attributes,
           pageInfo.timestamp,
           pageInfo.referralPage,
+          context
+        )
+        AnalyticsCore.writeEventToDisk(e, context, pageInfo.eventScene)
+      } else if (pageInfo.eventScene == EventScene.UniApp) {
+        let e = UniAppPageEvent.create(
+          pageInfo.path,
+          pageInfo.attributes,
           context
         )
         AnalyticsCore.writeEventToDisk(e, context, pageInfo.eventScene)
