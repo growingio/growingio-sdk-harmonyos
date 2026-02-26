@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl EventTimer.md
+
 import systemDatetime from '@ohos.systemDateTime'
 import util from '@ohos.util'
 

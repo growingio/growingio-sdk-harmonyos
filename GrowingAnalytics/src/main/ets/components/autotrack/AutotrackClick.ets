@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl AutotrackClick.md
+
 import { FrameNode } from '@ohos.arkui.node'
 
 import Autotrack from './Autotrack'

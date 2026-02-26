@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl Network.md
+
 import rcp from '@hms.collaboration.rcp'
 import taskpool from '@ohos.taskpool'
 

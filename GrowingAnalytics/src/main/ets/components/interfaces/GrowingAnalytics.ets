@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl GrowingAnalytics.md
+
 import common from '@ohos.app.ability.common'
 import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'

@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl Event.md
+
 import GrowingContext from '../core/Context'
 import DeviceInfo from '../core/DeviceInfo'
 import { ConfigMode } from '../interfaces/GrowingConfig'

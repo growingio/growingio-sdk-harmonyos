@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl GrowingConfig.md
+
 import { PluginsInterface } from '../plugins/Plugins'
 
 class RequestOptions {

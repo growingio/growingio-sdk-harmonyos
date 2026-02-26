@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl Flutter.md
+
 import AnalyticsCore from './AnalyticsCore'
 import GrowingContext from './Context'
 import AutotrackPage, { PageInfo } from '../autotrack/AutotrackPage'

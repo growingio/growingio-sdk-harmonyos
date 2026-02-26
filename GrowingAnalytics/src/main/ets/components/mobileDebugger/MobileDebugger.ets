@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl MobileDebugger.md
+
 import webSocket from "@ohos.net.webSocket"
 import { BusinessError } from '@ohos.base'
 import url from "@ohos.url"
