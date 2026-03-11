@@ -1,151 +1,115 @@
 ---
 name: ohpm-publish
-description: GrowingIO HarmonyOS SDK 的 OHPM 包发布流程。当用户需要发布 @growingio/analytics 或 @growingio/tools 到 OHPM 中心仓时使用。
+description: HarmonyOS SDK 发布工具，用于将 @growingio/analytics 和/或 @growingio/tools 打包并发布到 ohpm 仓库。当用户提到"发布 SDK"、"ohpm 发布"、"打包发布"、"上传 har"、"publish"、"发版"、"release"等关键词时触发此 skill。即使用户只说了"发布"或"上传"也应该触发。
 ---
 
-# OHPM 包发布指南
+# ohpm-publish
 
-本 skill 用于指导 GrowingIO HarmonyOS SDK 模块发布到 OHPM（OpenHarmony Package Manager）中心仓。
+将 GrowingIO HarmonyOS SDK 打包并发布到 ohpm 仓库。
 
-## 发布模块
+## 模块信息
 
-本项目包含两个可发布模块：
-
-| 模块 | 包名 | 配置文件路径 |
-|------|------|-------------|
-| GrowingAnalytics | `@growingio/analytics` | `GrowingAnalytics/oh-package.json5` |
-| GrowingToolsKit | `@growingio/tools` | `GrowingToolsKit/oh-package.json5` |
+| 模块名 | 包名 | oh-package.json5 | HAR 输出路径 |
+|--------|------|-------------------|--------------|
+| GrowingAnalytics | @growingio/analytics | `GrowingAnalytics/oh-package.json5` | `GrowingAnalytics/build/default/outputs/default/GrowingAnalytics-signed.har` |
+| GrowingToolsKit | @growingio/tools | `GrowingToolsKit/oh-package.json5` | `GrowingToolsKit/build/default/outputs/default/GrowingToolsKit-signed.har` |
 
 ## 发布流程
 
-### 1. 准备工作
+按顺序执行以下步骤，每步完成后告知用户进展。
 
-#### 1.1 确认版本号
+---
 
-检查对应模块的 `oh-package.json5` 中的 `version` 字段：
+### 第一步：确认发布模块
 
-```bash
-# GrowingAnalytics
-grep '"version"' GrowingAnalytics/oh-package.json5
+询问用户要发布哪个（或哪些）模块：
+- `@growingio/analytics`（GrowingAnalytics）
+- `@growingio/tools`（GrowingToolsKit）
+- 两个都发布
 
-# GrowingToolsKit
-grep '"version"' GrowingToolsKit/oh-package.json5
+---
+
+### 第二步：更新版本号
+
+读取每个待发布模块的 `oh-package.json5`，显示当前 `version` 值，询问用户新版本号是多少。
+
+确认后，直接编辑 `oh-package.json5` 将 `version` 字段更新为新版本。
+
+---
+
+### 第三步：检查签名配置
+
+读取仓库根目录的 `build-profile.json5`，检查 `app.signingConfigs` 数组。
+
+**判断条件：** 数组非空，且第一个元素的 `material` 对象包含 `storeFile`、`keyAlias`、`profile`、`certpath` 字段。
+
+如果签名配置缺失或不完整，**停止流程**，提示：
+
+```
+⚠️ 缺少发布签名配置，请先在 build-profile.json5 的 app.signingConfigs 中配置以下字段：
+  storeFile、storePassword、keyAlias、keyPassword、signAlg、profile、certpath
+配置完成后重新运行发布流程。
 ```
 
-版本号规范遵循 **SemVer**：`主版本号.次版本号.修订号`
+签名配置正常则继续。
 
-#### 1.2 检查依赖版本一致性
+---
 
-确保两个模块的公共依赖版本一致：
-- `snappyjs`
-- `@ohos/protobufjs`
-- `long`
+### 第四步：构建 HAR 包
 
-#### 1.3 更新版本号（如需）
+对每个待发布模块，在**仓库根目录**执行构建命令（告知用户正在构建，可能需要几分钟）：
 
-如需更新版本，编辑对应模块的 `oh-package.json5`：
-
-```json5
-{
-  "version": "x.y.z"
-}
-```
-
-#### 1.4 提交版本更新
-
+**GrowingAnalytics：**
 ```bash
-git add GrowingAnalytics/oh-package.json5 GrowingToolsKit/oh-package.json5
-git commit -m "chore: release x.y.z"
-```
-
-### 2. 构建 HAR 包
-
-使用 hvigor 构建 HAR（HarmonyOS Archive）：
-
-```bash
-# 构建 GrowingAnalytics
 /Applications/DevEco-Studio.app/Contents/tools/node/bin/node \
   /Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw.js \
-  --mode module -p product=default -p module=GrowingAnalytics@default \
-  assembleHar --analyze=normal --parallel --incremental --daemon
+  --mode module \
+  -p product=default \
+  -p module=GrowingAnalytics@default \
+  -p buildMode=release \
+  assembleHar \
+  --analyze=normal --parallel --incremental --daemon
+```
 
-# 构建 GrowingToolsKit
+**GrowingToolsKit：**
+```bash
 /Applications/DevEco-Studio.app/Contents/tools/node/bin/node \
   /Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw.js \
-  --mode module -p product=default -p module=GrowingToolsKit@default \
-  assembleHar --analyze=normal --parallel --incremental --daemon
+  --mode module \
+  -p product=default \
+  -p module=GrowingToolsKit@default \
+  -p buildMode=release \
+  assembleHar \
+  --analyze=normal --parallel --incremental --daemon
 ```
 
-构建产物位于：`build/default/outputs/default/<模块名>.har`
+构建完成后，确认 HAR 文件存在于对应的输出路径（见上方模块信息表）。
+若文件不存在，报告构建失败并展示命令输出供排查，不继续发布。
 
-### 3. 登录 OHPM
+---
 
-如未登录，先执行登录：
+### 第五步：发布到 ohpm
+
+对每个构建好的模块，使用**签名版本**的 HAR 文件执行发布命令：
 
 ```bash
-/Applications/DevEco-Studio.app/Contents/tools/ohpm/bin/ohpm login
+ohpm publish <HAR文件路径>
 ```
 
-按提示输入用户名和密码。
-
-### 4. 发布包
-
-进入模块目录执行发布：
-
+例如：
 ```bash
-# 发布 GrowingAnalytics
-cd GrowingAnalytics
-/Applications/DevEco-Studio.app/Contents/tools/ohpm/bin/ohpm publish
-
-# 发布 GrowingToolsKit
-cd GrowingToolsKit
-/Applications/DevEco-Studio.app/Contents/tools/ohpm/bin/ohpm publish
+ohpm publish GrowingAnalytics/build/default/outputs/default/GrowingAnalytics-signed.har
+ohpm publish GrowingToolsKit/build/default/outputs/default/GrowingToolsKit-signed.har
 ```
 
-> **注意**：确保在模块根目录（包含 oh-package.json5 的目录）执行 publish 命令。
+展示 ohpm 的输出结果，告知用户发布结果。
 
-### 5. 验证发布
+若提示未登录（`you are not logged in`），提示用户先执行 `ohpm login` 登录后重试。
 
-发布后可在 OHPM 中心仓搜索验证：
-- https://ohpm.openharmony.cn/#/cn/detail/@growingio%2Fanalytics
-- https://ohpm.openharmony.cn/#/cn/detail/@growingio%2Ftools
+---
 
-或使用命令验证：
+## 注意事项
 
-```bash
-/Applications/DevEco-Studio.app/Contents/tools/ohpm/bin/ohpm view @growingio/analytics versions
-/Applications/DevEco-Studio.app/Contents/tools/ohpm/bin/ohpm view @growingio/tools versions
-```
-
-## 常见问题
-
-### 版本已存在
-
-如果提示版本已存在，需要：
-1. 确认是否重复发布
-2. 如需更新，先提升版本号
-3. 重新构建并发布
-
-### 未登录错误
-
-```
-error: you are not logged in
-```
-
-解决：执行 `ohpm login` 登录。
-
-### 包名冲突
-
-确保 oh-package.json5 中的 `name` 字段正确：
-- `@growingio/analytics`
-- `@growingio/tools`
-
-## 发布检查清单
-
-- [ ] 版本号已正确更新
-- [ ] 公共依赖版本一致性已检查
-- [ ] 代码已提交到 git
-- [ ] HAR 构建成功
-- [ ] 已登录 OHPM
-- [ ] 发布命令在正确的模块目录执行
-- [ ] 发布后已在中心仓验证
+- 构建命令必须在**仓库根目录**执行
+- 构建可能耗时数分钟，耐心等待即可
+- 同时发布两个模块时，**逐个处理**：先构建第一个模块并发布，成功后再构建第二个模块并发布
