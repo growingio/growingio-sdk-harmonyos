@@ -151,7 +151,7 @@ export default class EventTimer {
     LogUtil.info(() => 'Track timer all pause with appState is background')
     for (let timer of EventTimer.timers.values()) {
       if (timer.isPaused()) {
-        return
+        continue
       }
       let currentTime = systemDatetime.getUptime(systemDatetime.TimeType.STARTUP, false)
       timer.duration = EventTimer.durationFrom(timer.startTime, currentTime)
@@ -163,7 +163,7 @@ export default class EventTimer {
     LogUtil.info(() => 'Track timer all resume with appState is foreground')
     for (let timer of EventTimer.timers.values()) {
       if (timer.isPaused()) {
-        return
+        continue
       }
       let currentTime = systemDatetime.getUptime(systemDatetime.TimeType.STARTUP, false)
       timer.startTime = currentTime

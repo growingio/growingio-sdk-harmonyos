@@ -114,7 +114,7 @@ export default class Network {
     let config = context.config
     let serverHost = config.dataCollectionServerHost
     if (serverHost.endsWith('/')) {
-      serverHost = serverHost.substring(0, serverHost.length - 2)
+      serverHost = serverHost.substring(0, serverHost.length - 1)
     }
     let accountId = config.accountId
     return serverHost + urlPath.replace('accountId', accountId) + '?stm=' + String(time)
