@@ -1,0 +1,28 @@
+{
+  "types": "",
+  "keywords": [
+    "analytics",
+    "data-analysis",
+    "marketing-automation",
+    "openHarmony",
+    "HarmonyOS",
+    "GrowingIO"
+  ],
+  "author": "GrowingIO",
+  "description": "GrowingAnalytics for HarmonyOS SDK (AtomicService).",
+  "main": "index.ets",
+  "type": "module",
+  "repository": "https://github.com/growingio/growingio-sdk-harmonyos",
+  "version": "2.8.0",
+  "dependencies": {
+    "snappyjs": "0.7.0",
+    "@ohos/protobufjs": "2.1.0",
+    "long": "5.2.1",
+  },
+  "tags": [
+    "Tool"
+  ],
+  "license": "Apache License 2.0",
+  "devDependencies": {},
+  "name": "@growingio/analytics-atomic-service"
+}

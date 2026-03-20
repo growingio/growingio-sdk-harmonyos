@@ -44,6 +44,10 @@
     {
       "name": "GrowingToolsKit",
       "srcPath": "./GrowingToolsKit",
+    },
+    {
+      "name": "GrowingAnalyticsAtomicService",
+      "srcPath": "./GrowingAnalyticsAtomicService",
     }
   ]
 }
