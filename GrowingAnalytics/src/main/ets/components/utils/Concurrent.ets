@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl Utils.md
+
 import buffer from '@ohos.buffer'
 
 import EventPersistence from "../event/EventPersistence"

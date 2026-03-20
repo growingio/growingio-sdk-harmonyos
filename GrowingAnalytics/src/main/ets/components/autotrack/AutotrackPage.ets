@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl AutotrackPage.md
+
 import uiObserver from '@ohos.arkui.observer'
 import emitter from '@ohos.events.emitter'
 

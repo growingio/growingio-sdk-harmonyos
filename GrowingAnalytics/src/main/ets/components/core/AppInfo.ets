@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl DeviceInfo.md
+
 import bundleManager from '@ohos.bundle.bundleManager'
 
 export default class AppInfo {

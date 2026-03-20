@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
+// @doc-impl DeviceInfo.md
+
 import deviceInfo from '@ohos.deviceInfo'
 import display from '@ohos.display'
 import I18n from '@ohos.i18n'
 import connection from '@ohos.net.connection'
+
 import util from '@ohos.util'
 // import radio from '@ohos.telephony.radio'
 

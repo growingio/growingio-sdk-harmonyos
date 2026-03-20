@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl Session.md
+
 import util from '@ohos.util'
 import emitter from '@ohos.events.emitter'
 

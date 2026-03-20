@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl Context.md
+
 import EventSender, { EventSenderType } from '../event/EventSender'
 import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
 import { MAIN_TRACKER_ID } from '../utils/Constants'

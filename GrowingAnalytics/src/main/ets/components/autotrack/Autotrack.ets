@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc AGENTS.md
+
 import window from '@ohos.window'
 
 import AutotrackClick from './AutotrackClick'

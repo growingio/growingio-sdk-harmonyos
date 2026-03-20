@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl AnalyticsCore.md
+
 import AbilityLifecycleCallback from '@ohos.app.ability.AbilityLifecycleCallback'
 import ApplicationStateChangeCallback from '@ohos.app.ability.ApplicationStateChangeCallback'
 import common from '@ohos.app.ability.common'

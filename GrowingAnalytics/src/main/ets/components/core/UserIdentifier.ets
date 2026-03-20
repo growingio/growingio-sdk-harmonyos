@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl UserIdentifier.md
+
 import Session from './Session'
 import { PREFERENCE_USER_ID, PREFERENCE_USER_IDENTIFIER, PREFERENCE_USER_KEY } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'

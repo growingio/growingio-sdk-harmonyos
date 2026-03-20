@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl Hybrid.md
+
 import webview from '@ohos.web.webview'
 
 import AnalyticsCore, { SDK_VERSION } from './AnalyticsCore'

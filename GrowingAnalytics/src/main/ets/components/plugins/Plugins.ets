@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// @doc-impl Plugins.md
+
 import common from '@ohos.app.ability.common'
 import window from '@ohos.window'
 import rcp from '@hms.collaboration.rcp'
