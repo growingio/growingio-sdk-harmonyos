@@ -43,7 +43,7 @@ export default class ViewElementEvent extends Event {
   ): ViewElementEvent {
     let event = new ViewElementEvent()
     event.path = String(path ?? '')
-    if (context.config.mode == ConfigMode.CDP) {
+    if (context.config.mode == ConfigMode.CDP || context.config.mode == ConfigMode.SaaS) {
       event.pageShowTimestamp = pageShowTimestamp > 0 ? pageShowTimestamp : Date.now()
     }
     if (eventType == EventType.ViewClick) {

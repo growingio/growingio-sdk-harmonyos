@@ -29,6 +29,7 @@ import Plugins from '../plugins/Plugins'
 const URL_PATH_NEW_SAAS = '/v3/projects/accountId/collect'
 const URL_PATH_SAAS_PV = '/v3/accountId/harmonyos/pv'
 const URL_PATH_SAAS_CSTM = '/v3/accountId/harmonyos/cstm'
+const URL_PATH_SAAS_OTHER = '/v3/accountId/harmonyos/other'
 
 /**
  * sendEvents 的返回结果，将 statusCode 和 request 显式绑定，
@@ -86,13 +87,15 @@ export async function runSendCycle(io: SendCycleIO): Promise<boolean> {
 export enum EventSenderType {
   NewSaaS = 0,
   SaaS_PV,
-  SaaS_CSTM
+  SaaS_CSTM,
+  SaaS_OTHER
 }
 
 export default class EventSender {
   urlPath: string
   trackerId: string
   eventTypes: string[] | undefined = undefined
+  mergeSaaSClick: boolean = false
   isUploading: boolean = false
 
   constructor(type: EventSenderType, trackerId: string) {
@@ -122,6 +125,11 @@ export default class EventSender {
           EventType.SaaS_Vstr,
           EventType.SaaS_Pvar
         ]
+        break
+      case EventSenderType.SaaS_OTHER:
+        this.urlPath = URL_PATH_SAAS_OTHER
+        this.eventTypes = [EventType.ViewClick, EventType.ViewChange]
+        this.mergeSaaSClick = true
         break
     }
   }
@@ -156,7 +164,7 @@ export default class EventSender {
           eventTypes
         ),
         sendEvents: async (events: EventPersistence[]): Promise<SendResult> => {
-          let response = await Network.request(events, urlPath, context)
+          let response = await Network.request(events, urlPath, context, this.mergeSaaSClick)
           Plugins.onResponseReceive(response)
           if (response.statusCode >= 200 && response.statusCode < 400) {
             LogUtil.info(() => 'Request Success, Url = ' + response.request.url)

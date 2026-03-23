@@ -48,10 +48,6 @@ export default class AutotrackClick {
     }
 
     let context = GrowingContext.getDefaultContext() as GrowingContext
-    if (context.config.mode == ConfigMode.SaaS) {
-      // mode SaaS not support
-      return
-    }
     if (!context.config.autotrackEnabled) {
       return
     }
@@ -76,7 +72,7 @@ export default class AutotrackClick {
       if (xpathInfo.inList) {
         index = index + 1
       }
-    } else if (context.config.mode == ConfigMode.CDP) {
+    } else if (context.config.mode == ConfigMode.CDP || context.config.mode == ConfigMode.SaaS) {
       for (let i = xpathInfo.xpath.length - 1; i >= 0; i--) {
         xpath = xpath + PATH_SEPARATOR + xpathInfo.xpath[i] + '[' + xpathInfo.xcontent[i] + ']'
       }
@@ -139,7 +135,7 @@ export default class AutotrackClick {
       info.path = realPath
 
       let context = GrowingContext.getDefaultContext() as GrowingContext
-      if (context.config.mode == ConfigMode.CDP) {
+      if (context.config.mode == ConfigMode.CDP || context.config.mode == ConfigMode.SaaS) {
         // compare with last page in cache
         let lastNativePage = AutotrackPage.lastNativePage
         let path = lastNativePage?.path
