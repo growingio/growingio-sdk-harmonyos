@@ -167,6 +167,23 @@ export default class Util {
 
       return JSON.stringify(evar)
 
+    } else if (eventType == 'VIEW_CLICK' || eventType == 'VIEW_CHANGE') {
+      let click = {
+        ...basic,
+        't': eventType == 'VIEW_CLICK' ? 'clck' : 'chng',
+        'ptm': event.pageShowTimestamp,
+        'p': event.path,
+        'q': event.query,
+        'r': r,
+        'lat': event.latitude,
+        'lng': event.longitude,
+        'x': event.xpath,
+        'v': event.textValue,
+        'h': event.hyperlink,
+        'idx': event.index !== undefined ? String(event.index) : undefined,
+      }
+      return JSON.stringify(click)
+
     } else if (eventType == 'VISIT') {
       let vst = {
         ...basic,
