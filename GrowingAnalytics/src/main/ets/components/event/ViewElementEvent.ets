@@ -26,6 +26,8 @@ export default class ViewElementEvent extends Event {
   xpath: string | undefined = undefined
   xcontent: string | undefined = undefined
   index: number | undefined = undefined
+  query: string | undefined = undefined
+  hyperlink: string | undefined = undefined
 
   // mode CDP
   pageShowTimestamp: number | undefined = undefined

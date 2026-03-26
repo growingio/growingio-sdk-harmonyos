@@ -31,6 +31,7 @@ import PageEvent from '../event/PageEvent'
 import HybridCustomEvent from '../event/hybrid/HybridCustomEvent'
 import HybridPageEvent from '../event/hybrid/HybridPageEvent'
 import HybridViewElementEvent from '../event/hybrid/HybridViewElementEvent'
+import ViewElementEvent from '../event/ViewElementEvent'
 import { SaaSEvarEvent, SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
 import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -144,7 +145,8 @@ export default class Hybrid {
         d: AppInfo.domain,
         u: DeviceInfo.deviceId,
         s: Session.getSessionId(context) ?? '',
-        cs1:  UserIdentifier.getUser(context)?.userId ?? ''
+        cs1: UserIdentifier.getUser(context)?.userId ?? '',
+        p: PageEvent.getLastPage(context)?.path ?? ''
       }
       scripts.push({
         script: 'window._vds_hybrid_native_info = ' + JSON.stringify(nativeInfo), scriptRules: scriptRules
@@ -336,7 +338,36 @@ class SaaSHybridEventHandler {
     let t: string = String(event.t ?? '')
     let attributes: AttributesType = event.var as (AttributesType | undefined) ?? {}
     let d = AppInfo.domain + '::' + String(event.d ?? '')
-    if (t == 'cstm' || t == 'pvar' || t == 'page') {
+    if (t == 'clck' || t == 'chng') {
+      let elements = event.e as Array<Record<string, Object>> | undefined
+      if (!elements || elements.length == 0) {
+        return
+      }
+      let p = String(event.p ?? '')
+      let lastPage = PageEvent.getLastPage(context)
+      if (lastPage) {
+        p = (lastPage.path ?? '') + '::' + p
+      }
+      let q = event.q as string | undefined
+      let ptm = event.ptm as number
+      let tm = event.tm as number
+      let eventType = t == 'clck' ? EventType.ViewClick : EventType.ViewChange
+      for (let element of elements) {
+        let xpath = String(element.x ?? '')
+        let textValue = String(element.v ?? '')
+        let index = element.idx as number
+        let hyperlink = element.h as string | undefined
+        let e = ViewElementEvent.create(p, ptm, textValue, xpath, '', index, {}, eventType, context)
+        if (t == 'chng' && textValue.length > 0) {
+          e.textValue = textValue
+        }
+        e.query = q
+        e.hyperlink = hyperlink
+        e.domain = d
+        e.timestamp = tm
+        AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
+      }
+    } else if (t == 'cstm' || t == 'pvar' || t == 'page') {
       let p = String(event.p ?? '')
       let lastPage = PageEvent.getLastPage(context)
       if (lastPage) {
