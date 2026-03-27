@@ -87,7 +87,7 @@ export default class Hybrid {
         controller: controller
       }
     } else if (context.config.mode == ConfigMode.SaaS && context.config.hybridAutotrackEnabled) {
-      let hybrid = new SaaSHybrid(controller, context)
+      let hybrid = new SaaSHybrid(controller, context, webviewId)
       return {
         object: hybrid,
         name: hybrid.name,
@@ -157,6 +157,10 @@ export default class Hybrid {
   }
 
   static saasCircleEnabled: boolean = false
+
+  static async handleSaaSCircleEventFromServer(dict: Record<string, Object>): Promise<void> {
+    await SaaSHybrid.handleCircleEventFromServer(dict)
+  }
 
   static async onPageEnd(controller: webview.WebviewController, context: GrowingContext, webviewId?: string): Promise<void> {
     if (context.config.mode != ConfigMode.SaaS || !Hybrid.saasCircleEnabled) {
@@ -306,6 +310,96 @@ export default class Hybrid {
 }
 
 class SaaSHybrid {
+  static _saasHybrids: SaaSHybrid[] = []
+
+  static async handleCircleEventFromServer(dict: Record<string, Object>): Promise<void> {
+    const xVal = dict['x'] !== undefined ? Number(dict['x']) : NaN
+    const yVal = dict['y'] !== undefined ? Number(dict['y']) : NaN
+    const hasXY = !isNaN(xVal) && !isNaN(yVal)
+
+    // 有 x/y 坐标时，只转发给命中该点的 WebView；否则广播给所有 WebView
+    let hybridsToNotify: SaaSHybrid[]
+    let hitFrameLeft: number = 0
+    let hitFrameTop: number = 0
+    let hitHybrid: SaaSHybrid | undefined = undefined
+    if (hasXY && AnalyticsCore.uiContent) {
+      for (let hybrid of SaaSHybrid._saasHybrids) {
+        if (hybrid.webviewId && hybrid.webviewId.length > 0) {
+          try {
+            let frameNode = AnalyticsCore.uiContent.getAttachedFrameNodeById(hybrid.webviewId)
+            if (frameNode) {
+              let json = frameNode.getInspectorInfo() as Record<string, Object>
+              let rect = json['$rect'] as string | undefined
+              if (rect) {
+                let matches = rect.match(/\[([\d.]+),\s*([\d.]+)\],\[([\d.]+),\s*([\d.]+)\]/)
+                if (matches && matches.length >= 5) {
+                  let leftVp   = AnalyticsCore.uiContent.px2vp(parseFloat(matches[1]))
+                  let topVp    = AnalyticsCore.uiContent.px2vp(parseFloat(matches[2]))
+                  let rightVp  = AnalyticsCore.uiContent.px2vp(parseFloat(matches[3]))
+                  let bottomVp = AnalyticsCore.uiContent.px2vp(parseFloat(matches[4]))
+                  if (xVal >= leftVp && xVal <= rightVp &&
+                      yVal >= topVp  && yVal <= bottomVp) {
+                    hitHybrid = hybrid
+                    let pos = frameNode.getPositionToWindowWithTransform()
+                    hitFrameLeft = pos.x
+                    hitFrameTop = pos.y
+                    break
+                  }
+                }
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      hybridsToNotify = hitHybrid ? [hitHybrid] : []
+    } else {
+      hybridsToNotify = [...SaaSHybrid._saasHybrids]
+    }
+
+    for (let hybrid of hybridsToNotify) {
+      let frameLeft = 0
+      let frameTop = 0
+      if (hasXY && hitHybrid === hybrid) {
+        frameLeft = hitFrameLeft
+        frameTop = hitFrameTop
+      } else if (hybrid.webviewId && hybrid.webviewId.length > 0 && AnalyticsCore.uiContent) {
+        try {
+          let frameNode = AnalyticsCore.uiContent.getAttachedFrameNodeById(hybrid.webviewId)
+          if (frameNode) {
+            let pos = frameNode.getPositionToWindowWithTransform()
+            frameLeft = pos.x
+            frameTop = pos.y
+          }
+        } catch (e) {}
+      }
+
+      // changeXYtoHybrid: 服务端 vp 坐标 → WebView 本地 CSS 坐标（HarmonyOS 上 1CSS px = 1vp）
+      let localDict: Record<string, Object> = JSON.parse(JSON.stringify(dict))
+      if (localDict['x'] !== undefined) {
+        let val = Number(localDict['x'])
+        if (!isNaN(val)) {
+          localDict['x'] = val - frameLeft
+        }
+      }
+      if (localDict['y'] !== undefined) {
+        let val = Number(localDict['y'])
+        if (!isNaN(val)) {
+          localDict['y'] = val - frameTop
+        }
+      }
+      if (localDict['ex'] !== undefined) {
+        localDict['ex'] = (localDict['ex'] as number) - frameLeft
+      }
+      if (localDict['ey'] !== undefined) {
+        localDict['ey'] = (localDict['ey'] as number) - frameTop
+      }
+      // ew/eh 是尺寸，不需要减偏移
+
+      let jsonStr = JSON.stringify(localDict)
+      await niceTryAsync(() => hybrid.controller.runJavaScript(`window._vds_hybrid.helper.handleWebEvent(${jsonStr})`))
+    }
+  }
+
   name: string = '_vds_bridge'
   methodList: string[] = [
     'saveEvent',
@@ -318,13 +412,32 @@ class SaaSHybrid {
   ]
   controller: webview.WebviewController
   context: GrowingContext
+  webviewId?: string
 
   constructor(
     controller: webview.WebviewController,
-    context: GrowingContext
+    context: GrowingContext,
+    webviewId?: string
   ) {
     this.controller = controller
     this.context = context
+    this.webviewId = webviewId
+    // 相同 webviewId 时替换旧实例（用户重进同页面场景）
+    if (webviewId && webviewId.length > 0) {
+      let idx = SaaSHybrid._saasHybrids.findIndex(h => h.webviewId === webviewId)
+      if (idx >= 0) {
+        SaaSHybrid._saasHybrids.splice(idx, 1, this)
+      } else {
+        SaaSHybrid._saasHybrids.push(this)
+      }
+    } else {
+      let idx = SaaSHybrid._saasHybrids.findIndex(h => h.controller === controller)
+      if (idx >= 0) {
+        SaaSHybrid._saasHybrids.splice(idx, 1, this)
+      } else {
+        SaaSHybrid._saasHybrids.push(this)
+      }
+    }
   }
 
   saveEvent = (eventString: string): void => {
@@ -362,8 +475,11 @@ class SaaSHybrid {
   }
 
   webCircleHybridEvent = (message: string): void => {
+    if (!Hybrid.saasCircleEnabled) {
+      return
+    }
     LogUtil.info(() => "[SaaS] [Hybrid] webCircleHybridEvent: " + message)
-    Plugins.onWebViewSaaSCircleEvent(message)
+    Plugins.onWebViewSaaSCircleEvent(message, this.webviewId)
   }
 
   onDOMChanged = (): void => {
