@@ -142,6 +142,10 @@ export class GrowingAnalytics {
     return AnalyticsCore.core.javaScriptOnDocumentEnd(scriptRules)
   }
 
+  static onPageEnd(controller: webview.WebviewController, webviewId?: string): Promise<void> {
+    return AnalyticsCore.core.onPageEnd(controller, webviewId)
+  }
+
   static isInitializedSuccessfully(trackerId?: string): boolean {
     if (trackerId) {
       return AnalyticsCore.tracker(trackerId).isInitializedSuccessfully()

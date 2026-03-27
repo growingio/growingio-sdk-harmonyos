@@ -48,6 +48,9 @@ export default class DummyTracker implements GrowingAnalyticsInterface {
   javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem> {
     return []
   }
+  onPageEnd(controller: webview.WebviewController, webviewId?: string): Promise<void> {
+    return Promise.resolve()
+  }
 
   // Main tracker only
   getDeviceId(): string { return '' }

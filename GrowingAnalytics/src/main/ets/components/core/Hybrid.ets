@@ -33,10 +33,11 @@ import HybridPageEvent from '../event/hybrid/HybridPageEvent'
 import HybridViewElementEvent from '../event/hybrid/HybridViewElementEvent'
 import ViewElementEvent from '../event/ViewElementEvent'
 import { SaaSEvarEvent, SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
-import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '../utils/Constants'
+import { AttributesType, JavaScriptProxyType, PATH_SEPARATOR, SaaSJavaScriptConfigType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import SaaSPageVarEvent from '../event/saas/SaaSPageVarEvent'
+import AutotrackClick from '../autotrack/AutotrackClick'
 import Plugins from '../plugins/Plugins'
 import { niceTryAsync } from '../utils/Util'
 
@@ -153,6 +154,42 @@ export default class Hybrid {
       })
     }
     return scripts
+  }
+
+  static saasCircleEnabled: boolean = false
+
+  static async onPageEnd(controller: webview.WebviewController, context: GrowingContext, webviewId?: string): Promise<void> {
+    if (context.config.mode != ConfigMode.SaaS || !Hybrid.saasCircleEnabled) {
+      return
+    }
+    if (webviewId && webviewId.length > 0) {
+      let xpath = Hybrid._getNativeXPathByWebViewId(webviewId)
+      if (xpath.length > 0) {
+        let updateX = 'if(window._vds_hybrid_native_info){window._vds_hybrid_native_info.x=\'' + xpath + '\'}'
+        await niceTryAsync(() => controller.runJavaScript(updateX))
+      }
+    }
+    let circleUrl = 'https://assets.giocdn.com/sdk/hybrid/2.0/vds_web_circle_plugin.min.js?sdkVer='
+      + SDK_VERSION + '&platform=' + SDK_PLATFORM
+    let js = '(function(){try{var p=document.createElement(\'script\');p.src=\'' + circleUrl + '\';document.head.appendChild(p);}catch(e){}})()'
+    await niceTryAsync(() => controller.runJavaScript(js))
+  }
+
+  private static _getNativeXPathByWebViewId(webviewId: string): string {
+    try {
+      let frameNode = AnalyticsCore.uiContent.getAttachedFrameNodeById(webviewId)
+      if (!frameNode) {
+        return ''
+      }
+      let xpathInfo = AutotrackClick.getXpathInfo(frameNode)
+      let xpath = ''
+      for (let i = xpathInfo.xpath.length - 1; i >= 0; i--) {
+        xpath += PATH_SEPARATOR + xpathInfo.xpath[i] + '[' + xpathInfo.xcontent[i] + ']'
+      }
+      return xpath
+    } catch (e) {
+      return ''
+    }
   }
 
   static javaScriptOnDocumentEnd(
@@ -325,11 +362,12 @@ class SaaSHybrid {
   }
 
   webCircleHybridEvent = (message: string): void => {
-    // LogUtil.info(() => "[SaaS] [Hybrid] webCircleHybridEvent: " + message)
+    LogUtil.info(() => "[SaaS] [Hybrid] webCircleHybridEvent: " + message)
+    Plugins.onWebViewSaaSCircleEvent(message)
   }
 
   onDOMChanged = (): void => {
-    // LogUtil.info(() => "[SaaS] [Hybrid] onDOMChanged")
+    Plugins.onWebViewDomTreeChanged()
   }
 }
 

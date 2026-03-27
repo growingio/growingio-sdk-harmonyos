@@ -235,6 +235,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     return Hybrid.javaScriptOnDocumentEnd(this.context, scriptRules)
   }
 
+  onPageEnd(controller: webview.WebviewController, webviewId?: string): Promise<void> {
+    return Hybrid.onPageEnd(controller, this.context, webviewId)
+  }
+
   isInitializedSuccessfully(): boolean {
     return this._isInitializedSuccessfully
   }
