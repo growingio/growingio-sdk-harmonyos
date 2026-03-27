@@ -30,6 +30,7 @@ import { StatusView } from "../mobileDebugger/StatusView"
 import AppInfo from "../core/AppInfo"
 import AnalyticsCore, { SDK_VERSION } from "../core/AnalyticsCore"
 import { Flutter } from "../core/Flutter"
+import Hybrid from "../core/Hybrid"
 import { SnapshotProvider } from "../mobileDebugger/Snapshot"
 import CircleElement from "./CircleElement"
 import { niceTry } from "../utils/Util"
@@ -51,6 +52,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
 
   stop(error?: string) {
     Flutter.onCircleClosed()
+    Hybrid.saasCircleEnabled = false
     this.snapshotProvider?.stopObserver()
     this.statusView?.hide()
 
@@ -156,6 +158,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
           this.statusView.show()
 
           Flutter.onCircleOpen()
+          Hybrid.saasCircleEnabled = true
         } else if (message.msgType == 'incompatible_version') {
           // 版本号不适配
           StatusView.showDialog({
