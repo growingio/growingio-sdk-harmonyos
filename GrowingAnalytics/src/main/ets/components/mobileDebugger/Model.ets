@@ -21,6 +21,7 @@ import Util from '../utils/Util'
 
 export interface Message {
   msgType: string
+  msgId?: string
 }
 
 export class ReadyInfo implements Message {
