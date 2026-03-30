@@ -393,8 +393,6 @@ class SaaSHybrid {
       if (localDict['ey'] !== undefined) {
         localDict['ey'] = (localDict['ey'] as number) - frameTop
       }
-      // ew/eh 是尺寸，不需要减偏移
-
       let jsonStr = JSON.stringify(localDict)
       await niceTryAsync(() => hybrid.controller.runJavaScript(`window._vds_hybrid.helper.handleWebEvent(${jsonStr})`))
     }
@@ -422,7 +420,6 @@ class SaaSHybrid {
     this.controller = controller
     this.context = context
     this.webviewId = webviewId
-    // 相同 webviewId 时替换旧实例（用户重进同页面场景）
     if (webviewId && webviewId.length > 0) {
       let idx = SaaSHybrid._saasHybrids.findIndex(h => h.webviewId === webviewId)
       if (idx >= 0) {
