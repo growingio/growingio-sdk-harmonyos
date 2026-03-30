@@ -536,6 +536,9 @@ Web({ src: url, controller: this.controller})
       this.controller.registerJavaScriptProxy(yourProxy.object, yourProxy.name, yourProxy.methodList, yourProxy.asyncMethodList, permission)
     }
   })
+  .onPageEnd(() => {
+    GrowingAnalytics.onPageEnd(this.controller, webviewId)
+  }) // H5页面集成的是仅埋点的Hybrid JS SDK则不需要此操作
   .id(webviewId)
 ```
 
