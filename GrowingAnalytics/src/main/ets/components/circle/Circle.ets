@@ -119,7 +119,6 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
       dict['msgId'] = 'hybridEvent'
       dict['sk'] = this._lastSnapshotKey
 
-      // changeXYtoWeb: JS 上报的坐标（phoneWidth 物理像素空间）→ 服务端截图坐标（vp）
       let frameLeft = 0
       let frameTop = 0
       if (webviewId && webviewId.length > 0 && AnalyticsCore.uiContent) {
@@ -166,7 +165,6 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
     if (element['eh'] !== undefined) {
       element['eh'] = AnalyticsCore.uiContent.px2vp(element['eh'] as number)
     }
-    // x/y 只在是数值时转换（避免误改字符串 xpath）
     if (element['x'] !== undefined) {
       let val = Number(element['x'])
       if (!isNaN(val)) {
@@ -201,7 +199,6 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
         }
         let message: Message = JSON.parse(value)
         if (message.msgId == 'hybridEvent') {
-          // 服务端发来 hybridEvent（含 x/y 坐标），转发给 WebView JS 处理
           Hybrid.handleSaaSCircleEventFromServer(message as Record<string, Object>)
           return
         }
