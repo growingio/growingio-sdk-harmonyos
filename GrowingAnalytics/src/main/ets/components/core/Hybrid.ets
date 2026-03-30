@@ -163,7 +163,7 @@ export default class Hybrid {
   }
 
   static async onPageEnd(controller: webview.WebviewController, context: GrowingContext, webviewId?: string): Promise<void> {
-    if (context.config.mode != ConfigMode.SaaS || !Hybrid.saasCircleEnabled) {
+    if (context.config.mode != ConfigMode.SaaS || !context.config.hybridAutotrackEnabled || !Hybrid.saasCircleEnabled) {
       return
     }
     if (webviewId && webviewId.length > 0) {
