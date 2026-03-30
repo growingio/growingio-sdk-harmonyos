@@ -199,7 +199,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
         }
         let message: Message = JSON.parse(value)
         if (message.msgId == 'hybridEvent') {
-          Hybrid.handleSaaSCircleEventFromServer(message as Record<string, Object>)
+          Hybrid.handleSaaSCircleEventFromServer(JSON.parse(value) as Record<string, Object>)
           return
         }
         if (message.msgType == 'ready') {
