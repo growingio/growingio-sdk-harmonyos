@@ -56,378 +56,63 @@ vibe: Builds the GrowingIO analytics SDK that powers data-driven decisions on Ha
 - **Stage 模型**：AbilityStage + UIAbility 生命周期钩子，不使用已废弃的 FA 模型
 - **HAR 打包**：SDK 以 HAR 形式交付（`byteCodeHar: true`），公开 API 仅通过 `index.ets` 导出，内部实现不暴露
 
-## 📋 Your Technical Deliverables
+## 📚 项目文档与开发参考
 
-### SDK 工程结构
-```
-growingio-sdk-harmonyos/
-├── GrowingAnalytics/                         # SDK HAR 主模块（@growingio/analytics）
-│   ├── index.ets                             # 公开 API 唯一出口
-│   ├── src/main/ets/components/
-│   │   ├── interfaces/
-│   │   │   ├── GrowingAnalytics.ets          # SDK 主入口类
-│   │   │   └── GrowingConfig.ets             # 初始化配置（工厂方法模式）
-│   │   ├── core/
-│   │   │   ├── AnalyticsCore.ets             # 核心单例逻辑
-│   │   │   ├── Session.ets                   # Session 管理（visit/page）
-│   │   │   ├── DeviceInfo.ets                # 设备信息采集
-│   │   │   ├── AppInfo.ets                   # 应用信息
-│   │   │   ├── UserIdentifier.ets            # 用户 ID 管理
-│   │   │   ├── GeneralProps.ets              # 通用属性
-│   │   │   ├── Network.ets                   # 网络请求（RCP）
-│   │   │   ├── EventTimer.ets                # 计时事件
-│   │   │   ├── Hybrid.ets                    # WebView 混合采集
-│   │   │   ├── Flutter.ets                   # Flutter 插件桥接
-│   │   │   ├── UniApp.ets                    # UniApp 框架支持
-│   │   │   └── DummyTracker.ets              # 空模式 Tracker（未初始化时防崩溃）
-│   │   ├── event/
-│   │   │   ├── Event.ets                     # 事件基类
-│   │   │   ├── EventBuilder.ets              # 事件构建器
-│   │   │   ├── EventDatabase.ets             # RDB 事件持久化
-│   │   │   ├── EventPersistence.ets          # 事件序列化
-│   │   │   ├── EventSender.ets               # 批量上报调度器
-│   │   │   ├── VisitEvent.ets                # 访问事件
-│   │   │   ├── PageEvent.ets                 # 页面浏览事件
-│   │   │   ├── CustomEvent.ets               # 自定义埋点事件
-│   │   │   ├── ViewElementEvent.ets          # 元素交互事件
-│   │   │   ├── AppClosedEvent.ets            # App 关闭事件
-│   │   │   ├── LoginUserAttributesEvent.ets  # 登录用户属性事件
-│   │   │   ├── hybrid/                       # WebView 混合事件
-│   │   │   ├── flutter/                      # Flutter 事件
-│   │   │   ├── uniapp/                       # UniApp 事件
-│   │   │   └── saas/                         # SaaS 专属事件
-│   │   ├── autotrack/
-│   │   │   ├── Autotrack.ets                 # 无埋点核心协调器
-│   │   │   ├── AutotrackPage.ets             # 页面自动追踪
-│   │   │   └── AutotrackClick.ets            # 点击自动追踪
-│   │   ├── circle/                           # 圈选/热图工具
-│   │   ├── mobileDebugger/                   # 移动端调试工具（WebSocket）
-│   │   ├── plugins/
-│   │   │   └── Plugins.ets                   # 插件架构
-│   │   └── utils/
-│   │       ├── Constants.ts                  # 常量定义
-│   │       ├── LogUtil.ts                    # 日志工具
-│   │       ├── Util.ts                       # 加密、压缩、序列化
-│   │       ├── Concurrent.ets                # TaskPool 工具
-│   │       ├── SharedPreferences.ets         # 持久化存储
-│   │       └── protobuf/                     # Protobuf 序列化
-│   └── src/main/module.json5
-├── GrowingToolsKit/                          # 调试工具 HAR 模块（@growingio/tools）
-│   ├── Index.ets                             # 公开 API 入口
-│   └── src/main/ets/components/
-│       ├── interfaces/GrowingToolsKit.ets    # 调试工具主类
-│       ├── pages/                            # 调试 UI 页面
-│       └── ...
-├── entry/                                    # Demo & 集成测试 HAP
-│   └── src/main/ets/
-│       ├── entryability/EntryAbility.ets
-│       └── pages/Index.ets
-└── build-profile.json5
-```
+> `docs/` 目录下有各模块的详细设计文档。**修改代码前请按场景读取对应文档**，避免破坏已有的数据协议和模块边界。
 
-### SDK 初始化（GrowingAnalytics.ets）
-```typescript
-// GrowingAnalytics/src/main/ets/components/interfaces/GrowingAnalytics.ets
+### 核心架构（改动 SDK 主流程时必读）
 
-// 三种初始化模式（通过 GrowingConfig 工厂方法选择）
-import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics';
+- `docs/GrowingAnalytics/interfaces/GrowingConfig.md` — 三种模式（NewSaaS/SaaS/CDP）的参数差异、配置项默认值、`copy()` 验证逻辑
+- `docs/GrowingAnalytics/interfaces/GrowingAnalytics.md` — 所有公开 API 的签名、行为约束、`GrowingAnalyticsInterface` 接口定义
+- `docs/GrowingAnalytics/core/AnalyticsCore.md` — SDK 初始化全流程（模块初始化顺序、插件注册策略、子 Tracker 机制、定时任务）
+- `docs/GrowingAnalytics/event/Event.md` — 事件模型全链路（Event → EventBuilder → EventPersistence → EventSender）、字段定义、批量上报限制（500条/2MB）、序列号管理
 
-// 方式一：configure + startAnalytics（推荐，分离配置与启动）
-GrowingAnalytics.configure(
-  new GrowingConfig().NewSaaS(
-    'accountId',
-    'dataSourceId',
-    'growing.your_url_scheme'
-    // dataCollectionServerHost 可选，默认 'https://napi.growingio.com'
-  )
-);
-GrowingAnalytics.startAnalytics(context);
+### 按场景读取
 
-// 方式二：一步到位
-GrowingAnalytics.start(context, new GrowingConfig().NewSaaS(
-  'accountId',
-  'dataSourceId',
-  'growing.your_url_scheme'
-));
+| 场景 | 文档 |
+|------|------|
+| 修改会话管理（VISIT/APP_CLOSED 触发时机、session 超时） | `core/Session.md` |
+| 修改网络层（RCP、加密压缩、URL 格式、请求头） | `core/Network.md` |
+| 修改设备/应用信息采集（ignoreField、网络状态监听） | `core/DeviceInfo.md` |
+| 修改用户标识（userId/userKey、ID Mapping、多 Tracker 隔离） | `core/UserIdentifier.md` |
+| 修改多 Tracker / GrowingContext 上下文管理 | `core/Context.md` |
+| 修改计时事件（EventTimer 状态机、前后台处理） | `core/EventTimer.md` |
+| 修改无埋点页面采集（Navigation/Router 监听、双队列、NavBar 栈） | `autotrack/AutotrackPage.md` |
+| 修改无埋点点击采集（willClick、XPath 生成算法、弹窗处理） | `autotrack/AutotrackClick.md` |
+| 修改 Hybrid/WebView 集成（JSBridge、SaaS 脚本注入、onPageEnd） | `core/Hybrid.md` |
+| 修改 Flutter 桥接（Platform Channel、圈选状态、后台 PAGE 缓存） | `core/Flutter.md` |
+| 修改插件系统（PluginsInterface 生命周期、DeepLink 处理） | `plugins/Plugins.md` |
+| 修改圈选功能（WebSocket 协议、截图机制、XPath 生成、WebView 圈选） | `circle/Circle.md` |
+| 修改 MobileDebugger（事件/日志队列、实时发送） | `mobileDebugger/MobileDebugger.md` |
+| 工具函数（niceTry、XOR 加密、序列化协议映射、日志系统） | `utils/Utils.md` |
+| 遇到 ArkTS 语法限制需要迁移 TypeScript 写法 | `docs/typescript-to-arkts-migration-guide.md` |
 
-// 方式三：延迟启动（用户同意隐私后在 UIAbility 中调用）
-GrowingAnalytics.deferStart(uiAbilityContext, new GrowingConfig().NewSaaS(...));
+### 构建命令
 
-// 无埋点场景必须在 UIAbility.onWindowStageCreate 中调用
-GrowingAnalytics.onWindowStageCreate(ability, windowStage);
-```
+```bash
+# 构建 GrowingAnalytics（HAR）
+/Applications/DevEco-Studio.app/Contents/tools/node/bin/node \
+  /Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw.js \
+  --mode module -p product=default -p module=GrowingAnalytics@default \
+  assembleHar --analyze=normal --parallel --incremental --daemon
 
-### 配置类（GrowingConfig）
-```typescript
-// GrowingAnalytics/src/main/ets/components/interfaces/GrowingConfig.ets
+# 构建 GrowingToolsKit（HAR）
+/Applications/DevEco-Studio.app/Contents/tools/node/bin/node \
+  /Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw.js \
+  --mode module -p product=default -p module=GrowingToolsKit@default \
+  assembleHar --analyze=normal --parallel --incremental --daemon
 
-// NewSaaS 模式（新版 SaaS，推荐）
-new GrowingConfig().NewSaaS(accountId, dataSourceId, urlScheme, dataCollectionServerHost?)
-// dataCollectionServerHost 默认：'https://napi.growingio.com'
+# 构建 entry（HAP）
+/Applications/DevEco-Studio.app/Contents/tools/node/bin/node \
+  /Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw.js \
+  --mode module -p module=entry@default -p product=default \
+  -p requiredDeviceType=phone assembleHap \
+  --analyze=normal --parallel --incremental --daemon
 
-// SaaS 模式（旧版 SaaS，兼容 Measurement Protocol v2）
-new GrowingConfig().SaaS(accountId, urlScheme, dataCollectionServerHost?)
-// dataCollectionServerHost 默认：'https://api.growingio.com'
-
-// CDP 模式（私有化/CDP 部署，必须指定 serverHost）
-new GrowingConfig().CDP(accountId, dataSourceId, urlScheme, dataCollectionServerHost)
-// 三个工厂方法均返回 this（GrowingConfig 实例），支持链式属性赋值
-
-// 关键配置项（均为可选，有合理默认值）
-// ⚠️ sessionInterval / dataUploadInterval / requestOptions 的 setter 接收【秒】，内部自动转毫秒
-config.sessionInterval = 30               // session 超时：默认 30 秒（setter 接收秒）
-config.dataUploadInterval = 15            // 上报间隔：默认 15 秒（setter 接收秒）
-config.dataValidityPeriod = 7             // 本地事件保留天数：默认 7 天（范围 3-30）
-config.debugEnabled = false               // 调试日志开关
-config.dataCollectionEnabled = true       // 数据采集总开关
-config.autotrackEnabled = false           // 无埋点开关（默认关闭）
-config.autotrackAllPages = false          // 全量页面自动追踪
-config.useProtobuf = true                 // Protobuf 序列化（SaaS 模式自动禁用）
-config.encryptEnabled = true              // XOR 混淆加密
-config.compressEnabled = true             // Snappy 压缩
-config.idMappingEnabled = false           // 多身份映射
-config.hybridAutotrackEnabled = true      // Hybrid WebView 自动追踪
-config.ignoreField = GrowingIgnoreFields.NetworkState | GrowingIgnoreFields.ScreenSize  // 按需忽略设备字段
-config.plugins = []                       // 插件列表
-
-// 忽略字段枚举（位掩码）
-enum GrowingIgnoreFields {
-  NetworkState   = (1 << 0),
-  ScreenSize     = (1 << 1),
-  DeviceBrand    = (1 << 2),
-  DeviceModel    = (1 << 3),
-  DeviceType     = (1 << 4),
-  SystemLanguage = (1 << 5),
-  TimezoneOffset = (1 << 6),
-  PlatformVersion= (1 << 7),
-}
-```
-
-### 事件类型
-```typescript
-// GrowingAnalytics/src/main/ets/components/event/Event.ets
-
-export enum EventType {
-  Visit               = 'VISIT',                // 会话开始（访问事件）
-  Custom              = 'CUSTOM',               // 自定义埋点事件
-  LoginUserAttributes = 'LOGIN_USER_ATTRIBUTES',// 登录用户属性
-  Page                = 'PAGE',                 // 页面浏览
-  ViewClick           = 'VIEW_CLICK',           // 元素点击
-  ViewChange          = 'VIEW_CHANGE',          // 元素状态变化（仅 Hybrid/Flutter 场景，原生无埋点暂不支持）
-  AppClosed           = 'APP_CLOSED',           // App 关闭
-  // SaaS 专属
-  SaaS_Evar          = 'evar',
-  SaaS_Vstr          = 'vstr',
-  SaaS_Pvar          = 'pvar',
-}
-
-export enum EventScene {
-  Native  = 0,  // 原生 HarmonyOS
-  Hybrid,       // WebView 混合
-  Flutter,      // Flutter 桥接
-  UniApp,       // UniApp 框架
-}
-
-// 事件基类关键字段（Event.ets）
-abstract class Event {
-  eventType: EventType
-  eventSequenceId: number      // 递增序号（服务端排序键）
-  timestamp: number            // 毫秒时间戳
-  sessionId: string            // 会话 ID
-  deviceId: string             // 匿名设备 ID
-  userId?: string              // 登录用户 ID
-  userKey?: string             // 用户 ID 类型（多身份体系）
-  dataSourceId: string
-  urlScheme: string
-  sdkVersion: string
-  // 设备信息
-  platform: string
-  platformVersion?: string     // OS 版本（非 osVersion）
-  screenWidth?: number
-  screenHeight?: number
-  deviceBrand?: string
-  deviceModel?: string
-  deviceType?: string
-  language?: string
-  timezoneOffset?: string
-  networkState?: string        // WIFI / 5G / 4G / UNKNOWN
-  // 应用信息
-  domain: string               // bundleName
-  appName: string
-  appVersion: string
-  appState: string
-  appChannel?: string
-  // 可选
-  latitude?: number
-  longitude?: number
-  attributes?: AttributesType
-}
-
-// 属性值类型（支持数组）
-type ValueType = string | number | boolean | string[] | number[] | boolean[]
-type AttributesType = { [key: string]: ValueType }
-type GrowingAttrType = AttributesType
-```
-
-### 埋点 API（GrowingAnalyticsInterface）
-```typescript
-// 自定义事件埋点
-GrowingAnalytics.track(eventName: string, attributes?: GrowingAttrType, sendTo?: string[])
-
-// 登录用户
-GrowingAnalytics.setLoginUserId(userId: string, userKey?: string)
-GrowingAnalytics.cleanLoginUserId()
-GrowingAnalytics.setLoginUserAttributes(attributes: GrowingAttrType)
-
-// 数据采集总开关
-GrowingAnalytics.setDataCollectionEnabled(enabled: boolean)
-
-// 计时事件（用于统计事件持续时长）
-const timerId = GrowingAnalytics.trackTimerStart(eventName: string): string
-GrowingAnalytics.trackTimerPause(timerId)
-GrowingAnalytics.trackTimerResume(timerId)
-GrowingAnalytics.trackTimerEnd(timerId, attributes?, sendTo?)
-GrowingAnalytics.removeTimer(timerId)
-GrowingAnalytics.clearTrackTimer()
-
-// Hybrid WebView 集成
-GrowingAnalytics.createHybridProxy(controller: webview.WebviewController, webviewId?)
-
-// 多 Tracker（子 Tracker）
-GrowingAnalytics.startSubTracker(trackerId: string, configuration: GrowingConfig)
-GrowingAnalytics.tracker(trackerId: string): GrowingAnalyticsInterface
-
-// SaaS 专属 API
-GrowingAnalytics.setPeopleVariable(attributes: GrowingAttrType)
-GrowingAnalytics.setEvar(attributes: GrowingAttrType)
-GrowingAnalytics.setVisitor(attributes: GrowingAttrType)
-```
-
-### 本地事件数据库
-```typescript
-// GrowingAnalytics/src/main/ets/components/event/EventDatabase.ets
-// 数据库名：growing_analytics_enc_database（加密 RDB）
-// 批量读取上限：REQUEST_MAX_EVENT_COUNT = 500 条，REQUEST_MAX_EVENT_SIZE = 2MB
-
-import relationalStore from '@ohos.data.relationalStore';
-
-const DATABASE_NAME = 'growing_analytics_enc_database';
-const TABLE = 'EVENTS';  // 注意：大写
-// 安全级别：S1 + encrypt: true（数据库文件加密）
-// 注意：实际文件名为 DATABASE_NAME + '.db'
-const config: relationalStore.StoreConfig = {
-  name: DATABASE_NAME + '.db',
-  securityLevel: relationalStore.SecurityLevel.S1,
-  encrypt: true,
-};
-```
-
-### 批量上报（EventSender.ets）
-```typescript
-// 上报调度：定时（dataUploadInterval，默认 15s）+ 条数触发
-// 每批最多 500 条 / 2MB，超限自动分片
-// 网络层使用 RCP（@kit.RemoteCommunicationKit），非 @ohos.net.http
-// 支持 Snappy 压缩 + XOR 混淆加密
-// 上报端点：
-//   NewSaaS/CDP: POST ${serverHost}/v3/projects/${accountId}/collect
-//   SaaS PV:     POST ${serverHost}/v3/${accountId}/harmonyos/pv
-//   SaaS 自定义: POST ${serverHost}/v3/${accountId}/harmonyos/cstm
-```
-
-### 公开 API 导出（SDK 对外接口唯一入口）
-```typescript
-// GrowingAnalytics/index.ets
-export {
-  GrowingAnalytics,
-  GrowingAttrType,
-  GrowingAutotrackElementID,    // 无埋点组件标识属性（用于忽略或别名）
-  GrowingAnalyticsInterface,
-  GrowingFlutterPlugin,
-  GrowingUniAppPlugin,
-} from './src/main/ets/components/interfaces/GrowingAnalytics'
-
-export {
-  GrowingConfig,
-  IgnoreFields as GrowingIgnoreFields,
-  IgnoreFieldsAll as GrowingIgnoreFieldsAll,
-} from './src/main/ets/components/interfaces/GrowingConfig'
-
-// GrowingToolsKit/Index.ets
-export { GrowingToolsKit } from './src/main/ets/components/interfaces/GrowingToolsKit'
-```
-
-### 宿主 App 集成示例
-```typescript
-// 宿主 App: MyAbilityStage.ets（推荐在此初始化）
-import AbilityStage from '@ohos.app.ability.AbilityStage';
-import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics';
-
-export default class MyAbilityStage extends AbilityStage {
-  onCreate(): void {
-    // ✅ 在用户同意隐私协议后才调用 start()
-    const config = new GrowingConfig().NewSaaS(
-      'your_account_id',
-      'your_datasource_id',
-      'growing.your_url_scheme'
-      // dataCollectionServerHost 可选，默认 'https://napi.growingio.com'
-    );
-    // ⚠️ sessionInterval / dataUploadInterval 的 setter 接收秒，内部自动转毫秒
-    config.sessionInterval = 30;           // 30 秒
-    config.dataUploadInterval = 15;        // 15 秒
-    config.debugEnabled = false;
-    config.encryptEnabled = true;
-    GrowingAnalytics.start(this.context, config);
-  }
-}
-
-// 宿主 App: EntryAbility.ets — 无埋点必须挂载
-import UIAbility from '@ohos.app.ability.UIAbility';
-import window from '@ohos.window';
-import { GrowingAnalytics } from '@growingio/analytics';
-
-export default class EntryAbility extends UIAbility {
-  onWindowStageCreate(windowStage: window.WindowStage): void {
-    // ✅ 无埋点自动采集必须在此注册
-    GrowingAnalytics.onWindowStageCreate(this, windowStage);
-    windowStage.loadContent('pages/Index');
-  }
-}
-
-// 业务页面埋点示例
-import { GrowingAnalytics } from '@growingio/analytics';
-
-// 登录成功后
-GrowingAnalytics.setLoginUserId('user_12345');
-GrowingAnalytics.setLoginUserAttributes({ membership: 'gold', age: 28 });
-
-// 自定义事件
-GrowingAnalytics.track('add_to_cart', {
-  product_id: 'SKU_001',
-  product_name: '鸿蒙开发者大会纪念衫',
-  price: 199,
-  quantity: 2,
-});
-
-// 计时事件
-const timerId = GrowingAnalytics.trackTimerStart('video_play');
-// ... 用户操作 ...
-GrowingAnalytics.trackTimerEnd(timerId, { video_id: 'v001' });
-
-// 退出登录
-GrowingAnalytics.cleanLoginUserId();
-
-// 用户拒绝隐私协议时
-GrowingAnalytics.setDataCollectionEnabled(false);
-
-// 调试工具（需依赖 @growingio/tools）
-// GrowingToolsKit 是一个插件，通过 config.plugins 注入，不是独立 start()
-import { GrowingToolsKit } from '@growingio/tools';
-const config = new GrowingConfig().NewSaaS(...);
-config.plugins = [new GrowingToolsKit()];           // 加入插件列表
-GrowingAnalytics.start(this.context, config);
-// 可选：手动控制调试面板显示/隐藏
-GrowingToolsKit.show();
-GrowingToolsKit.minimize();
+# 清理构建产物
+/Applications/DevEco-Studio.app/Contents/tools/node/bin/node \
+  /Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw.js \
+  -p product=default clean --analyze=normal --parallel --incremental --daemon
 ```
 
 ## 🔄 Your Workflow Process
