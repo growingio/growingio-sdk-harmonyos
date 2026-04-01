@@ -4,6 +4,7 @@ on:
     paths:
       - 'GrowingAnalytics/src/main/ets/**/*.ets'
       - 'GrowingToolsKit/src/main/ets/**/*.ets'
+      - 'GrowingAnalyticsAtomicService/src/main/ets/**/*.ets'
       - '**/*.proto'
       - '**/obfuscation-rules.txt'
       - '**/consumer-rules.txt'

@@ -39,6 +39,7 @@ appName
 appVersion
 appChannel
 eventName
+pageShowTimestamp
 # --------- autotrack/hybrid event properties ---------
 path
 index
@@ -102,3 +103,5 @@ source
 key
 X-Compress-Codec
 X-Crypt-Codec
+Content-Type
+X-Timestamp

@@ -58,6 +58,10 @@ TOOLS_RULES_FILES = [
     ROOT / "GrowingToolsKit/obfuscation-rules.txt",
     ROOT / "GrowingToolsKit/consumer-rules.txt",
 ]
+ATOMIC_SERVICE_RULES_FILES = [
+    ROOT / "GrowingAnalyticsAtomicService/obfuscation-rules.txt",
+    ROOT / "GrowingAnalyticsAtomicService/consumer-rules.txt",
+]
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 数据结构
@@ -404,13 +408,57 @@ MONITOR_RULES: list[MonitorRule] = [
         label="GrowingToolsKit · HTTP 请求头",
     ),
 
-    # ── Protobuf proto 文件变动（全量扫描两个模块）────────────────────────────
+    # ── GrowingAnalyticsAtomicService Event 属性 ─────────────────────────────
+    MonitorRule(
+        path_patterns=[
+            "GrowingAnalyticsAtomicService/src/main/ets/components/event/*Event.ets",
+        ],
+        extractors=[(extract_event_properties, "property")],
+        rules_files=ATOMIC_SERVICE_RULES_FILES,
+        label="GrowingAnalyticsAtomicService · Event 属性",
+    ),
+
+    # ── GrowingAnalyticsAtomicService HTTP Header ─────────────────────────────
+    MonitorRule(
+        path_patterns=[
+            "GrowingAnalyticsAtomicService/src/main/ets/components/core/Network.ets",
+        ],
+        extractors=[(extract_http_headers, "property")],
+        rules_files=ATOMIC_SERVICE_RULES_FILES,
+        label="GrowingAnalyticsAtomicService · HTTP 请求头",
+    ),
+
+    # ── GrowingAnalyticsAtomicService 圈选 JSON Schema ────────────────────────
+    MonitorRule(
+        path_patterns=[
+            "GrowingAnalyticsAtomicService/src/main/ets/components/circle/CircleElement.ets",
+        ],
+        extractors=[
+            (extract_dollar_json_keys,    "property"),
+            (extract_growing_keys,        "property"),
+            (extract_circle_message_keys, "property"),
+        ],
+        rules_files=ATOMIC_SERVICE_RULES_FILES,
+        label="GrowingAnalyticsAtomicService · 圈选 JSON key",
+    ),
+
+    # ── GrowingAnalyticsAtomicService Protobuf 全局名 ─────────────────────────
+    MonitorRule(
+        path_patterns=[
+            "GrowingAnalyticsAtomicService/src/main/ets/components/utils/protobuf/event_pb.d.ts",
+        ],
+        extractors=[(extract_protobuf_globals, "global")],
+        rules_files=ATOMIC_SERVICE_RULES_FILES,
+        label="GrowingAnalyticsAtomicService · Protobuf 全局名",
+    ),
+
+    # ── Protobuf proto 文件变动（全量扫描三个模块）────────────────────────────
     MonitorRule(
         path_patterns=[
             "resources/event_v3.proto",
         ],
         extractors=[(extract_protobuf_globals, "global")],
-        rules_files=ANALYTICS_RULES_FILES + TOOLS_RULES_FILES,
+        rules_files=ANALYTICS_RULES_FILES + TOOLS_RULES_FILES + ATOMIC_SERVICE_RULES_FILES,
         label="Protobuf Schema (.proto 全局名)",
     ),
 ]
