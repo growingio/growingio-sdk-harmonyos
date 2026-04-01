@@ -69,6 +69,16 @@ int64
 # --------- database ---------
 REQUEST_BLOB
 RESPONSE_BLOB
+EVENT_UUID
+DATA
+TYPE
+ACCOUNT_ID
+DATASOURCE_ID
+EVENT_SCENE
+CREATE_AT
+IS_SEND
+REQUEST_UUID
+INFO
 # --------- request ---------
 X-Timestamp
 responseHeader
