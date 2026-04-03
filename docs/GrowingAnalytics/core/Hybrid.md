@@ -15,6 +15,7 @@
 - [SaaS 模式支持](#saas-模式支持)
 - [WebView 圈选支持](#webview-圈选支持)
 - [脚本注入机制](#脚本注入机制)
+  - [onPageEnd API](#公共-api-接口)
 
 ---
 
@@ -103,7 +104,9 @@ Hybrid 模块是 GrowingIO SDK 实现原生应用与 H5 页面数据打通的核
 ├─────────────────────────────────────────────────────────────────────────┤
 │  属性                                                                   │
 │  ├── name: string = '_vds_bridge'                                       │
-│  └── methodList: string[]              // SaaS 专用方法列表             │
+│  ├── methodList: string[]              // SaaS 专用方法列表             │
+│  ├── webviewId?: string                // WebView 唯一标识              │
+│  └── static _saasHybrids: SaaSHybrid[] // 所有 SaaS Hybrid 实例列表   │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  方法                                                                   │
 │  ├── saveEvent()                       // 保存事件                      │
@@ -264,7 +267,7 @@ static createHybridProxy(
     
   } else if (context.config.mode == ConfigMode.SaaS && context.config.hybridAutotrackEnabled) {
     // SaaS 模式且开启 Hybrid 无埋点
-    let hybrid = new SaaSHybrid(controller, context)
+    let hybrid = new SaaSHybrid(controller, context, webviewId)
     return {
       object: hybrid,
       name: hybrid.name,
@@ -482,7 +485,9 @@ class SaaSHybridEventHandler {
     let attributes: AttributesType = event.var ?? {} // 事件属性
     let d = AppInfo.domain + '::' + String(event.d ?? '')  // 域名
     
-    if (t == 'cstm' || t == 'pvar' || t == 'page') {
+    if (t == 'clck' || t == 'chng') {
+      // 点击/变更无埋点事件，由 AutotrackClick 模块处理
+    } else if (t == 'cstm' || t == 'pvar' || t == 'page') {
       let p = String(event.p ?? '')  // 页面路径
       let lastPage = PageEvent.getLastPage(context)
       if (lastPage) {
@@ -668,7 +673,8 @@ static javaScriptOnDocumentStart(
       d: AppInfo.domain,
       u: DeviceInfo.deviceId,
       s: Session.getSessionId(context) ?? '',
-      cs1: UserIdentifier.getUser(context)?.userId ?? ''
+      cs1: UserIdentifier.getUser(context)?.userId ?? '',
+      p: PageEvent.getLastPage(context)?.path ?? ''   // 当前页面路径
     }
     scripts.push({
       script: 'window._vds_hybrid_native_info = ' + JSON.stringify(nativeInfo),
@@ -751,10 +757,22 @@ static javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem> {
  * @param webviewId WebView 唯一标识
  */
 static createHybridProxy(
-  controller: webview.WebviewController, 
+  controller: webview.WebviewController,
   webviewId?: string
 ): JavaScriptProxyType | undefined {
   return AnalyticsCore.core.createHybridProxy(controller, webviewId)
+}
+
+/**
+ * WebView 页面加载完成时调用，注入圈选插件
+ * @param controller WebView 控制器
+ * @param webviewId WebView 唯一标识
+ */
+static onPageEnd(
+  controller: webview.WebviewController,
+  webviewId?: string
+): Promise<void> {
+  return AnalyticsCore.core.onPageEnd(controller, webviewId)
 }
 ```
 
