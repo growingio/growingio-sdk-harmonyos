@@ -2,6 +2,7 @@ import { describe, it, expect } from '@ohos/hypium'
 import EventPersistence from '../../main/ets/components/event/EventPersistence'
 import Util from '../../main/ets/components/utils/Util'
 import { AttributesType } from '../../main/ets/components/utils/Constants'
+import { JsonParser } from '../helpers/JsonParser'
 
 // ─── 测试用事件数据接口（模块顶层声明，符合 ArkTS arkts-no-untyped-obj-literals 规则）
 
@@ -156,10 +157,9 @@ export default function eventPersistenceTests() {
         timestamp: 1700000000000,
         userId: undefined
       }
-      let serialized = Util.toSerializeByMeasurementProtocolV3(eventObj)
-      let parsed = JSON.parse(serialized) as ESObject
-      expect(parsed['eventType']).assertEqual('CUSTOM')
-      expect(parsed['eventName']).assertEqual('test')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV3(eventObj))
+      expect(json.getString('eventType')).assertEqual('CUSTOM')
+      expect(json.getString('eventName')).assertEqual('test')
     })
 
     it('SaaS 序列化（V2）CUSTOM 事件 t 字段应为 cstm', 0, () => {
@@ -175,9 +175,8 @@ export default function eventPersistenceTests() {
         path: '/cart',
         pageShowTimestamp: 0
       }
-      let serialized = Util.toSerializeByMeasurementProtocolV2(eventObj, 'WIFI')
-      let parsed = JSON.parse(serialized) as ESObject
-      expect(parsed['t']).assertEqual('cstm')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(eventObj, 'WIFI'))
+      expect(json.getString('t')).assertEqual('cstm')
     })
 
     it('SaaS 序列化（V2）VISIT 事件 t 字段应为 vst', 0, () => {
@@ -201,9 +200,8 @@ export default function eventPersistenceTests() {
         urlScheme: 'growing.x',
         language: 'zh'
       }
-      let serialized = Util.toSerializeByMeasurementProtocolV2(eventObj, 'WIFI')
-      let parsed = JSON.parse(serialized) as ESObject
-      expect(parsed['t']).assertEqual('vst')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(eventObj, 'WIFI'))
+      expect(json.getString('t')).assertEqual('vst')
     })
 
     it('V3 序列化应过滤 timezoneOffset 字段', 0, () => {
@@ -212,10 +210,9 @@ export default function eventPersistenceTests() {
         path: '/home',
         timezoneOffset: '+08:00'
       }
-      let serialized = Util.toSerializeByMeasurementProtocolV3(eventObj)
-      let parsed = JSON.parse(serialized) as ESObject
-      expect(parsed['timezoneOffset']).assertUndefined()
-      expect(parsed['path']).assertEqual('/home')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV3(eventObj))
+      expect(json.hasKey('timezoneOffset')).assertFalse()
+      expect(json.getString('path')).assertEqual('/home')
     })
   })
 

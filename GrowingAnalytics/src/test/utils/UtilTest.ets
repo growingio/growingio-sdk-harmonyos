@@ -1,6 +1,7 @@
 import { describe, it, expect } from '@ohos/hypium'
 import Util from '../../main/ets/components/utils/Util'
 import { AttributesType } from '../../main/ets/components/utils/Constants'
+import { JsonParser } from '../helpers/JsonParser'
 
 // ─── 测试用事件数据接口（模块顶层声明，符合 ArkTS arkts-no-untyped-obj-literals 规则）
 
@@ -354,69 +355,69 @@ export default function utilTests() {
   describe('Util - toSerializeByMeasurementProtocolV2 - CUSTOM', () => {
 
     it('t 字段应为 cstm', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
-      expect(json['t']).assertEqual('cstm')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      expect(json.getString('t')).assertEqual('cstm')
     })
 
     it('n 字段应等于 eventName', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
-      expect(json['n']).assertEqual('btn_click')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      expect(json.getString('n')).assertEqual('btn_click')
     })
 
     it('esid 和 gesid 应等于 eventSequenceId', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
-      expect(json['esid']).assertEqual(7)
-      expect(json['gesid']).assertEqual(7)
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      expect(json.getNumber('esid')).assertEqual(7)
+      expect(json.getNumber('gesid')).assertEqual(7)
     })
 
     it('u 字段应等于 deviceId', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
-      expect(json['u']).assertEqual('device-abc')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      expect(json.getString('u')).assertEqual('device-abc')
     })
 
     it('s 字段应等于 sessionId', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
-      expect(json['s']).assertEqual('session-xyz')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      expect(json.getString('s')).assertEqual('session-xyz')
     })
 
     it('cs1 字段在有 userId 时应有值', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
-      expect(json['cs1']).assertEqual('user-001')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      expect(json.getString('cs1')).assertEqual('user-001')
     })
 
     it('cs1 字段在 userId 为 undefined 时应为 undefined', 0, () => {
       let base = makeBase()
       base.userId = undefined
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(base, 'WIFI')) as ESObject
-      expect(json['cs1']).assertUndefined()
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(base, 'WIFI'))
+      expect(json.hasKey('cs1')).assertFalse()
     })
   })
 
   describe('Util - toSerializeByMeasurementProtocolV2 - 网络状态映射', () => {
 
     it('networkState=WIFI → r=WIFI', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), 'WIFI')) as ESObject
-      expect(json['r']).assertEqual('WIFI')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), 'WIFI'))
+      expect(json.getString('r')).assertEqual('WIFI')
     })
 
     it('networkState=5G → r=CELL', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '5G')) as ESObject
-      expect(json['r']).assertEqual('CELL')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '5G'))
+      expect(json.getString('r')).assertEqual('CELL')
     })
 
     it('networkState=4G → r=CELL', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '4G')) as ESObject
-      expect(json['r']).assertEqual('CELL')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '4G'))
+      expect(json.getString('r')).assertEqual('CELL')
     })
 
     it('networkState=UNKNOWN → r=UNKNOWN', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), 'UNKNOWN')) as ESObject
-      expect(json['r']).assertEqual('UNKNOWN')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), 'UNKNOWN'))
+      expect(json.getString('r')).assertEqual('UNKNOWN')
     })
 
     it('networkState=空字符串 → r=NONE', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '')) as ESObject
-      expect(json['r']).assertEqual('NONE')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), ''))
+      expect(json.getString('r')).assertEqual('NONE')
     })
   })
 
@@ -437,10 +438,10 @@ export default function utilTests() {
         referralPage: '/home',
         attributes: undefined
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI')) as ESObject
-      expect(json['t']).assertEqual('page')
-      expect(json['p']).assertEqual('/detail')
-      expect(json['tl']).assertEqual('Detail')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      expect(json.getString('t')).assertEqual('page')
+      expect(json.getString('p')).assertEqual('/detail')
+      expect(json.getString('tl')).assertEqual('Detail')
     })
   })
 
@@ -469,14 +470,14 @@ export default function utilTests() {
         latitude: undefined,
         longitude: undefined
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI')) as ESObject
-      expect(json['t']).assertEqual('vst')
-      expect(json['db']).assertEqual('HUAWEI')
-      expect(json['dm']).assertEqual('Mate60')
-      expect(json['sh']).assertEqual(1920)
-      expect(json['sw']).assertEqual(1080)
-      expect(json['os']).assertEqual('HarmonyOS')
-      expect(json['cv']).assertEqual('1.0.0')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      expect(json.getString('t')).assertEqual('vst')
+      expect(json.getString('db')).assertEqual('HUAWEI')
+      expect(json.getString('dm')).assertEqual('Mate60')
+      expect(json.getNumber('sh')).assertEqual(1920)
+      expect(json.getNumber('sw')).assertEqual(1080)
+      expect(json.getString('os')).assertEqual('HarmonyOS')
+      expect(json.getString('cv')).assertEqual('1.0.0')
     })
   })
 
@@ -493,9 +494,9 @@ export default function utilTests() {
         userId: undefined,
         path: '/home'
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI')) as ESObject
-      expect(json['t']).assertEqual('cls')
-      expect(json['p']).assertEqual('/home')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      expect(json.getString('t')).assertEqual('cls')
+      expect(json.getString('p')).assertEqual('/home')
     })
   })
 
@@ -509,8 +510,8 @@ export default function utilTests() {
         eventName: 'test',
         timezoneOffset: '+08:00'
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event)) as ESObject
-      expect(json['timezoneOffset']).assertUndefined()
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV3(event))
+      expect(json.hasKey('timezoneOffset')).assertFalse()
     })
 
     it('序列化结果不含 xcontent 字段（当 xcontent 存在时）', 0, () => {
@@ -519,9 +520,9 @@ export default function utilTests() {
         xpath: '/Button[0]',
         xcontent: '/Button[0]/Image[0]'
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event)) as ESObject
-      expect(json['xcontent']).assertUndefined()
-      expect(json['xpath']).assertEqual('/Button[0]')
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV3(event))
+      expect(json.hasKey('xcontent')).assertFalse()
+      expect(json.getString('xpath')).assertEqual('/Button[0]')
     })
 
     it('xcontent 为 null 时仍应被移除', 0, () => {
@@ -530,8 +531,8 @@ export default function utilTests() {
         xpath: '/Button[0]',
         xcontent: null
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event)) as ESObject
-      expect(json['xcontent']).assertUndefined()
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV3(event))
+      expect(json.hasKey('xcontent')).assertFalse()
     })
 
     it('其余字段应原样保留', 0, () => {
@@ -540,10 +541,10 @@ export default function utilTests() {
         eventName: 'purchase',
         eventSequenceId: 42
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event)) as ESObject
-      expect(json['eventType']).assertEqual('CUSTOM')
-      expect(json['eventName']).assertEqual('purchase')
-      expect(json['eventSequenceId']).assertEqual(42)
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV3(event))
+      expect(json.getString('eventType')).assertEqual('CUSTOM')
+      expect(json.getString('eventName')).assertEqual('purchase')
+      expect(json.getNumber('eventSequenceId')).assertEqual(42)
     })
   })
 }
