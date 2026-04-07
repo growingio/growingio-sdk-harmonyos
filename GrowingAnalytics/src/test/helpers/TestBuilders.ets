@@ -26,7 +26,7 @@ export function buildFakeContext(
 
   return {
     trackerId: 'default',
-    config,
+    config: config,
     eventSender: []
   } as unknown as GrowingContext
 }

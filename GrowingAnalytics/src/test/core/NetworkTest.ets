@@ -30,7 +30,7 @@ function buildContext(
   config.compressEnabled = options?.compress ?? true
   config.useProtobuf = options?.protobuf ?? true
 
-  return { trackerId: 'default', config } as unknown as GrowingContext
+  return { trackerId: 'default', config: config } as unknown as GrowingContext
 }
 
 export default function networkTests() {

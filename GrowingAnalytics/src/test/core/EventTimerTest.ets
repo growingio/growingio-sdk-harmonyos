@@ -7,7 +7,7 @@ import GrowingContext from '../../main/ets/components/core/Context'
  * 只需 trackerId 字段，供 clearTrackTimer 使用
  */
 function makeFakeContext(trackerId: string): GrowingContext {
-  return { trackerId } as GrowingContext
+  return { trackerId: trackerId } as unknown as GrowingContext
 }
 
 export default function eventTimerTests() {

@@ -45,8 +45,9 @@ export default function niceTryTests() {
     })
 
     it('函数内部访问嵌套 undefined 属性时应被安全捕获', 0, () => {
-      let obj: Record<string, object> | undefined = undefined
-      let result = niceTry(() => obj!['key'], 'fallback')
+      // 使用 Record<string, string> 使 T=string 与 fallback 类型一致
+      let obj: Record<string, string> | undefined = undefined
+      let result = niceTry<string>(() => obj!['key'], 'fallback')
       expect(result).assertEqual('fallback')
     })
   })
