@@ -1,6 +1,7 @@
 import EventPersistence from '../../main/ets/components/event/EventPersistence'
 import GrowingContext from '../../main/ets/components/core/Context'
 import { IEventStore } from '../../main/ets/components/interfaces/IEventStore'
+import Util from '../../main/ets/components/utils/Util'
 
 /**
  * IEventStore 的内存实现，用于本地单元测试
@@ -33,7 +34,7 @@ export class InMemoryEventStore implements IEventStore {
       if (result.length >= maxCount) {
         break
       }
-      let bytes = new TextEncoder().encode(event.data).byteLength
+      let bytes = Util.sizeOfEventString(event.data)
       if (totalBytes + bytes > maxSize) {
         break
       }

@@ -1,9 +1,75 @@
-import { describe, it, expect, beforeEach } from '@ohos/hypium'
+import { describe, it, expect } from '@ohos/hypium'
 import EventPersistence from '../../main/ets/components/event/EventPersistence'
-import { EventType } from '../../main/ets/components/event/Event'
-import { ConfigMode } from '../../main/ets/components/interfaces/GrowingConfig'
 import Util from '../../main/ets/components/utils/Util'
-import { buildFakeContext } from '../helpers/TestBuilders'
+
+// ─── 测试用事件数据接口（模块顶层声明，符合 ArkTS arkts-no-untyped-obj-literals 规则）
+
+interface NormalEventData {
+  eventType: string
+  eventName: string
+  attributes: Record<string, string>
+}
+
+interface BigEventData {
+  eventType: string
+  attributes: Record<string, string>
+}
+
+interface BorderEventData {
+  eventType: string
+  key: string
+}
+
+interface V3CustomEventData {
+  eventType: string
+  eventName: string
+  eventSequenceId: number
+  deviceId: string
+  sessionId: string
+  domain: string
+  timestamp: number
+  userId: string | undefined
+}
+
+interface V2CustomEventData {
+  eventType: string
+  eventName: string
+  eventSequenceId: number
+  deviceId: string
+  sessionId: string
+  domain: string
+  timestamp: number
+  userId: string
+  path: string
+  pageShowTimestamp: number
+}
+
+interface V2VisitEventData {
+  eventType: string
+  eventSequenceId: number
+  deviceId: string
+  sessionId: string
+  domain: string
+  timestamp: number
+  userId: string | undefined
+  sdkVersion: string
+  screenHeight: number
+  screenWidth: number
+  deviceBrand: string
+  deviceModel: string
+  platform: string
+  platformVersion: string
+  appVersion: string
+  appName: string
+  urlScheme: string
+  language: string
+}
+
+interface V3PageEventData {
+  eventType: string
+  path: string
+  timezoneOffset: string
+}
 
 export default function eventPersistenceTests() {
 
@@ -42,7 +108,7 @@ export default function eventPersistenceTests() {
   describe('EventPersistence - 大事件降级逻辑（通过 Util.validateEventSize）', () => {
 
     it('正常大小事件应通过校验，isValid=true', 0, () => {
-      let normalEvent = {
+      let normalEvent: NormalEventData = {
         eventType: 'CUSTOM',
         eventName: 'purchase',
         attributes: { price: '99.9', item: 'book' }
@@ -52,7 +118,7 @@ export default function eventPersistenceTests() {
     })
 
     it('超过 1.8MB 的事件 isValid=false，并携带 growing_error_msg', 0, () => {
-      let bigEvent = {
+      let bigEvent: BigEventData = {
         eventType: 'CUSTOM',
         attributes: { key: 'x'.repeat(2 * 1024 * 1024) }
       }
@@ -62,11 +128,10 @@ export default function eventPersistenceTests() {
     })
 
     it('1.8MB 边界值：刚好超过 1.8MB 时应返回错误', 0, () => {
-      // 1.8 * 1024 * 1024 = 1887436 bytes
-      // JSON 序列化后 key 占 5 bytes，value 超过阈值
-      let borderEvent = {
+      // 1.8 * 1024 * 1024 = 1887436.8 bytes，加 1 确保超过阈值
+      let borderEvent: BorderEventData = {
         eventType: 'CUSTOM',
-        key: 'x'.repeat(1.8 * 1024 * 1024 + 1)
+        key: 'x'.repeat(Math.floor(1.8 * 1024 * 1024) + 1)
       }
       let result = Util.validateEventSize(borderEvent)
       expect(result.isValid).assertFalse()
@@ -78,7 +143,7 @@ export default function eventPersistenceTests() {
   describe('EventPersistence - 序列化格式验证（通过 Util 序列化方法）', () => {
 
     it('NewSaaS 序列化（V3）结果应为合法 JSON', 0, () => {
-      let eventObj = {
+      let eventObj: V3CustomEventData = {
         eventType: 'CUSTOM',
         eventName: 'test',
         eventSequenceId: 1,
@@ -95,7 +160,7 @@ export default function eventPersistenceTests() {
     })
 
     it('SaaS 序列化（V2）CUSTOM 事件 t 字段应为 cstm', 0, () => {
-      let eventObj = {
+      let eventObj: V2CustomEventData = {
         eventType: 'CUSTOM',
         eventName: 'checkout',
         eventSequenceId: 3,
@@ -113,7 +178,7 @@ export default function eventPersistenceTests() {
     })
 
     it('SaaS 序列化（V2）VISIT 事件 t 字段应为 vst', 0, () => {
-      let eventObj = {
+      let eventObj: V2VisitEventData = {
         eventType: 'VISIT',
         eventSequenceId: 1,
         deviceId: 'dev',
@@ -139,7 +204,7 @@ export default function eventPersistenceTests() {
     })
 
     it('V3 序列化应过滤 timezoneOffset 字段', 0, () => {
-      let eventObj = {
+      let eventObj: V3PageEventData = {
         eventType: 'PAGE',
         path: '/home',
         timezoneOffset: '+08:00'

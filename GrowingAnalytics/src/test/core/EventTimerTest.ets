@@ -38,13 +38,17 @@ export default function eventTimerTests() {
     })
 
     it('超过 24 小时的 duration 应返回 0（异常值保护）', 0, () => {
+      // startTime=1000 > 0，确保触发的是 24h 时长保护，而非 startTime 哨兵保护
+      let start = 1000
       let over24h = 25 * 60 * 60 * 1000
-      expect(EventTimer.durationFrom(0, over24h)).assertEqual(0)
+      expect(EventTimer.durationFrom(start, start + over24h)).assertEqual(0)
     })
 
     it('恰好 24 小时应返回 0（边界值）', 0, () => {
+      // duration === 24h 不满足 duration < 24h，应返回 0
+      let start = 1000
       let exactly24h = 24 * 60 * 60 * 1000
-      expect(EventTimer.durationFrom(0, exactly24h)).assertEqual(0)
+      expect(EventTimer.durationFrom(start, start + exactly24h)).assertEqual(0)
     })
 
     it('比 24 小时少 1ms 应正常返回', 0, () => {

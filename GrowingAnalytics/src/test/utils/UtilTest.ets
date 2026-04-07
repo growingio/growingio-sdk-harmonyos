@@ -1,6 +1,100 @@
 import { describe, it, expect } from '@ohos/hypium'
 import Util from '../../main/ets/components/utils/Util'
 
+// ─── 测试用事件数据接口（模块顶层声明，符合 ArkTS arkts-no-untyped-obj-literals 规则）
+
+interface CustomEventData {
+  eventType: string
+  eventSequenceId: number
+  deviceId: string
+  sessionId: string
+  domain: string
+  timestamp: number
+  userId: string | undefined
+  eventName: string
+  attributes: Record<string, string> | undefined
+  path: string
+  pageShowTimestamp: number
+}
+
+interface PageEventData {
+  eventType: string
+  eventSequenceId: number
+  deviceId: string
+  sessionId: string
+  domain: string
+  timestamp: number
+  userId: string | undefined
+  path: string
+  query: string
+  title: string
+  referralPage: string
+  attributes: Record<string, string> | undefined
+}
+
+interface VisitEventData {
+  eventType: string
+  eventSequenceId: number
+  deviceId: string
+  sessionId: string
+  domain: string
+  timestamp: number
+  userId: string | undefined
+  sdkVersion: string
+  screenHeight: number
+  screenWidth: number
+  deviceBrand: string
+  deviceModel: string
+  platform: string
+  platformVersion: string
+  appVersion: string
+  appName: string
+  urlScheme: string
+  language: string
+  latitude: number | undefined
+  longitude: number | undefined
+}
+
+interface AppClosedEventData {
+  eventType: string
+  eventSequenceId: number
+  deviceId: string
+  sessionId: string
+  domain: string
+  timestamp: number
+  userId: string | undefined
+  path: string
+}
+
+interface V3SimpleEventData {
+  eventType: string
+  eventName: string
+  timezoneOffset: string
+}
+
+interface V3ViewClickEventData {
+  eventType: string
+  xpath: string
+  xcontent: string | null
+}
+
+interface V3PurchaseEventData {
+  eventType: string
+  eventName: string
+  eventSequenceId: number
+}
+
+interface ValidateSizeSmallEvent {
+  eventType: string
+  eventName: string
+  attributes: Record<string, string>
+}
+
+interface ValidateSizeBigEvent {
+  eventType: string
+  attributes: Record<string, string>
+}
+
 export default function utilTests() {
 
   // ─── serializableAttributes ───────────────────────────────────────────────
@@ -189,21 +283,25 @@ export default function utilTests() {
   describe('Util - validateEventSize', () => {
 
     it('小事件（远小于 1.8MB）应通过校验', 0, () => {
-      let event = { eventType: 'CUSTOM', eventName: 'btn_click', attributes: { key: 'value' } }
+      let event: ValidateSizeSmallEvent = {
+        eventType: 'CUSTOM',
+        eventName: 'btn_click',
+        attributes: { key: 'value' }
+      }
       let result = Util.validateEventSize(event)
       expect(result.isValid).assertTrue()
     })
 
     it('超过 1.8MB 的事件应返回 isValid=false', 0, () => {
       let bigValue = 'x'.repeat(2 * 1024 * 1024)
-      let event = { eventType: 'CUSTOM', attributes: { key: bigValue } }
+      let event: ValidateSizeBigEvent = { eventType: 'CUSTOM', attributes: { key: bigValue } }
       let result = Util.validateEventSize(event)
       expect(result.isValid).assertFalse()
     })
 
     it('超大事件的 attributes 应包含 growing_error_msg', 0, () => {
       let bigValue = 'x'.repeat(2 * 1024 * 1024)
-      let event = { eventType: 'CUSTOM', attributes: { key: bigValue } }
+      let event: ValidateSizeBigEvent = { eventType: 'CUSTOM', attributes: { key: bigValue } }
       let result = Util.validateEventSize(event)
       let errMsg = result.attributes['growing_error_msg'] as string
       expect(errMsg.indexOf('exceeds maximum limit')).assertLarger(-1)
@@ -214,7 +312,7 @@ export default function utilTests() {
 
   describe('Util - toSerializeByMeasurementProtocolV2 - CUSTOM', () => {
 
-    function makeBase(): Record<string, object> {
+    function makeBase(): CustomEventData {
       return {
         eventType: 'CUSTOM',
         eventSequenceId: 7,
@@ -263,7 +361,7 @@ export default function utilTests() {
 
     it('cs1 字段在 userId 为 undefined 时应为 undefined', 0, () => {
       let base = makeBase()
-      base['userId'] = undefined as unknown as object
+      base.userId = undefined   // CustomEventData.userId 声明为 string | undefined，赋值合法
       let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(base, 'WIFI'))
       expect(json['cs1']).assertUndefined()
     })
@@ -271,7 +369,7 @@ export default function utilTests() {
 
   describe('Util - toSerializeByMeasurementProtocolV2 - 网络状态映射', () => {
 
-    function makePageEvent(): Record<string, object> {
+    function makePageEvent(): PageEventData {
       return {
         eventType: 'PAGE',
         eventSequenceId: 1,
@@ -317,7 +415,7 @@ export default function utilTests() {
   describe('Util - toSerializeByMeasurementProtocolV2 - PAGE', () => {
 
     it('t 字段应为 page', 0, () => {
-      let event: Record<string, object> = {
+      let event: PageEventData = {
         eventType: 'PAGE',
         eventSequenceId: 2,
         deviceId: 'd',
@@ -341,7 +439,7 @@ export default function utilTests() {
   describe('Util - toSerializeByMeasurementProtocolV2 - VISIT', () => {
 
     it('t 字段应为 vst，且包含设备信息字段', 0, () => {
-      let event: Record<string, object> = {
+      let event: VisitEventData = {
         eventType: 'VISIT',
         eventSequenceId: 1,
         deviceId: 'd',
@@ -377,7 +475,7 @@ export default function utilTests() {
   describe('Util - toSerializeByMeasurementProtocolV2 - APP_CLOSED', () => {
 
     it('t 字段应为 cls', 0, () => {
-      let event: Record<string, object> = {
+      let event: AppClosedEventData = {
         eventType: 'APP_CLOSED',
         eventSequenceId: 5,
         deviceId: 'd',
@@ -398,7 +496,7 @@ export default function utilTests() {
   describe('Util - toSerializeByMeasurementProtocolV3', () => {
 
     it('序列化结果不含 timezoneOffset 字段', 0, () => {
-      let event: Record<string, object> = {
+      let event: V3SimpleEventData = {
         eventType: 'CUSTOM',
         eventName: 'test',
         timezoneOffset: '+08:00'
@@ -408,7 +506,7 @@ export default function utilTests() {
     })
 
     it('序列化结果不含 xcontent 字段（当 xcontent 存在时）', 0, () => {
-      let event: Record<string, object> = {
+      let event: V3ViewClickEventData = {
         eventType: 'VIEW_CLICK',
         xpath: '/Button[0]',
         xcontent: '/Button[0]/Image[0]'
@@ -419,16 +517,17 @@ export default function utilTests() {
     })
 
     it('xcontent 为 null 时仍应被移除', 0, () => {
-      let event: Record<string, object> = {
+      let event: V3ViewClickEventData = {
         eventType: 'VIEW_CLICK',
-        xcontent: null as unknown as object
+        xpath: '/Button[0]',
+        xcontent: null
       }
       let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event))
       expect(json['xcontent']).assertUndefined()
     })
 
     it('其余字段应原样保留', 0, () => {
-      let event: Record<string, object> = {
+      let event: V3PurchaseEventData = {
         eventType: 'CUSTOM',
         eventName: 'purchase',
         eventSequenceId: 42
