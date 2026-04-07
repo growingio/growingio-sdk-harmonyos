@@ -9,6 +9,15 @@ export interface SentRequest {
   urlPath: string
 }
 
+/** 最小 rcp.Response 替身，仅保留 statusCode */
+class FakeRcpResponse {
+  statusCode: number
+
+  constructor(statusCode: number) {
+    this.statusCode = statusCode
+  }
+}
+
 /**
  * INetwork 的测试替身，用于本地单元测试
  *
@@ -19,8 +28,8 @@ export interface SentRequest {
  * - 提供 reset() 方法供 beforeEach 使用
  */
 export class FakeNetwork implements INetwork {
-  /** 预设的响应队列，按顺序返回；队列为空时默认返回 200 */
-  responses: Array<{ statusCode: number }> = []
+  /** 预设的响应队列（statusCode 列表），按顺序返回；队列为空时默认返回 200 */
+  responses: number[] = []
 
   /** 是否在下次请求时抛出网络异常（模拟超时/断网） */
   shouldThrow: boolean = false
@@ -33,38 +42,31 @@ export class FakeNetwork implements INetwork {
     urlPath: string,
     context: GrowingContext
   ): Promise<rcp.Response> {
-    this.requests.push({ events: [...events], urlPath })
+    this.requests.push({ events: [...events], urlPath: urlPath })
 
     if (this.shouldThrow) {
       throw new Error('FakeNetwork: simulated network error')
     }
 
     let preset = this.responses.shift()
-    let statusCode = preset?.statusCode ?? 200
+    let statusCode = preset ?? 200
 
-    // 构造最小 rcp.Response 替身
-    return {
-      statusCode,
-      request: {
-        url: 'https://fake.growingio.com' + urlPath,
-        content: JSON.stringify(events.map(e => e.data))
-      }
-    } as unknown as rcp.Response
+    return new FakeRcpResponse(statusCode) as ESObject as rcp.Response
   }
 
   /** 预设一个成功响应（200）*/
   enqueueSuccess(): void {
-    this.responses.push({ statusCode: 200 })
+    this.responses.push(200)
   }
 
   /** 预设一个客户端错误响应（400）*/
   enqueueClientError(): void {
-    this.responses.push({ statusCode: 400 })
+    this.responses.push(400)
   }
 
   /** 预设一个服务端错误响应（500）*/
   enqueueServerError(): void {
-    this.responses.push({ statusCode: 500 })
+    this.responses.push(500)
   }
 
   /** 测试辅助：重置所有状态 */

@@ -16,11 +16,24 @@ import GrowingContext from '../../main/ets/components/core/Context'
  * URL 格式：{serverHost}{urlPath.replace('accountId', accountId)}?stm={time}
  */
 
+/** buildContext 可选参数 */
+interface NetworkTestOptions {
+  encrypt?: boolean
+  compress?: boolean
+  protobuf?: boolean
+}
+
+/** 最小 GrowingContext 替身的中间结构 */
+interface MinimalNetworkContext {
+  trackerId: string
+  config: GrowingConfig
+}
+
 function buildContext(
   mode: ConfigMode,
   accountId: string,
   serverHost: string,
-  options?: { encrypt?: boolean; compress?: boolean; protobuf?: boolean }
+  options?: NetworkTestOptions
 ): GrowingContext {
   let config = new GrowingConfig()
   config.mode = mode
@@ -30,7 +43,8 @@ function buildContext(
   config.compressEnabled = options?.compress ?? true
   config.useProtobuf = options?.protobuf ?? true
 
-  return { trackerId: 'default', config: config } as unknown as GrowingContext
+  let ctx: MinimalNetworkContext = { trackerId: 'default', config: config }
+  return ctx as ESObject as GrowingContext
 }
 
 export default function networkTests() {
@@ -45,7 +59,7 @@ export default function networkTests() {
       let url = Network.generateUrl(Date.now(), urlPath, ctx)
 
       expect(url).assertContain('acct-001')
-      expect(url).assertNotContain('/accountId/')  // 模板变量已被替换
+      expect(url.includes('/accountId/')).assertFalse()  // 模板变量已被替换
       expect(url).assertContain('/v3/projects/acct-001/collect')
     })
 
@@ -56,7 +70,7 @@ export default function networkTests() {
 
       expect(url).assertContain('saas-acct')
       expect(url).assertContain('/harmonyos/pv')
-      expect(url).assertNotContain('/accountId/')
+      expect(url.includes('/accountId/')).assertFalse()
     })
 
     it('SaaS CSTM 路径：accountId 模板应被正确替换', 0, () => {
@@ -99,15 +113,15 @@ export default function networkTests() {
   describe('Network - generateHeaders', () => {
 
     it('useProtobuf=true → Content-Type 应为 application/protobuf', 0, () => {
-      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com',
-        { encrypt: false, compress: false, protobuf: true })
+      let opts: NetworkTestOptions = { encrypt: false, compress: false, protobuf: true }
+      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com', opts)
       let headers = Network.generateHeaders(Date.now(), true, ctx)
       expect(headers['Content-Type']).assertEqual('application/protobuf')
     })
 
     it('useProtobuf=false → Content-Type 应为 application/json', 0, () => {
-      let ctx = buildContext(ConfigMode.SaaS, 'a', 'https://x.com',
-        { encrypt: false, compress: false, protobuf: false })
+      let opts: NetworkTestOptions = { encrypt: false, compress: false, protobuf: false }
+      let ctx = buildContext(ConfigMode.SaaS, 'a', 'https://x.com', opts)
       let headers = Network.generateHeaders(Date.now(), false, ctx)
       expect(headers['Content-Type']).assertEqual('application/json')
     })
@@ -126,46 +140,46 @@ export default function networkTests() {
     })
 
     it('compressEnabled=true → 应包含 X-Compress-Codec 头', 0, () => {
-      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com',
-        { encrypt: false, compress: true })
+      let opts: NetworkTestOptions = { encrypt: false, compress: true }
+      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com', opts)
       let headers = Network.generateHeaders(Date.now(), true, ctx)
       expect(Object.keys(headers).indexOf('X-Compress-Codec')).assertLarger(-1)
       expect(headers['X-Compress-Codec']).assertEqual('2')
     })
 
     it('compressEnabled=false → 不应包含 X-Compress-Codec 头', 0, () => {
-      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com',
-        { encrypt: false, compress: false })
+      let opts: NetworkTestOptions = { encrypt: false, compress: false }
+      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com', opts)
       let headers = Network.generateHeaders(Date.now(), true, ctx)
       expect(Object.keys(headers).indexOf('X-Compress-Codec')).assertEqual(-1)
     })
 
     it('encryptEnabled=true → 应包含 X-Crypt-Codec 头', 0, () => {
-      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com',
-        { encrypt: true, compress: false })
+      let opts: NetworkTestOptions = { encrypt: true, compress: false }
+      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com', opts)
       let headers = Network.generateHeaders(Date.now(), true, ctx)
       expect(Object.keys(headers).indexOf('X-Crypt-Codec')).assertLarger(-1)
       expect(headers['X-Crypt-Codec']).assertEqual('1')
     })
 
     it('encryptEnabled=false → 不应包含 X-Crypt-Codec 头', 0, () => {
-      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com',
-        { encrypt: false, compress: false })
+      let opts: NetworkTestOptions = { encrypt: false, compress: false }
+      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com', opts)
       let headers = Network.generateHeaders(Date.now(), true, ctx)
       expect(Object.keys(headers).indexOf('X-Crypt-Codec')).assertEqual(-1)
     })
 
     it('同时启用加密和压缩 → 两个头都应存在', 0, () => {
-      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com',
-        { encrypt: true, compress: true })
+      let opts: NetworkTestOptions = { encrypt: true, compress: true }
+      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com', opts)
       let headers = Network.generateHeaders(Date.now(), true, ctx)
       expect(Object.keys(headers).indexOf('X-Compress-Codec')).assertLarger(-1)
       expect(Object.keys(headers).indexOf('X-Crypt-Codec')).assertLarger(-1)
     })
 
     it('同时禁用加密和压缩 → 两个头都不应存在', 0, () => {
-      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com',
-        { encrypt: false, compress: false })
+      let opts: NetworkTestOptions = { encrypt: false, compress: false }
+      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com', opts)
       let headers = Network.generateHeaders(Date.now(), false, ctx)
       expect(Object.keys(headers).indexOf('X-Compress-Codec')).assertEqual(-1)
       expect(Object.keys(headers).indexOf('X-Crypt-Codec')).assertEqual(-1)

@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@ohos/hypium'
 import { niceTry, niceTryAsync } from '../../main/ets/components/utils/Util'
+import { AttributesType } from '../../main/ets/components/utils/Constants'
 
 export default function niceTryTests() {
 
@@ -37,17 +38,17 @@ export default function niceTryTests() {
     })
 
     it('抛出异常时应返回 fallback 值（对象）', 0, () => {
-      let fallback: Record<string, string> = { key: 'safe' }
-      let result = niceTry<Record<string, string>>(() => {
+      let fallback: AttributesType = {}
+      fallback['key'] = 'safe'
+      let result = niceTry<AttributesType>(() => {
         throw new Error('fail')
       }, fallback)
-      expect(result!['key']).assertEqual('safe')
+      expect(result!['key'] as string).assertEqual('safe')
     })
 
     it('函数内部访问嵌套 undefined 属性时应被安全捕获', 0, () => {
-      // 使用 Record<string, string> 使 T=string 与 fallback 类型一致
-      let obj: Record<string, string> | undefined = undefined
-      let result = niceTry<string>(() => obj!['key'], 'fallback')
+      let obj: AttributesType | undefined = undefined
+      let result = niceTry<string>(() => (obj as AttributesType)['key'] as string, 'fallback')
       expect(result).assertEqual('fallback')
     })
   })

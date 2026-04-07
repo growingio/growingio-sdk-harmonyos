@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@ohos/hypium'
 import Util from '../../main/ets/components/utils/Util'
+import { AttributesType } from '../../main/ets/components/utils/Constants'
 
 // ─── 测试用事件数据接口（模块顶层声明，符合 ArkTS arkts-no-untyped-obj-literals 规则）
 
@@ -12,7 +13,7 @@ interface CustomEventData {
   timestamp: number
   userId: string | undefined
   eventName: string
-  attributes: Record<string, string> | undefined
+  attributes: AttributesType | undefined
   path: string
   pageShowTimestamp: number
 }
@@ -29,7 +30,7 @@ interface PageEventData {
   query: string
   title: string
   referralPage: string
-  attributes: Record<string, string> | undefined
+  attributes: AttributesType | undefined
 }
 
 interface VisitEventData {
@@ -87,12 +88,49 @@ interface V3PurchaseEventData {
 interface ValidateSizeSmallEvent {
   eventType: string
   eventName: string
-  attributes: Record<string, string>
+  attributes: AttributesType
 }
 
 interface ValidateSizeBigEvent {
   eventType: string
-  attributes: Record<string, string>
+  attributes: AttributesType
+}
+
+// ─── 模块顶层辅助函数（ArkTS 不允许嵌套函数，必须在 describe 外声明）
+
+function makeBase(): CustomEventData {
+  let attrs: AttributesType = {}
+  attrs['source'] = 'home'
+  return {
+    eventType: 'CUSTOM',
+    eventSequenceId: 7,
+    deviceId: 'device-abc',
+    sessionId: 'session-xyz',
+    domain: 'com.example.app',
+    timestamp: 1700000000000,
+    userId: 'user-001',
+    eventName: 'btn_click',
+    attributes: attrs,
+    path: '/home',
+    pageShowTimestamp: 1699999990000
+  }
+}
+
+function makePageEvent(): PageEventData {
+  return {
+    eventType: 'PAGE',
+    eventSequenceId: 1,
+    deviceId: 'd',
+    sessionId: 's',
+    domain: 'com.x',
+    timestamp: 0,
+    userId: undefined,
+    path: '/page',
+    query: '',
+    title: 'Home',
+    referralPage: '',
+    attributes: undefined
+  }
 }
 
 export default function utilTests() {
@@ -179,20 +217,20 @@ export default function utilTests() {
   describe('Util - removeKeysForObject', () => {
 
     it('指定的 key 应被删除', 0, () => {
-      let obj: Record<string, string> = { a: '1', b: '2', c: '3' }
+      let obj: AttributesType = { a: '1', b: '2', c: '3' }
       Util.removeKeysForObject(['a', 'c'], obj)
       expect(obj['a']).assertUndefined()
       expect(obj['c']).assertUndefined()
     })
 
     it('未指定的 key 应保留', 0, () => {
-      let obj: Record<string, string> = { a: '1', b: '2' }
+      let obj: AttributesType = { a: '1', b: '2' }
       Util.removeKeysForObject(['a'], obj)
       expect(obj['b']).assertEqual('2')
     })
 
     it('删除不存在的 key 不应抛出异常', 0, () => {
-      let obj: Record<string, string> = { a: '1' }
+      let obj: AttributesType = { a: '1' }
       Util.removeKeysForObject(['nonexistent'], obj)
       expect(obj['a']).assertEqual('1')
     })
@@ -283,10 +321,11 @@ export default function utilTests() {
   describe('Util - validateEventSize', () => {
 
     it('小事件（远小于 1.8MB）应通过校验', 0, () => {
+      let attrs: AttributesType = { key: 'value' }
       let event: ValidateSizeSmallEvent = {
         eventType: 'CUSTOM',
         eventName: 'btn_click',
-        attributes: { key: 'value' }
+        attributes: attrs
       }
       let result = Util.validateEventSize(event)
       expect(result.isValid).assertTrue()
@@ -294,14 +333,16 @@ export default function utilTests() {
 
     it('超过 1.8MB 的事件应返回 isValid=false', 0, () => {
       let bigValue = 'x'.repeat(2 * 1024 * 1024)
-      let event: ValidateSizeBigEvent = { eventType: 'CUSTOM', attributes: { key: bigValue } }
+      let attrs: AttributesType = { key: bigValue }
+      let event: ValidateSizeBigEvent = { eventType: 'CUSTOM', attributes: attrs }
       let result = Util.validateEventSize(event)
       expect(result.isValid).assertFalse()
     })
 
     it('超大事件的 attributes 应包含 growing_error_msg', 0, () => {
       let bigValue = 'x'.repeat(2 * 1024 * 1024)
-      let event: ValidateSizeBigEvent = { eventType: 'CUSTOM', attributes: { key: bigValue } }
+      let attrs: AttributesType = { key: bigValue }
+      let event: ValidateSizeBigEvent = { eventType: 'CUSTOM', attributes: attrs }
       let result = Util.validateEventSize(event)
       let errMsg = result.attributes['growing_error_msg'] as string
       expect(errMsg.indexOf('exceeds maximum limit')).assertLarger(-1)
@@ -312,102 +353,69 @@ export default function utilTests() {
 
   describe('Util - toSerializeByMeasurementProtocolV2 - CUSTOM', () => {
 
-    function makeBase(): CustomEventData {
-      return {
-        eventType: 'CUSTOM',
-        eventSequenceId: 7,
-        deviceId: 'device-abc',
-        sessionId: 'session-xyz',
-        domain: 'com.example.app',
-        timestamp: 1700000000000,
-        userId: 'user-001',
-        eventName: 'btn_click',
-        attributes: { source: 'home' },
-        path: '/home',
-        pageShowTimestamp: 1699999990000
-      }
-    }
-
     it('t 字段应为 cstm', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
       expect(json['t']).assertEqual('cstm')
     })
 
     it('n 字段应等于 eventName', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
       expect(json['n']).assertEqual('btn_click')
     })
 
     it('esid 和 gesid 应等于 eventSequenceId', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
       expect(json['esid']).assertEqual(7)
       expect(json['gesid']).assertEqual(7)
     })
 
     it('u 字段应等于 deviceId', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
       expect(json['u']).assertEqual('device-abc')
     })
 
     it('s 字段应等于 sessionId', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
       expect(json['s']).assertEqual('session-xyz')
     })
 
     it('cs1 字段在有 userId 时应有值', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI')) as ESObject
       expect(json['cs1']).assertEqual('user-001')
     })
 
     it('cs1 字段在 userId 为 undefined 时应为 undefined', 0, () => {
       let base = makeBase()
-      base.userId = undefined   // CustomEventData.userId 声明为 string | undefined，赋值合法
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(base, 'WIFI'))
+      base.userId = undefined
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(base, 'WIFI')) as ESObject
       expect(json['cs1']).assertUndefined()
     })
   })
 
   describe('Util - toSerializeByMeasurementProtocolV2 - 网络状态映射', () => {
 
-    function makePageEvent(): PageEventData {
-      return {
-        eventType: 'PAGE',
-        eventSequenceId: 1,
-        deviceId: 'd',
-        sessionId: 's',
-        domain: 'com.x',
-        timestamp: 0,
-        userId: undefined,
-        path: '/page',
-        query: '',
-        title: 'Home',
-        referralPage: '',
-        attributes: undefined
-      }
-    }
-
     it('networkState=WIFI → r=WIFI', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), 'WIFI')) as ESObject
       expect(json['r']).assertEqual('WIFI')
     })
 
     it('networkState=5G → r=CELL', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '5G'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '5G')) as ESObject
       expect(json['r']).assertEqual('CELL')
     })
 
     it('networkState=4G → r=CELL', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '4G'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '4G')) as ESObject
       expect(json['r']).assertEqual('CELL')
     })
 
     it('networkState=UNKNOWN → r=UNKNOWN', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), 'UNKNOWN'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), 'UNKNOWN')) as ESObject
       expect(json['r']).assertEqual('UNKNOWN')
     })
 
     it('networkState=空字符串 → r=NONE', 0, () => {
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), ''))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), '')) as ESObject
       expect(json['r']).assertEqual('NONE')
     })
   })
@@ -429,7 +437,7 @@ export default function utilTests() {
         referralPage: '/home',
         attributes: undefined
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI')) as ESObject
       expect(json['t']).assertEqual('page')
       expect(json['p']).assertEqual('/detail')
       expect(json['tl']).assertEqual('Detail')
@@ -461,7 +469,7 @@ export default function utilTests() {
         latitude: undefined,
         longitude: undefined
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI')) as ESObject
       expect(json['t']).assertEqual('vst')
       expect(json['db']).assertEqual('HUAWEI')
       expect(json['dm']).assertEqual('Mate60')
@@ -485,7 +493,7 @@ export default function utilTests() {
         userId: undefined,
         path: '/home'
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI')) as ESObject
       expect(json['t']).assertEqual('cls')
       expect(json['p']).assertEqual('/home')
     })
@@ -501,7 +509,7 @@ export default function utilTests() {
         eventName: 'test',
         timezoneOffset: '+08:00'
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event)) as ESObject
       expect(json['timezoneOffset']).assertUndefined()
     })
 
@@ -511,7 +519,7 @@ export default function utilTests() {
         xpath: '/Button[0]',
         xcontent: '/Button[0]/Image[0]'
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event)) as ESObject
       expect(json['xcontent']).assertUndefined()
       expect(json['xpath']).assertEqual('/Button[0]')
     })
@@ -522,7 +530,7 @@ export default function utilTests() {
         xpath: '/Button[0]',
         xcontent: null
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event)) as ESObject
       expect(json['xcontent']).assertUndefined()
     })
 
@@ -532,7 +540,7 @@ export default function utilTests() {
         eventName: 'purchase',
         eventSequenceId: 42
       }
-      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event))
+      let json = JSON.parse(Util.toSerializeByMeasurementProtocolV3(event)) as ESObject
       expect(json['eventType']).assertEqual('CUSTOM')
       expect(json['eventName']).assertEqual('purchase')
       expect(json['eventSequenceId']).assertEqual(42)

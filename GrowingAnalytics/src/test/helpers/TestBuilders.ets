@@ -1,6 +1,24 @@
 import { GrowingConfig, ConfigMode } from '../../main/ets/components/interfaces/GrowingConfig'
 import GrowingContext from '../../main/ets/components/core/Context'
+import EventSender from '../../main/ets/components/event/EventSender'
 import EventPersistence from '../../main/ets/components/event/EventPersistence'
+
+/**
+ * buildFakeContext 的可选覆盖参数
+ */
+export interface FakeContextOptions {
+  accountId?: string
+  dataSourceId?: string
+  urlScheme?: string
+  dataCollectionServerHost?: string
+}
+
+/** 用于构造最小 GrowingContext 替身的中间结构 */
+interface MinimalContext {
+  trackerId: string
+  config: GrowingConfig
+  eventSender: EventSender[]
+}
 
 /**
  * 构造最小可用的 GrowingContext 替身
@@ -10,12 +28,7 @@ import EventPersistence from '../../main/ets/components/event/EventPersistence'
  */
 export function buildFakeContext(
   mode: ConfigMode = ConfigMode.NewSaaS,
-  overrides?: {
-    accountId?: string
-    dataSourceId?: string
-    urlScheme?: string
-    dataCollectionServerHost?: string
-  }
+  overrides?: FakeContextOptions
 ): GrowingContext {
   let config = new GrowingConfig()
   config.mode = mode
@@ -24,11 +37,9 @@ export function buildFakeContext(
   config.urlScheme = overrides?.urlScheme ?? 'growing.test'
   config.dataCollectionServerHost = overrides?.dataCollectionServerHost ?? 'https://napi.growingio.com'
 
-  return {
-    trackerId: 'default',
-    config: config,
-    eventSender: []
-  } as unknown as GrowingContext
+  let eventSender: EventSender[] = []
+  let ctx: MinimalContext = { trackerId: 'default', config: config, eventSender: eventSender }
+  return ctx as ESObject as GrowingContext
 }
 
 /**
@@ -44,7 +55,7 @@ export function makeFakePersistence(
 ): EventPersistence {
   return EventPersistence.fromDatabase(
     uuid,
-    JSON.stringify({ eventType, eventName: 'test_event', eventSequenceId: 1 }),
+    JSON.stringify({ eventType: eventType, eventName: 'test_event', eventSequenceId: 1 }),
     eventType,
     '2.8.0',
     accountId,

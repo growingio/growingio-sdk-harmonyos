@@ -6,8 +6,14 @@ import GrowingContext from '../../main/ets/components/core/Context'
  * 构造测试用的最小 GrowingContext 替身
  * 只需 trackerId 字段，供 clearTrackTimer 使用
  */
+/** 最小 GrowingContext 替身的中间结构 */
+interface MinimalTimerContext {
+  trackerId: string
+}
+
 function makeFakeContext(trackerId: string): GrowingContext {
-  return { trackerId: trackerId } as unknown as GrowingContext
+  let ctx: MinimalTimerContext = { trackerId: trackerId }
+  return ctx as ESObject as GrowingContext
 }
 
 export default function eventTimerTests() {

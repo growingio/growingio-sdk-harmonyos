@@ -2,6 +2,16 @@ import { describe, it, expect, beforeEach } from '@ohos/hypium'
 import Session, { SessionState } from '../../main/ets/components/core/Session'
 import GrowingContext from '../../main/ets/components/core/Context'
 
+/** 最小 GrowingContext 替身的中间结构 */
+interface MinimalSessionContext {
+  trackerId: string
+}
+
+function makeSessionContext(trackerId: string): GrowingContext {
+  let ctx: MinimalSessionContext = { trackerId: trackerId }
+  return ctx as ESObject as GrowingContext
+}
+
 /**
  * Session 测试策略说明：
  *
@@ -44,14 +54,14 @@ export default function sessionTests() {
   describe('Session - getSessionId', () => {
 
     it('sessions 为空时应返回 undefined', 0, () => {
-      let fakeContext = { trackerId: 'tracker-1' } as unknown as GrowingContext
+      let fakeContext = makeSessionContext('tracker-1')
       let result = Session.getSessionId(fakeContext)
       expect(result).assertUndefined()
     })
 
     it('session 存在时应返回对应 sessionId', 0, () => {
       Session.sessions.push(new Session('session-abc', 'tracker-1'))
-      let fakeContext = { trackerId: 'tracker-1' } as unknown as GrowingContext
+      let fakeContext = makeSessionContext('tracker-1')
 
       let result = Session.getSessionId(fakeContext)
       expect(result).assertEqual('session-abc')
@@ -61,8 +71,8 @@ export default function sessionTests() {
       Session.sessions.push(new Session('session-A', 'tracker-A'))
       Session.sessions.push(new Session('session-B', 'tracker-B'))
 
-      let ctxA = { trackerId: 'tracker-A' } as unknown as GrowingContext
-      let ctxB = { trackerId: 'tracker-B' } as unknown as GrowingContext
+      let ctxA = makeSessionContext('tracker-A')
+      let ctxB = makeSessionContext('tracker-B')
 
       expect(Session.getSessionId(ctxA)).assertEqual('session-A')
       expect(Session.getSessionId(ctxB)).assertEqual('session-B')
@@ -70,7 +80,7 @@ export default function sessionTests() {
 
     it('不存在的 trackerId 应返回 undefined', 0, () => {
       Session.sessions.push(new Session('session-A', 'tracker-A'))
-      let ctxB = { trackerId: 'tracker-B' } as unknown as GrowingContext
+      let ctxB = makeSessionContext('tracker-B')
 
       expect(Session.getSessionId(ctxB)).assertUndefined()
     })
@@ -171,7 +181,7 @@ export default function sessionTests() {
       Session.sessions.push(new Session('s1', 'tracker-1'))
       Session._reset()
 
-      let ctx = { trackerId: 'tracker-1' } as unknown as GrowingContext
+      let ctx = makeSessionContext('tracker-1')
       expect(Session.getSessionId(ctx)).assertUndefined()
     })
   })

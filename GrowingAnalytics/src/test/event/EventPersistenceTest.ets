@@ -1,18 +1,19 @@
 import { describe, it, expect } from '@ohos/hypium'
 import EventPersistence from '../../main/ets/components/event/EventPersistence'
 import Util from '../../main/ets/components/utils/Util'
+import { AttributesType } from '../../main/ets/components/utils/Constants'
 
 // ─── 测试用事件数据接口（模块顶层声明，符合 ArkTS arkts-no-untyped-obj-literals 规则）
 
 interface NormalEventData {
   eventType: string
   eventName: string
-  attributes: Record<string, string>
+  attributes: AttributesType
 }
 
 interface BigEventData {
   eventType: string
-  attributes: Record<string, string>
+  attributes: AttributesType
 }
 
 interface BorderEventData {
@@ -108,19 +109,21 @@ export default function eventPersistenceTests() {
   describe('EventPersistence - 大事件降级逻辑（通过 Util.validateEventSize）', () => {
 
     it('正常大小事件应通过校验，isValid=true', 0, () => {
+      let attrs: AttributesType = { price: '99.9', item: 'book' }
       let normalEvent: NormalEventData = {
         eventType: 'CUSTOM',
         eventName: 'purchase',
-        attributes: { price: '99.9', item: 'book' }
+        attributes: attrs
       }
       let result = Util.validateEventSize(normalEvent)
       expect(result.isValid).assertTrue()
     })
 
     it('超过 1.8MB 的事件 isValid=false，并携带 growing_error_msg', 0, () => {
+      let attrs: AttributesType = { key: 'x'.repeat(2 * 1024 * 1024) }
       let bigEvent: BigEventData = {
         eventType: 'CUSTOM',
-        attributes: { key: 'x'.repeat(2 * 1024 * 1024) }
+        attributes: attrs
       }
       let result = Util.validateEventSize(bigEvent)
       expect(result.isValid).assertFalse()
@@ -154,7 +157,7 @@ export default function eventPersistenceTests() {
         userId: undefined
       }
       let serialized = Util.toSerializeByMeasurementProtocolV3(eventObj)
-      let parsed = JSON.parse(serialized)
+      let parsed = JSON.parse(serialized) as ESObject
       expect(parsed['eventType']).assertEqual('CUSTOM')
       expect(parsed['eventName']).assertEqual('test')
     })
@@ -173,7 +176,7 @@ export default function eventPersistenceTests() {
         pageShowTimestamp: 0
       }
       let serialized = Util.toSerializeByMeasurementProtocolV2(eventObj, 'WIFI')
-      let parsed = JSON.parse(serialized)
+      let parsed = JSON.parse(serialized) as ESObject
       expect(parsed['t']).assertEqual('cstm')
     })
 
@@ -199,7 +202,7 @@ export default function eventPersistenceTests() {
         language: 'zh'
       }
       let serialized = Util.toSerializeByMeasurementProtocolV2(eventObj, 'WIFI')
-      let parsed = JSON.parse(serialized)
+      let parsed = JSON.parse(serialized) as ESObject
       expect(parsed['t']).assertEqual('vst')
     })
 
@@ -210,7 +213,7 @@ export default function eventPersistenceTests() {
         timezoneOffset: '+08:00'
       }
       let serialized = Util.toSerializeByMeasurementProtocolV3(eventObj)
-      let parsed = JSON.parse(serialized)
+      let parsed = JSON.parse(serialized) as ESObject
       expect(parsed['timezoneOffset']).assertUndefined()
       expect(parsed['path']).assertEqual('/home')
     })
