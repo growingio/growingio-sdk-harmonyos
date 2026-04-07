@@ -181,4 +181,9 @@ export default class EventTimer {
     let duration = endTime - startTime
     return (duration > 0 && duration < 24 * 60 * 60 * 1000) ? duration : 0
   }
+
+  /** 仅供单元测试使用：重置所有静态状态，保证用例间相互隔离 */
+  static _reset() {
+    EventTimer.timers = new Map()
+  }
 }
