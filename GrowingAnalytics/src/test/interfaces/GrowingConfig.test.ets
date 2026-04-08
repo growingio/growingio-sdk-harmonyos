@@ -5,7 +5,7 @@ export default function configTests() {
 
   // ─── 默认值 ───────────────────────────────────────────────────────────────
 
-  describe('GrowingConfig - 默认值', () => {
+  describe('GrowingConfig_defaults', () => {
 
     it('默认 mode 为 NewSaaS', 0, () => {
       let config = new GrowingConfig()
@@ -67,7 +67,7 @@ export default function configTests() {
 
   // ─── 模式工厂方法 ─────────────────────────────────────────────────────────
 
-  describe('GrowingConfig - NewSaaS()', () => {
+  describe('GrowingConfig_NewSaaS', () => {
 
     it('mode 应为 NewSaaS', 0, () => {
       let config = new GrowingConfig().NewSaaS('acct-001', 'ds-001', 'growing.xxx')
@@ -97,7 +97,7 @@ export default function configTests() {
     })
   })
 
-  describe('GrowingConfig - SaaS()', () => {
+  describe('GrowingConfig_SaaS', () => {
 
     it('mode 应为 SaaS', 0, () => {
       let config = new GrowingConfig().SaaS('saas-acct', 'growing.saas')
@@ -123,7 +123,7 @@ export default function configTests() {
     })
   })
 
-  describe('GrowingConfig - CDP()', () => {
+  describe('GrowingConfig_CDP', () => {
 
     it('mode 应为 CDP', 0, () => {
       let config = new GrowingConfig().CDP('cdp-acct', 'cdp-ds', 'growing.cdp', 'https://cdp.example.com')
@@ -141,7 +141,7 @@ export default function configTests() {
 
   // ─── setter / getter 边界值 ────────────────────────────────────────────────
 
-  describe('GrowingConfig - sessionInterval setter/getter', () => {
+  describe('GrowingConfig_sessionInterval', () => {
 
     it('设置正数应正确转为毫秒存储', 0, () => {
       let config = new GrowingConfig()
@@ -163,7 +163,7 @@ export default function configTests() {
     })
   })
 
-  describe('GrowingConfig - dataUploadInterval setter/getter', () => {
+  describe('GrowingConfig_dataUploadInterval', () => {
 
     it('设置正数应正确转为毫秒存储', 0, () => {
       let config = new GrowingConfig()
@@ -179,7 +179,7 @@ export default function configTests() {
     })
   })
 
-  describe('GrowingConfig - dataValidityPeriod setter/getter', () => {
+  describe('GrowingConfig_dataValidityPeriod', () => {
 
     it('设置 7 天应正确存储', 0, () => {
       let config = new GrowingConfig()
@@ -202,7 +202,7 @@ export default function configTests() {
 
   // ─── IgnoreFields bitmask ────────────────────────────────────────────────
 
-  describe('GrowingConfig - IgnoreFields bitmask', () => {
+  describe('GrowingConfig_IgnoreFields_bitmask', () => {
 
     it('各字段位应互相独立（单独设置不影响其他位）', 0, () => {
       expect(IgnoreFields.NetworkState & IgnoreFields.ScreenSize).assertEqual(0)
@@ -232,7 +232,7 @@ export default function configTests() {
 
   // ─── copy() 校验 ─────────────────────────────────────────────────────────
 
-  describe('GrowingConfig - copy() 校验', () => {
+  describe('GrowingConfig_copy_validation', () => {
 
     it('accountId 为空时 copy() 应抛出错误', 0, () => {
       let config = new GrowingConfig()

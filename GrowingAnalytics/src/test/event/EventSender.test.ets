@@ -32,7 +32,7 @@ export default function eventSenderTests() {
 
   // ─── InMemoryEventStore 行为验证（数据层调度基础）────────────────────────
 
-  describe('InMemoryEventStore - getEventsByCount 过滤逻辑', () => {
+  describe('InMemoryEventStore_getEventsByCount', () => {
 
     it('数据库为空时应返回空数组', 0, async (done: Function) => {
       let ctx = buildFakeContext()
@@ -105,7 +105,7 @@ export default function eventSenderTests() {
 
   // ─── InMemoryEventStore - removeEvents ───────────────────────────────────
 
-  describe('InMemoryEventStore - removeEvents', () => {
+  describe('InMemoryEventStore_removeEvents', () => {
 
     it('remove 指定事件后 store 中应不存在该事件', 0, async (done: Function) => {
       let ctx = buildFakeContext()
@@ -133,7 +133,7 @@ export default function eventSenderTests() {
 
   // ─── InMemoryEventStore - countOfEvents ──────────────────────────────────
 
-  describe('InMemoryEventStore - countOfEvents', () => {
+  describe('InMemoryEventStore_countOfEvents', () => {
 
     it('无事件时计数为 0', 0, async (done: Function) => {
       let ctx = buildFakeContext()
@@ -165,7 +165,7 @@ export default function eventSenderTests() {
 
   // ─── FakeNetwork 行为验证 ─────────────────────────────────────────────────
 
-  describe('FakeNetwork - 请求记录与响应预设', () => {
+  describe('FakeNetwork_request', () => {
 
     it('未预设响应时默认返回 200', 0, async (done: Function) => {
       let ctx = buildFakeContext()
@@ -242,7 +242,7 @@ export default function eventSenderTests() {
 
   // ─── 调度逻辑黑盒验证（store + network 组合）─────────────────────────────
 
-  describe('EventSender 调度逻辑（组合验证）', () => {
+  describe('EventSender_dispatch', () => {
 
     it('200 成功后 store 中事件应被删除', 0, async (done: Function) => {
       let ctx = buildFakeContext()

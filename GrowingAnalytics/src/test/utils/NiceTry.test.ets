@@ -4,7 +4,7 @@ import { AttributesType } from '../../main/ets/components/utils/Constants'
 
 export default function niceTryTests() {
 
-  describe('niceTry - 同步版本', () => {
+  describe('niceTry_sync', () => {
 
     it('执行成功时应返回函数结果', 0, () => {
       let result = niceTry(() => 42)
@@ -53,7 +53,7 @@ export default function niceTryTests() {
     })
   })
 
-  describe('niceTryAsync - 异步版本', () => {
+  describe('niceTryAsync_async', () => {
 
     it('异步执行成功时应返回 resolved 值', 0, async (done: Function) => {
       let result = await niceTryAsync(async () => 'async-result')

@@ -77,7 +77,7 @@ export default function eventPersistenceTests() {
 
   // ─── fromDatabase ─────────────────────────────────────────────────────────
 
-  describe('EventPersistence - fromDatabase', () => {
+  describe('EventPersistence_fromDatabase', () => {
 
     it('6 个字段应全部正确保留', 0, () => {
       let e = EventPersistence.fromDatabase(
@@ -107,7 +107,7 @@ export default function eventPersistenceTests() {
 
   // ─── validateEventSize（通过 Util 直接测试，EventPersistence 调用该逻辑）──
 
-  describe('EventPersistence - 大事件降级逻辑（通过 Util.validateEventSize）', () => {
+  describe('EventPersistence_largeEvent_degradation', () => {
 
     it('正常大小事件应通过校验，isValid=true', 0, () => {
       let attrs: AttributesType = { price: '99.9', item: 'book' }
@@ -144,7 +144,7 @@ export default function eventPersistenceTests() {
 
   // ─── EventPersistence.fromDatabase + 序列化格式验证 ──────────────────────
 
-  describe('EventPersistence - 序列化格式验证（通过 Util 序列化方法）', () => {
+  describe('EventPersistence_serialization_format', () => {
 
     it('NewSaaS 序列化（V3）结果应为合法 JSON', 0, () => {
       let eventObj: V3CustomEventData = {
@@ -218,7 +218,7 @@ export default function eventPersistenceTests() {
 
   // ─── fromDatabase 保障：uuid 唯一性（业务约定）────────────────────────────
 
-  describe('EventPersistence - uuid 字段', () => {
+  describe('EventPersistence_uuid', () => {
 
     it('相同参数构造的两个实例 uuid 应相同（fromDatabase 不生成新 uuid）', 0, () => {
       let e1 = EventPersistence.fromDatabase('fixed-uuid', '{}', 'CUSTOM', '2.8.0', 'a', 'b')

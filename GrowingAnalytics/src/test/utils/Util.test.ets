@@ -138,7 +138,7 @@ export default function utilTests() {
 
   // ─── serializableAttributes ───────────────────────────────────────────────
 
-  describe('Util - serializableAttributes', () => {
+  describe('Util_serializableAttributes', () => {
 
     it('数组值应被转换为 || 分隔字符串', 0, () => {
       let result = Util.serializableAttributes({ tags: ['a', 'b', 'c'] })
@@ -181,7 +181,7 @@ export default function utilTests() {
 
   // ─── mapToObject ──────────────────────────────────────────────────────────
 
-  describe('Util - mapToObject', () => {
+  describe('Util_mapToObject', () => {
 
     it('Map 转换后键值对应正确', 0, () => {
       let map: Map<string, string> = new Map([['k1', 'v1'], ['k2', 'v2']])
@@ -198,7 +198,7 @@ export default function utilTests() {
 
   // ─── concatObject ─────────────────────────────────────────────────────────
 
-  describe('Util - concatObject', () => {
+  describe('Util_concatObject', () => {
 
     it('后者字段覆盖前者同名字段', 0, () => {
       let result = Util.concatObject({ x: '1', y: '2' }, { y: '99', z: '3' })
@@ -215,7 +215,7 @@ export default function utilTests() {
 
   // ─── removeKeysForObject ──────────────────────────────────────────────────
 
-  describe('Util - removeKeysForObject', () => {
+  describe('Util_removeKeysForObject', () => {
 
     it('指定的 key 应被删除', 0, () => {
       let obj: AttributesType = { a: '1', b: '2', c: '3' }
@@ -239,7 +239,7 @@ export default function utilTests() {
 
   // ─── sizeOfEventString ────────────────────────────────────────────────────
 
-  describe('Util - sizeOfEventString', () => {
+  describe('Util_sizeOfEventString', () => {
 
     it('纯 ASCII 字符串：字节数等于字符数', 0, () => {
       expect(Util.sizeOfEventString('hello')).assertEqual(5)
@@ -261,7 +261,7 @@ export default function utilTests() {
 
   // ─── getHintFromTime ──────────────────────────────────────────────────────
 
-  describe('Util - getHintFromTime', () => {
+  describe('Util_getHintFromTime', () => {
 
     it('应提取时间戳十六进制的最低字节', 0, () => {
       // 0xFF 最低字节 = 0xFF = 255
@@ -279,7 +279,7 @@ export default function utilTests() {
 
   // ─── encrypt ──────────────────────────────────────────────────────────────
 
-  describe('Util - encrypt', () => {
+  describe('Util_encrypt', () => {
 
     it('XOR 自反性：加密两次应还原原文', 0, () => {
       let buf = new ArrayBuffer(5)
@@ -319,7 +319,7 @@ export default function utilTests() {
 
   // ─── validateEventSize ────────────────────────────────────────────────────
 
-  describe('Util - validateEventSize', () => {
+  describe('Util_validateEventSize', () => {
 
     it('小事件（远小于 1.8MB）应通过校验', 0, () => {
       let attrs: AttributesType = { key: 'value' }
@@ -352,7 +352,7 @@ export default function utilTests() {
 
   // ─── toSerializeByMeasurementProtocolV2 ──────────────────────────────────
 
-  describe('Util - toSerializeByMeasurementProtocolV2 - CUSTOM', () => {
+  describe('Util_toSerializeByMeasurementProtocolV2_CUSTOM', () => {
 
     it('t 字段应为 cstm', 0, () => {
       let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeBase(), 'WIFI'))
@@ -393,7 +393,7 @@ export default function utilTests() {
     })
   })
 
-  describe('Util - toSerializeByMeasurementProtocolV2 - 网络状态映射', () => {
+  describe('Util_toSerializeByMeasurementProtocolV2_NetworkStateMapping', () => {
 
     it('networkState=WIFI → r=WIFI', 0, () => {
       let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makePageEvent(), 'WIFI'))
@@ -421,7 +421,7 @@ export default function utilTests() {
     })
   })
 
-  describe('Util - toSerializeByMeasurementProtocolV2 - PAGE', () => {
+  describe('Util_toSerializeByMeasurementProtocolV2_PAGE', () => {
 
     it('t 字段应为 page', 0, () => {
       let event: PageEventData = {
@@ -445,7 +445,7 @@ export default function utilTests() {
     })
   })
 
-  describe('Util - toSerializeByMeasurementProtocolV2 - VISIT', () => {
+  describe('Util_toSerializeByMeasurementProtocolV2_VISIT', () => {
 
     it('t 字段应为 vst，且包含设备信息字段', 0, () => {
       let event: VisitEventData = {
@@ -481,7 +481,7 @@ export default function utilTests() {
     })
   })
 
-  describe('Util - toSerializeByMeasurementProtocolV2 - APP_CLOSED', () => {
+  describe('Util_toSerializeByMeasurementProtocolV2_APP_CLOSED', () => {
 
     it('t 字段应为 cls', 0, () => {
       let event: AppClosedEventData = {
@@ -502,7 +502,7 @@ export default function utilTests() {
 
   // ─── toSerializeByMeasurementProtocolV3 ──────────────────────────────────
 
-  describe('Util - toSerializeByMeasurementProtocolV3', () => {
+  describe('Util_toSerializeByMeasurementProtocolV3', () => {
 
     it('序列化结果不含 timezoneOffset 字段', 0, () => {
       let event: V3SimpleEventData = {

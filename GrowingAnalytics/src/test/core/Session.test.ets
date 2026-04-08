@@ -38,7 +38,7 @@ export default function sessionTests() {
 
   // ─── 初始状态 ─────────────────────────────────────────────────────────────
 
-  describe('Session - 初始状态', () => {
+  describe('Session_initialState', () => {
 
     it('初始 sessionState 应为 Foreground', 0, () => {
       expect(Session.sessionState).assertEqual(SessionState.Foreground)
@@ -51,7 +51,7 @@ export default function sessionTests() {
 
   // ─── getSessionId ─────────────────────────────────────────────────────────
 
-  describe('Session - getSessionId', () => {
+  describe('Session_getSessionId', () => {
 
     it('sessions 为空时应返回 undefined', 0, () => {
       let fakeContext = makeSessionContext('tracker-1')
@@ -88,7 +88,7 @@ export default function sessionTests() {
 
   // ─── sessionState 状态管理 ────────────────────────────────────────────────
 
-  describe('Session - sessionState', () => {
+  describe('Session_sessionState', () => {
 
     it('_reset 后 sessionState 应恢复为 Foreground', 0, () => {
       Session.sessionState = SessionState.Background
@@ -104,7 +104,7 @@ export default function sessionTests() {
 
   // ─── session 超时判断逻辑（纯条件验证）───────────────────────────────────
 
-  describe('Session - sessionInterval 超时判断逻辑', () => {
+  describe('Session_sessionInterval_timeout', () => {
     /**
      * Session.onForeground 内部的核心判断：
      *   Date.now() - session.latestOnBackgroundTime >= context.config._sessionInterval
@@ -143,7 +143,7 @@ export default function sessionTests() {
 
   // ─── sessions 数组直接操作 ───────────────────────────────────────────────
 
-  describe('Session - sessions 数组管理', () => {
+  describe('Session_sessions_array', () => {
 
     it('手动 push 后 sessions.length 应增加', 0, () => {
       Session.sessions.push(new Session('s1', 'tracker-1'))
@@ -166,7 +166,7 @@ export default function sessionTests() {
 
   // ─── _reset 隔离验证 ──────────────────────────────────────────────────────
 
-  describe('Session - _reset 测试隔离保证', () => {
+  describe('Session_reset_isolation', () => {
 
     it('_reset 应清空 sessions 数组', 0, () => {
       Session.sessions.push(new Session('s1', 'tracker-1'))

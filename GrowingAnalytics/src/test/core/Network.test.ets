@@ -51,7 +51,7 @@ export default function networkTests() {
 
   // ─── generateUrl ─────────────────────────────────────────────────────────
 
-  describe('Network - generateUrl', () => {
+  describe('Network_generateUrl', () => {
 
     it('NewSaaS 路径：accountId 模板应被正确替换', 0, () => {
       const urlPath = '/v3/projects/accountId/collect'
@@ -110,7 +110,7 @@ export default function networkTests() {
 
   // ─── generateHeaders ─────────────────────────────────────────────────────
 
-  describe('Network - generateHeaders', () => {
+  describe('Network_generateHeaders', () => {
 
     it('useProtobuf=true → Content-Type 应为 application/protobuf', 0, () => {
       let opts: NetworkTestOptions = { encrypt: false, compress: false, protobuf: true }
