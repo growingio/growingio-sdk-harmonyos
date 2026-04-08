@@ -126,9 +126,14 @@ export default class EventSender {
     if (this.isUploading) {
       return
     }
-    this.isUploading = true
 
-    let context = gContext ?? GrowingContext.getContext(this.trackerId) as GrowingContext
+    let maybeContext = gContext ?? GrowingContext.getContext(this.trackerId)
+    if (!maybeContext) {
+      return
+    }
+    const context: GrowingContext = maybeContext
+
+    this.isUploading = true
 
     try {
       const urlPath = this.urlPath
