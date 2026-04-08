@@ -153,7 +153,7 @@ export default class EventSender {
           }
           return response.statusCode
         },
-        removeEvents: (events: EventPersistence[]) => EventDatabase.removeEvents([...events]),
+        removeEvents: (events: EventPersistence[]): Promise<void> => EventDatabase.removeEvents([...events]),
         afterRemove: (events: EventPersistence[]) => {
           if (lastRequest !== null) {
             Plugins.onEventsDidSend(events, lastRequest)

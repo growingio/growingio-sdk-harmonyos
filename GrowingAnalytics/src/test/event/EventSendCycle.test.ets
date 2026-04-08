@@ -42,6 +42,7 @@ export default function eventSendCycleTests() {
           removedEvents = events
           return Promise.resolve()
         },
+        afterRemove: (_events: EventPersistence[]) => {},
         countRemaining: () => Promise.resolve(0)
       })
 
@@ -57,6 +58,7 @@ export default function eventSendCycleTests() {
         fetchEvents: () => Promise.resolve([makeFakePersistence('e1')]),
         sendEvents: async (_events: EventPersistence[]) => 200,
         removeEvents: (_events: EventPersistence[]) => Promise.resolve(),
+        afterRemove: (_events: EventPersistence[]) => {},
         countRemaining: () => Promise.resolve(REQUEST_MAX_EVENT_COUNT + 1)
       })
 
@@ -74,6 +76,7 @@ export default function eventSendCycleTests() {
           removeCalled = true
           return Promise.resolve()
         },
+        afterRemove: (_events: EventPersistence[]) => {},
         countRemaining: () => Promise.resolve(0)
       })
 
@@ -135,6 +138,7 @@ export default function eventSendCycleTests() {
           removeCalled = true
           return Promise.resolve()
         },
+        afterRemove: (_events: EventPersistence[]) => {},
         countRemaining: () => Promise.resolve(0)
       })
 
@@ -153,6 +157,7 @@ export default function eventSendCycleTests() {
           removeCalled = true
           return Promise.resolve()
         },
+        afterRemove: (_events: EventPersistence[]) => {},
         countRemaining: () => Promise.resolve(0)
       })
 
@@ -178,6 +183,7 @@ export default function eventSendCycleTests() {
             removeCalled = true
             return Promise.resolve()
           },
+          afterRemove: (_events: EventPersistence[]) => {},
           countRemaining: () => Promise.resolve(0)
         })
       } catch (_e) {
