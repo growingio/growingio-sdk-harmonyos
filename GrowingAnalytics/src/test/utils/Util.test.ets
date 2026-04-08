@@ -525,14 +525,14 @@ export default function utilTests() {
       expect(json.getString('xpath')).assertEqual('/Button[0]')
     })
 
-    it('xcontent 为 null 时仍应被移除', 0, () => {
+    it('xcontent 为 null 时不应被移除', 0, () => {
       let event: V3ViewClickEventData = {
         eventType: 'VIEW_CLICK',
         xpath: '/Button[0]',
         xcontent: null
       }
       let json = new JsonParser(Util.toSerializeByMeasurementProtocolV3(event))
-      expect(json.hasKey('xcontent')).assertFalse()
+      expect(json.hasKey('xcontent')).assertTrue()
     })
 
     it('其余字段应原样保留', 0, () => {
