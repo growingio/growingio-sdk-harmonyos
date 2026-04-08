@@ -18,14 +18,13 @@ function makeFakeContext(trackerId: string): GrowingContext {
 
 export default function eventTimerTests() {
 
-  // 每个用例前重置静态状态，防止用例间污染
-  beforeEach(() => {
-    EventTimer._reset()
-  })
-
   // ─── durationFrom（纯函数，无副作用）────────────────────────────────────
 
   describe('EventTimer_durationFrom', () => {
+
+    beforeEach(() => {
+      EventTimer._reset()
+    })
 
     it('正常时间段应返回正确 duration（毫秒）', 0, () => {
       expect(EventTimer.durationFrom(1000, 3500)).assertEqual(2500)
@@ -67,6 +66,10 @@ export default function eventTimerTests() {
 
   describe('EventTimer_isPaused', () => {
 
+    beforeEach(() => {
+      EventTimer._reset()
+    })
+
     it('startTime=0 时应返回 true', 0, () => {
       let timer = new EventTimer('test_event', 0, 500, 'tracker-1')
       expect(timer.isPaused()).assertTrue()
@@ -81,6 +84,10 @@ export default function eventTimerTests() {
   // ─── trackTimerPause ──────────────────────────────────────────────────────
 
   describe('EventTimer_trackTimerPause', () => {
+
+    beforeEach(() => {
+      EventTimer._reset()
+    })
 
     it('正常 pause 后 startTime 应归零', 0, () => {
       let timerId = 'timer-001'
@@ -128,6 +135,10 @@ export default function eventTimerTests() {
 
   describe('EventTimer_trackTimerResume', () => {
 
+    beforeEach(() => {
+      EventTimer._reset()
+    })
+
     it('对运行中的 timer 调用 resume 应无副作用', 0, () => {
       let timerId = 'timer-r1'
       let timer = new EventTimer('event', 5000, 0, 'tracker-1')  // startTime>0，运行中
@@ -149,6 +160,10 @@ export default function eventTimerTests() {
 
   describe('EventTimer_removeTimer', () => {
 
+    beforeEach(() => {
+      EventTimer._reset()
+    })
+
     it('remove 后 timer 应从 Map 中删除', 0, () => {
       let timerId = 'remove-me'
       EventTimer.timers.set(timerId, new EventTimer('evt', 1000, 0, 'tracker-1'))
@@ -168,6 +183,10 @@ export default function eventTimerTests() {
   // ─── clearTrackTimer ─────────────────────────────────────────────────────
 
   describe('EventTimer_clearTrackTimer', () => {
+
+    beforeEach(() => {
+      EventTimer._reset()
+    })
 
     it('只删除指定 trackerId 的计时器，不影响其他 tracker', 0, () => {
       EventTimer.timers.set('t1', new EventTimer('e1', 1000, 0, 'tracker-A'))
@@ -193,6 +212,10 @@ export default function eventTimerTests() {
   // ─── handleAllTimersPause / handleAllTimersResume ─────────────────────────
 
   describe('EventTimer_handleAllTimersPause', () => {
+
+    beforeEach(() => {
+      EventTimer._reset()
+    })
 
     it('运行中的计时器应被暂停（startTime 归零）', 0, () => {
       // 直接构造一个运行中的 timer（startTime=5000）
@@ -223,6 +246,10 @@ export default function eventTimerTests() {
 
   describe('EventTimer_handleAllTimersResume', () => {
 
+    beforeEach(() => {
+      EventTimer._reset()
+    })
+
     it('已 paused 的计时器不受 handleAllTimersResume 影响', 0, () => {
       // isPaused() == true 时 resume 不操作
       let pausedTimer = new EventTimer('e1', 0, 200, 'tracker-1')
@@ -238,6 +265,10 @@ export default function eventTimerTests() {
   // ─── _reset 隔离验证 ──────────────────────────────────────────────────────
 
   describe('EventTimer_reset_isolation', () => {
+
+    beforeEach(() => {
+      EventTimer._reset()
+    })
 
     it('_reset 应清空所有计时器', 0, () => {
       EventTimer.timers.set('t1', new EventTimer('e1', 1000, 0, 'tracker-1'))

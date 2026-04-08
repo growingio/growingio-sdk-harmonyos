@@ -32,13 +32,13 @@ function makeSessionContext(trackerId: string): GrowingContext {
  */
 export default function sessionTests() {
 
-  beforeEach(() => {
-    Session._reset()
-  })
-
   // ─── 初始状态 ─────────────────────────────────────────────────────────────
 
   describe('Session_initialState', () => {
+
+    beforeEach(() => {
+      Session._reset()
+    })
 
     it('初始 sessionState 应为 Foreground', 0, () => {
       expect(Session.sessionState).assertEqual(SessionState.Foreground)
@@ -52,6 +52,10 @@ export default function sessionTests() {
   // ─── getSessionId ─────────────────────────────────────────────────────────
 
   describe('Session_getSessionId', () => {
+
+    beforeEach(() => {
+      Session._reset()
+    })
 
     it('sessions 为空时应返回 undefined', 0, () => {
       let fakeContext = makeSessionContext('tracker-1')
@@ -89,6 +93,10 @@ export default function sessionTests() {
   // ─── sessionState 状态管理 ────────────────────────────────────────────────
 
   describe('Session_sessionState', () => {
+
+    beforeEach(() => {
+      Session._reset()
+    })
 
     it('_reset 后 sessionState 应恢复为 Foreground', 0, () => {
       Session.sessionState = SessionState.Background
@@ -145,6 +153,10 @@ export default function sessionTests() {
 
   describe('Session_sessions_array', () => {
 
+    beforeEach(() => {
+      Session._reset()
+    })
+
     it('手动 push 后 sessions.length 应增加', 0, () => {
       Session.sessions.push(new Session('s1', 'tracker-1'))
       Session.sessions.push(new Session('s2', 'tracker-2'))
@@ -167,6 +179,10 @@ export default function sessionTests() {
   // ─── _reset 隔离验证 ──────────────────────────────────────────────────────
 
   describe('Session_reset_isolation', () => {
+
+    beforeEach(() => {
+      Session._reset()
+    })
 
     it('_reset 应清空 sessions 数组', 0, () => {
       Session.sessions.push(new Session('s1', 'tracker-1'))
