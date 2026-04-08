@@ -5,7 +5,7 @@ import eventTimerTests from './core/EventTimer.test'
 import sessionTests from './core/Session.test'
 import networkTests from './core/Network.test'
 import eventPersistenceTests from './event/EventPersistence.test'
-import eventSenderTests from './event/EventSender.test'
+import eventSendCycleTests from './event/EventSendCycle.test'
 
 export default function testsuite() {
   // Phase 1 · 纯函数层
@@ -19,7 +19,7 @@ export default function testsuite() {
 
   // Phase 3 · 数据管道层
   eventPersistenceTests()
-  eventSenderTests()
+  eventSendCycleTests()
 
   // Phase 4 · 网络层（URL / Header 生成）
   networkTests()

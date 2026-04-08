@@ -207,7 +207,9 @@ export default class Util {
   static toSerializeByMeasurementProtocolV3(event: any): string {
     let modified = { ...event}
     delete modified.timezoneOffset
-    delete modified.xcontent
+    if (modified.xcontent != undefined && modified.xcontent != null) {
+      delete modified.xcontent
+    }
     return JSON.stringify(modified)
   }
 

@@ -45,7 +45,7 @@ export function buildFakeContext(
 /**
  * 构造用于测试的最小 EventPersistence 实例
  *
- * 用于 EventSender / InMemoryEventStore 的测试数据填充。
+ * 用于 EventSendCycle / EventPersistence 等测试的数据填充。
  */
 export function makeFakePersistence(
   uuid: string,
