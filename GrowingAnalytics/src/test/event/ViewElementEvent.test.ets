@@ -174,11 +174,12 @@ export default function viewElementEventTests() {
       expect(e.pageShowTimestamp === undefined).assertTrue()
     })
 
-    it('SaaS 模式：pageShowTimestamp 为 undefined', 0, () => {
+    it('SaaS 模式：pageShowTimestamp 有值', 0, () => {
       let ctx = makeCtx('t', ConfigMode.SaaS)
       seedContext(ctx)
-      let e = ViewElementEvent.create('/p', 9999, '', '/X', '', 0, {}, EventType.ViewClick, ctx)
-      expect(e.pageShowTimestamp === undefined).assertTrue()
+      let e = ViewElementEvent.create('/p', 1700000000000, '', '/X', '', 0, {}, EventType.ViewClick, ctx)
+      expect(e.pageShowTimestamp !== undefined).assertTrue()
+      expect(e.pageShowTimestamp).assertEqual(1700000000000)
     })
   })
 

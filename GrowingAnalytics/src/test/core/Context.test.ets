@@ -207,10 +207,10 @@ export default function contextTests() {
       expect(ctx.eventSender.length).assertEqual(1)
     })
 
-    it('SaaS 模式应创建 2 个 EventSender（PV + CSTM）', 0, () => {
+    it('SaaS 模式应创建 3 个 EventSender（PV + CSTM + OTHER）', 0, () => {
       GrowingContext.setContext('t1', makeConfig('a', 'b', ConfigMode.SaaS))
       let ctx = GrowingContext.getContext('t1')!
-      expect(ctx.eventSender.length).assertEqual(2)
+      expect(ctx.eventSender.length).assertEqual(3)
     })
   })
 
