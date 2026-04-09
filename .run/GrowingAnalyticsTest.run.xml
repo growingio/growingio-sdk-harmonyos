@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="GrowingAnalyticsTest" type="LocalTest">
+    <HISTORY_PROJECT_MODEL value="{&quot;compileSdkVersion&quot;:20,&quot;historyProductMap&quot;:{&quot;default&quot;:&quot;default&quot;},&quot;projectModelType&quot;:&quot;HosProjectModelV2&quot;,&quot;projectPath&quot;:&quot;$PROJECT_DIR$&quot;,&quot;runtimeOSMap&quot;:{&quot;default&quot;:&quot;HARMONY_OS&quot;}}" />
+    <HISTORY_MODULE_MODEL value="{&quot;apiType&quot;:&quot;stageMode&quot;,&quot;language&quot;:&quot;ets&quot;,&quot;moduleName&quot;:&quot;GrowingAnalytics&quot;,&quot;modulePath&quot;:&quot;$PROJECT_DIR$/GrowingAnalytics&quot;}" />
+    <test_type value="2" />
+    <TESTING_TYPE value="0" />
+    <PACKAGE_NAME value="test" />
+    <WHOLE_PACKAGE_NAME value="$PROJECT_DIR$/GrowingAnalytics/src/test" />
+    <JS_SUITE_NAME value="" />
+    <KEEP_DATA value="false" />
+    <TIMEOUT value="15" />
+    <MODULE_NAME>GrowingAnalytics</MODULE_NAME>
+    <method v="2">
+      <option name="LocalTest.Build.Hvigor.BeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>

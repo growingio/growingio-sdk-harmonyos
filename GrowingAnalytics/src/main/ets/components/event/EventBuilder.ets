@@ -98,4 +98,9 @@ export default class EventBuilder {
     let key = context.config.accountId + '_' + context.config.dataSourceId
     return EventBuilder._eventSequenceIds[key] ?? 0
   }
+
+  /** 仅供单元测试使用：重置所有静态状态，保证用例间相互隔离 */
+  static _reset() {
+    EventBuilder._eventSequenceIds = {}
+  }
 }

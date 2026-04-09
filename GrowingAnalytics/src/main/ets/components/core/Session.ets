@@ -137,4 +137,10 @@ export default class Session {
     let e = AppClosedEvent.create(context)
     AnalyticsCore.writeEventToDisk(e, context)
   }
+
+  /** 仅供单元测试使用：重置所有静态状态，保证用例间相互隔离 */
+  static _reset() {
+    Session.sessions = []
+    Session.sessionState = SessionState.Foreground
+  }
 }

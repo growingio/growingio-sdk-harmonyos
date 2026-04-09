@@ -23,6 +23,9 @@
     "Tool"
   ],
   "license": "Apache License 2.0",
-  "devDependencies": {},
+  "devDependencies": {
+    "@ohos/hypium": "1.0.21",
+    "@ohos/hamock": "1.0.2"
+  },
   "name": "@growingio/analytics"
 }

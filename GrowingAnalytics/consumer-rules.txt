@@ -94,6 +94,8 @@ CREATE_AT
 SDK_VERSION
 ACCOUNT_ID
 DATASOURCE_ID
+# --------- test-only helpers (do NOT call in production code) ---------
+_reset
 # --------- other/reserved ---------
 gioId
 globalSequenceId
