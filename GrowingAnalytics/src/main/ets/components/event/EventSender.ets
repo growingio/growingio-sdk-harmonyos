@@ -31,16 +31,26 @@ const URL_PATH_SAAS_PV = '/v3/accountId/harmonyos/pv'
 const URL_PATH_SAAS_CSTM = '/v3/accountId/harmonyos/cstm'
 
 /**
+ * sendEvents 的返回结果，将 statusCode 和 request 显式绑定，
+ * 避免调用方通过闭包共享可变状态。
+ */
+export interface SendResult {
+  statusCode: number
+  request: rcp.Request
+}
+
+/**
  * 上报调度核心 IO 依赖
  *
  * 通过回调注入的方式将调度决策逻辑与平台 IO 解耦，
  * 使 runSendCycle 成为可独立测试的纯调度函数。
+ * 每个回调职责单一，回调之间不共享可变状态。
  */
 export interface SendCycleIO {
   fetchEvents: () => Promise<EventPersistence[]>
-  sendEvents: (events: EventPersistence[]) => Promise<number>
+  sendEvents: (events: EventPersistence[]) => Promise<SendResult>
   removeEvents: (events: EventPersistence[]) => Promise<void>
-  afterRemove: (events: EventPersistence[]) => void
+  afterRemove: (events: EventPersistence[], request: rcp.Request) => void
   countRemaining: () => Promise<number>
 }
 
@@ -61,11 +71,11 @@ export async function runSendCycle(io: SendCycleIO): Promise<boolean> {
     return false
   }
 
-  const statusCode = await io.sendEvents(events)
+  const result = await io.sendEvents(events)
 
-  if (statusCode >= 200 && statusCode < 400) {
+  if (result.statusCode >= 200 && result.statusCode < 400) {
     await io.removeEvents(events)
-    io.afterRemove(events)
+    io.afterRemove(events, result.request)
     const count = await io.countRemaining()
     return count > REQUEST_MAX_EVENT_COUNT
   }
@@ -138,7 +148,6 @@ export default class EventSender {
     try {
       const urlPath = this.urlPath
       const eventTypes = this.eventTypes
-      let lastRequest: rcp.Request | null = null
       const hasMore = await runSendCycle({
         fetchEvents: () => EventDatabase.getEventsByCount(
           REQUEST_MAX_EVENT_COUNT,
@@ -146,9 +155,8 @@ export default class EventSender {
           context,
           eventTypes
         ),
-        sendEvents: async (events: EventPersistence[]) => {
+        sendEvents: async (events: EventPersistence[]): Promise<SendResult> => {
           let response = await Network.request(events, urlPath, context)
-          lastRequest = response.request
           Plugins.onResponseReceive(response)
           if (response.statusCode >= 200 && response.statusCode < 400) {
             LogUtil.info(() => 'Request Success, Url = ' + response.request.url)
@@ -156,13 +164,11 @@ export default class EventSender {
           } else {
             LogUtil.info(() => 'Request Failure, responseCode: ' + String(response.statusCode))
           }
-          return response.statusCode
+          return { statusCode: response.statusCode, request: response.request } as SendResult
         },
         removeEvents: (events: EventPersistence[]): Promise<void> => EventDatabase.removeEvents([...events]),
-        afterRemove: (events: EventPersistence[]) => {
-          if (lastRequest !== null) {
-            Plugins.onEventsDidSend(events, lastRequest)
-          }
+        afterRemove: (events: EventPersistence[], request: rcp.Request) => {
+          Plugins.onEventsDidSend(events, request)
           Plugins.onEventsRemoveFromDisk(events.map(e => e.uuid))
         },
         countRemaining: () => EventDatabase.countOfEvents(context, eventTypes)
