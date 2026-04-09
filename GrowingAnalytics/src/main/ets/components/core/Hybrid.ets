@@ -31,11 +31,13 @@ import PageEvent from '../event/PageEvent'
 import HybridCustomEvent from '../event/hybrid/HybridCustomEvent'
 import HybridPageEvent from '../event/hybrid/HybridPageEvent'
 import HybridViewElementEvent from '../event/hybrid/HybridViewElementEvent'
+import ViewElementEvent from '../event/ViewElementEvent'
 import { SaaSEvarEvent, SaaSVisitorEvent } from '../event/saas/SaaSTrackEvent'
-import { AttributesType, JavaScriptProxyType, SaaSJavaScriptConfigType } from '../utils/Constants'
+import { AttributesType, JavaScriptProxyType, PATH_SEPARATOR, SaaSJavaScriptConfigType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import SaaSPageVarEvent from '../event/saas/SaaSPageVarEvent'
+import AutotrackClick from '../autotrack/AutotrackClick'
 import Plugins from '../plugins/Plugins'
 import { niceTryAsync } from '../utils/Util'
 
@@ -85,7 +87,7 @@ export default class Hybrid {
         controller: controller
       }
     } else if (context.config.mode == ConfigMode.SaaS && context.config.hybridAutotrackEnabled) {
-      let hybrid = new SaaSHybrid(controller, context)
+      let hybrid = new SaaSHybrid(controller, context, webviewId)
       return {
         object: hybrid,
         name: hybrid.name,
@@ -144,13 +146,54 @@ export default class Hybrid {
         d: AppInfo.domain,
         u: DeviceInfo.deviceId,
         s: Session.getSessionId(context) ?? '',
-        cs1:  UserIdentifier.getUser(context)?.userId ?? ''
+        cs1: UserIdentifier.getUser(context)?.userId ?? '',
+        p: PageEvent.getLastPage(context)?.path ?? ''
       }
       scripts.push({
         script: 'window._vds_hybrid_native_info = ' + JSON.stringify(nativeInfo), scriptRules: scriptRules
       })
     }
     return scripts
+  }
+
+  static saasCircleEnabled: boolean = false
+
+  static async handleSaaSCircleEventFromServer(dict: Record<string, Object>): Promise<void> {
+    await SaaSHybrid.handleCircleEventFromServer(dict)
+  }
+
+  static async onPageEnd(controller: webview.WebviewController, context: GrowingContext, webviewId?: string): Promise<void> {
+    if (context.config.mode != ConfigMode.SaaS || !context.config.hybridAutotrackEnabled || !Hybrid.saasCircleEnabled) {
+      return
+    }
+    if (webviewId && webviewId.length > 0) {
+      let xpath = Hybrid._getNativeXPathByWebViewId(webviewId)
+      if (xpath.length > 0) {
+        let updateX = 'if(window._vds_hybrid_native_info){window._vds_hybrid_native_info.x=\'' + xpath + '\'}'
+        await niceTryAsync(() => controller.runJavaScript(updateX))
+      }
+    }
+    let circleUrl = 'https://assets.giocdn.com/sdk/hybrid/2.0/vds_web_circle_plugin.min.js?sdkVer='
+      + SDK_VERSION + '&platform=' + SDK_PLATFORM
+    let js = '(function(){try{var p=document.createElement(\'script\');p.src=\'' + circleUrl + '\';document.head.appendChild(p);}catch(e){}})()'
+    await niceTryAsync(() => controller.runJavaScript(js))
+  }
+
+  private static _getNativeXPathByWebViewId(webviewId: string): string {
+    try {
+      let frameNode = AnalyticsCore.uiContent.getAttachedFrameNodeById(webviewId)
+      if (!frameNode) {
+        return ''
+      }
+      let xpathInfo = AutotrackClick.getXpathInfo(frameNode)
+      let xpath = ''
+      for (let i = xpathInfo.xpath.length - 1; i >= 0; i--) {
+        xpath += PATH_SEPARATOR + xpathInfo.xpath[i] + '[' + xpathInfo.xcontent[i] + ']'
+      }
+      return xpath
+    } catch (e) {
+      return ''
+    }
   }
 
   static javaScriptOnDocumentEnd(
@@ -267,6 +310,94 @@ export default class Hybrid {
 }
 
 class SaaSHybrid {
+  static _saasHybrids: SaaSHybrid[] = []
+
+  static async handleCircleEventFromServer(dict: Record<string, Object>): Promise<void> {
+    const xVal = dict['x'] !== undefined ? Number(dict['x']) : NaN
+    const yVal = dict['y'] !== undefined ? Number(dict['y']) : NaN
+    const hasXY = !isNaN(xVal) && !isNaN(yVal)
+
+    // 有 x/y 坐标时，只转发给命中该点的 WebView；否则广播给所有 WebView
+    let hybridsToNotify: SaaSHybrid[]
+    let hitFrameLeft: number = 0
+    let hitFrameTop: number = 0
+    let hitHybrid: SaaSHybrid | undefined = undefined
+    if (hasXY && AnalyticsCore.uiContent) {
+      for (let hybrid of SaaSHybrid._saasHybrids) {
+        if (hybrid.webviewId && hybrid.webviewId.length > 0) {
+          try {
+            let frameNode = AnalyticsCore.uiContent.getAttachedFrameNodeById(hybrid.webviewId)
+            if (frameNode) {
+              let json = frameNode.getInspectorInfo() as Record<string, Object>
+              let rect = json['$rect'] as string | undefined
+              if (rect) {
+                let matches = rect.match(/\[([\d.]+),\s*([\d.]+)\],\[([\d.]+),\s*([\d.]+)\]/)
+                if (matches && matches.length >= 5) {
+                  let leftVp   = AnalyticsCore.uiContent.px2vp(parseFloat(matches[1]))
+                  let topVp    = AnalyticsCore.uiContent.px2vp(parseFloat(matches[2]))
+                  let rightVp  = AnalyticsCore.uiContent.px2vp(parseFloat(matches[3]))
+                  let bottomVp = AnalyticsCore.uiContent.px2vp(parseFloat(matches[4]))
+                  if (xVal >= leftVp && xVal <= rightVp &&
+                      yVal >= topVp  && yVal <= bottomVp) {
+                    hitHybrid = hybrid
+                    let pos = frameNode.getPositionToWindowWithTransform()
+                    hitFrameLeft = pos.x
+                    hitFrameTop = pos.y
+                    break
+                  }
+                }
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      hybridsToNotify = hitHybrid ? [hitHybrid] : []
+    } else {
+      hybridsToNotify = [...SaaSHybrid._saasHybrids]
+    }
+
+    for (let hybrid of hybridsToNotify) {
+      let frameLeft = 0
+      let frameTop = 0
+      if (hasXY && hitHybrid === hybrid) {
+        frameLeft = hitFrameLeft
+        frameTop = hitFrameTop
+      } else if (hybrid.webviewId && hybrid.webviewId.length > 0 && AnalyticsCore.uiContent) {
+        try {
+          let frameNode = AnalyticsCore.uiContent.getAttachedFrameNodeById(hybrid.webviewId)
+          if (frameNode) {
+            let pos = frameNode.getPositionToWindowWithTransform()
+            frameLeft = pos.x
+            frameTop = pos.y
+          }
+        } catch (e) {}
+      }
+
+      // changeXYtoHybrid: 服务端 vp 坐标 → WebView 本地 CSS 坐标（HarmonyOS 上 1CSS px = 1vp）
+      let localDict: Record<string, Object> = JSON.parse(JSON.stringify(dict))
+      if (localDict['x'] !== undefined) {
+        let val = Number(localDict['x'])
+        if (!isNaN(val)) {
+          localDict['x'] = val - frameLeft
+        }
+      }
+      if (localDict['y'] !== undefined) {
+        let val = Number(localDict['y'])
+        if (!isNaN(val)) {
+          localDict['y'] = val - frameTop
+        }
+      }
+      if (localDict['ex'] !== undefined) {
+        localDict['ex'] = (localDict['ex'] as number) - frameLeft
+      }
+      if (localDict['ey'] !== undefined) {
+        localDict['ey'] = (localDict['ey'] as number) - frameTop
+      }
+      let jsonStr = JSON.stringify(localDict)
+      await niceTryAsync(() => hybrid.controller.runJavaScript(`window._vds_hybrid.helper.handleWebEvent(${jsonStr})`))
+    }
+  }
+
   name: string = '_vds_bridge'
   methodList: string[] = [
     'saveEvent',
@@ -279,13 +410,31 @@ class SaaSHybrid {
   ]
   controller: webview.WebviewController
   context: GrowingContext
+  webviewId?: string
 
   constructor(
     controller: webview.WebviewController,
-    context: GrowingContext
+    context: GrowingContext,
+    webviewId?: string
   ) {
     this.controller = controller
     this.context = context
+    this.webviewId = webviewId
+    if (webviewId && webviewId.length > 0) {
+      let idx = SaaSHybrid._saasHybrids.findIndex(h => h.webviewId === webviewId)
+      if (idx >= 0) {
+        SaaSHybrid._saasHybrids.splice(idx, 1, this)
+      } else {
+        SaaSHybrid._saasHybrids.push(this)
+      }
+    } else {
+      let idx = SaaSHybrid._saasHybrids.findIndex(h => h.controller === controller)
+      if (idx >= 0) {
+        SaaSHybrid._saasHybrids.splice(idx, 1, this)
+      } else {
+        SaaSHybrid._saasHybrids.push(this)
+      }
+    }
   }
 
   saveEvent = (eventString: string): void => {
@@ -323,11 +472,15 @@ class SaaSHybrid {
   }
 
   webCircleHybridEvent = (message: string): void => {
-    // LogUtil.info(() => "[SaaS] [Hybrid] webCircleHybridEvent: " + message)
+    if (!Hybrid.saasCircleEnabled) {
+      return
+    }
+    LogUtil.info(() => "[SaaS] [Hybrid] webCircleHybridEvent: " + message)
+    Plugins.onWebViewSaaSCircleEvent(message, this.webviewId)
   }
 
   onDOMChanged = (): void => {
-    // LogUtil.info(() => "[SaaS] [Hybrid] onDOMChanged")
+    Plugins.onWebViewDomTreeChanged()
   }
 }
 
@@ -336,7 +489,36 @@ class SaaSHybridEventHandler {
     let t: string = String(event.t ?? '')
     let attributes: AttributesType = event.var as (AttributesType | undefined) ?? {}
     let d = AppInfo.domain + '::' + String(event.d ?? '')
-    if (t == 'cstm' || t == 'pvar' || t == 'page') {
+    if (t == 'clck' || t == 'chng') {
+      let elements = event.e as Array<Record<string, Object>> | undefined
+      if (!elements || elements.length == 0) {
+        return
+      }
+      let p = String(event.p ?? '')
+      let lastPage = PageEvent.getLastPage(context)
+      if (lastPage) {
+        p = (lastPage.path ?? '') + '::' + p
+      }
+      let q = event.q as string | undefined
+      let ptm = event.ptm as number
+      let tm = event.tm as number
+      let eventType = t == 'clck' ? EventType.ViewClick : EventType.ViewChange
+      for (let element of elements) {
+        let xpath = String(element.x ?? '')
+        let textValue = String(element.v ?? '')
+        let index = element.idx as number
+        let hyperlink = element.h as string | undefined
+        let e = ViewElementEvent.create(p, ptm, textValue, xpath, '', index, {}, eventType, context)
+        if (t == 'chng' && textValue.length > 0) {
+          e.textValue = textValue
+        }
+        e.query = q
+        e.hyperlink = hyperlink
+        e.domain = d
+        e.timestamp = tm
+        AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
+      }
+    } else if (t == 'cstm' || t == 'pvar' || t == 'page') {
       let p = String(event.p ?? '')
       let lastPage = PageEvent.getLastPage(context)
       if (lastPage) {

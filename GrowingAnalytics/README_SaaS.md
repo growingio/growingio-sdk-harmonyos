@@ -138,6 +138,8 @@ GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext)
 | encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示                                                            |
 | compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                                                                |
 | hybridAutotrackEnabled        | boolean  | true   | 是否集成无埋点对应的 Hybrid JS SDK                                                             |
+| autotrackEnabled              | boolean  | false  | 是否开启无埋点采集，开启后自动采集用户点击和输入变更事件                                                          |
+| autotrackAllPages             | boolean  | false  | 是否采集所有页面（Page）事件，开启后所有页面均会自动上报，否则需手动调用页面相关 API                                         |
 
 ### 数据采集 API
 
@@ -445,41 +447,50 @@ GrowingAnalytics.setDynamicGeneralProps(() => ({}))
 ### Hybrid 打通
 
 ```typescript
-static createHybridProxy(controller: webview.WebviewController): {
-object: object;
-name: string;
-methodList: Array<string>;
-controller: WebviewController;
-} | undefined
+static createHybridProxy(
+  controller: webview.WebviewController,
+  webviewId?: string
+): GrowingJSProxyType | undefined
 
 static javaScriptOnDocumentStart(
   scriptRules?: Array<string>,
   saasJavaScriptConfig?: {
     hashTagEnabled: boolean;
     impEnabled: boolean;
-}): Array<ScriptItem>
+  }): Array<ScriptItem>
 
 static javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem>
+
+static onPageEnd(
+  controller: webview.WebviewController,
+  webviewId?: string
+): Promise<void>
 ```
 
 ##### 参数说明
 
 | 参数    | 参数类型      | 默认值                      | 说明 |
 | ------- |-----------| -------------------------- | ------- |
+| `webviewId` | `string` | - | 可选参数，用于进行无埋点圈选时圈选 hybrid 页面；如需使用该功能，请将对应的 Web 控件的唯一标识 (id) 设为相同值，并保证 webviewId 全局唯一 |
 | `hashTagEnabled` | `boolean` | false | 设置是否启用 Hash Tag |
 | `impEnabled` | `boolean` | false | 设置是否发送元素的展现次数（浏览量、曝光量） |
 
 ##### 示例
 
-在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)，并在 onDocumentStart 和 onDocumentEnd 2 个时机注入 SDK 提供的脚本：
+在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)，并在 onDocumentStart 和 onDocumentEnd 2 个时机注入 SDK 提供的脚本，同时在 onPageEnd 时机调用对应接口：
 ```typescript
 let url = 'https://www.example.com'
+let webviewId = 'customWebviewId'
 Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
-  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller, webviewId))
   .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart())
   .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd())
+  .onPageEnd(() => {
+    GrowingAnalytics.onPageEnd(this.controller, webviewId)
+  })
+  .id(webviewId)
 ```
 
 如果您的 H5 页面集成的是仅埋点的 Hybrid JS SDK (`gio_hybrid_track.js`)，那么需要修改 SDK 的初始化配置项 `hybridAutotrackEnabled` 为 `false`, 且仅注入 hybrid：
@@ -507,26 +518,31 @@ Web({ src: url, controller: this.controller})
 let url = 'https://www.example.com'
 // 通过permission配置权限管控
 let permission = 'Your Permission'
+let webviewId = 'customWebviewId'
 Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
   .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart()) // H5页面集成的是仅埋点的Hybrid JS SDK则不需要此操作
   .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd()) // H5页面集成的是仅埋点的Hybrid JS SDK则不需要此操作
   .onControllerAttached(() => {
-    let proxy = GrowingAnalytics.createHybridProxy(this.controller)
+    let proxy = GrowingAnalytics.createHybridProxy(this.controller, webviewId)
     if (proxy) {
       this.controller.registerJavaScriptProxy(proxy.object, proxy.name, proxy.methodList, [], permission)
     }
-    
+
     // 如果需要注入多个JavaScript对象
     let yourProxy = new YourProxy()
     if (yourProxy) {
       this.controller.registerJavaScriptProxy(yourProxy.object, yourProxy.name, yourProxy.methodList, yourProxy.asyncMethodList, permission)
     }
   })
+  .onPageEnd(() => {
+    GrowingAnalytics.onPageEnd(this.controller, webviewId)
+  }) // H5页面集成的是仅埋点的Hybrid JS SDK则不需要此操作
+  .id(webviewId)
 ```
 
-> 当前 Hybrid 打通不支持点击事件、表单提交事件等无埋点事件
+> 当前 Hybrid 打通支持点击事件（clck）和输入变更事件（chng），不支持表单提交事件等其他无埋点事件
 
 ## License
 ```
