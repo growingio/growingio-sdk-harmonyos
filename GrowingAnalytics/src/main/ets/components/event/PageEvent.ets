@@ -73,4 +73,9 @@ export default class PageEvent extends Event implements Page {
   static setLastPage(page: Page, context: GrowingContext) {
     PageEvent.lastPage[context.trackerId] = page
   }
+
+  /** 仅供单元测试使用：重置所有静态状态，保证用例间相互隔离 */
+  static _reset() {
+    PageEvent.lastPage = {}
+  }
 }
