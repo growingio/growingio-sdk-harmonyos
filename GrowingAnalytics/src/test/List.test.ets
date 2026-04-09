@@ -7,6 +7,8 @@ import generalPropsTests from './core/GeneralProps.test'
 import contextTests from './core/Context.test'
 import userIdentifierTests from './core/UserIdentifier.test'
 import networkTests from './core/Network.test'
+import deviceInfoTests from './core/DeviceInfo.test'
+import queueTests from './mobileDebugger/Queue.test'
 import eventBuilderTests from './event/EventBuilder.test'
 import pageEventTests from './event/PageEvent.test'
 import customEventTests from './event/CustomEvent.test'
@@ -37,4 +39,8 @@ export default function testsuite() {
 
   // Phase 4 · 网络层（URL / Header 生成）
   networkTests()
+  deviceInfoTests()
+
+  // Phase 5 · 工具类
+  queueTests()
 }
