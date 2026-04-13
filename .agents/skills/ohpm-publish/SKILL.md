@@ -1,6 +1,6 @@
 ---
 name: ohpm-publish
-description: HarmonyOS SDK 发布工具，用于将 @growingio/analytics 和/或 @growingio/tools 打包并发布到 ohpm 仓库。当用户提到"发布 SDK"、"ohpm 发布"、"打包发布"、"上传 har"、"publish"、"发版"、"release"等关键词时触发此 skill。即使用户只说了"发布"或"上传"也应该触发。
+description: Use when user mentions "发布 SDK"、"ohpm 发布"、"打包发布"、"上传 har"、"publish"、"发版"、"release"、"发布" or "上传" in the context of this SDK
 ---
 
 # ohpm-publish

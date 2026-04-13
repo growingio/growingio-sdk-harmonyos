@@ -1,6 +1,6 @@
 ---
 name: jira-ticket
-description: Jira 发版工具。当用户需要创建 SDK 版本发布 Ticket、问"帮我建个发版任务"时使用。
+description: Use when user asks to create a version release ticket, says "帮我建个发版任务", "建个 Jira", "创建发版单", or needs to track an SDK release in Jira
 ---
 
 # Jira Ticket

@@ -1,6 +1,6 @@
 ---
 name: growingio-arkts-coding-style
-description: GrowingIO HarmonyOS SDK 代码风格规范。在编写或审查本项目代码时使用，确保代码符合 ArkTS 语言约束、项目命名约定和格式化标准。
+description: Use when writing or reviewing .ets/.ts files in this project, or when seeing any, unknown, obj['key'] index access, destructuring assignment, var declarations, #privateField, intersection types, conditional types, or index signatures in code
 ---
 
 # GrowingIO HarmonyOS SDK - 代码风格指南

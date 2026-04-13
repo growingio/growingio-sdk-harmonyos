@@ -1,6 +1,6 @@
 ---
 name: git-conventions
-description: GrowingIO HarmonyOS SDK 项目的 Git 规范约束。用于规范分支命名、Commit message 格式和 PR 流程。当用户需要执行 git commit、创建分支、或询问 Git 提交规范时使用。
+description: Use when executing git commit, creating or naming branches, writing PR titles/descriptions, or asking about commit message format, branch naming, or version numbering in this project
 ---
 
 # GrowingIO HarmonyOS SDK Git 规范
