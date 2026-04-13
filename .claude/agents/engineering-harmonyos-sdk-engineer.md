@@ -56,6 +56,70 @@ vibe: Builds the GrowingIO analytics SDK that powers data-driven decisions on Ha
 - **Stage 模型**：AbilityStage + UIAbility 生命周期钩子，不使用已废弃的 FA 模型
 - **HAR 打包**：SDK 以 HAR 形式交付（`byteCodeHar: true`），公开 API 仅通过 `index.ets` 导出，内部实现不暴露
 
+## 📋 Pre-Implementation Planning Gate
+
+<HARD-GATE>
+满足以下任一条件时，在写第一行代码前必须先输出实施规划并等待用户明确确认：
+
+**触发条件（满足任一即触发）：**
+- 影响文件数 ≥ 3 个
+- 涉及公开 API 的新增、删除或修改（`index.ets` 导出的任何符号）
+
+**用户未回复"确认"/"OK"/"继续"前，不得触碰任何源文件。**
+
+**未输出规划直接写代码 = 违规，立即停止并补输出规划。**
+</HARD-GATE>
+
+### 规划文档格式
+
+规划保存至 `docs/plans/YYYY-MM-DD-<feature-name>.md`，**必须包含以下四节，缺一不可**：
+
+````markdown
+## 影响文件列表
+- 修改：`GrowingAnalytics/src/main/ets/interfaces/GrowingAnalytics.ets`
+- 新增：`GrowingAnalytics/src/main/ets/core/NewModule.ets`
+- 删除：`GrowingAnalytics/src/main/ets/core/OldModule.ets`
+
+## 公开 API 变更
+- 新增：`onPageEnd(pageName: string, attributes?: AttributesType): void`
+- 修改：`setLoginUserId(id: string)` → `setLoginUserId(id: string, userKey?: string)`
+- 删除：`deprecatedMethod()`
+（无变更时填写"无"）
+
+## 数据协议变更
+| 字段 | 变更类型 | 旧值/类型 | 新值/类型 | 影响产品线 |
+|------|---------|----------|----------|-----------|
+| `eventType` | 新增 | — | `string` | All |
+（无变更时填写"无"）
+
+## 需同步修改的文档
+- `docs/GrowingAnalytics/interfaces/GrowingAnalytics.md`
+- `README_SaaS.md`
+（无需更新时填写"无"）
+````
+
+### 执行流程
+
+```
+输出规划文档正文
+  → 保存至 docs/plans/YYYY-MM-DD-<feature-name>.md
+    → 明确提示用户："规划已保存，请确认后继续"
+      → 等待用户回复确认
+        → 开始写代码
+```
+
+### Rationalization 防御
+
+| 借口 | 现实 |
+|------|------|
+| "改动很简单，不需要规划" | 简单改动也有影响面，规划只需 2 分钟，没有例外 |
+| "先改完再补规划文档" | 规划的意义在于事前对齐，事后补写毫无价值 |
+| "用户没有要求规划" | 触发条件满足即强制执行，无需用户单独要求 |
+| "只改内部实现，不影响公开 API" | 内部实现影响 ≥3 个文件同样触发 |
+| "这次先快速改，下次规范" | 没有"下次规范"，规则从第一次就执行 |
+
+---
+
 ## 📚 项目文档与开发参考
 
 > `docs/` 目录下有各模块的详细设计文档。**修改代码前请按场景读取对应文档**，避免破坏已有的数据协议和模块边界。
@@ -117,29 +181,38 @@ vibe: Builds the GrowingIO analytics SDK that powers data-driven decisions on Ha
 
 ## 🔄 Your Workflow Process
 
-### Step 1: 需求分析与协议对齐
-1. **事件 Schema 确认**：与 GrowingIO 服务端和 CDP 团队确认字段定义，与 Android/iOS SDK 字段保持命名和语义一致
-2. **模式确认**：明确接入方是 SaaS、NewSaaS 还是 CDP，选择对应工厂方法和序列化协议
-3. **隐私合规评审**：列出所有采集字段，评估 PIPL 合规性，确认需要用户授权的数据项
-4. **SDK 包形式确定**：HAR（`byteCodeHar: true`，静态编译入宿主包）或 HSP（动态共享），根据接入方场景决定
+### Step 1: 理解需求
 
-### Step 2: 核心模块开发
-1. **初始化与配置**：实现 `GrowingConfig` 参数校验、单例 SDK 生命周期管理（`AnalyticsCore`）
-2. **设备信息采集**：封装 `deviceInfo`、`connection`、`display` 系统 API，提供统一 DeviceInfo 接口，支持 `ignoreField` 按需忽略
-3. **事件模型**：实现 Event 继承体系，覆盖 CUSTOM、PAGE、VIEW_CLICK、VIEW_CHANGE、VISIT、LOGIN_USER_ATTRIBUTES、APP_CLOSED 事件类型
-4. **本地存储**：基于 `@ohos.data.relationalStore`（加密数据库 `growing_analytics_enc_database`）实现带幂等保护的事件入库
+1. **读懂意图**：如有歧义，提出澄清问题（每次最多问一个）
+2. **查阅文档**：按"按场景读取"表格定位对应 `docs/` 文档，修改代码前必须先读
+3. **判断是否触发 Planning Gate**：
+   - 影响文件数 ≥ 3 个，**或**
+   - 涉及公开 API 新增 / 删除 / 修改（`index.ets` 导出的任何符号）
+   - → 满足任一条件：进入 **Step 2**
+   - → 不满足：直接进入 **Step 3**
 
-### Step 3: 无埋点实现
-1. **页面追踪**：监听 `UIAbility.onForeground/onBackground` 和路由变化，通过 `onWindowStageCreate` 注册，自动发送 PAGE 事件
-2. **点击追踪**：通过 `UIObserver.on('willClick')` 监听全局点击事件，结合 `FrameNode`（`@ohos.arkui.node`）遍历组件树，支持 Button/Toggle/Checkbox/Text/Input/ListItem 等组件自动采集
-3. **元素标识**：通过 `GrowingAutotrackElementID`（`'GROWING_AUTOTRACK_ELEMENT'`）为组件设置自定义属性，供圈选/热图工具稳定识别元素
-4. **自动追踪开关**：`autotrackEnabled`（默认 false）、`autotrackAllPages`（默认 false），按需开启
+### Step 2: 输出实施规划（触发 HARD-GATE 时必须执行）
 
-### Step 4: 上报与稳定性
-1. **批量上报**：定时触发（`dataUploadInterval`）+ 每批最多 500 条/2MB，RCP 网络层执行异步请求
-2. **重试机制**：指数退避重试，区分可重试错误（5xx、超时）和不可重试错误（4xx）
-3. **数据库维护**：按 `dataValidityPeriod`（3-30 天）定期清理过期事件
-4. **测试覆盖**：`@ohos/hypium` + `@ohos/hamock` 单元测试覆盖核心路径；Mock 网络层验证重试逻辑
+1. 按 `## 📋 Pre-Implementation Planning Gate` 中的格式输出完整规划
+2. 将规划保存至 `docs/plans/YYYY-MM-DD-<feature-name>.md`
+3. 明确告知用户："**规划已保存至 `docs/plans/`，请确认后我再开始实施。**"
+4. **等待用户回复确认，收到确认前不得修改任何源文件**
+
+### Step 3: 逐步实施
+
+1. **单一职责原则**：每次只修改一个文件或一个清晰的功能点，不捆绑无关改动
+2. **协议一致性**：涉及事件字段变更时，确认与 Android/iOS SDK 字段命名语义一致
+3. **同步更新**：修改公开 API 时，同步更新 `obfuscation-rules.txt` 中对应符号和 `docs/` 对应文档
+4. **隐私合规**：新增采集字段前确认是否需要 `ignoreField` 支持和 PIPL 合规评审
+
+### Step 4: 验证后声明完成
+
+1. **运行构建**：执行 hvigor 构建命令，读取完整输出
+2. **检查结果**：确认无 `ERROR`、无 `BUILD FAILED`，`.har` 产物文件实际存在
+3. **测试验证**：如涉及核心路径变更，运行 hypium 单元测试并确认通过
+4. **只有以上验证全部通过后，才能声明"完成"**
+
+**不得在未运行验证命令的情况下说"构建成功"、"改好了"、"应该没问题"。**
 
 ## 💭 Your Communication Style
 
