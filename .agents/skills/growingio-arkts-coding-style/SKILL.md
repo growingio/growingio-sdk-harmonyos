@@ -1,150 +1,332 @@
 ---
 name: growingio-arkts-coding-style
-description: Use when writing or reviewing .ets/.ts files in this project, or when seeing any, unknown, obj['key'] index access, destructuring assignment, var declarations, #privateField, intersection types, conditional types, or index signatures in code
+description: Use when writing or reviewing .ets/.ts files in this project, or when seeing any, unknown, obj['key'] index access, destructuring assignment, var declarations, #privateField, intersection types, conditional types, index signatures, function expressions, for..in loops, delete operator, throw non-Error, <T> casts, catch type annotation, nested functions, in operator, or object literals typed as Object in code
 ---
 
-# GrowingIO HarmonyOS SDK - 代码风格指南
+# GrowingIO HarmonyOS SDK - ArkTS 编码规范
 
-本技能用于强制执行 GrowingIO HarmonyOS SDK 项目的代码风格标准，使用 ArkTS（HarmonyOS TypeScript 变体）。
+本 skill 覆盖 GrowingIO HarmonyOS SDK 项目的 ArkTS 语法约束和代码风格要求。
 
-## 语言约束（ArkTS）
+> 📚 完整约束原文见 [`docs/typescript-to-arkts-migration-guide.md`](../../../docs/typescript-to-arkts-migration-guide.md)。
 
-本项目使用 **ArkTS**，而非标准 TypeScript。以下特性被严格禁止。
+---
 
-> 📚 **详细参考**: 关于 ArkTS 语言约束的完整说明和迁移示例，请参考 [`docs/typescript-to-arkts-migration-guide.md`](../../../docs/typescript-to-arkts-migration-guide.md)。
+## 第一部分：ArkTS 语法约束（编译错误级别）
 
-### 关键约束
+### 1. 类型系统
 
-| 规则 | 禁止 | 允许 |
-|------|------|------|
-| 类型 | `any`, `unknown` | 显式类型 |
-| 结构化类型 | 相同结构的类直接赋值 | 使用 `implements Interface` |
-| 解构赋值 | `let { x, y } = point` | `let x = point.x` |
-| 索引访问 | `obj['key']` | `obj.key` |
-| 变量声明 | `var x = 1` | `let x = 1` 或 `const x = 1` |
-| 私有字段 | `#foo: number` | `private foo: number` |
-| 一元加号 | `+'42'`（字符串） | `+42`（仅数字） |
-
-### 其他限制
-
-- 禁止使用 `Symbol()`（`Symbol.iterator` 除外）
-- 类中禁止多个静态代码块
-- 禁止索引签名
-- 禁止交叉类型（使用继承）
-- 禁止使用 `this` 类型标注
-- 禁止条件类型
-- 禁止在构造函数参数中声明字段
-- 接口中禁止构造函数签名
-
-## 文件命名规范
-
-| 文件类型 | 命名规范 | 扩展名 | 示例 |
-|---------|---------|--------|------|
-| ArkTS 类 | PascalCase | `.ets` | `GrowingAnalytics.ets` |
-| TypeScript 工具类 | PascalCase/camelCase | `.ts` | `LogUtil.ts` |
-| 测试文件 | PascalCase + `.test` | `.ets` | `LocalUnit.test.ets` |
-| 配置文件 | kebab-case | `.json5` | `build-profile.json5` |
-
-## 代码格式化
-
-### 缩进和间距
-
-- **缩进**：4 个空格（禁用 tab）
-- **行宽限制**：120 个字符
-- **最大空行数**：2
+| 约束 | 禁止 | 允许 | 规则 ID |
+|------|------|------|---------|
+| any/unknown | `any`, `unknown` | 显式类型声明 | `arkts-no-any` |
+| 结构化类型 | 相同结构的类直接赋值 | `implements Interface` | `arkts-no-structural` |
+| 交叉类型 | `A & B` | 继承 / 接口组合 | `arkts-no-intersection` |
+| 条件类型 | `T extends U ? X : Y` | 显式类或联合类型 | `arkts-no-conditional` |
+| 映射类型 | `{ [P in keyof T]: boolean }` | 显式声明的具名类 | `arkts-no-mapped-types` |
+| `this` 类型标注 | `this` 作为返回类型 | 具名类型 | `arkts-no-this-type` |
+| 类型转换语法 | `<T>value` | `value as T` | `arkts-as-casts` |
+| `typeof` 类型查询 | `let n: typeof x` | 直接写类型 `number` | `arkts-no-type-query` |
+| 索引访问类型 | `T['key']`（类型层面） | 显式声明类型别名 | `arkts-no-idx-access-types` |
 
 ```typescript
 // ✅ 正确
-class AnalyticsCore {
-    private context: GrowingContext
-    
-    constructor(context: GrowingContext) {
-        this.context = context
-    }
+let count: number = 0
+let result = value as string
+
+// ❌ 错误
+let count: any = 0
+let result = <string>value
+let t: typeof count
+```
+
+### 2. 对象与属性
+
+| 约束 | 禁止 | 允许 | 规则 ID |
+|------|------|------|---------|
+| 动态属性名 | `{ 'name': 'x', 2: 'y' }` | 标识符属性名 | `arkts-identifiers-as-prop-names` |
+| 索引签名 | `[key: string]: T` | 具名字段 / `Map<K,V>` | `arkts-no-idx-signatures` |
+| 运行时动态添加属性 | `obj.newProp = val`（未在类中声明） | 类中提前声明所有字段 | 对象布局不可变 |
+| `delete` 操作符 | `delete obj.prop` | `obj.prop = null`（字段改为 nullable） | `arkts-no-delete` |
+| 方法重新赋值 | `c2.foo = bar` | 子类继承 + 覆写 | `arkts-no-method-reassignment` |
+| `in` 操作符 | `'name' in obj` | `obj instanceof Class` | `arkts-no-in` |
+| 对象字面量类型 | `let o: Object = { n: 1 }` | 必须对应已声明的类或接口 | `arkts-no-untyped-obj-literals` |
+
+```typescript
+// ✅ 正确
+class EventAttr {
+  key: string = ''
+  value: string = ''
+}
+let attr: EventAttr = { key: 'page', value: 'Home' }
+
+// ❌ 错误 - 字面量不能赋给 Object 类型
+let attr: Object = { key: 'page', value: 'Home' }
+
+// ✅ 正确 - 替代 delete
+class Config {
+  userId: string | null = null
+}
+config.userId = null   // 代替 delete config.userId
+
+// ✅ 正确 - 替代 in
+if (tracker instanceof SubTracker) { ... }  // 代替 'subId' in tracker
+```
+
+**SDK 中的 `AttributesType`：**
+
+```typescript
+// SDK 使用类型别名表示事件属性字典，不用 Record<string, any>
+type AttributesType = Record<string, string | number | boolean>
+
+// 赋值时必须确保值类型匹配
+let attrs: AttributesType = {}
+attrs['key'] = 'value'  // ❌ 索引访问
+// 实际 SDK 中通过 Map 或具名字段处理
+```
+
+### 3. 函数与方法
+
+| 约束 | 禁止 | 允许 | 规则 ID |
+|------|------|------|---------|
+| 函数表达式 | `let f = function(x) { }` | 箭头函数 `let f = (x) => { }` | `arkts-no-func-expressions` |
+| 嵌套函数 | 函数内部 `function` 定义 | 用箭头函数（lambda）替代 | `arkts-no-nested-funcs` |
+| 解构参数 | `function f({ x, y })` | 普通参数 + 手动解构 | `arkts-no-destruct-params` |
+| `this` 在独立函数 | 顶层函数 / 静态方法中用 `this` | 仅在实例方法中用 `this` | `arkts-no-standalone-this` |
+| 生成器函数 | `function* gen()` | 异步 + Promise 替代 | `arkts-no-generators` |
+| 省略返回类型 | 返回值为另一个函数调用时省略 | 显式声明返回类型 | `arkts-no-implicit-return-types` |
+
+```typescript
+// ✅ 正确 - 箭头函数
+let handler = (event: ClickEvent): void => {
+  LogUtil.info('clicked')
 }
 
-// ❌ 错误 - 缩进不正确
-class AnalyticsCore {
-  private context: GrowingContext
+// ❌ 错误 - 函数表达式
+let handler = function(event: ClickEvent) {
+  LogUtil.info('clicked')
+}
+
+// ✅ 正确 - 嵌套逻辑用 lambda
+function processEvent(event: Event): void {
+  let validate = (e: Event): boolean => e.eventName.length > 0
+  if (validate(event)) { ... }
+}
+
+// ❌ 错误 - 嵌套函数
+function processEvent(event: Event): void {
+  function validate(e: Event): boolean { return e.eventName.length > 0 }
+}
+
+// ✅ 正确 - 解构参数改为普通参数
+function buildEvent(eventName: string, timestamp: number): Event { ... }
+
+// ❌ 错误
+function buildEvent({ eventName, timestamp }: EventParams): Event { ... }
+
+// ✅ 正确 - 显式返回类型（调用其他函数时必须标注）
+function getSessionId(): string {
+  return SessionManager.currentId()
 }
 ```
 
-### 括号和控制流
+### 4. 控制流
+
+| 约束 | 禁止 | 允许 | 规则 ID |
+|------|------|------|---------|
+| `for..in` | `for (let k in obj)` | `for..of` / 索引 `for` / `Object.keys()` | `arkts-no-for-in` |
+| `with` 语句 | `with (Math) { ... }` | 直接用限定名 `Math.PI` | `arkts-no-with` |
+| Catch 类型标注 | `catch (e: unknown)` | `catch (e)` | `arkts-no-types-in-catch` |
+| `throw` 任意值 | `throw 'error'` / `throw 42` | `throw new Error('msg')` | `arkts-limited-throw` |
 
 ```typescript
-// ✅ 正确 - 括号在同一行
-if (condition) {
-    doSomething()
-} else {
-    doSomethingElse()
+// ✅ 正确 - for..of 遍历数组
+for (let event of events) {
+  process(event)
 }
 
-// ✅ 正确 - 允许短函数
-getDeviceId(): string {
-    return DeviceInfo.deviceId
+// ✅ 正确 - 索引遍历
+for (let i = 0; i < events.length; i++) {
+  process(events[i])
 }
 
-// ❌ 错误 - 括号在新行
-if (condition)
-{
-    doSomething()
+// ❌ 错误
+for (let key in attrs) { ... }
+
+// ✅ 正确 - catch 无类型标注
+try {
+  await database.write(event)
+} catch (e) {
+  LogUtil.error('write failed')
 }
+
+// ❌ 错误
+} catch (e: unknown) { ... }
+
+// ✅ 正确 - throw 只抛 Error
+throw new Error('dataSourceId is required')
+
+// ❌ 错误
+throw 'invalid config'
+throw { code: 400, msg: 'bad request' }
 ```
 
-### 行续接
+### 5. 解构
+
+| 约束 | 禁止 | 允许 | 规则 ID |
+|------|------|------|---------|
+| 解构赋值 | `let { x, y } = point` | `let x = point.x` | `arkts-no-destruct-assignment` |
+| 解构参数 | `function f({ x, y })` | 普通参数（见函数部分） | `arkts-no-destruct-params` |
+| 数组解构 | `let [a, b] = arr` | `let a = arr[0]` | `arkts-no-destruct-assignment` |
 
 ```typescript
-// ✅ 正确 - 在 120 字符处换行，缩进 4 空格
-static writeEventToDisk<T extends Event>(
-    event: T,
-    context: GrowingContext,
-    eventScene: EventScene = EventScene.Native
-): void {
-    // 实现
-}
+// ✅ 正确
+let eventName = event.name
+let timestamp = event.timestamp
 
-// ✅ 正确 - 链式调用分行
-subWindow.loadContentByName(routeName, localStorage)
-    .then(() => {
-        subWindow.setWindowBackgroundColor(color)
-    })
+// ❌ 错误
+let { name: eventName, timestamp } = event
+let [first, ...rest] = events
 ```
 
-## 命名规范
+### 6. 类与接口
 
-| 构造类型 | 规范 | 示例 |
-|---------|------|------|
-| 类 | PascalCase | `AnalyticsCore`, `EventDatabase` |
-| 接口 | PascalCase | `GrowingAnalyticsInterface` |
-| 枚举 | PascalCase | `EventType`, `ConfigMode` |
-| 方法/函数 | camelCase | `trackEvent()`, `getDeviceId()` |
-| 属性/字段 | camelCase | `dataSourceId`, `sessionInterval` |
-| 常量 | UPPER_SNAKE_CASE（类枚举） | `SDK_VERSION` |
-| 静态成员 | 类名 PascalCase，方法 camelCase | `LogUtil.info()` |
-| 类型别名 | PascalCase | `AttributesType`, `GrowingAttrType` |
-
-## 导入组织
-
-导入必须按以下三组组织，组间空行分隔：
+| 约束 | 禁止 | 允许 | 规则 ID |
+|------|------|------|---------|
+| 构造函数参数声明字段 | `constructor(private id: string)` | 类体中单独声明字段 | `arkts-no-ctor-prop-decls` |
+| 接口中构造函数签名 | `interface F { new(): T }` | 工厂方法 / 抽象类 | `arkts-no-ctor-signatures-iface` |
+| `implements` 中使用类 | `class A implements SomeClass` | 只能 implements 接口 | `arkts-implements-only-iface` |
+| 类字面量 | `const R = class { ... }` | 具名类定义 | `arkts-no-class-literals` |
+| 私有 `#` 字段 | `#foo: number` | `private foo: number` | `arkts-no-private-identifiers` |
+| 多个静态代码块 | 类中 `static { }` 超过一个 | 合并到单个静态块 | `arkts-no-multiple-static-blocks` |
+| `Symbol()` | `Symbol('id')` | —（`Symbol.iterator` 除外） | `arkts-no-symbol` |
 
 ```typescript
-// 1. 系统/HarmonyOS 导入优先
+// ✅ 正确 - 字段在类体中声明
+class EventSender {
+  private config: GrowingConfig
+  private isUploading: boolean = false
+
+  constructor(config: GrowingConfig) {
+    this.config = config
+  }
+}
+
+// ❌ 错误 - 构造函数参数声明字段
+class EventSender {
+  constructor(private config: GrowingConfig) { }
+}
+
+// ✅ 正确 - implements 只用接口
+class AnalyticsCore implements GrowingAnalyticsInterface { ... }
+
+// ❌ 错误 - implements 类
+class SubTracker implements AnalyticsCore { ... }
+```
+
+---
+
+## 第二部分：SDK 特有模式
+
+### TaskPool 回调
+
+TaskPool 中的任务必须用 `@Concurrent` 装饰器，内部只能用箭头函数（无 `this`）：
+
+```typescript
+// ✅ 正确 - TaskPool 任务函数
+@Concurrent
+function writeEventTask(serialized: string, dbPath: string): void {
+  // 纯函数，无 this
+}
+
+taskpool.execute(writeEventTask, JSON.stringify(event), dbPath)
+```
+
+### 可选字段
+
+```typescript
+// ✅ 正确 - 显式 union 类型
+class UserIdentifier {
+  userId: string | undefined = undefined
+  userKey: string | undefined = undefined
+}
+
+// ❌ 避免 - 可选 ? 语法（ArkTS 支持但 SDK 内部统一用显式 union）
+userId?: string
+```
+
+### niceTry 包装模式
+
+SDK 内部用 `niceTry` 包装可能抛出的表达式，返回值或 `undefined`：
+
+```typescript
+// niceTry 签名（工具函数）
+function niceTry<T>(fn: () => T): T | undefined {
+  try {
+    return fn()
+  } catch (e) {
+    return undefined
+  }
+}
+
+// 使用
+let deviceId: string | undefined = niceTry(() => DeviceInfo.udid)
+```
+
+### 事件属性字典
+
+SDK 使用 `GrowingAttrType`（内部）和 `AttributesType`（公开）表示键值对属性，不用 `Record<string, any>`：
+
+```typescript
+// ✅ 正确
+type AttributesType = Record<string, string | number | boolean>
+
+function track(eventName: string, attributes: AttributesType): void { ... }
+```
+
+---
+
+## 第三部分：格式规范
+
+### 基础格式
+
+- **缩进**：4 个空格，禁用 tab
+- **行宽**：≤ 120 字符
+- **字符串**：单引号 `'hello'`（模板字符串用反引号）
+- **括号**：`{` 同行，不换行
+
+### 导入顺序
+
+```typescript
+// 1. 系统 / HarmonyOS API
 import AbilityStage from '@ohos.app.ability.AbilityStage'
-import UIAbility from '@ohos.app.ability.UIAbility'
 import window from '@ohos.window'
 
-// 2. 第三方库导入
-import { SomeClass } from 'third-party-lib'
+// 2. 第三方库
 
-// 3. 内部模块导入（相对路径）
+// 3. 内部模块（相对路径）
 import { GrowingConfig } from '../interfaces/GrowingConfig'
 import { LogUtil } from '../utils/LogUtil'
-import Util from '../utils/Util'
 ```
 
-## 文件头模板
+### 命名规范
 
-每个源文件必须包含 Apache 2.0 许可证头：
+| 类型 | 规范 | 示例 |
+|------|------|------|
+| 类 / 接口 / 枚举 / 类型别名 | PascalCase | `AnalyticsCore`, `EventType`, `AttributesType` |
+| 方法 / 函数 / 属性 / 变量 | camelCase | `trackEvent()`, `sessionId` |
+| 常量 | UPPER_SNAKE_CASE | `SDK_VERSION`, `MAX_BATCH_SIZE` |
+
+### 类成员顺序
+
+1. 静态公共字段
+2. 静态私有字段
+3. 公共实例字段
+4. 私有实例字段
+5. 构造函数
+6. 公共静态方法
+7. 公共实例方法
+8. 私有 / 受保护方法
+
+### 文件头（Apache 2.0）
 
 ```typescript
 /**
@@ -152,171 +334,42 @@ import Util from '../utils/Util'
  * Copyright (C) 2023 Beijing Yishu Technology Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * ...
  */
 ```
 
-## 类结构
+---
 
-### 字段声明顺序
+## 第四部分：代码审查清单
 
-1. 静态公共字段
-2. 静态私有字段
-3. 公共实例字段
-4. 私有实例字段
+### ArkTS 语法
 
-```typescript
-class Example {
-    // 1. 静态公共
-    static debugEnabled: boolean = false
-    
-    // 2. 静态私有
-    private static _instance: Example
-    
-    // 3. 公共实例
-    context: GrowingContext
-    config: GrowingConfig
-    
-    // 4. 私有实例
-    private _isInitialized: boolean = false
-    private _eventQueue: Event[] = []
-}
-```
+- [ ] 无 `any` / `unknown`（含 `as any` cast）
+- [ ] 无解构赋值 / 解构参数（`let { x } = o` / `function f({ x })`）
+- [ ] 无 `var`（用 `let` / `const`）
+- [ ] 无 `#` 私有字段（用 `private`）
+- [ ] 无 `obj['key']` 索引访问
+- [ ] 无函数表达式（`function(x) {}`）→ 箭头函数
+- [ ] 无嵌套函数定义（用 lambda 替代）
+- [ ] 无 `for..in`（用 `for..of` / 索引 `for`）
+- [ ] 无 `delete` 操作符（字段改为 nullable）
+- [ ] 无 `in` 操作符（用 `instanceof`）
+- [ ] `throw` 只抛 `Error` 或其子类
+- [ ] `catch (e)` 无类型标注
+- [ ] 类型转换只用 `as T`（无 `<T>value`）
+- [ ] 函数调用其他函数时返回类型显式声明
+- [ ] 无交叉类型 / 条件类型 / 映射类型
+- [ ] 无索引签名（`[key: string]: T`）
+- [ ] 对象字面量对应已声明的类或接口（不赋给 `Object` / `object`）
+- [ ] `implements` 后只有接口（不是类）
+- [ ] 构造函数参数不包含字段声明
 
-### 方法组织顺序
-
-1. 构造函数
-2. 公共静态方法
-3. 公共实例方法
-4. 私有/受保护方法
-
-## 类型安全模式
-
-### 显式类型
-
-```typescript
-// ✅ 正确 - 显式类型
-let eventName: string = 'click'
-let attributes: AttributesType = {}
-
-// ❌ 错误 - 隐式类型（ArkTS 可能拒绝）
-let eventName = 'click'
-let attributes = {}
-```
-
-### 可选字段的联合类型
-
-```typescript
-// ✅ 正确
-userId: string | undefined = undefined
-networkState: string | undefined = undefined
-
-// ❌ 错误 - 避免使用 ? 简写，优先使用显式联合类型
-userId?: string
-```
-
-### 接口实现
-
-```typescript
-// ✅ 正确 - 使用接口实现多态
-export interface GrowingAnalyticsInterface {
-    isInitializedSuccessfully(): boolean
-    setDataCollectionEnabled(enabled: boolean): void
-}
-
-export class AnalyticsCore implements GrowingAnalyticsInterface {
-    // 实现
-}
-```
-
-## 字符串和字面量规范
-
-### 字符串引号
-
-字符串使用单引号：
-
-```typescript
-// ✅ 正确
-let message: string = 'Hello World'
-
-// ❌ 错误
-let message: string = "Hello World"
-```
-
-### 模板字符串
-
-插值使用模板字符串：
-
-```typescript
-// ✅ 正确
-let message: string = `Event ${eventName} tracked with id ${eventId}`
-
-// ❌ 错误 - 字符串拼接
-let message: string = 'Event ' + eventName + ' tracked with id ' + eventId
-```
-
-## 错误处理
-
-### 易错操作的返回类型
-
-```typescript
-// ✅ 正确 - 返回布尔值或结果类型
-static handleOpenURL(uri: string): boolean {
-    // 实现
-}
-
-// ✅ 正确 - 对外部操作使用 try-catch
-try {
-    let subWindow = window.findWindow(SUB_WINDOW_NAME)
-    return subWindow
-} catch (e) {
-    return undefined
-}
-```
-
-## 注释
-
-### 行内注释
-
-```typescript
-// 使用单行注释进行解释说明
-// 使用完整句子，正确使用标点符号
-
-// 根据调试模式计算延迟
-let delay: number = config.debugEnabled ? 1000 : interval
-```
-
-### 区域注释
-
-```typescript
-// ==================== 事件处理 ====================
-
-// ==================== 会话管理 ====================
-```
-
-## 代码审查清单
-
-审查代码时，请验证：
+### SDK 规范
 
 - [ ] 文件包含 Apache 2.0 许可证头
-- [ ] 未使用 `any` 或 `unknown` 类型
-- [ ] 未使用解构赋值
-- [ ] 未使用 `var` 关键字（使用 `let`/`const`）
-- [ ] 未使用私有 `#` 字段（使用 `private` 关键字）
-- [ ] 未使用索引属性访问（`obj['key']`）
-- [ ] 导入组织正确（系统 → 第三方 → 内部）
-- [ ] 命名符合规范（类/类型用 PascalCase，方法/字段用 camelCase）
-- [ ] 行长度 ≤ 120 字符
-- [ ] 4 空格缩进（无 tab）
-- [ ] 所有声明都有显式类型
-- [ ] 字符串使用单引号
-- [ ] 可选字段正确使用 `undefined` 联合类型
+- [ ] 新增公开 API 同步更新 `obfuscation-rules.txt`
+- [ ] 新增采集字段确认是否需要 `ignoreField` 支持
+- [ ] IO 操作在 TaskPool / Worker 中（主线程零阻塞）
+- [ ] 导入顺序：系统 → 第三方 → 内部
+- [ ] 4 空格缩进，行宽 ≤ 120
+- [ ] 字符串单引号

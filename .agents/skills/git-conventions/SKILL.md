@@ -32,18 +32,33 @@ description: Use when executing git commit, creating or naming branches, writing
 
 ### Scope（可选）
 
-用于区分代码变更所属的产品线：
+Scope 有两类用途，按实际情况选一类：
+
+**产品线 scope**（变更只影响特定产品线时使用）：
 
 | Scope | 说明 |
 |-------|------|
 | `saas` | 仅 **SaaS** 产品线相关修改 |
 | `cdp` | 仅 **CDP** 产品线相关修改 |
-| *(空)* | **New SaaS** 产品线修改（默认）<br>**或** SaaS/CDP/New SaaS **三个产品线通用**的修改 |
+| *(空)* | **New SaaS** 产品线修改（默认）**或** 三个产品线通用的修改 |
+
+**模块 scope**（变更聚焦于特定功能模块时使用）：
+
+| Scope | 说明 |
+|-------|------|
+| `autotrack` | 无埋点采集模块 |
+| `circle` | 圈选模块 |
+| `mobiledebugger` | Mobile Debugger 模块 |
+| `giokit` | GrowingToolsKit 调试工具 |
+| `hybrid` | Hybrid / WebView 集成 |
+| `flutter` | Flutter 桥接 |
 
 **使用规则**：
-- 仅涉及单一产品线（SaaS 或 CDP）时，填写对应 scope
+- 仅涉及单一产品线（SaaS 或 CDP）时，用产品线 scope
 - 涉及 New SaaS 时，省略 scope（默认）
 - 涉及三个产品线通用的修改，省略 scope
+- 修改聚焦于某个功能模块（且与产品线无关）时，用模块 scope
+- 两类 scope 不混用；范围模糊时省略 scope
 
 ### Subject（必填）
 
