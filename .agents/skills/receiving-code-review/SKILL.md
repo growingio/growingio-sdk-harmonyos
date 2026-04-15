@@ -140,3 +140,21 @@ reviewer 返回 6 条问题，你理解 1、2、3、6，不确定 4、5。
 | 回避 push back | 技术正确性 > 社交舒适度 |
 | 部分理解就开始改 | STOP-ASK，先澄清所有不明确项 |
 | 无法验证仍然继续 | 明确说出局限，请求指导 |
+
+## 避免这么想
+
+| 想法 | 现实 |
+|---|---|
+| "reviewer 说的有理，全盘接受避免冲突" | 表演式认同是失职；正确的反应是修复或给技术反驳 |
+| "reviewer 这条我觉得不对，忽略就行" | 必须 push back 并给技术理由，不是沉默不处理 |
+| "改完了不用重新 dispatch，reviewer 不会再挑出新问题" | Critical/Important 修完必须重新 review，不可自判 |
+| "先改 Critical，Important 合并前再说" | Important 也阻塞合并，只有 Suggestion 可延后 |
+| "一次把所有意见全改完再验证" | 批量修改后一个点崩了定位困难，逐条修复逐条验证 |
+| "部分听懂了就开始改" | 不明确项必须 STOP-ASK，改错的成本高于问一句 |
+
+## 关联 skill
+
+- **上游触发：** 收到 `sdk-code-review` 的 reviewer subagent 或人类 reviewer 反馈
+- **调度 subagent：** 无（本 skill 由实施者执行处理反馈）
+- **完成后交接：** 所有 Critical/Important 修复并重审通过 → 回到原流程（继续下一任务 / 进入 `verification-before-completion`）
+- **替代路径：** push back 有据且 reviewer 撤回 → 无需修改，记录讨论并继续

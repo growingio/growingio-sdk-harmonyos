@@ -183,3 +183,21 @@ git commit -m "chore: upgrade build dependencies"
 2. PR 描述中应说明变更原因和影响范围
 3. 关联相关 Issue（如有）
 4. 确保 CI 检查通过
+
+## 避免这么想
+
+| 想法 | 现实 |
+|---|---|
+| "commit message 随便写，能 push 就行" | message 是未来排查问题的唯一线索，格式不规范 = 未来自找麻烦 |
+| "分支名无所谓" | 分支名决定了搜索/自动化/权限匹配（发版分支要 `release/v*`） |
+| "所有改动塞一个 commit 省事" | 一次 commit 只做一件事是回滚/审查/二分定位的基础 |
+| "版本号拍脑袋来" | 遵守 semver；破坏 API = major，新增 = minor，修复 = patch |
+| "Co-Authored-By 随便加" | 按项目约定，每个 commit 包含 `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>` |
+| "PR 标题抄 commit 就行" | PR 标题是产品语义层面的描述，不是 commit subject 的复制 |
+
+## 关联 skill
+
+- **上游触发：** 执行 `git commit` / `git push` / 创建分支 / 写 PR 标题时
+- **调度 subagent：** 无（本 skill 是参考手册，由执行者自己应用）
+- **完成后交接：** `finishing-a-development-branch`（分支收尾流程会引用本 skill 的 commit/tag/PR 规范）
+- **替代路径：** 无——所有 git 操作都应遵循本规范

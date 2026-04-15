@@ -160,3 +160,20 @@ reviewer 返回结果
 ```
 
 **不要向用户隐藏审查结果。** 即使通过，也在请求用户确认时附上 reviewer 的摘要（如"plan reviewer 通过，无 Critical/Important 问题"），让用户知道 plan 经过了独立审查。
+
+## 避免这么想
+
+| 想法 | 现实 |
+|---|---|
+| "自己写的 plan 自己审就行" | 自审替代不了独立审查，reviewer 是新鲜 context |
+| "跳过 reviewer 直接请求用户确认" | Planning Gate 的独立审查是硬性流程的一部分，不是可选步骤 |
+| "reviewer 说 Important 我觉得是 Suggestion" | 可以 push back，但要有技术理由，不是感觉 |
+| "修完 Critical 不用重新 dispatch" | 必须重新 dispatch，不可自判"已修好" |
+| "审了两轮还有问题就先过吧" | 第 2 轮后仍有 Critical/Important → 停下讨论，不盲目循环 |
+
+## 关联 skill
+
+- **上游触发：** `writing-plans` 产出 plan 文件后、请求用户确认前
+- **调度 subagent：** `general-purpose` subagent（本 skill 内嵌 prompt 模板，不需专门 agent）
+- **完成后交接：** 通过 → 向用户展示 plan + reviewer 摘要请求确认 → 进入实施
+- **替代路径：** 未触发 Planning Gate 的小改动 → 不走本 skill

@@ -13,14 +13,28 @@ description: Use when executing implementation plans with independent tasks - di
 
 ## 何时使用
 
-**使用条件（全部满足）：**
-- 有实施规划（plan 文件）
-- 任务大部分相互独立
-- 希望在当前会话中连续执行
+### 决策图
 
-**不适用时：**
-- 无 plan → 先写 plan 或手动实施
-- 任务紧密耦合 → 手动实施
+```
+有 plan 文件?
+  ├─ NO  → writing-plans 先产出 plan（或判断是否应该手动实施）
+  └─ YES → 任务数 ≥ 3 且任务大部分独立?
+             ├─ NO  → 手动实施（模式 B）+ 按 sdk-code-review 流程审查
+             └─ YES → 希望留在当前会话连续执行?
+                        ├─ NO  → 改用手动实施 + 完整审查
+                        └─ YES → 本 skill（subagent-driven-development）
+```
+
+### 使用条件（全部满足）
+
+- 有实施规划（plan 文件存在于 `docs/plans/`）
+- 任务 ≥ 3 个且大部分相互独立
+- 希望在当前会话中连续执行（不切换会话）
+
+### 不适用时
+
+- 无 plan → 先走 `writing-plans` → `plan-document-review` 产出合规 plan
+- 任务紧密耦合 → 手动实施，避免 subagent 间相互阻塞
 - 只有 1-2 个简单改动 → 直接改，不需要这个流程
 
 ## 流程
@@ -194,9 +208,33 @@ Task 2: 实现 Hybrid 模块中的 onPageEnd 逻辑
 - dispatch 新的修复 subagent，给出具体指令
 - 不自己手动修（上下文污染）
 
-## 与其他 skill 的集成
+## 避免这么想
 
-- **sdk-code-review** — 全部任务完成后，dispatch 全局审查
-- **receiving-code-review** — 处理审查反馈的规范
-- **growingio-arkts-coding-style** — 实现者和审查者都应遵循的编码规范
-- **git-conventions** — 提交信息规范
+| 想法 | 现实 |
+|---|---|
+| "任务独立性我判断过了不用走 subagent" | 本 skill 的隔离是为了防 context 污染，不只是为了并行 |
+| "一个 subagent 并行多任务能快" | 明确禁止——会冲突；一次只 dispatch 一个实现者 |
+| "subagent 可以自己读 plan 文件" | 必须粘贴全文进 prompt，不让它读文件，避免 context 污染 |
+| "自审过就不用 spec-reviewer 了" | 自审替代不了独立审查；两阶段都要走 |
+| "spec-reviewer 有问题先质量审了，回头再改" | 顺序不可颠倒，规格不合规时做质量审查纯浪费 |
+| "实现者报 BLOCKED 再让它用更强模型重试一次" | BLOCKED 必须更换上下文/模型/任务粒度；不允许无变化重试 |
+| "reviewer 提了 Critical 我修了就不用重新 review 了" | 修完必须重新 dispatch 同审查者，不可自判 |
+
+## 关联 skill
+
+- **上游触发：**
+  - `writing-plans` 产出 plan 文件（前置）
+  - `plan-document-review` 通过独立审查（前置）
+- **调度 subagent / Prompt 模板（本 skill 目录下）：**
+  - `./implementer-prompt.md` — 实现者 subagent 调度模板
+  - `./spec-reviewer-prompt.md` — 规格合规审查 subagent 调度模板
+  - `./code-quality-reviewer-prompt.md` — 代码质量审查 subagent 调度模板
+- **Subagent 内部遵循（嵌入在 prompt 中）：**
+  - `test-driven-development` — 核心路径走 Red-Green-Refactor
+  - `growingio-arkts-coding-style` — ArkTS 编码规范
+  - `systematic-debugging` — 实现者遇错时的调试纪律
+- **完成后交接：**
+  - 全部任务完成 → `sdk-code-review`（全局审查）
+  - 审查反馈处理 → `receiving-code-review`
+  - 审查通过 → `verification-before-completion` → `finishing-a-development-branch`
+- **替代路径：** 任务紧密耦合或 < 3 个 → 跳过本 skill，手动实施 + `sdk-code-review` 独立审查

@@ -133,8 +133,20 @@ ls -lh GrowingToolsKit/build/default/outputs/default/*.har
                               → 通过 → 完成
 ```
 
-## 与其他 skill 的关系
+## 避免这么想
 
-- **验证失败**：进入 `systematic-debugging` skill 的四阶段方法
-- **验证通过后**：根据场景进入 `sdk-code-review`（审查）或 `finishing-a-development-branch`（分支收尾）
-- **engineer persona Step 5**：本 skill 是 Step 5 的可调用形式，实现者 subagent 和直接实施模式都应使用
+| 想法 | 现实 |
+|---|---|
+| "改完了应该能过吧" | 猜不算证据，跑命令才算 |
+| "上次跑过一次没问题" | 当前 commit 要重新跑；代码改了一点点也算新版本 |
+| "构建过了就算验证" | 构建 ≠ 测试；测试 ≠ 真实行为 |
+| "错误信息看着无关紧要" | 读完整输出，exit code ≠ 0 就是失败 |
+| "这个警告忽略吧" | 警告可能是隐式失败的前兆，先确认再决定 |
+| "改 README 这种不用验证" | 涉及 SDK 行为的才跑验证；纯文档改动确实可跳过，但必须显式判定 |
+
+## 关联 skill
+
+- **上游触发：** 任何"声明完成 / 已修好 / 准备审查 / 准备 merge"的时刻
+- **调度 subagent：** 无（实施者/控制器自己执行验证命令）
+- **完成后交接：** 验证通过 → `sdk-code-review` 或 `finishing-a-development-branch`
+- **替代路径：** 验证失败 → `systematic-debugging` 四阶段方法，不允许"再试一次"的无脑重跑

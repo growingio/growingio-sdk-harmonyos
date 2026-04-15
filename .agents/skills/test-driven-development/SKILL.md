@@ -165,8 +165,21 @@ it('json_path_includes_eventSequenceId', ...)
 | 测试依赖真实网络 / 真实文件系统 | 脆弱、慢、环境相关 |
 | `it.skip` 长期存在 | 要么修，要么删 |
 
-## 交叉引用
+## 避免这么想
 
-- Planning 阶段决定是否走 TDD：`.agents/skills/writing-plans/SKILL.md`（常见遗漏场景清单）
-- 实施阶段（模式 A）：`.agents/skills/subagent-driven-development/implementer-prompt.md` 第 2 步
-- 实施阶段（模式 B）：engineer persona `Step 3 模式 B` 第 5 条原则
+| 想法 | 现实 |
+|---|---|
+| "先写实现再补测试" | 测试退化为"验证代码写了什么"，失去发现设计错误的能力 |
+| "测试让它过就行，断言改宽松点" | 等于没测——下次回归改动就会悄悄破坏行为 |
+| "这块改动太简单不用测试" | 简单代码的 bug 最羞耻；核心路径零例外 |
+| "测试加了但没跑失败过" | 没见过 Red 的 Green 不算 Green，可能测的是空实现 |
+| "单测跑真实网络/RDB 才真实" | 依赖外部 = 慢 + 脆弱 = 最后没人跑 |
+| "一个 it 里多几个 assert 省事" | 失败时定位困难；拆成多个 it |
+| "dataCollectionEnabled=false 的路径不用测" | 这是隐私合规红线，必须有"关了就不采集"的测试 |
+
+## 关联 skill
+
+- **上游触发：** `writing-plans` 在"影响面自查清单"中判定本次涉及核心模块
+- **调度 subagent：** 无（本 skill 由实施者执行）
+- **完成后交接：** 测试通过 → 继续实施 / 交给 `verification-before-completion` 做最终验证
+- **替代路径：** 非核心路径（纯配置 / 文档）→ 跳过 TDD；运行时探索性改动 → `systematic-debugging` 的四阶段先于 TDD

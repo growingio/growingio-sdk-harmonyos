@@ -142,9 +142,20 @@ git push origin --delete <branch-name>
 | 合并后不清理分支 | 仓库分支列表污染 |
 | 跳过 Step 1 直接进入合并 | 可能把未提交改动或 WIP commit 带入 master |
 
-## 与其他 skill 的关系
+## 避免这么想
 
-- **前置：** `verification-before-completion`（必须已通过）+ `sdk-code-review`（必须已通过）
-- **调用：** `git-conventions`（commit/PR/tag 命名）
-- **发版场景下调用：** `jira-ticket`（创建发版单）+ `ohpm-publish`（发布到 OHPM Registry）
-- **engineer persona：** 本 skill 应在 Step 5 `verification-before-completion` 通过后被自动触发
+| 想法 | 现实 |
+|---|---|
+| "验证通过就算完成了" | 没合并 / 没 PR / 没 tag = 交付还没落地 |
+| "直接 push 到 master 快一点" | master 合并必须用户确认，不可自作主张 |
+| "发版分支忘了打 tag 也没事" | 丢失版本追溯能力，补 tag 需要 cherry-pick 成本 |
+| "改动都 commit 了，用 `git add -A` 一把梭" | 容易把 .env / 密钥 / 构建产物带进去 |
+| "合并完分支保留吧以后说不定还用" | 仓库分支列表会膨胀；真要用再 checkout commit |
+| "没触发 Planning Gate 就不用走收尾" | 只要有 commit 产生就应该走本 skill，小改动可以跳过 PR 但不能跳过用户确认 |
+
+## 关联 skill
+
+- **上游触发：** `verification-before-completion` 通过且 `sdk-code-review` 通过
+- **调度 subagent：** 无（本 skill 由控制器执行，用户决策哪条路径）
+- **完成后交接：** 合并到 master / PR 待评审 / 分支保留 / 分支废弃 四种终态之一
+- **替代路径：** 发版分支 → 调用 `jira-ticket`（发版单） + `ohpm-publish`（OHPM 发布） + `git-conventions`（tag 命名）

@@ -373,3 +373,22 @@ import { LogUtil } from '../utils/LogUtil'
 - [ ] 导入顺序：系统 → 第三方 → 内部
 - [ ] 4 空格缩进，行宽 ≤ 120
 - [ ] 字符串单引号
+
+## 避免这么想
+
+| 想法 | 现实 |
+|---|---|
+| "TypeScript 能这么写 ArkTS 应该也行" | ArkTS 是严格子集，解构/动态属性/any 都禁用；不看约束表就是埋雷 |
+| "先用 `any` 让它编过，后面再改" | `any` 是 ArkTS 第一红线，改不回来；上来就用正确类型 |
+| "`obj['key']` 很方便" | 禁用，必须用 `obj.key` 或定义接口 |
+| "新增字段先不改 `obfuscation-rules.txt`" | HAR 打包后混淆会把公开 API 符号名改掉，接入方直接挂 |
+| "IO 操作在 onClick 里同步调一下无所谓" | 主线程零阻塞是红线；必须走 TaskPool |
+| "`throw 'error'` 抛个字符串够用了" | ArkTS 要求只抛 `Error` 或其子类 |
+| "类里加 `#private` 字段更现代" | ArkTS 不支持 `#`，用 `private` 关键字 |
+
+## 关联 skill
+
+- **上游触发：** 写或审查任何 `.ets` / `.ts` 文件时
+- **调度 subagent：** 无（本 skill 是规范手册，由编码者/审查者自己对照）
+- **完成后交接：** `sdk-code-review` 的 code-reviewer subagent 必须用本 skill 的约束清单做审查
+- **替代路径：** 遇到 TypeScript 代码需迁移 → 交叉参考 `docs/typescript-to-arkts-migration-guide.md`
