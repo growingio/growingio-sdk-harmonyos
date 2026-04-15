@@ -13,6 +13,14 @@ If you were dispatched as a subagent to execute a specific task — this include
 
 **then SKIP THIS META-SKILL ENTIRELY.** Do not apply the routing, Planning Gate, or workflow below. Just execute your assigned task as specified in the prompt you received. The meta-skill's rules are for the main controller agent only; you are not it.
 
+**但"跳过 meta-skill"不等于"不用任何 skill"**：子 agent 仍可（且应当）自主调用与任务相关的**域 skill**，例如：
+- `growingio-arkts-coding-style`（写/审 `.ets`/`.ts` 时）
+- `test-driven-development`（实现核心路径时）
+- `systematic-debugging`（遇到 build/test/runtime 失败时）
+- `verification-before-completion`（声称任务完成前）
+
+跳过的**只是** meta-skill 的三项硬规则：**Planning Gate + Workflow Routing + TodoWrite 强制**。域 skill 的判断由子 agent 按自身任务自行决定。
+
 Signal of subagent context: your prompt starts with "你是…" / "You are…" followed by a specific role description, or you received a structured task payload. In contrast, the main controller receives raw user messages.
 </SUBAGENT-STOP>
 
@@ -48,9 +56,16 @@ If the user says "skip the plan this time" and a skill says "always write a plan
 
 **Invoke relevant skills BEFORE any response or action.** Even a 1% chance a skill applies means invoke it. If the invoked skill turns out to be wrong, you can drop it — but you must check first.
 
+## Skill Checklist → TodoWrite (HARD RULE)
+
+当被调用的 skill 包含步骤清单（"Checklist"、编号步骤、"You MUST..."、"必须完成以下"），控制器 **必须**立即调用 `TaskCreate` 把每一条转为独立 todo，并在完成每一步后用 `TaskUpdate` 更新状态。**禁止只在脑内执行 checklist**——脑内 checklist 的漏项率极高，落盘到 todo 才有约束力。
+
+此规则对控制器（主 agent）强制；subagent 因其生命周期短、目标单一，可自行判断是否需要。
+
 ## Skill Catalog (by category)
 
 ### Process skills (check FIRST — they decide HOW to approach the task)
+- `brainstorming` — 模糊需求 / 范围不清 / 写 plan 前，做"一次一个问题"的规格收敛
 - `writing-plans` — drafting an implementation plan in `docs/plans/`
 - `plan-document-review` — reviewing a plan doc for completeness before user confirmation
 - `subagent-driven-development` — executing a plan by dispatching fresh subagents with two-stage review
@@ -63,13 +78,18 @@ If the user says "skip the plan this time" and a skill says "always write a plan
 
 ### Closing skills
 - `verification-before-completion` — before claiming work is done/fixed/ready
-- `finishing-a-development-branch` — after verification & review pass, to close out the branch
+- `finishing-a-development-branch` — after verification & review pass, to close out the branch（普通分支收尾 / 发版分支 → 触发 Release 侧流）
 - `git-conventions` — writing commit messages, branch names, PR titles
 
 ### Domain skills
 - `growingio-arkts-coding-style` — writing/reviewing `.ets`/`.ts` files
+
+### Release 侧流（仅发版分支激活，不走主流程）
+- `jira-ticket` — 创建发版 Jira ticket（版本号确定后、`ohpm-publish` 之前）
 - `ohpm-publish` — publishing the SDK HAR to OHPM registry
-- `jira-ticket` — creating a release tracking ticket in Jira
+
+### Meta 侧流（改 skill / 改 agent 本身时才用，不走主流程）
+- `writing-skills` — 新建或修改 `.agents/skills/` 下任何 SKILL.md 时
 
 ## Planning Gate (HARD GATE)
 
@@ -100,8 +120,12 @@ Required sections in every plan (missing any = incomplete):
 | "用户没要求规划" | 触发条件满足即强制，不需用户单独要求 |
 | "只改内部实现，不影响公开 API" | 内部实现影响 ≥3 文件同样触发 |
 | "这次先快速改，下次规范" | 没有"下次规范"，规则从第一次执行 |
+| "步骤很清楚，我脑内过一遍 checklist 就行，不用 TodoWrite" | 脑内 checklist 漏项率极高；TaskCreate 落盘 30 秒，无例外 |
+| "需求我看懂了，不用 brainstorming" | 看懂字面 ≠ 规格闭合；brainstorming 把假设写下来给用户挑错 |
 
 ## Workflow Routing (decision tree)
+
+> 图中**实线**是主干，**虚线/旁路**是可插入的 skill（遇到对应情况随时跳转）。每个 `→` 都是一次 skill invoke。
 
 ```
 User request received
@@ -110,39 +134,80 @@ User request received
 Invoke using-growingio-sdk-skills (you are here)
   │
   ▼
-Understand intent → if ambiguous, ask ONE clarifying question
+Understand intent
   │
   ▼
-Read relevant docs (docs/sdk-engineering-guide.md → "按场景读取" table)
+需求模糊 / 范围不清 / 无规格?
+  ├─ YES → brainstorming → 产出 docs/specs/YYYY-MM-DD-<topic>.md → 用户确认
+  │          │
+  │          ▼
+  │        brainstorming 自评影响面（按 Planning Gate 触发条件）
+  │          ├─ ≥3 files OR public API change → 进主干 writing-plans
+  │          └─ <3 files AND no public API     → 进主干 直接实施（跳过 plan）
+  └─ NO  → 继续
   │
   ▼
-Planning Gate triggered? (≥3 files OR public API change)
-  ├─ YES → writing-plans → plan-document-review → WAIT FOR USER CONFIRM
-  │         │
-  │         ▼
-  │       Tasks mostly independent AND ≥3 tasks?
-  │         ├─ YES → subagent-driven-development (you are controller, don't code)
-  │         └─ NO  → implement directly, apply test-driven-development on core paths
-  │
-  └─ NO  → implement directly (single-responsibility edits)
-            │
-            ▼
-          Encountered build/test/runtime error? → systematic-debugging
+Read relevant docs (docs/sdk-doc-routing.md 按场景读取表;
+                    docs/sdk-critical-rules.md 若改核心模块必读)
   │
   ▼
-Code review?
-  ├─ Had a plan → sdk-code-review (full: spec-reviewer → code-reviewer)
-  ├─ No plan, ≤5 files, no public API change → sdk-code-review (code-reviewer only)
-  └─ Trivial change (< 3 files, no public API) → may skip
+Planning Gate: ≥3 files OR public API change ?
   │
-  ▼
-verification-before-completion (run actual verify command, read full output)
-  │
-  ▼
-finishing-a-development-branch (commit/PR/merge decision)
-  │
-  ▼
-Done
+  ├─ YES ─────────────────────────────────────────────┐
+  │     │                                              │
+  │     ▼                                              │
+  │   writing-plans → plan-document-review             │
+  │     → WAIT FOR USER CONFIRM                        │
+  │     │                                              │
+  │     ▼                                              │
+  │   Tasks ≥3 且大部分独立?                            │
+  │     ├─ YES → subagent-driven-development           │
+  │     │          (控制器不写代码；subagent 内部按需用      │
+  │     │           TDD / growingio-arkts-coding-style  │
+  │     │           / systematic-debugging)            │
+  │     │                                              │
+  │     └─ NO  → 直接实施（单一职责 edits）               │
+  │                                                    │
+  └─ NO ── 直接实施（单一职责 edits） ───────────────────┘
+                       │
+                       │  实施期可随时插入的旁路 skill：
+                       │    ┊ 改核心模块（事件管道/存储/网络） → test-driven-development
+                       │    ┊ 写/审 .ets / .ts                  → growingio-arkts-coding-style
+                       │    ┊ 任何阶段 build/test/runtime 失败 → systematic-debugging
+                       │                                        (修完 → 回到失败前的上一步)
+                       ▼
+           verification-before-completion (跑真实 verify 命令，读完整输出)
+                       │
+                       ├─ 失败 → systematic-debugging → （修完）→ 回本步骤重跑 ─┐
+                       │                                                     │
+                       └─ 通过                                               │
+                       │◄────────────────────────────────────────────────────┘
+                       ▼
+           Code review
+             ├─ 有 plan → sdk-code-review 模式 A（spec-reviewer → code-reviewer）
+             ├─ 无 plan + ≤5 files + 不动公开 API → sdk-code-review 模式 B（仅 code-reviewer）
+             └─ 琐碎改动（<3 files 且不动公开 API）→ 可跳过
+                       │
+                       ├─ 需修改 → receiving-code-review → 修复
+                       │              → 重派同一 reviewer 复审 ─────────────┐
+                       │              → 回 verification-before-completion 重跑
+                       │                                                    │
+                       └─ 通过                                              │
+                       │◄───────────────────────────────────────────────────┘
+                       ▼
+           finishing-a-development-branch
+             ├─ 普通分支 → 使用 git-conventions 规范 commit / PR / 分支名
+             │            → Done
+             │
+             └─ 发版分支（version 字段变更）→ 侧流：
+                    jira-ticket（发版单）→ ohpm-publish（发布 HAR）
+                    → 使用 git-conventions 规范 tag 命名
+                    → Done
+```
+
+**Meta 侧流**（与上图主流程正交，改 skill 本身时激活）：
+```
+修改 .agents/skills/*/SKILL.md → writing-skills → 按其 Checklist 走完
 ```
 
 ## Skill Types
@@ -164,6 +229,8 @@ The skill itself declares which type it is.
 | "先做一点再补流程" | 补不回来，从第一步就按流程走 |
 | "这个场景有点特殊" | 没有特殊，Rigid skill 没有例外 |
 | "我在 subagent 里，不需要查" | 看 `<SUBAGENT-STOP>` — 只有控制器跳过，其他要查 |
+| "skill 里的 checklist 我记住了，不用落盘 TodoWrite" | 落盘是约束力，不是记忆术；立刻 TaskCreate |
+| "先直接写 plan，跳过 brainstorming" | 需求模糊时 plan 的输入就是错的；先走 brainstorming 收敛规格 |
 
 ## User Instructions Override
 
@@ -173,7 +240,14 @@ Only explicit "skip the plan / skip the review" overrides the skill.
 
 ## Domain Context
 
-Domain knowledge (product mission, SDK red lines, module docs routing, build commands, health metrics) lives in `docs/sdk-engineering-guide.md`. This skill does NOT duplicate it — read that doc for WHAT to build; read skills for HOW to build.
+领域知识拆分为若干 lazy-load 文档：
+
+- `docs/sdk-engineering-guide.md` — 产品使命、核心职责索引、健康指标（精简版）
+- `docs/sdk-critical-rules.md` — 修改核心模块前 **必读**
+- `docs/sdk-doc-routing.md` — 按场景读取的模块文档索引
+- `docs/sdk-build-commands.md` — hvigor 构建命令
+
+本 skill 不重复这些内容——读文档知道 WHAT to build，读 skill 知道 HOW to build。
 
 ---
 

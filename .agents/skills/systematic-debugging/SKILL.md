@@ -116,7 +116,7 @@ git log --oneline --grep="关键词" -10
 
 ---
 
-如果修复后问题消失 → 完成，记录根因和解法（在 commit message 或注释中）。
+如果修复后问题消失 → 记录根因和解法（commit message 或注释）→ **回到 `verification-before-completion` 重跑**。调试过程中的临时改动（日志、调试开关、临时 mock）需在重跑 verify 前清理干净。
 
 如果问题仍然存在 → 带着"已知不是 X"回到 Phase 1，这次你掌握了更多信息。
 

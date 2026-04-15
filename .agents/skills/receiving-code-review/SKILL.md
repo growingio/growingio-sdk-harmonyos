@@ -151,10 +151,22 @@ reviewer 返回 6 条问题，你理解 1、2、3、6，不确定 4、5。
 | "先改 Critical，Important 合并前再说" | Important 也阻塞合并，只有 Suggestion 可延后 |
 | "一次把所有意见全改完再验证" | 批量修改后一个点崩了定位困难，逐条修复逐条验证 |
 | "部分听懂了就开始改" | 不明确项必须 STOP-ASK，改错的成本高于问一句 |
+| "我改得很小，不用重跑 verify" | 任何修改后 verify 都要重跑——这是 `verification-before-completion` 的不变量 |
+| "改完 reviewer 一定会通过，不用重新 dispatch 了" | Critical/Important 修完必须重新 review，自判=赌博 |
+
+## 下游 / loop-back（HARD RULE）
+
+反馈项全部实施完成后，**必须**按以下顺序走完回路，不得自行判定"改好了"：
+
+1. **回到同一个 reviewer 复审**（不是新 reviewer，避免上下文丢失）
+   - 直接实施路径：重新 dispatch `sdk-code-review` 的同一 reviewer 角色
+   - SDD 路径：由 SDD 控制器重派 spec-reviewer（若 spec 未过）或 code-reviewer（若 spec 已过）
+2. **所有项通过后** → `verification-before-completion` 重跑（修复可能破坏既有验证，不重跑就是赌博）
+3. **verify 通过** → 回到主流程（继续下一任务 / `finishing-a-development-branch`）
 
 ## 关联 skill
 
 - **上游触发：** 收到 `sdk-code-review` 的 reviewer subagent 或人类 reviewer 反馈
 - **调度 subagent：** 无（本 skill 由实施者执行处理反馈）
-- **完成后交接：** 所有 Critical/Important 修复并重审通过 → 回到原流程（继续下一任务 / 进入 `verification-before-completion`）
-- **替代路径：** push back 有据且 reviewer 撤回 → 无需修改，记录讨论并继续
+- **完成后交接：** 见上方「下游 / loop-back」
+- **替代路径：** push back 有据且 reviewer 撤回该条 → 该条无需修改；其他条仍需按 loop-back 流程走

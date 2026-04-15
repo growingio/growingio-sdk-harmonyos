@@ -76,7 +76,12 @@ Dispatch 质量审查者 subagent（./code-quality-reviewer-prompt.md）
   ↓
 Dispatch 全局 code-reviewer（sdk-code-review skill）
   ↓
-完成
+全局审查通过？ ──no──→ receiving-code-review → 修复 → 重新全局审查
+  │yes
+  ↓
+verification-before-completion
+  ↓
+finishing-a-development-branch  ← 终态
 ```
 
 ## 模型选择

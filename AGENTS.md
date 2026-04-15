@@ -13,6 +13,10 @@
 
 ## 工程指南
 
-详细的产品使命、核心职责、Critical Rules、文档路由、构建命令、健康指标等见下方引用文档：
+@docs/sdk-engineering-guide.md 提供产品使命 + 文档索引 + 健康指标。
 
-@docs/sdk-engineering-guide.md
+> **注意**：以下文档为 lazy-load（不自动注入），按需读取：
+>
+> - `docs/sdk-critical-rules.md` — 修改核心模块 **必读**（SDK 设计红线 + ArkTS 开发规范）
+> - `docs/sdk-doc-routing.md` — 按场景读取的模块文档索引表
+> - `docs/sdk-build-commands.md` — hvigor 构建命令速查
