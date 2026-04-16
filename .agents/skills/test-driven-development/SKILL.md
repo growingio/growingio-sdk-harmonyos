@@ -1,9 +1,11 @@
 ---
 name: test-driven-development
-description: Use when implementing core SDK paths (event pipeline, storage, network) to follow Red-Green-Refactor cycle with hypium
+description: Use when implementing or modifying core SDK paths (event pipeline, storage, network, session management)
 ---
 
 # Test-Driven Development
+
+> **Type:** Technique | **Discipline:** Rigid
 
 在 SDK 核心路径上，**先写会失败的测试，再写通过测试的最小实现**。测试不是交付后补的文档，而是驱动设计的工具。
 
@@ -165,9 +167,9 @@ it('json_path_includes_eventSequenceId', ...)
 | 测试依赖真实网络 / 真实文件系统 | 脆弱、慢、环境相关 |
 | `it.skip` 长期存在 | 要么修，要么删 |
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
+| Excuse | Reality |
 |---|---|
 | "先写实现再补测试" | 测试退化为"验证代码写了什么"，失去发现设计错误的能力 |
 | "测试让它过就行，断言改宽松点" | 等于没测——下次回归改动就会悄悄破坏行为 |
@@ -176,6 +178,13 @@ it('json_path_includes_eventSequenceId', ...)
 | "单测跑真实网络/RDB 才真实" | 依赖外部 = 慢 + 脆弱 = 最后没人跑 |
 | "一个 it 里多几个 assert 省事" | 失败时定位困难；拆成多个 it |
 | "dataCollectionEnabled=false 的路径不用测" | 这是隐私合规红线，必须有"关了就不采集"的测试 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "让我先把实现写完，测试等会补" → 删掉实现，从 Red 开始
+- "这个函数太简单了，不需要测试" → 简单代码的 bug 最羞耻，核心路径零例外
+- "测试第一次就绿了" → 没见过 Red 的 Green 不可信，检查测试是否真的覆盖了目标行为
+- "dataCollectionEnabled=false 的路径不重要" → 这是隐私合规红线，必须有专门测试
 
 ## 关联 skill
 

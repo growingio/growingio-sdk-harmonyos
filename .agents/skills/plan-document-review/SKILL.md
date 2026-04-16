@@ -1,9 +1,11 @@
 ---
 name: plan-document-review
-description: Use after writing a plan document in docs/plans/ to verify completeness, task decomposition, and coverage before requesting user confirmation
+description: Use after writing a plan document in docs/plans/, before requesting user confirmation
 ---
 
 # Plan Document Review
+
+> **Type:** Technique | **Discipline:** Rigid
 
 在 Planning Gate 输出完规划文档后、请求用户确认前，dispatch 一个 plan reviewer subagent 审查规划本身的质量。这一层审查能堵住"格式正确但内容不到位"的规划漏过 gate 的问题。
 
@@ -161,15 +163,21 @@ reviewer 返回结果
 
 **不要向用户隐藏审查结果。** 即使通过，也在请求用户确认时附上 reviewer 的摘要（如"plan reviewer 通过，无 Critical/Important 问题"），让用户知道 plan 经过了独立审查。
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
+| Excuse | Reality |
 |---|---|
 | "自己写的 plan 自己审就行" | 自审替代不了独立审查，reviewer 是新鲜 context |
 | "跳过 reviewer 直接请求用户确认" | Planning Gate 的独立审查是硬性流程的一部分，不是可选步骤 |
 | "reviewer 说 Important 我觉得是 Suggestion" | 可以 push back，但要有技术理由，不是感觉 |
 | "修完 Critical 不用重新 dispatch" | 必须重新 dispatch，不可自判"已修好" |
 | "审了两轮还有问题就先过吧" | 第 2 轮后仍有 Critical/Important → 停下讨论，不盲目循环 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "这个 plan 我自己写的，内容肯定没问题" → 自审盲区是最大的漏洞来源
+- "直接给用户看吧，省掉 reviewer 这一步" → 独立审查是硬性流程，不是可选优化
+- "修完 Critical 了，不用重新 dispatch 了" → 自判"已修好" = 赌博
 
 ## 关联 skill
 

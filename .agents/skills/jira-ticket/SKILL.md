@@ -5,6 +5,8 @@ description: Use when user asks to create a version release ticket, says "帮我
 
 # Jira Ticket
 
+> **Type:** Reference | **Discipline:** Flexible
+
 创建 SDK 版本发布的 Jira Ticket。
 
 ## 使用场景

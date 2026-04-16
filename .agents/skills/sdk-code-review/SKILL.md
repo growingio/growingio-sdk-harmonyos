@@ -5,6 +5,8 @@ description: Use when a feature, bugfix, or refactoring step is completed and ne
 
 # SDK 代码审查
 
+> **Type:** Technique | **Discipline:** Rigid
+
 dispatch 审查 subagent 对已完成的工作进行独立审查。审查者不继承当前会话历史——你负责构造它需要的全部上下文。
 
 ## 何时触发
@@ -142,15 +144,22 @@ git diff $BASE_SHA..$HEAD_SHA
 - 如果认为审查者判断有误，用技术理由 push back（参见 `receiving-code-review` skill）
 - 不做表演式认同，直接修复或给出技术反驳
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
-|------|------|
+| Excuse | Reality |
+|---|---|
 | "改动小，跳过审查吧" | 模式 B 已经是最轻量路径，再跳就是裸奔 |
 | "我自己看过一遍没问题" | 自审替代不了独立审查，上下文污染 |
 | "先做质量审查，规格审查之后补" | 顺序不可颠倒——实现不合规时做质量审查是浪费 |
 | "reviewer 说 Important，我觉得是 Suggestion" | 可以 push back，但要有技术理由，不是感觉 |
 | "改完了，直接声明通过" | Critical/Important 修复后必须重新 dispatch，不可自判 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "这个改动太小了不需要审查" → 模式 B 就是为小改动设计的，再跳 = 裸奔
+- "我自己检查过了，没问题" → 自审替代不了独立审查，你有上下文盲区
+- "先跑质量审查，spec review 后面补" → 顺序不可颠倒，规格不合规时质量审查是浪费
+- "修完 Critical 了，不用重新 dispatch reviewer" → 必须重新 dispatch，自判 = 赌博
 
 ## 关联 skill
 

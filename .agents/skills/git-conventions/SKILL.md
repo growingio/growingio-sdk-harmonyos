@@ -5,6 +5,8 @@ description: Use when executing git commit, creating or naming branches, writing
 
 # GrowingIO HarmonyOS SDK Git 规范
 
+> **Type:** Reference | **Discipline:** Flexible
+
 本项目遵循 Angular Commit 规范进行版本控制和变更追踪。
 
 ## Commit Message 规范

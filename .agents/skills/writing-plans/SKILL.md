@@ -1,9 +1,11 @@
 ---
 name: writing-plans
-description: Use when drafting an implementation plan in docs/plans/ to guide task decomposition, impact assessment, and common scenario coverage
+description: Use when Planning Gate triggers (affected files ≥3 or public API change) and an implementation plan is needed
 ---
 
 # Writing Plans
+
+> **Type:** Technique | **Discipline:** Rigid
 
 指导如何写好一份实施规划。Planning Gate（见 `using-growingio-sdk-skills` meta-skill）定义 plan 的**格式**（四节结构），本 skill 定义**内容质量**。
 
@@ -35,9 +37,9 @@ Planning Gate 要求输出 plan 时（影响 ≥ 3 文件，或涉及公开 API 
 
 拆分后按 `subagent-driven-development` skill 判定是否走 subagent 模式。
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
+| Excuse | Reality |
 |---|---|
 | "plan 写得越细越安全" | 过度设计 = 浪费；plan 划边界和决策点，不是代码草稿 |
 | "先动手改两个文件再补 plan" | ≥3 文件动手那刻已经违规 |
@@ -46,6 +48,12 @@ Planning Gate 要求输出 plan 时（影响 ≥ 3 文件，或涉及公开 API 
 | "事件字段只影响当前产品线" | 三产品线字段要求不同，未标注 = 后端仓库出错 |
 | "autotrack 不用管 SaaS" | 必须显式声明"SaaS 跳过"，否则会出现错误降级分支 |
 | "这次规划口述就行" | 必须落地到 `docs/plans/YYYY-MM-DD-*.md`，reviewer 要读文件 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "先改两个文件试试，plan 后面再写" → Planning Gate 触发那一刻就必须先写 plan
+- "影响面我心里有数，不用列全" → 没列出来的文件 = 会返工的文件
+- "这个字段变更只涉及 NewSaaS" → 三产品线必须逐一确认，未标注 = 后端出错
 
 ## 关联 skill
 

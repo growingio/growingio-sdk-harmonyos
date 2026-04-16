@@ -5,6 +5,8 @@ description: Use when writing or reviewing .ets/.ts files in this project, or wh
 
 # GrowingIO HarmonyOS SDK - ArkTS 编码规范
 
+> **Type:** Reference | **Discipline:** Flexible
+
 本 skill 覆盖 GrowingIO HarmonyOS SDK 项目的 ArkTS 语法约束和代码风格要求。
 
 > 📚 完整约束原文见 [`docs/typescript-to-arkts-migration-guide.md`](../../../docs/typescript-to-arkts-migration-guide.md)。

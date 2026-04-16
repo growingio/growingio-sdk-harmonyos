@@ -1,6 +1,6 @@
 ---
 name: using-growingio-sdk-skills
-description: Use at the start of every interaction with the GrowingIO HarmonyOS SDK engineer agent — establishes skill invocation discipline and workflow routing BEFORE any response including clarifying questions
+description: Use when starting any interaction as the GrowingIO HarmonyOS SDK engineer main controller agent
 ---
 
 <SUBAGENT-STOP>
@@ -29,6 +29,8 @@ If you think there is even a 1% chance a skill might apply to what you are doing
 </EXTREMELY-IMPORTANT>
 
 # Using GrowingIO SDK Skills
+
+> **Type:** Technique | **Discipline:** Rigid
 
 This is the **entry gate** for the GrowingIO HarmonyOS SDK engineer (main controller agent).
 
@@ -111,7 +113,7 @@ Required sections in every plan (missing any = incomplete):
 - 数据协议变更（无则填"无"）
 - 需同步修改的文档（无则填"无"）
 
-### Planning Gate Rationalizations (all invalid)
+### Rationalizations (all invalid)
 
 | Excuse | Reality |
 |--------|---------|
@@ -139,14 +141,10 @@ Understand intent
   ▼
 需求模糊 / 范围不清 / 无规格?
   ├─ YES → brainstorming → 产出 docs/specs/YYYY-MM-DD-<topic>.md → 用户确认
-  │          │
-  │          ▼
-  │        brainstorming 自评影响面（按 Planning Gate 触发条件）
-  │          ├─ ≥3 files OR public API change → 进主干 writing-plans
-  │          └─ <3 files AND no public API     → 进主干 直接实施（跳过 plan）
-  └─ NO  → 继续
-  │
-  ▼
+  │                                                                    │
+  └─ NO ───────────────────────────────────────────────────────────────┐
+                                                                       │
+                                                                       ▼
 Read relevant docs (docs/sdk-doc-routing.md 按场景读取表;
                     docs/sdk-critical-rules.md 若改核心模块必读)
   │

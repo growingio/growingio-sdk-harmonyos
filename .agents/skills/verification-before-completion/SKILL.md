@@ -1,9 +1,11 @@
 ---
 name: verification-before-completion
-description: Use before claiming work is complete, fixed, or ready to review — run the actual verification command and read the full output before asserting success
+description: Use before claiming work is complete, fixed, or ready to review
 ---
 
 # Verification Before Completion
+
+> **Type:** Technique | **Discipline:** Rigid
 
 在声明工作完成之前，必须运行验证命令并亲眼读完输出。
 
@@ -133,9 +135,9 @@ ls -lh GrowingToolsKit/build/default/outputs/default/*.har
                               → 通过 → 完成
 ```
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
+| Excuse | Reality |
 |---|---|
 | "改完了应该能过吧" | 猜不算证据，跑命令才算 |
 | "上次跑过一次没问题" | 当前 commit 要重新跑；代码改了一点点也算新版本 |
@@ -143,6 +145,13 @@ ls -lh GrowingToolsKit/build/default/outputs/default/*.har
 | "错误信息看着无关紧要" | 读完整输出，exit code ≠ 0 就是失败 |
 | "这个警告忽略吧" | 警告可能是隐式失败的前兆，先确认再决定 |
 | "改 README 这种不用验证" | 涉及 SDK 行为的才跑验证；纯文档改动确实可跳过，但必须显式判定 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "改好了" / "应该没问题" → 在运行验证命令之前，这些话不允许说
+- "上次验证过了，这次改动很小" → 任何改动都是新版本，必须重跑
+- "命令启动了，应该能过" → 等到 `BUILD SUCCESSFUL` 出现在输出里才算
+- "输出太长，看个大概就行" → 必须滚到底部确认无 `error:` 行
 
 ## 关联 skill
 

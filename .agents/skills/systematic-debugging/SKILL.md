@@ -5,6 +5,8 @@ description: Use when facing ArkTS compile errors, hvigor build failures, hypium
 
 # Systematic Debugging
 
+> **Type:** Technique | **Discipline:** Rigid
+
 遇到技术问题时，用纪律代替直觉。随机猜测让问题变得更复杂；系统性方法让每次尝试都增加信息量。
 
 **核心原则：** 在不理解根本原因之前，不修改代码。每次修改只验证一个假设。
@@ -155,9 +157,9 @@ git log --oneline --grep="关键词" -10
 | 3 次失败后继续硬撑 | 已进入无效区间，升级比继续试更快 |
 | 修复后不运行验证命令 | 最终在 Step 5 发现更早能发现的问题 |
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
+| Excuse | Reality |
 |---|---|
 | "直接改一下看看行不行" | 无假设的试探 = 随机游走，增加不确定性 |
 | "这个错误面熟，大概率是 X" | 面熟是陷阱；Phase 1 要读完整错误+相关代码再判断 |
@@ -165,6 +167,13 @@ git log --oneline --grep="关键词" -10
 | "同时试 3 个可能的修复" | 无法分离原因；一次一个假设 |
 | "失败 3 次再试第 4 次说不定就行" | 进入无效区间，升级比继续试更快 |
 | "修完了不跑验证命令也能感觉到过了" | 违反 `verification-before-completion`，最终发现问题更贵 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "先改一下看看" → 没有假设的修改是随机游走，回到 Phase 1
+- "这个错误我见过" → 面熟 ≠ 理解根因，读完整错误再判断
+- "顺手重构一下这段" → 调试期间引入新变量 = 无法归因，只改假设对应的最小修复
+- "第 3 次失败了，再试一次吧" → 3 次是硬上限，强制升级
 
 ## 关联 skill
 

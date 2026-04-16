@@ -1,9 +1,11 @@
 ---
 name: finishing-a-development-branch
-description: Use after verification-before-completion passes and code review is clean, to close out the branch — commit loose changes, choose merge/PR/keep/discard, and handle release-specific steps like git tag
+description: Use after verification-before-completion passes and code review is clean, to close out the development branch
 ---
 
 # Finishing a Development Branch
+
+> **Type:** Technique | **Discipline:** Rigid
 
 功能做完、验证通过、审查通过后，进入"收尾阶段"。此 skill 防止两类遗漏：
 - **改完就停手**：代码没 commit、分支没合并、PR 没建
@@ -142,9 +144,9 @@ git push origin --delete <branch-name>
 | 合并后不清理分支 | 仓库分支列表污染 |
 | 跳过 Step 1 直接进入合并 | 可能把未提交改动或 WIP commit 带入 master |
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
+| Excuse | Reality |
 |---|---|
 | "验证通过就算完成了" | 没合并 / 没 PR / 没 tag = 交付还没落地 |
 | "直接 push 到 master 快一点" | master 合并必须用户确认，不可自作主张 |
@@ -152,6 +154,13 @@ git push origin --delete <branch-name>
 | "改动都 commit 了，用 `git add -A` 一把梭" | 容易把 .env / 密钥 / 构建产物带进去 |
 | "合并完分支保留吧以后说不定还用" | 仓库分支列表会膨胀；真要用再 checkout commit |
 | "没触发 Planning Gate 就不用走收尾" | 只要有 commit 产生就应该走本 skill，小改动可以跳过 PR 但不能跳过用户确认 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "验证通过了，done" → 没走完五步收尾就不算完成
+- "直接合并到 master 吧，用户不会介意" → master 合并是不可逆操作，必须用户确认
+- "这是发版分支但先不打 tag" → tag 是版本追溯的锚点，发版分支不打 tag = 历史断裂
+- "用 `git add .` 快一点" → 下一秒就把 .env 推上去了
 
 ## 关联 skill
 

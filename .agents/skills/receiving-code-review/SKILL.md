@@ -1,9 +1,11 @@
 ---
 name: receiving-code-review
-description: Use when receiving feedback from code-reviewer subagent or human reviewer, to ensure structured handling of review comments
+description: Use when receiving feedback from code-reviewer subagent or human reviewer
 ---
 
 # 接收代码审查反馈
+
+> **Type:** Technique | **Discipline:** Rigid
 
 收到 code-reviewer subagent 或人类 reviewer 的反馈后，按本技能规范处理。核心原则：**验证先于实施，澄清先于假设，技术正确性高于社交舒适度。**
 
@@ -141,9 +143,9 @@ reviewer 返回 6 条问题，你理解 1、2、3、6，不确定 4、5。
 | 部分理解就开始改 | STOP-ASK，先澄清所有不明确项 |
 | 无法验证仍然继续 | 明确说出局限，请求指导 |
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
+| Excuse | Reality |
 |---|---|
 | "reviewer 说的有理，全盘接受避免冲突" | 表演式认同是失职；正确的反应是修复或给技术反驳 |
 | "reviewer 这条我觉得不对，忽略就行" | 必须 push back 并给技术理由，不是沉默不处理 |
@@ -153,6 +155,14 @@ reviewer 返回 6 条问题，你理解 1、2、3、6，不确定 4、5。
 | "部分听懂了就开始改" | 不明确项必须 STOP-ASK，改错的成本高于问一句 |
 | "我改得很小，不用重跑 verify" | 任何修改后 verify 都要重跑——这是 `verification-before-completion` 的不变量 |
 | "改完 reviewer 一定会通过，不用重新 dispatch 了" | Critical/Important 修完必须重新 review，自判=赌博 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "reviewer 说得对！让我立刻实现" → 表演式认同，先验证再行动
+- "这条反馈我不同意，跳过" → 必须 push back 并给技术理由，沉默 ≠ 处理
+- "部分理解了就先改能改的" → STOP-ASK，各项可能相互关联，部分理解 = 错误实施
+- "改完了不用重新 dispatch 了" → Critical/Important 修完必须重新 review，自判 = 赌博
+- "改动很小，不用重跑 verify" → 任何修改后 verify 都要重跑，这是不变量
 
 ## 下游 / loop-back（HARD RULE）
 

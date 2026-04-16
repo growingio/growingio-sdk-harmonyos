@@ -1,9 +1,11 @@
 ---
 name: subagent-driven-development
-description: Use when executing implementation plans with independent tasks - dispatches fresh subagent per task with two-stage review (spec compliance then code quality)
+description: Use when executing an implementation plan with 3+ independent tasks in the current session
 ---
 
 # Subagent-Driven Development
+
+> **Type:** Technique | **Discipline:** Rigid
 
 通过 dispatch 独立 subagent 执行 plan 中的每个任务，每个任务完成后进行两阶段审查（规格合规 → 代码质量）。
 
@@ -213,9 +215,9 @@ Task 2: 实现 Hybrid 模块中的 onPageEnd 逻辑
 - dispatch 新的修复 subagent，给出具体指令
 - 不自己手动修（上下文污染）
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
+| Excuse | Reality |
 |---|---|
 | "任务独立性我判断过了不用走 subagent" | 本 skill 的隔离是为了防 context 污染，不只是为了并行 |
 | "一个 subagent 并行多任务能快" | 明确禁止——会冲突；一次只 dispatch 一个实现者 |
@@ -224,6 +226,13 @@ Task 2: 实现 Hybrid 模块中的 onPageEnd 逻辑
 | "spec-reviewer 有问题先质量审了，回头再改" | 顺序不可颠倒，规格不合规时做质量审查纯浪费 |
 | "实现者报 BLOCKED 再让它用更强模型重试一次" | BLOCKED 必须更换上下文/模型/任务粒度；不允许无变化重试 |
 | "reviewer 提了 Critical 我修了就不用重新 review 了" | 修完必须重新 dispatch 同审查者，不可自判 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "这个任务简单，我自己直接改比 dispatch subagent 快" → 你在找借口污染控制器上下文
+- "跳过 spec review，implementer 自审过了" → 自审替代不了独立审查，两阶段都要走
+- "并行 dispatch 两个 implementer 加速" → 明确禁止，文件冲突概率极高
+- "这个 bug 我自己顺手修一下" → 控制器不写代码，dispatch 修复 subagent
 
 ## 关联 skill
 

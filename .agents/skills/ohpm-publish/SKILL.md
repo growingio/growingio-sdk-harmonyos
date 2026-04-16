@@ -5,6 +5,8 @@ description: Use when user mentions "发布 SDK"、"ohpm 发布"、"打包发布
 
 # ohpm-publish
 
+> **Type:** Technique | **Discipline:** Rigid
+
 将 GrowingIO HarmonyOS SDK 打包并发布到 ohpm 仓库。
 
 ## 模块信息
@@ -114,9 +116,9 @@ ohpm publish GrowingToolsKit/build/default/outputs/default/GrowingToolsKit-signe
 - 构建可能耗时数分钟，耐心等待即可
 - 同时发布两个模块时，**逐个处理**：先构建第一个模块并发布，成功后再构建第二个模块并发布
 
-## 避免这么想
+## Rationalizations
 
-| 想法 | 现实 |
+| Excuse | Reality |
 |---|---|
 | "版本号不用改也能 publish" | OHPM Registry 拒绝重复版本号；必须先 bump `oh-package.json5` 的 `version` |
 | "跳过签名直接 publish" | 无签名产物会被 Registry 拒收，且无法在接入方设备上验证完整性 |
@@ -124,6 +126,13 @@ ohpm publish GrowingToolsKit/build/default/outputs/default/GrowingToolsKit-signe
 | "发了再测也没事，出问题再回滚" | OHPM Registry 发布后无法删除/覆盖同版本号；出错代价 = 升新版本号重发 |
 | "本地跑过示例 App 就算验证通过" | `verification-before-completion` 要求 hypium 测试全绿 + 构建 HAR 成功；不可跳过 |
 | "登录失败再说，先构建" | `ohpm login` 是前置条件，先确认登录态再走构建避免浪费时间 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "版本号不改直接发" → OHPM Registry 拒绝重复版本号，先 bump version
+- "签名那步跳过吧" → 无签名产物被 Registry 拒收，没有捷径
+- "两个模块并行构建+发布更快" → 构建产物路径会冲突，必须逐个完成
+- "发了再测" → OHPM 发布后无法删除同版本号，发错了只能升版本号重发
 
 ## 关联 skill
 

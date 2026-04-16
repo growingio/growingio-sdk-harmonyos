@@ -1,9 +1,11 @@
 ---
 name: brainstorming
-description: Use when receiving an ambiguous feature request, when scope is unclear, or before writing any plan — explores intent and requirements through guided dialogue
+description: Use when receiving an ambiguous feature request, when scope is unclear, or before writing any plan
 ---
 
 # Brainstorming: 把想法变成规格
+
+> **Type:** Pattern | **Discipline:** Flexible
 
 把模糊需求通过"一次一个问题"的方式，收敛成一份可用于 `writing-plans` 的设计规格。
 
@@ -39,7 +41,7 @@ description: Use when receiving an ambiguous feature request, when scope is uncl
 5. **写规格文档** — 保存到 `docs/specs/YYYY-MM-DD-<topic>.md`
 6. **规格自查** — 有无占位符 `TODO`、有无自相矛盾、范围是否闭合
 7. **请用户审阅规格文件** — 等明确 "OK/确认/继续"
-8. **移交**（根据影响面判断下游，见下方「下游分叉」） — 不再无条件调用 `writing-plans`
+8. **移交** — 规格确认后回到主流程（Read relevant docs → Planning Gate），由 Planning Gate 统一判定是否需要 plan
 
 ## Process Flow
 
@@ -71,9 +73,7 @@ Self-review (placeholders / contradictions / scope)
 User reviews spec file ── approved? ─NO→ revise
   │ YES
   ▼
-影响面自评（按 Planning Gate 触发条件）
-  ├─ 预计影响 ≥3 文件 或 改动公开 API → writing-plans
-  └─ 预计 <3 文件 且 不动公开 API       → 直接实施 + sdk-code-review 模式 B
+回到主流程 → Read relevant docs → Planning Gate（统一判定）
 ```
 
 ## Anti-Pattern：「这个需求太简单不需要规格」
@@ -93,11 +93,19 @@ User reviews spec file ── approved? ─NO→ revise
 | "先写 plan 再说" | plan 以规格为输入；输入错，plan 全错 |
 | "bug 修复不用走" | 是，但得先确认 root cause，否则这是个伪装成 bug 的需求 |
 
-## 下游分叉
+## Red Flags — STOP if you catch yourself thinking these
 
-brainstorming 收敛规格后，按 **Planning Gate 触发条件**自评影响面（原文复制，不引入新判定维度）：
+- "这个需求我理解了，直接写 plan" → 你理解的是字面，规格是把假设写下来给用户挑错
+- "一次把所有问题问完效率更高" → 一次多问 = 用户挑 1-2 个回答，其余遗漏
+- "这个需求太简单不用写规格" → 简单 = "我忽略了若干假设"，规格可以只有几行但必须写
+- "用户会觉得问太多很啰嗦" → 比事后返工友好 10 倍
 
-- **预计影响 ≥3 文件 或 改动公开 API** → 进入 `writing-plans` → `plan-document-review` → 用户确认 → SDD 或直接实施
-- **预计 <3 文件 且 不动公开 API** → **跳过 plan**，直接实施；实施完走 `sdk-code-review` 模式 B（独立审查，仅 code-reviewer）
+## 下游移交
 
-**禁止**：不能直接跳 `subagent-driven-development`——SDD 需要 plan 作为输入。
+brainstorming 收敛规格并拿到用户确认后，**不自行判定影响面**，直接回到主流程：
+
+```
+规格确认 → Read relevant docs → Planning Gate（统一判定）
+```
+
+影响面判定权归 Planning Gate 一处（`using-growingio-sdk-skills` meta-skill），brainstorming 不重复判定、不自行分叉。
