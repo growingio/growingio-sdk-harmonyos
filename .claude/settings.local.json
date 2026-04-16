@@ -6,7 +6,11 @@
       "Bash(/Applications/DevEco-Studio.app/Contents/tools/node/bin/node /Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw.js --mode module -p product=default -p module=GrowingToolsKit@default assembleHar --analyze=normal --parallel --incremental --daemon)",
       "Bash(git checkout *)",
       "Bash(git rebase *)",
-      "Bash(git push*)"
+      "Bash(git push*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

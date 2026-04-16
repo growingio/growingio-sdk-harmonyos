@@ -1,9 +1,11 @@
 ---
 name: ohpm-publish
-description: HarmonyOS SDK 发布工具，用于将 @growingio/analytics 和/或 @growingio/tools 打包并发布到 ohpm 仓库。当用户提到"发布 SDK"、"ohpm 发布"、"打包发布"、"上传 har"、"publish"、"发版"、"release"等关键词时触发此 skill。即使用户只说了"发布"或"上传"也应该触发。
+description: Use when user mentions "发布 SDK"、"ohpm 发布"、"打包发布"、"上传 har"、"publish"、"发版"、"release"、"发布" or "上传" in the context of this SDK
 ---
 
 # ohpm-publish
+
+> **Type:** Technique | **Discipline:** Rigid
 
 将 GrowingIO HarmonyOS SDK 打包并发布到 ohpm 仓库。
 
@@ -113,3 +115,28 @@ ohpm publish GrowingToolsKit/build/default/outputs/default/GrowingToolsKit-signe
 - 构建命令必须在**仓库根目录**执行
 - 构建可能耗时数分钟，耐心等待即可
 - 同时发布两个模块时，**逐个处理**：先构建第一个模块并发布，成功后再构建第二个模块并发布
+
+## Rationalizations
+
+| Excuse | Reality |
+|---|---|
+| "版本号不用改也能 publish" | OHPM Registry 拒绝重复版本号；必须先 bump `oh-package.json5` 的 `version` |
+| "跳过签名直接 publish" | 无签名产物会被 Registry 拒收，且无法在接入方设备上验证完整性 |
+| "两个模块一起并行发布快一点" | 构建产物路径和签名状态会相互干扰，必须逐个完成 |
+| "发了再测也没事，出问题再回滚" | OHPM Registry 发布后无法删除/覆盖同版本号；出错代价 = 升新版本号重发 |
+| "本地跑过示例 App 就算验证通过" | `verification-before-completion` 要求 hypium 测试全绿 + 构建 HAR 成功；不可跳过 |
+| "登录失败再说，先构建" | `ohpm login` 是前置条件，先确认登录态再走构建避免浪费时间 |
+
+## Red Flags — STOP if you catch yourself thinking these
+
+- "版本号不改直接发" → OHPM Registry 拒绝重复版本号，先 bump version
+- "签名那步跳过吧" → 无签名产物被 Registry 拒收，没有捷径
+- "两个模块并行构建+发布更快" → 构建产物路径会冲突，必须逐个完成
+- "发了再测" → OHPM 发布后无法删除同版本号，发错了只能升版本号重发
+
+## 关联 skill
+
+- **上游触发：** 用户明确说"发布 SDK" / "ohpm 发布" / "发版" 等关键词
+- **调度 subagent：** 无（本 skill 是操作手册，由执行者按步骤执行）
+- **完成后交接：** `finishing-a-development-branch`（发版分支的打 tag / PR / 合并） + `jira-ticket`（同步更新发版单）
+- **替代路径：** 预发布验证阶段 → 只构建 HAR 不 publish（验证构建链路）
