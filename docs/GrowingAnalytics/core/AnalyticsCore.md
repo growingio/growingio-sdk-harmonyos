@@ -613,6 +613,16 @@ static setLocation(latitude: number, longitude: number) {
 
 ## SaaS 模式特殊方法
 
+### onPageEnd() - WebView 圈选脚本注入
+
+```typescript
+onPageEnd(controller: webview.WebviewController, webviewId?: string): Promise<void>
+```
+
+**作用：** 委托给 `Hybrid.onPageEnd()`。仅当 SaaS 模式 + `hybridAutotrackEnabled=true` + `Hybrid.saasCircleEnabled=true` 时执行，在 WebView `onPageEnd` 时机向 H5 页面注入圈选插件脚本，并将 WebView 的 Native xpath 同步到 `window._vds_hybrid_native_info.x`。
+
+---
+
 ### 设置 People Variable
 
 ```typescript

@@ -50,9 +50,10 @@ constructor(trackerId: string, config: GrowingConfig)
 
 ```typescript
 if (config.mode == ConfigMode.SaaS) {
-    // SaaS 模式：分离 PV 事件和自定义事件的发送
-    this.eventSender.push(new EventSender(EventSenderType.SaaS_PV, this.trackerId))
-    this.eventSender.push(new EventSender(EventSenderType.SaaS_CSTM, this.trackerId))
+    // SaaS 模式：按事件类型分三路发送
+    this.eventSender.push(new EventSender(EventSenderType.SaaS_PV, this.trackerId))    // 页面/访问事件
+    this.eventSender.push(new EventSender(EventSenderType.SaaS_CSTM, this.trackerId))  // 自定义事件
+    this.eventSender.push(new EventSender(EventSenderType.SaaS_OTHER, this.trackerId)) // 无埋点点击/变更事件（合并格式）
 } else {
     // NewSaaS/CDP 模式：统一发送
     this.eventSender.push(new EventSender(EventSenderType.NewSaaS, this.trackerId))
