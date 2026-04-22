@@ -123,6 +123,9 @@ git diff $BASE_SHA..$HEAD_SHA
 | **HEAD_SHA** | 变更结束 commit | `3df7661` |
 | **变更文件列表** | `git diff --name-only` 的输出 | 文件列表 |
 
+> **Special case**：若变更文件列表包含 `.agents/` 或 `.claude/` 路径，在 dispatch 时显式注明：
+> "本次变更包含 skill/agent 配置文件，请额外执行维度 7（Skill/Agent 架构一致性）检查。"
+
 ### 3. 处理审查结果
 
 按 `receiving-code-review` skill 的规范处理反馈。核心流程：

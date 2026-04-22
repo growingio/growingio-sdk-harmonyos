@@ -65,6 +65,17 @@ model: sonnet
 - 每个文件职责单一、接口清晰
 - 模块可独立理解和测试
 
+### 7. Skill / Agent 架构一致性（条件触发）
+
+**仅当变更文件列表包含 `.agents/` 或 `.claude/` 路径时执行。**
+
+- **Skill frontmatter**：`name` 字段与目录名一致；`description` 以 `Use when`/`Use before`/`Use after` 开头，仅描述触发条件，**不含流程摘要**（违反 = workflow in description → agent skips body）
+- **Skill 类型声明**：正文开头已声明 `Type`（Technique/Pattern/Reference）+ `Discipline`（Rigid/Flexible）两个维度
+- **Rigid skill 完整性**：`Discipline: Rigid` 的 skill 必须包含 Rationalizations 表 + Red Flags 章节，缺失即 Important 问题
+- **交叉引用有效性**：skill 里通过名称引用的其他 skill 确实存在于 `.agents/skills/` 或 `.claude/skills/` 目录
+- **Agent 格式一致**：新增/修改 agent 的 frontmatter（`name`/`description`/`model`）格式与 `.claude/agents/` 下现有 agent 文件保持一致
+- **Settings hooks 无冲突**：`settings.json` 中新增的 hook 不与现有 hook 重复触发同一逻辑（PreToolUse + PostToolUse 执行同一命令 = 冗余），且 hook 的触发时机与其保护意图匹配（PostToolUse 无法阻断已完成的操作）
+
 ## 输出格式
 
 审查输出必须遵循以下结构：
@@ -96,6 +107,7 @@ model: sonnet
 - [ ] 隐私合规无遗漏
 - [ ] obfuscation-rules.txt 已更新（如需要）
 - [ ] 文档已同步更新（如需要）
+- [ ] Skill/Agent 架构一致性（`.agents/` / `.claude/` 变更时）
 
 ## 结论
 
