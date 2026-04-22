@@ -102,6 +102,9 @@ export interface PluginsInterface {
 
   // WebView DOM 树变化
   onWebViewDomTreeChanged?(): void
+
+  // SaaS 模式 WebView 圈选事件（H5 → Native → 服务端）
+  onWebViewSaaSCircleEvent?(message: string, webviewId?: string): void
 }
 ```
 
@@ -121,6 +124,7 @@ export interface PluginsInterface {
 | | `onResponseReceive` | 收到网络响应后 |
 | | `onEventsDidSend` | 事件发送完成后 |
 | **Hybrid** | `onWebViewDomTreeChanged` | WebView DOM 变化时 |
+| | `onWebViewSaaSCircleEvent` | SaaS WebView 圈选事件上报时（H5 → Native 方向） |
 
 ---
 

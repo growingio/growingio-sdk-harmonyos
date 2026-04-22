@@ -215,7 +215,8 @@ static async generateRequest(
   time: number, 
   url: string, 
   events: EventPersistence[], 
-  context: GrowingContext
+  context: GrowingContext,
+  mergeSaaSClick: boolean = false   // SaaS 无埋点点击合并上报开关
 ): Promise<rcp.Request> {
 
   // 1. 判断是否使用 Protobuf
@@ -229,7 +230,8 @@ static async generateRequest(
     processEvents, 
     events, 
     useProtobuf, 
-    context.config.compressEnabled
+    context.config.compressEnabled,
+    mergeSaaSClick                   // 传入合并标志
   )
   
   let serialize: ArrayBuffer
@@ -279,7 +281,8 @@ static async generateRequest(
 export function processEvents(
   events: EventPersistence[], 
   useProtobuf: boolean, 
-  compressEnabled: boolean
+  compressEnabled: boolean,
+  mergeSaaSClick: boolean = false   // true 时按 SaaS 合并格式序列化 clck/chng 事件
 ): ArrayBuffer {
   
   // 1. 转换为 JSON 数组
@@ -485,6 +488,7 @@ https://napi.growingio.com/v3/projects/123456/collect?stm=1708765432100
 | NewSaaS | `/v3/projects/{accountId}/collect` | 统一收集接口 |
 | SaaS PV | `/v3/{accountId}/harmonyos/pv` | 页面/访问事件 |
 | SaaS CSTM | `/v3/{accountId}/harmonyos/cstm` | 自定义事件 |
+| SaaS OTHER | `/v3/{accountId}/harmonyos/other` | 无埋点点击/变更事件（mergeSaaSClick 合并格式） |
 
 ---
 

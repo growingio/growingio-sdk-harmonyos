@@ -467,6 +467,25 @@ Web({
 })
 ```
 
+#### onPageEnd() - WebView 页面加载完成回调（SaaS 圈选）
+
+```typescript
+static onPageEnd(
+    controller: webview.WebviewController,
+    webviewId?: string
+): Promise<void>
+```
+
+**作用：** 仅在 SaaS 模式且开启 `hybridAutotrackEnabled` 并处于圈选状态时生效。在 WebView `onPageEnd` 回调时调用，向 H5 页面注入圈选插件脚本，并将 WebView 的 Native xpath 更新到 `window._vds_hybrid_native_info.x`。
+
+**示例：**
+```typescript
+Web({ src: url, controller: this.controller })
+  .onPageEnd(() => {
+    GrowingAnalytics.onPageEnd(this.controller, 'myWebviewId')
+  })
+```
+
 ---
 
 ### 11. Flutter 支持

@@ -288,15 +288,39 @@ static toSerializeByMeasurementProtocolV2(
 ): string
 ```
 
-**字段映射：**
+**字段映射（按事件类型分支）：**
+
+*公共基础字段（所有类型共享）：*
 | 输出字段 | 源字段 | 说明 |
 |----------|--------|------|
-| `t` | eventType | 事件类型（cstm/page/vst等）|
-| `n` | eventName | 事件名称 |
+| `esid`/`gesid` | eventSequenceId | 事件序列号 |
 | `u` | deviceId | 设备 ID |
 | `s` | sessionId | 会话 ID |
-| `var` | attributes | 事件属性 |
+| `d` | domain | 包名/域名 |
+| `tm` | timestamp | 事件时间戳 |
+| `cs1` | userId | 登录用户 ID（有值时写入） |
+
+*CUSTOM (`t: cstm`)*：`n`(eventName), `var`(attributes), `p`(path), `ptm`(pageShowTimestamp)
+
+*PAGE (`t: page`)*：`var`(attributes), `p`(path), `q`(query), `tl`(title), `rp`(referralPage), `r`(networkState→WIFI/CELL/UNKNOWN/NONE)
+
+*VIEW_CLICK (`t: clck`) / VIEW_CHANGE (`t: chng`)（SaaS 无埋点）：*
+| 输出字段 | 源字段 | 说明 |
+|----------|--------|------|
+| `t` | eventType | `clck`（VIEW_CLICK）或 `chng`（VIEW_CHANGE） |
 | `p` | path | 页面路径 |
+| `ptm` | pageShowTimestamp | 页面显示时间戳 |
+| `x` | xpath | 元素 xpath |
+| `v` | textValue | 元素文本（undefined 时不写入） |
+| `q` | query | 页面查询参数（undefined 时不写入） |
+| `h` | hyperlink | 超链接地址（undefined 时不写入） |
+| `idx` | index | 列表索引，以字符串写入（undefined 时不写入） |
+| `r` | networkState | 网络状态（WIFI/CELL/UNKNOWN/NONE） |
+| `lat`/`lng` | latitude/longitude | 地理位置（undefined 时不写入） |
+
+*VISIT (`t: vst`)*：设备信息字段（`db`, `dm`, `sh`, `sw`, `os`, `cv` 等）
+
+*APP_CLOSED (`t: cls`)*：`p`(path)
 
 #### toSerializeByMeasurementProtocolV3() - CDP 协议
 
