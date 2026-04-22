@@ -68,6 +68,25 @@ interface AppClosedEventData {
   path: string
 }
 
+interface SaaSViewElementEventData {
+  eventType: string
+  eventSequenceId: number
+  deviceId: string
+  sessionId: string
+  domain: string
+  timestamp: number
+  userId: string | undefined
+  pageShowTimestamp: number | undefined
+  path: string
+  query: string | undefined
+  latitude: number | undefined
+  longitude: number | undefined
+  xpath: string
+  textValue: string | undefined
+  hyperlink: string | undefined
+  index: number | undefined
+}
+
 interface V3SimpleEventData {
   eventType: string
   eventName: string
@@ -114,6 +133,27 @@ function makeBase(): CustomEventData {
     attributes: attrs,
     path: '/home',
     pageShowTimestamp: 1699999990000
+  }
+}
+
+function makeViewClickEvent(): SaaSViewElementEventData {
+  return {
+    eventType: 'VIEW_CLICK',
+    eventSequenceId: 10,
+    deviceId: 'dev-111',
+    sessionId: 'sess-aaa',
+    domain: 'com.example.app',
+    timestamp: 1700000000000,
+    userId: 'user-1',
+    pageShowTimestamp: 1699999990000,
+    path: '/home/detail',
+    query: undefined,
+    latitude: undefined,
+    longitude: undefined,
+    xpath: '/Page/Button[0]',
+    textValue: 'Click Me',
+    hyperlink: undefined,
+    index: undefined
   }
 }
 
@@ -497,6 +537,118 @@ export default function utilTests() {
       let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
       expect(json.getString('t')).assertEqual('cls')
       expect(json.getString('p')).assertEqual('/home')
+    })
+  })
+
+  // ─── VIEW_CLICK / VIEW_CHANGE (SaaS autotrack) ───────────────────────────
+
+  describe('Util_toSerializeByMeasurementProtocolV2_VIEW_CLICK_CHANGE', () => {
+
+    it('VIEW_CLICK → t 字段应为 clck', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.getString('t')).assertEqual('clck')
+    })
+
+    it('VIEW_CHANGE → t 字段应为 chng', 0, () => {
+      let event = makeViewClickEvent()
+      event.eventType = 'VIEW_CHANGE'
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      expect(json.getString('t')).assertEqual('chng')
+    })
+
+    it('p 字段应等于 path', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.getString('p')).assertEqual('/home/detail')
+    })
+
+    it('ptm 字段应等于 pageShowTimestamp', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.getNumber('ptm')).assertEqual(1699999990000)
+    })
+
+    it('x 字段应等于 xpath', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.getString('x')).assertEqual('/Page/Button[0]')
+    })
+
+    it('textValue 非空 → v 字段应写入', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.getString('v')).assertEqual('Click Me')
+    })
+
+    it('textValue 为 undefined → v 字段不应出现', 0, () => {
+      let event = makeViewClickEvent()
+      event.textValue = undefined
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      expect(json.hasKey('v')).assertFalse()
+    })
+
+    it('query 有值 → q 字段应写入', 0, () => {
+      let event = makeViewClickEvent()
+      event.query = 'tab=0'
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      expect(json.getString('q')).assertEqual('tab=0')
+    })
+
+    it('query 为 undefined → q 字段不应出现', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.hasKey('q')).assertFalse()
+    })
+
+    it('hyperlink 有值 → h 字段应写入', 0, () => {
+      let event = makeViewClickEvent()
+      event.hyperlink = 'https://example.com/page'
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      expect(json.getString('h')).assertEqual('https://example.com/page')
+    })
+
+    it('hyperlink 为 undefined → h 字段不应出现', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.hasKey('h')).assertFalse()
+    })
+
+    it('index 有值 → idx 字段应以字符串形式写入', 0, () => {
+      let event = makeViewClickEvent()
+      event.index = 3
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      expect(json.getString('idx')).assertEqual('3')
+    })
+
+    it('index 为 undefined → idx 字段不应出现', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.hasKey('idx')).assertFalse()
+    })
+
+    it('WIFI → r 字段应为 WIFI', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.getString('r')).assertEqual('WIFI')
+    })
+
+    it('4G → r 字段应为 CELL', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), '4G'))
+      expect(json.getString('r')).assertEqual('CELL')
+    })
+
+    it('latitude/longitude 有值时 lat/lng 字段应写入', 0, () => {
+      let event = makeViewClickEvent()
+      event.latitude = 39.9
+      event.longitude = 116.4
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, 'WIFI'))
+      expect(json.hasKey('lat')).assertTrue()
+      expect(json.hasKey('lng')).assertTrue()
+    })
+
+    it('latitude/longitude 为 undefined 时 lat/lng 字段不应出现', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.hasKey('lat')).assertFalse()
+      expect(json.hasKey('lng')).assertFalse()
+    })
+
+    it('u/s/d 基础公共字段应正确写入', 0, () => {
+      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
+      expect(json.getString('u')).assertEqual('dev-111')
+      expect(json.getString('s')).assertEqual('sess-aaa')
+      expect(json.getString('d')).assertEqual('com.example.app')
     })
   })
 

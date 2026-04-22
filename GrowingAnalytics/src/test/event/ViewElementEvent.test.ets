@@ -93,11 +93,12 @@ function createViewChange(
  *
  * ViewElementEvent.create() 的分支逻辑：
  *   1. path：String(path ?? '') 保证非 null
- *   2. pageShowTimestamp：仅 CDP 模式写入，>0 用原值，=0 用 Date.now()
+ *   2. pageShowTimestamp：CDP 和 SaaS 模式写入，>0 用原值，=0 用 Date.now()
  *   3. textValue：仅 eventType = ViewClick 时写入，且非空才写（否则 undefined）
  *   4. index：> 0 时写入，否则 undefined（过滤掉 0 和负数）
  *   5. xcontent / xpath / attributes：直接透传
  *   6. eventType：直接透传（ViewClick / ViewChange）
+ *   7. query / hyperlink：不在 create() 参数内，由调用方在 create() 后直接赋值
  */
 export default function viewElementEventTests() {
 
@@ -257,6 +258,43 @@ export default function viewElementEventTests() {
       seedContext(ctx)
       let e = ViewElementEvent.create('/p', 0, '', '/X', 'content-id-123', 0, {}, EventType.ViewClick, ctx)
       expect(e.xcontent).assertEqual('content-id-123')
+    })
+  })
+
+  // ─── query / hyperlink（SaaS hybrid autotrack 赋值路径）───────────────────
+
+  describe('ViewElementEvent_queryHyperlink', () => {
+
+    beforeEach(() => { resetAll() })
+
+    it('create() 后赋值 query，字段应可读取', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.SaaS)
+      seedContext(ctx)
+      let e = createViewClick(ctx)
+      e.query = 'tab=1'
+      expect(e.query).assertEqual('tab=1')
+    })
+
+    it('create() 后赋值 hyperlink，字段应可读取', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.SaaS)
+      seedContext(ctx)
+      let e = createViewClick(ctx)
+      e.hyperlink = 'https://example.com/page'
+      expect(e.hyperlink).assertEqual('https://example.com/page')
+    })
+
+    it('未赋值时 query 默认为 undefined', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.SaaS)
+      seedContext(ctx)
+      let e = createViewClick(ctx)
+      expect(e.query === undefined).assertTrue()
+    })
+
+    it('未赋值时 hyperlink 默认为 undefined', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.SaaS)
+      seedContext(ctx)
+      let e = createViewClick(ctx)
+      expect(e.hyperlink === undefined).assertTrue()
     })
   })
 }
