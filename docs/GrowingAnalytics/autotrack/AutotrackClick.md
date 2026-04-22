@@ -35,7 +35,7 @@
 |------|---------|------|
 | NewSaaS | 支持 | 完整功能支持 |
 | CDP | 支持 | 完整功能支持，XPath 格式不同 |
-| SaaS | 不支持 | 直接返回，不采集点击事件 |
+| SaaS | 支持 | 完整功能支持，XPath 格式与 CDP 相同 |
 
 ---
 
@@ -63,7 +63,7 @@
 │                      _PageInfo                              │
 ├─────────────────────────────────────────────────────────────┤
 │  path: string                 // 页面路径                    │
-│  pageShowTimestamp: number    // 页面显示时间戳(CDP模式)     │
+│  pageShowTimestamp: number    // 页面显示时间戳(CDP/SaaS模式) │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -161,14 +161,6 @@ static onWillClick(event: ClickEvent, frameNode?: FrameNode)
                              │是
                              ▼
                     ┌──────────────────┐
-                    │ 非 SaaS 模式？   │
-                    └────────┬─────────┘
-                             │否 (是SaaS)
-                             ▼
-                    【返回，不处理】
-                             │是
-                             ▼
-                    ┌──────────────────┐
                     │ autotrackEnabled │
                     │ == true？        │
                     └────────┬─────────┘
@@ -240,17 +232,12 @@ static onWillClick(event: ClickEvent, frameNode?: FrameNode) {
 
   let context = GrowingContext.getDefaultContext() as GrowingContext
 
-  // 4. 模式检查（SaaS 模式不支持点击采集）
-  if (context.config.mode == ConfigMode.SaaS) {
-    return
-  }
-
-  // 5. 无埋点总开关检查
+  // 4. 无埋点总开关检查
   if (!context.config.autotrackEnabled) {
     return
   }
 
-  // 6. 数据采集开关检查
+  // 5. 数据采集开关检查
   if (!context.config.dataCollectionEnabled) {
     return
   }
@@ -352,9 +339,9 @@ static getPageInfo(frameNode: FrameNode): _PageInfo {
   if (realPath) {
     info.path = realPath
 
-    // CDP 模式：获取页面显示时间戳
+    // CDP/SaaS 模式：获取页面显示时间戳
     let context = GrowingContext.getDefaultContext() as GrowingContext
-    if (context.config.mode == ConfigMode.CDP) {
+    if (context.config.mode == ConfigMode.CDP || context.config.mode == ConfigMode.SaaS) {
       let lastNativePage = AutotrackPage.lastNativePage
       let path = lastNativePage?.path
       if (path == realPath) {
@@ -384,6 +371,7 @@ XPath 用于唯一标识页面中的元素，由两部分组成：
 |------|---------------|
 | NewSaaS | xpath: `/root/Column/Button` <br> xcontent: `/0/0/0` |
 | CDP | `/root[0]/Column[0]/Button[0#submitBtn]` |
+| SaaS | `/root[0]/Column[0]/Button[0#submitBtn]` |（与 CDP 格式相同）
 
 ### getXpathInfo() 方法
 
@@ -664,8 +652,8 @@ if (context.config.mode == ConfigMode.NewSaaS) {
   if (xpathInfo.inList) {
     index = index + 1  // 列表索引从 1 开始
   }
-} else if (context.config.mode == ConfigMode.CDP) {
-  // CDP 模式：带索引的完整路径
+} else if (context.config.mode == ConfigMode.CDP || context.config.mode == ConfigMode.SaaS) {
+  // CDP/SaaS 模式：带索引的完整路径
   for (let i = xpathInfo.xpath.length - 1; i >= 0; i--) {
     xpath = xpath + PATH_SEPARATOR + xpathInfo.xpath[i] + '[' + xpathInfo.xcontent[i] + ']'
   }
@@ -694,7 +682,7 @@ AnalyticsCore.writeEventToDisk(e, context)
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `path` | string | 页面路径 |
-| `pageShowTimestamp` | number | 页面显示时间戳（仅 CDP） |
+| `pageShowTimestamp` | number | 页面显示时间戳（CDP/SaaS 模式） |
 | `textValue` | string | 点击元素的文本内容 |
 | `xpath` | string | 元素 XPath 路径 |
 | `xcontent` | string | 元素索引路径 |
@@ -824,7 +812,6 @@ export const CONTAINER_COMPONENTS: Array<string> = [
 | `frameNode` 存在 | 确保点击事件包含有效的节点信息 |
 | `uniqueId > 0` | 过滤无效节点（系统节点通常为负值） |
 | SDK 初始化完成 | 避免在 SDK 未就绪时采集数据 |
-| 非 SaaS 模式 | SaaS 模式不支持点击事件采集 |
 | `autotrackEnabled` | 无埋点总开关 |
 | `dataCollectionEnabled` | 数据采集总开关 |
 

@@ -30,6 +30,7 @@ import { StatusView } from "../mobileDebugger/StatusView"
 import AppInfo from "../core/AppInfo"
 import AnalyticsCore, { SDK_VERSION } from "../core/AnalyticsCore"
 import { Flutter } from "../core/Flutter"
+import Hybrid from "../core/Hybrid"
 import { SnapshotProvider } from "../mobileDebugger/Snapshot"
 import CircleElement from "./CircleElement"
 import { niceTry } from "../utils/Util"
@@ -38,6 +39,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   ws: WebSocket = new WebSocket()
   statusView?: StatusView
   snapshotProvider?: SnapshotProvider
+  private _lastSnapshotKey: number = 0
 
   connect(url: string) {
     if (AnalyticsCore.mainWindow && AnalyticsCore.uiContent) {
@@ -51,8 +53,10 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
 
   stop(error?: string) {
     Flutter.onCircleClosed()
+    Hybrid.saasCircleEnabled = false
     this.snapshotProvider?.stopObserver()
     this.statusView?.hide()
+    this._lastSnapshotKey = 0
 
     if (error && error.length > 0) {
       StatusView.showDialog({
@@ -72,6 +76,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
         return
       }
     }
+    this._lastSnapshotKey = snapshotKey
     let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
     await CircleElement.setPagesAndElements(screenshot)
     this.ws.sendScreenshot(screenshot)
@@ -108,6 +113,72 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
     this.snapshotProvider?.onDomChanged()
   }
 
+  onWebViewSaaSCircleEvent(message: string, webviewId?: string) {
+    try {
+      let dict: Record<string, Object> = JSON.parse(message)
+      dict['msgId'] = 'hybridEvent'
+      dict['sk'] = this._lastSnapshotKey
+
+      let frameLeft = 0
+      let frameTop = 0
+      if (webviewId && webviewId.length > 0 && AnalyticsCore.uiContent) {
+        try {
+          let frameNode = AnalyticsCore.uiContent.getAttachedFrameNodeById(webviewId)
+          if (frameNode) {
+            let pos = frameNode.getPositionToWindowWithTransform()
+            frameLeft = pos.x
+            frameTop = pos.y
+          }
+        } catch (e) {}
+      }
+
+      for (let key of ['e', 'el', 'heatmap', 'similar']) {
+        let arr = dict[key] as Array<Record<string, Object>> | undefined
+        if (arr && arr.length > 0) {
+          for (let element of arr) {
+            this._changeXYtoWeb(element, frameLeft, frameTop)
+          }
+        }
+      }
+
+      this.ws.send(JSON.stringify(dict))
+    } catch (e) {
+      this.ws.send(message)
+    }
+  }
+
+  // changeXYtoWeb: WebView JS 物理像素坐标 → 服务端截图 vp 坐标
+  // JS 以 phoneWidth（物理px）为基准上报坐标，native 转换为 vp 并加上 WebView 在屏幕中的偏移
+  private _changeXYtoWeb(element: Record<string, Object>, frameLeft: number, frameTop: number) {
+    if (!AnalyticsCore.uiContent) {
+      return
+    }
+    if (element['ex'] !== undefined) {
+      element['ex'] = AnalyticsCore.uiContent.px2vp(element['ex'] as number) + frameLeft
+    }
+    if (element['ey'] !== undefined) {
+      element['ey'] = AnalyticsCore.uiContent.px2vp(element['ey'] as number) + frameTop
+    }
+    if (element['ew'] !== undefined) {
+      element['ew'] = AnalyticsCore.uiContent.px2vp(element['ew'] as number)
+    }
+    if (element['eh'] !== undefined) {
+      element['eh'] = AnalyticsCore.uiContent.px2vp(element['eh'] as number)
+    }
+    if (element['x'] !== undefined) {
+      let val = Number(element['x'])
+      if (!isNaN(val)) {
+        element['x'] = AnalyticsCore.uiContent.px2vp(val) + frameLeft
+      }
+    }
+    if (element['y'] !== undefined) {
+      let val = Number(element['y'])
+      if (!isNaN(val)) {
+        element['y'] = AnalyticsCore.uiContent.px2vp(val) + frameTop
+      }
+    }
+  }
+
   // WebSocketCallbackInterface
 
   onWebSocketOpen(err: BusinessError, value: Object) {
@@ -127,6 +198,10 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
           return
         }
         let message: Message = JSON.parse(value)
+        if (message.msgId == 'hybridEvent') {
+          Hybrid.handleSaaSCircleEventFromServer(JSON.parse(value) as Record<string, Object>)
+          return
+        }
         if (message.msgType == 'ready') {
           // web端ready
           if (!this.snapshotProvider) {
@@ -156,6 +231,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
           this.statusView.show()
 
           Flutter.onCircleOpen()
+          Hybrid.saasCircleEnabled = true
         } else if (message.msgType == 'incompatible_version') {
           // 版本号不适配
           StatusView.showDialog({

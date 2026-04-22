@@ -157,7 +157,7 @@ enum EventScene {
 | `PageEvent` | 页面浏览事件 | `path`, `title`, `orientation`, `referralPage` |
 | `HybridPageEvent` | H5 页面事件 | `title`, `referralPage`, `protocolType`, `path`, `query` |
 | `FlutterPageEvent` | Flutter 页面事件 | `path`, `title`, `orientation`, `referralPage` |
-| `ViewElementEvent` | 点击/变化事件 | `textValue`, `xpath`, `xcontent`, `index` |
+| `ViewElementEvent` | 点击/变化事件 | `textValue`, `xpath`, `xcontent`, `index`, `query`(SaaS), `hyperlink`(SaaS) |
 | `HybridViewElementEvent` | H5 点击事件 | `textValue`, `xpath`, `xcontent`, `index`, `hyperlink` |
 | `HybridCustomEvent` | H5 自定义事件 | `eventName`, `pageShowTimestamp` |
 | `LoginUserAttributesEvent` | 登录用户属性 | 无 |
@@ -397,7 +397,8 @@ EventBuilder.build() 返回事件
 enum EventSenderType {
   NewSaaS = 0,     // NewSaaS 模式
   SaaS_PV,         // SaaS 页面事件
-  SaaS_CSTM        // SaaS 自定义事件
+  SaaS_CSTM,       // SaaS 自定义事件
+  SaaS_OTHER       // SaaS 无埋点点击/变更事件（启用合并上报）
 }
 ```
 
@@ -408,6 +409,9 @@ enum EventSenderType {
 | NewSaaS | `/v3/projects/accountId/collect` | 统一上报接口 |
 | SaaS_PV | `/v3/accountId/harmonyos/pv` | 页面/访问事件 |
 | SaaS_CSTM | `/v3/accountId/harmonyos/cstm` | 自定义事件 |
+| SaaS_OTHER | `/v3/accountId/harmonyos/other` | 无埋点点击/变更事件（合并格式） |
+
+> **SaaS click 合并上报：** `SaaS_OTHER` 发送时会启用 `mergeSaaSClick` 模式——相同页面、会话、网络环境下的多个点击/变更事件按 `t_u_s_d_p_ptm_r` 为 key 分组，公共字段提升至顶层，每条事件的专属字段（`x`、`gesid`、`esid`、`v`、`idx`、`h` 等）收入 `e[]` 数组，减少冗余字段传输。
 
 ### 发送流程
 
