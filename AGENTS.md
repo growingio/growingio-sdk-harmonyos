@@ -11,4 +11,12 @@
 - HarmonyOS，兼容 API 12 (5.0.0) ~ 目标 API 20 (6.0.0)
 - 主要语言：ArkTS | 构建工具：hvigor | 包管理器：OHPM
 
-> 详细开发规范与文档路由见 `.claude/agents/engineering-harmonyos-sdk-engineer.md`
+## 工程指南
+
+@docs/sdk-engineering-guide.md 提供产品使命 + 文档索引 + 健康指标。
+
+> **注意**：以下文档为 lazy-load（不自动注入），按需读取：
+>
+> - `docs/sdk-critical-rules.md` — 修改核心模块 **必读**（SDK 设计红线 + ArkTS 开发规范）
+> - `docs/sdk-doc-routing.md` — 按场景读取的模块文档索引表
+> - `docs/sdk-build-commands.md` — hvigor 构建命令速查
