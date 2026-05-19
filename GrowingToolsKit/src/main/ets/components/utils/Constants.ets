@@ -26,23 +26,12 @@ export const DATABASE_NAME = 'growing_tools_enc_database'
 export const MAIN_TRACKER_ID = '__GrowingAnalyticsCore'
 
 /**
- * GrowingToolsKit 色彩 token。深浅模式适配通过资源限定符
- * （resources/base/element/color.json + resources/dark/element/color.json）实现，
- * ArkUI 自动随系统颜色模式切换并重绘。
+ * GrowingToolsKit 色彩 token。取值见 resources/{base,dark}/element/color.json，
+ * ArkUI 自动随系统色彩模式切换。
  *
- * 命名约定（历史保留，请按"语义/用途"而非"字面颜色"理解）：
- * - primaryBlack / secondaryBlack / tertiaryBlack：文字层级（主/次/占位与分隔），
- *   深色模式下值为浅色——名称仅源自浅色模式。
- * - primaryWhite / secondaryWhite：表面层（卡片/列表）背景，
- *   深色模式下值为深色（#232323 / #181818）——名称仅源自浅色模式。
- *   ⚠️ 仅用于 .backgroundColor()。品牌色背景上的"白字"请用 ArkUI 内置 Color.White（永远白），
- *   不要用 GTKColor.primaryWhite 作 .fontColor()——深色模式下会变成深字。
- * - primaryBackground / secondaryBackground：页面级背景。
- * - primaryLabel / secondaryLabel：对齐 iOS labelColor / secondaryLabelColor 系统色。
- * - primaryTheme / secondaryTheme / tertiaryTheme：品牌橙色（深浅模式相同）。
- * - hybridTagLabel / flutterTagLabel：事件类型标记色（深浅模式相同）。
- * - transparentBackground：完全透明（#00000000），非深浅色 token，
- *   用于 setWindowBackgroundColor 等只接受 string 的 API。
+ * ⚠️ 命名沿用浅色模式：primaryBlack 在深色模式下是浅色，primaryWhite 反之。
+ * ⚠️ primaryWhite 仅用作 .backgroundColor()；品牌色背景上的"白字"用 ArkUI 内置 Color.White。
+ * ⚠️ transparentBackground 是 string 类型（其余为 Resource），用于 setWindowBackgroundColor 等只接受 string 的 API。
  */
 interface GTKColorTokens {
   readonly primaryTheme: Resource

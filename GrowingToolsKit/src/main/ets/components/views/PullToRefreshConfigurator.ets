@@ -20,14 +20,14 @@ export class PullToRefreshConfigurator {
   private listIsPlacement?: boolean = true; // 滑动结束后列表是否归位
   private animDuration?: number = 150; // 滑动结束后，回弹动画执行时间
   private refreshHeight?: number = 30; // 下拉动画高度
-  private refreshColor?: string = '#999999'; // 下拉动画颜色（Canvas/SVG 用，签名只接受 string；深色模式适配 Out-of-Scope）
+  private refreshColor?: string = '#999999'; // 下拉动画颜色
   private refreshBackgroundColor?: ResourceColor = 'rgba(0,0,0,0)'; // 下拉动画区域背景色
-  private refreshTextColor?: ResourceColor = $r('app.color.gtk_secondaryBlack'); // 下拉加载完毕后提示文本的字体颜色（深浅自动切换，浅 #666666 / 深 #AAAAAA，对齐 iOS black_2）
+  private refreshTextColor?: ResourceColor = $r('app.color.gtk_secondaryBlack'); // 下拉加载完毕后提示文本的字体颜色
   private refreshTextSize?: number | string | Resource = 18; // 下拉加载完毕后提示文本的字体大小
   private refreshAnimDuration?: number = 1000; // 下拉动画执行一次的时间
   private loadImgHeight?: number = 30; // 上拉图片高度
   private loadBackgroundColor?: ResourceColor = 'rgba(0,0,0,0)'; // 上拉动画区域背景色
-  private loadTextColor?: ResourceColor = $r('app.color.gtk_secondaryBlack'); // 上拉文本的字体颜色（深浅自动切换，浅 #666666 / 深 #AAAAAA，对齐 iOS black_2）
+  private loadTextColor?: ResourceColor = $r('app.color.gtk_secondaryBlack'); // 上拉文本的字体颜色
   private loadTextSize?: number | string | Resource = 18; // 上拉文本的字体大小
   private loadTextPullUp1?: string = '正在上拉刷新...'; // 上拉1阶段文本
   private loadTextPullUp2?: string = '放开刷新'; // 上拉2阶段文本

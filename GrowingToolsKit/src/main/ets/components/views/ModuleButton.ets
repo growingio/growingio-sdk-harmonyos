@@ -44,8 +44,6 @@ export default struct ModuleButton {
         Text(this.name)
       }
     }
-    // 外层 Button 背景设为透明：浅色模式下融入白色页面背景，
-    // 深色模式下融入深色页面背景。避免硬编码 Color.White 在深色模式下凸显成白方块。
     .backgroundColor(GTKColor.transparentBackground)
     .stateEffect(false)
     .width(this.buttonSideLength)
