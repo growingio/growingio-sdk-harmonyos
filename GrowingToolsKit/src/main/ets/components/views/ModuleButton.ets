@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { GTKColor } from '../utils/Constants'
+
 @Component
 export default struct ModuleButton {
   entrySideLength: number = 50
@@ -42,7 +44,7 @@ export default struct ModuleButton {
         Text(this.name)
       }
     }
-    .backgroundColor(Color.White)
+    .backgroundColor(GTKColor.transparentBackground)
     .stateEffect(false)
     .width(this.buttonSideLength)
     .height(this.buttonSideLength)

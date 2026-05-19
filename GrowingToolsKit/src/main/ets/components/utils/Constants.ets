@@ -25,22 +25,48 @@ export const PREFERENCE_NAME = 'growing_tools_sp'
 export const DATABASE_NAME = 'growing_tools_enc_database'
 export const MAIN_TRACKER_ID = '__GrowingAnalyticsCore'
 
-export enum GTKColor {
-  primaryTheme = '#FC5F3A',
-  secondaryTheme = '#FF9167',
-  tertiaryTheme = '#C22A0D',
-  blackAlpha = '#00000000',
-  primaryBlack = '#333333',
-  secondaryBlack = '#666666',
-  tertiaryBlack = '#DDDDDD',
-  primaryWhite = '#FFFFFF',
-  secondaryWhite = '#FFF2F2F7',
-  primaryLabel = '#FF000000',
-  secondaryLabel = '#993C3C43',
-  primaryBackground = '#FFFFFF',
-  secondaryBackground = '#F4F5F6',
-  hybridTagLabel = '#FF5733',
-  flutterTagLabel = '#027DFD',
+/**
+ * GrowingToolsKit 色彩 token。取值见 resources/{base,dark}/element/color.json，
+ * ArkUI 自动随系统色彩模式切换。
+ *
+ * ⚠️ 命名沿用浅色模式：primaryBlack 在深色模式下是浅色，primaryWhite 反之。
+ * ⚠️ primaryWhite 仅用作 .backgroundColor()；品牌色背景上的"白字"用 ArkUI 内置 Color.White。
+ * ⚠️ transparentBackground 是 string 类型（其余为 Resource），用于 setWindowBackgroundColor 等只接受 string 的 API。
+ */
+interface GTKColorTokens {
+  readonly primaryTheme: Resource
+  readonly secondaryTheme: Resource
+  readonly tertiaryTheme: Resource
+  readonly primaryBlack: Resource
+  readonly secondaryBlack: Resource
+  readonly tertiaryBlack: Resource
+  readonly primaryWhite: Resource
+  readonly secondaryWhite: Resource
+  readonly primaryLabel: Resource
+  readonly secondaryLabel: Resource
+  readonly primaryBackground: Resource
+  readonly secondaryBackground: Resource
+  readonly hybridTagLabel: Resource
+  readonly flutterTagLabel: Resource
+  readonly transparentBackground: string
+}
+
+export const GTKColor: GTKColorTokens = {
+  primaryTheme:          $r('app.color.gtk_primaryTheme'),
+  secondaryTheme:        $r('app.color.gtk_secondaryTheme'),
+  tertiaryTheme:         $r('app.color.gtk_tertiaryTheme'),
+  primaryBlack:          $r('app.color.gtk_primaryBlack'),
+  secondaryBlack:        $r('app.color.gtk_secondaryBlack'),
+  tertiaryBlack:         $r('app.color.gtk_tertiaryBlack'),
+  primaryWhite:          $r('app.color.gtk_primaryWhite'),
+  secondaryWhite:        $r('app.color.gtk_secondaryWhite'),
+  primaryLabel:          $r('app.color.gtk_primaryLabel'),
+  secondaryLabel:        $r('app.color.gtk_secondaryLabel'),
+  primaryBackground:     $r('app.color.gtk_primaryBackground'),
+  secondaryBackground:   $r('app.color.gtk_secondaryBackground'),
+  hybridTagLabel:        $r('app.color.gtk_hybridTagLabel'),
+  flutterTagLabel:       $r('app.color.gtk_flutterTagLabel'),
+  transparentBackground: '#00000000',
 }
 
 export enum ConfigMode {

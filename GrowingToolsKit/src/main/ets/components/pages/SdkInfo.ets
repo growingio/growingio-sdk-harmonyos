@@ -75,7 +75,7 @@ export default struct SdkInfo {
   @Builder itemHead(header: string) {
     Row() {
       Text(header)
-        .fontColor(GTKColor.primaryWhite)
+        .fontColor(Color.White)
         .padding(10)
       Blank()
       Image($r('app.media.growingtk_arrow_right'))

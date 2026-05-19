@@ -1,0 +1,18 @@
+{
+  "color": [
+    { "name": "gtk_primaryTheme",        "value": "#FFFC5F3A" },
+    { "name": "gtk_secondaryTheme",      "value": "#FFFF9167" },
+    { "name": "gtk_tertiaryTheme",       "value": "#FFC22A0D" },
+    { "name": "gtk_primaryBlack",        "value": "#FFDDDDDD" },
+    { "name": "gtk_secondaryBlack",      "value": "#FFAAAAAA" },
+    { "name": "gtk_tertiaryBlack",       "value": "#FF666666" },
+    { "name": "gtk_primaryWhite",        "value": "#FF232323" },
+    { "name": "gtk_secondaryWhite",      "value": "#FF181818" },
+    { "name": "gtk_primaryLabel",        "value": "#FFFFFFFF" },
+    { "name": "gtk_secondaryLabel",      "value": "#99EBEBF5" },
+    { "name": "gtk_primaryBackground",   "value": "#FF2C2C2E" },
+    { "name": "gtk_secondaryBackground", "value": "#FF353537" },
+    { "name": "gtk_hybridTagLabel",      "value": "#FFFF5733" },
+    { "name": "gtk_flutterTagLabel",     "value": "#FF027DFD" }
+  ]
+}

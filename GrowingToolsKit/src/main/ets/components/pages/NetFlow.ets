@@ -124,7 +124,7 @@ export default struct NetFlow {
                   Blank(5)
                   Text('耗时：' + Math.floor(request.info.totalDuration) + '毫秒')
                     .fontSize(9)
-                    .fontColor(GTKColor.primaryWhite)
+                    .fontColor(Color.White)
                     .padding(4)
                     .borderRadius(4)
                     .backgroundColor(GTKColor.secondaryTheme)
@@ -187,7 +187,7 @@ export default struct NetFlow {
       Column() {
         Button('请求')
           .fontColor(this.isShowRequestDetail ? GTKColor.primaryTheme : GTKColor.primaryBlack)
-          .backgroundColor(GTKColor.blackAlpha)
+          .backgroundColor(GTKColor.transparentBackground)
           .onClick(() => {
             this.isShowRequestDetail = true
           })
@@ -200,7 +200,7 @@ export default struct NetFlow {
       Column() {
         Button('响应')
           .fontColor(this.isShowRequestDetail ? GTKColor.primaryBlack : GTKColor.primaryTheme)
-          .backgroundColor(GTKColor.blackAlpha)
+          .backgroundColor(GTKColor.transparentBackground)
           .onClick(() => {
             this.isShowRequestDetail = false
           })
@@ -288,7 +288,7 @@ export default struct NetFlow {
     Row() {
       Text(title)
         .fontSize(16)
-        .fontColor(GTKColor.primaryWhite)
+        .fontColor(Color.White)
         .padding(10)
     }
     .backgroundColor(GTKColor.secondaryTheme)
