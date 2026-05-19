@@ -1,3 +1,9 @@
+## [1.4.1](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.4.1) (2026-05-19)
+
+### Features 功能
+
+* feat: 适配深色模式，与 iOS toolskit 色彩语义对齐
+
 ## [1.4.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/giokit-1.4.0) (2025-12-11)
 
 ### Features 功能
