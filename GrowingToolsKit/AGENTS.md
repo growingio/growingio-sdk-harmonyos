@@ -217,7 +217,7 @@ ToolsKit 创建悬浮子窗口覆盖层：
 windowStage.createSubWindow(SUB_WINDOW_NAME)
   .then(subWindow => {
     subWindow.loadContentByName(routeName, localStorage)
-    subWindow.setWindowBackgroundColor(GTKColor.blackAlpha)
+    subWindow.setWindowBackgroundColor(GTKColor.transparentBackground)
     subWindow.moveWindowTo(x, y)
     subWindow.resize(56vp, 56vp)  // 悬浮图标大小
     subWindow.showWindow()
@@ -238,11 +238,12 @@ ToolsKit 维护自己的 SQLite 数据库：
 // 窗口名称
 const SUB_WINDOW_NAME = 'GrowingToolsKitSubWindow'
 
-// 颜色
+// 颜色（深浅模式自动切换，详见 components/utils/Constants.ets）
+// 实际类型：GTKColorTokens（14 个 Resource + 1 个 string）
 const GTKColor = {
-  blackAlpha: '#00000000',
-  primary: '#007DFF',
-  // ...
+  transparentBackground: '#00000000', // 完全透明，非深浅色 token
+  primaryTheme: $r('app.color.gtk_primaryTheme'),
+  // ... 其他 Resource token 见 resources/{base,dark}/element/color.json
 }
 
 // 事件场景

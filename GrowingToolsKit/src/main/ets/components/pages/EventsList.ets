@@ -114,7 +114,7 @@ export default struct EventsList {
           if (typeof event == 'string') {
             Row() {
               Text(event)
-                .fontColor(GTKColor.primaryWhite)
+                .fontColor(Color.White)
                 .padding(10)
             }
             .backgroundColor(GTKColor.secondaryTheme)
@@ -133,7 +133,7 @@ export default struct EventsList {
                     Blank(5)
                     Text('Hybrid')
                       .fontSize(11)
-                      .fontColor(GTKColor.primaryWhite)
+                      .fontColor(Color.White)
                       .padding(4)
                       .borderRadius(4)
                       .backgroundColor(GTKColor.hybridTagLabel)
@@ -143,7 +143,7 @@ export default struct EventsList {
                     Blank(5)
                     Text('Flutter')
                       .fontSize(11)
-                      .fontColor(GTKColor.primaryWhite)
+                      .fontColor(Color.White)
                       .padding(4)
                       .borderRadius(4)
                       .backgroundColor(GTKColor.flutterTagLabel)

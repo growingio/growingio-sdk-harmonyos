@@ -156,7 +156,7 @@ export class GrowingToolsKit {
         let localStorage = new LocalStorage()
         localStorage.setOrCreate(PREFERENCE_ENTRY_POSITION, this._position)
         subWindow.loadContentByName(routeName, localStorage).then(() => {
-          subWindow.setWindowBackgroundColor(GTKColor.blackAlpha)
+          subWindow.setWindowBackgroundColor(GTKColor.transparentBackground)
         })
         subWindow.moveWindowTo(this._position.x, this._position.y)
         let context = windowStage.getMainWindowSync().getUIContext()

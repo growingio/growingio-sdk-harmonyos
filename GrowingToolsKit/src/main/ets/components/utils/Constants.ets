@@ -25,22 +25,59 @@ export const PREFERENCE_NAME = 'growing_tools_sp'
 export const DATABASE_NAME = 'growing_tools_enc_database'
 export const MAIN_TRACKER_ID = '__GrowingAnalyticsCore'
 
-export enum GTKColor {
-  primaryTheme = '#FC5F3A',
-  secondaryTheme = '#FF9167',
-  tertiaryTheme = '#C22A0D',
-  blackAlpha = '#00000000',
-  primaryBlack = '#333333',
-  secondaryBlack = '#666666',
-  tertiaryBlack = '#DDDDDD',
-  primaryWhite = '#FFFFFF',
-  secondaryWhite = '#FFF2F2F7',
-  primaryLabel = '#FF000000',
-  secondaryLabel = '#993C3C43',
-  primaryBackground = '#FFFFFF',
-  secondaryBackground = '#F4F5F6',
-  hybridTagLabel = '#FF5733',
-  flutterTagLabel = '#027DFD',
+/**
+ * GrowingToolsKit 色彩 token。深浅模式适配通过资源限定符
+ * （resources/base/element/color.json + resources/dark/element/color.json）实现，
+ * ArkUI 自动随系统颜色模式切换并重绘。
+ *
+ * 命名约定（历史保留，请按"语义/用途"而非"字面颜色"理解）：
+ * - primaryBlack / secondaryBlack / tertiaryBlack：文字层级（主/次/占位与分隔），
+ *   深色模式下值为浅色——名称仅源自浅色模式。
+ * - primaryWhite / secondaryWhite：表面层（卡片/列表）背景，
+ *   深色模式下值为深色（#232323 / #181818）——名称仅源自浅色模式。
+ *   ⚠️ 仅用于 .backgroundColor()。品牌色背景上的"白字"请用 ArkUI 内置 Color.White（永远白），
+ *   不要用 GTKColor.primaryWhite 作 .fontColor()——深色模式下会变成深字。
+ * - primaryBackground / secondaryBackground：页面级背景。
+ * - primaryLabel / secondaryLabel：对齐 iOS labelColor / secondaryLabelColor 系统色。
+ * - primaryTheme / secondaryTheme / tertiaryTheme：品牌橙色（深浅模式相同）。
+ * - hybridTagLabel / flutterTagLabel：事件类型标记色（深浅模式相同）。
+ * - transparentBackground：完全透明（#00000000），非深浅色 token，
+ *   用于 setWindowBackgroundColor 等只接受 string 的 API。
+ */
+interface GTKColorTokens {
+  readonly primaryTheme: Resource
+  readonly secondaryTheme: Resource
+  readonly tertiaryTheme: Resource
+  readonly primaryBlack: Resource
+  readonly secondaryBlack: Resource
+  readonly tertiaryBlack: Resource
+  readonly primaryWhite: Resource
+  readonly secondaryWhite: Resource
+  readonly primaryLabel: Resource
+  readonly secondaryLabel: Resource
+  readonly primaryBackground: Resource
+  readonly secondaryBackground: Resource
+  readonly hybridTagLabel: Resource
+  readonly flutterTagLabel: Resource
+  readonly transparentBackground: string
+}
+
+export const GTKColor: GTKColorTokens = {
+  primaryTheme:          $r('app.color.gtk_primaryTheme'),
+  secondaryTheme:        $r('app.color.gtk_secondaryTheme'),
+  tertiaryTheme:         $r('app.color.gtk_tertiaryTheme'),
+  primaryBlack:          $r('app.color.gtk_primaryBlack'),
+  secondaryBlack:        $r('app.color.gtk_secondaryBlack'),
+  tertiaryBlack:         $r('app.color.gtk_tertiaryBlack'),
+  primaryWhite:          $r('app.color.gtk_primaryWhite'),
+  secondaryWhite:        $r('app.color.gtk_secondaryWhite'),
+  primaryLabel:          $r('app.color.gtk_primaryLabel'),
+  secondaryLabel:        $r('app.color.gtk_secondaryLabel'),
+  primaryBackground:     $r('app.color.gtk_primaryBackground'),
+  secondaryBackground:   $r('app.color.gtk_secondaryBackground'),
+  hybridTagLabel:        $r('app.color.gtk_hybridTagLabel'),
+  flutterTagLabel:       $r('app.color.gtk_flutterTagLabel'),
+  transparentBackground: '#00000000',
 }
 
 export enum ConfigMode {

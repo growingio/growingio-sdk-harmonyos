@@ -39,7 +39,7 @@ export default struct TrackerTabBar {
         })
         Button(this.subTrackerId)
           .fontSize(14)
-          .fontColor(GTKColor.primaryWhite)
+          .fontColor(Color.White)
           .backgroundColor(this.trackerId != '' && this.trackerId != MAIN_TRACKER_ID
             ? GTKColor.primaryTheme
             : GTKColor.secondaryTheme)
@@ -70,7 +70,7 @@ export default struct TrackerTabBar {
   button(title: string, color: () => ResourceColor, onClick: () => void) {
     Button(title)
       .fontSize(14)
-      .fontColor(GTKColor.primaryWhite)
+      .fontColor(Color.White)
       .backgroundColor(color())
       .margin({ right: 5, top: 5, bottom: 5 })
       .onClick(onClick)

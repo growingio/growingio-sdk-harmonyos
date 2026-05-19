@@ -75,7 +75,7 @@ export default struct SdkInfo {
   @Builder itemHead(header: string) {
     Row() {
       Text(header)
-        .fontColor(GTKColor.primaryWhite)
+        .fontColor(Color.White) // 橙色品牌背景上的文字，永远白色，不随深浅切换
         .padding(10)
       Blank()
       Image($r('app.media.growingtk_arrow_right'))
