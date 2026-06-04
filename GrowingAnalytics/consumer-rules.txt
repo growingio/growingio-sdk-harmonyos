@@ -64,6 +64,33 @@ $rect
 $ID
 $type
 $attrs
+# --------- SaaS circle WS protocol (SaaSModel.ets) ---------
+msgId
+ai
+spn
+protocolVersion
+userAction
+actionDesc
+screenshot
+screenshotWidth
+screenshotHeight
+sdkConfig
+isTrackWebView
+sk
+impress
+targets
+nodeType
+page
+isClickable
+isContainer
+isTab
+isWebview
+zLevel
+left
+top
+width
+height
+parentXPath
 # --------- protobuf ---------
 roots
 fromBits

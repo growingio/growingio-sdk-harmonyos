@@ -21,16 +21,18 @@ import { BusinessError } from '@ohos.base'
 import DeviceInfo from "../core/DeviceInfo"
 import AppInfo from "../core/AppInfo"
 import GrowingContext from "../core/Context"
+import { ConfigMode } from "../interfaces/GrowingConfig"
 import {
   CircleReadyInfo,
   ClientInfo,
-  ClientInfoData, 
+  ClientInfoData,
   DebuggerData, EventData,
   LogData,
   LoggerData,
   Quit,
   ReadyInfo,
   RefreshScreenshot } from './Model'
+import { ClientInit, ClientQuit, UserAction } from './SaaSModel'
 import { niceTryAsync } from "../utils/Util"
 
 export interface WebSocketCallbackInterface {
@@ -72,7 +74,11 @@ export class WebSocket {
 
     let latestSocket = this.ws
     this.queue = []
-    niceTryAsync(() => latestSocket.send(JSON.stringify(new Quit())))
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    let quit = context.config.mode == ConfigMode.SaaS
+      ? JSON.stringify(new ClientQuit())
+      : JSON.stringify(new Quit())
+    niceTryAsync(() => latestSocket.send(quit))
   }
 
   send(message: string) {
@@ -114,16 +120,21 @@ export class WebSocket {
 
   sendCircleReadyInfo() {
     let context = GrowingContext.getDefaultContext() as GrowingContext
-    let readyInfo = new CircleReadyInfo(
-      context.config.accountId,
-      Date.now(),
-      AppInfo.domain,
-      DeviceInfo.screenWidth ?? DeviceInfo.defaultScreenWidth,
-      DeviceInfo.screenHeight ?? DeviceInfo.defaultScreenHeight,
-      context.config.urlScheme,
-      AppInfo.appVersion,
-    )
-    this.send(JSON.stringify(readyInfo))
+    if (context.config.mode == ConfigMode.SaaS) {
+      let clientInit = new ClientInit(context.config.accountId, AppInfo.domain, AppInfo.appVersion)
+      this.send(JSON.stringify(clientInit))
+    } else {
+      let readyInfo = new CircleReadyInfo(
+        context.config.accountId,
+        Date.now(),
+        AppInfo.domain,
+        DeviceInfo.screenWidth ?? DeviceInfo.defaultScreenWidth,
+        DeviceInfo.screenHeight ?? DeviceInfo.defaultScreenHeight,
+        context.config.urlScheme,
+        AppInfo.appVersion,
+      )
+      this.send(JSON.stringify(readyInfo))
+    }
   }
 
   sendClientInfo() {
@@ -182,5 +193,9 @@ export class WebSocket {
 
   sendScreenshot(screenshot: RefreshScreenshot) {
     this.send(JSON.stringify(screenshot))
+  }
+
+  sendSaaSUserAction(userAction: UserAction) {
+    this.send(JSON.stringify(userAction))
   }
 }

@@ -22,13 +22,17 @@ import { BusinessError } from '@ohos.base'
 import url from "@ohos.url"
 
 import AutotrackPage from "../autotrack/AutotrackPage"
-import { EventScene } from "../event/Event"
+import { EventScene, EventType } from "../event/Event"
+import EventPersistence from "../event/EventPersistence"
 import { Message, RefreshScreenshot } from '../mobileDebugger/Model'
+import { ImpressElement, SdkConfig, UserAction } from '../mobileDebugger/SaaSModel'
 import { WebSocket, WebSocketCallbackInterface } from '../mobileDebugger/WebSocket'
 import { PluginsInterface } from "../plugins/Plugins"
 import { StatusView } from "../mobileDebugger/StatusView"
 import AppInfo from "../core/AppInfo"
 import AnalyticsCore, { SDK_VERSION } from "../core/AnalyticsCore"
+import GrowingContext from "../core/Context"
+import { ConfigMode } from "../interfaces/GrowingConfig"
 import { Flutter } from "../core/Flutter"
 import Hybrid from "../core/Hybrid"
 import { SnapshotProvider } from "../mobileDebugger/Snapshot"
@@ -55,6 +59,7 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
     Flutter.onCircleClosed()
     Hybrid.saasCircleEnabled = false
     this.snapshotProvider?.stopObserver()
+    this.snapshotProvider = undefined
     this.statusView?.hide()
     this._lastSnapshotKey = 0
 
@@ -68,6 +73,9 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   }
 
   async sendScreenshot(screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) {
+    if (!this.snapshotProvider) {
+      return
+    }
     if (AutotrackPage.lastPage) {
       // 当有页面浏览事件生成时，需判断当前页面是否是原生页面
       // 而flutter页面，则应该由flutter sdk触发sendScreenshotForFlutter
@@ -77,9 +85,40 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
       }
     }
     this._lastSnapshotKey = snapshotKey
-    let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
-    await CircleElement.setPagesAndElements(screenshot)
-    this.ws.sendScreenshot(screenshot)
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (context.config.mode == ConfigMode.SaaS) {
+      await this._sendSaaSUserAction('refresh', '更新截图', screenWidth, screenHeight, snapshotKey, snapshot)
+    } else {
+      let screenshot = new RefreshScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
+      await CircleElement.setPagesAndElements(screenshot)
+      this.ws.sendScreenshot(screenshot)
+    }
+  }
+
+  private async _sendSaaSUserAction(userAction: string, actionDesc: string,
+    screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string,
+    clickedXpath?: string): Promise<void> {
+    this._lastSnapshotKey = snapshotKey
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    let sdkConfig = new SdkConfig(AppInfo.appVersion, context.config.hybridAutotrackEnabled)
+    let page = AutotrackPage.lastPage?.path ?? ''
+    let title = AutotrackPage.lastPage?.title ?? ''
+    let action = new UserAction(userAction, actionDesc, title, page, AppInfo.domain,
+      snapshot, screenWidth, screenHeight, AppInfo.appVersion, sdkConfig, snapshotKey)
+    let impress = await CircleElement.setImpressElements(screenWidth, screenHeight)
+    action.impress = impress
+    if (clickedXpath && clickedXpath.length > 0) {
+      let targets: Array<ImpressElement> = []
+      for (let el of impress) {
+        if (el.xpath == clickedXpath) {
+          targets.push(el)
+        }
+      }
+      if (targets.length > 0) {
+        action.targets = targets
+      }
+    }
+    this.ws.sendSaaSUserAction(action)
   }
 
   sendScreenshotForFlutter(data: Map<string, Object>) {
@@ -111,6 +150,33 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
 
   onWebViewDomTreeChanged() {
     this.snapshotProvider?.onDomChanged()
+  }
+
+  onEventWroteToDisk(event: EventPersistence, eventScene: number) {
+    if (!this.snapshotProvider || eventScene != EventScene.Native) {
+      return
+    }
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (context.config.mode != ConfigMode.SaaS) {
+      return
+    }
+
+    if (event.eventType == EventType.ViewClick) {
+      let data = JSON.parse(event.data) as _SaaSEventData
+      let nodeName = data.v && data.v.length > 0 ? data.v : '元素'
+      let clickedXpath = data.x ?? ''
+      this.snapshotProvider.getSnapshot((screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => {
+        this._sendSaaSUserAction('click', '点击了' + nodeName, screenWidth, screenHeight, snapshotKey, snapshot, clickedXpath)
+      })
+    } else if (event.eventType == EventType.Page) {
+      let data = JSON.parse(event.data) as _SaaSEventData
+      let pageName = data.tl && data.tl.length > 0 ? data.tl : (data.p ?? '')
+      setTimeout(() => {
+        this.snapshotProvider?.getSnapshot((screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => {
+          this._sendSaaSUserAction('page', '进入了' + pageName, screenWidth, screenHeight, snapshotKey, snapshot)
+        })
+      }, 500)
+    }
   }
 
   onWebViewSaaSCircleEvent(message: string, webviewId?: string) {
@@ -202,50 +268,74 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
           Hybrid.handleSaaSCircleEventFromServer(JSON.parse(value) as Record<string, Object>)
           return
         }
-        if (message.msgType == 'ready') {
-          // web端ready
-          if (!this.snapshotProvider) {
-            this.snapshotProvider = new SnapshotProvider(
-              (screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => {
-                this.sendScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
-              })
-          }
-          this.snapshotProvider.startObserver()
-
-          if (!this.statusView) {
-            this.statusView = new StatusView('正在进行圈选(上下拖曳移动)', () => {
-              StatusView.showDialog({
-                title: '正在进行圈选',
-                message: `APP版本: ${AppInfo.appVersion}\nSDK版本: ${SDK_VERSION}`,
-                buttons: [
-                  { text: '继续', color: '#000000' },
-                  { text: '退出', color: '#000000' }
-                ]
-              }).then(r => {
-                if (r.index == 1) {
-                  this.ws.disconnect()
-                }
-              })
-            })
-          }
-          this.statusView.show()
-
-          Flutter.onCircleOpen()
-          Hybrid.saasCircleEnabled = true
-        } else if (message.msgType == 'incompatible_version') {
-          // 版本号不适配
-          StatusView.showDialog({
-            title: '抱歉',
-            message: '您使用的SDK版本号过低，请升级SDK后再使用',
-            buttons: [{ text: '知道了', color: '#000000' }]
-          })
-
-          this.ws.disconnect()
+        let context = GrowingContext.getDefaultContext() as GrowingContext
+        if (context.config.mode == ConfigMode.SaaS) {
+          this._handleSaaSMessage(message)
+        } else {
+          this._handleMessage(message)
         }
       }
     } catch (e) {
 
     }
+  }
+
+  private _handleSaaSMessage(message: Message) {
+    if (message.msgId == 'editor_ready') {
+      this._startCircling()
+    } else if (message.msgId == 'editor_quit') {
+      this.stop('当前设备已与Web端断开连接，如需继续圈选请扫码重新连接')
+    } else if (message.msgId == 'incompatible_version') {
+      this._showIncompatibleVersion()
+    }
+  }
+
+  private _handleMessage(message: Message) {
+    if (message.msgType == 'ready') {
+      this._startCircling()
+    } else if (message.msgType == 'incompatible_version') {
+      this._showIncompatibleVersion()
+    }
+  }
+
+  private _startCircling() {
+    if (!this.snapshotProvider) {
+      this.snapshotProvider = new SnapshotProvider(
+        (screenWidth: number, screenHeight: number, snapshotKey: number, snapshot: string) => {
+          this.sendScreenshot(screenWidth, screenHeight, snapshotKey, snapshot)
+        })
+    }
+    this.snapshotProvider.startObserver()
+
+    if (!this.statusView) {
+      this.statusView = new StatusView('正在进行圈选(上下拖曳移动)', () => {
+        StatusView.showDialog({
+          title: '正在进行圈选',
+          message: `APP版本: ${AppInfo.appVersion}\nSDK版本: ${SDK_VERSION}`,
+          buttons: [
+            { text: '继续', color: '#000000' },
+            { text: '退出', color: '#000000' }
+          ]
+        }).then(r => {
+          if (r.index == 1) {
+            this.ws.disconnect()
+          }
+        })
+      })
+    }
+    this.statusView.show()
+
+    Flutter.onCircleOpen()
+    Hybrid.saasCircleEnabled = true
+  }
+
+  private _showIncompatibleVersion() {
+    StatusView.showDialog({
+      title: '抱歉',
+      message: '您使用的SDK版本号过低，请升级SDK后再使用',
+      buttons: [{ text: '知道了', color: '#000000' }]
+    })
+    this.ws.disconnect()
   }
 
   onWebSocketClose(err: BusinessError, value: webSocket.CloseResult) {
@@ -255,4 +345,11 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   onWebSocketError(err: BusinessError) {
     this.stop('服务器链接失败')
   }
+}
+
+class _SaaSEventData {
+  x: string | undefined = undefined
+  v: string | undefined = undefined
+  p: string | undefined = undefined
+  tl: string | undefined = undefined
 }

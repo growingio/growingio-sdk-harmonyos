@@ -444,6 +444,68 @@ GrowingAnalytics.setDynamicGeneralProps(() => {
 GrowingAnalytics.setDynamicGeneralProps(() => ({}))
 ```
 
+### 无埋点采集
+
+无埋点可自动采集用户的点击、输入变更和页面浏览事件，无需逐个手动埋点。
+
+> 注意：无埋点采集**必须**先开启无埋点监听 (`onWindowStageCreate`)，仅设置 `autotrackEnabled` / `autotrackAllPages` 配置项而不注册监听，将**不会**产生任何无埋点事件。
+
+#### 开启无埋点监听
+
+在主窗口对应的 Ability 的 `onWindowStageCreate` 方法中，于 `windowStage.loadContent` 完成时开启无埋点监听：
+
+```typescript
+onWindowStageCreate(windowStage: window.WindowStage) {
+  try {
+    windowStage.loadContent('pages/Index', (err: BusinessError) => {
+      const errCode: number = err.code
+      if (errCode) {
+        console.error(`Failed to load the content. Cause code: ${err.code}, message: ${err.message}`)
+        return;
+      }
+      console.info('Succeeded in loading the content.')
+      // 在 windowStage.loadContent 完成时，开启无埋点监听
+      GrowingAnalytics.onWindowStageCreate(this, windowStage)
+    });
+  } catch (exception) {
+    console.error(`Failed to load the content. Cause code: ${exception.code}, message: ${exception.message}`)
+  }
+}
+```
+
+> 注意：该监听在未初始化 SDK 之前不会获取任何设备信息，以及产生事件数据。
+
+#### 开启无埋点采集
+
+在初始化配置中设置 `autotrackEnabled` 为 `true` (默认为 `false`)，开启后自动采集用户点击和输入变更事件：
+
+```typescript
+setupAnalytics() {
+  let config = new GrowingConfig().SaaS(
+    'Your AccountId',
+    'Your UrlScheme'
+  )
+  config.autotrackEnabled = true
+  GrowingAnalytics.configure(config)
+}
+```
+
+#### 开启页面浏览事件自动埋点
+
+在初始化配置中设置 `autotrackAllPages` 为 `true` (默认为 `false`)，开启页面浏览事件自动埋点，适配组件导航 (Navigation) 和页面路由 (@ohos.router)：
+
+```typescript
+setupAnalytics() {
+  let config = new GrowingConfig().SaaS(
+    'Your AccountId',
+    'Your UrlScheme'
+  )
+  config.autotrackEnabled = true
+  config.autotrackAllPages = true
+  GrowingAnalytics.configure(config)
+}
+```
+
 ### Hybrid 打通
 
 ```typescript

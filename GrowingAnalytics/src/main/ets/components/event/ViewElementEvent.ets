@@ -53,7 +53,11 @@ export default class ViewElementEvent extends Event {
     }
     event.xpath = xpath
     event.xcontent = xcontent
-    event.index = index && index > 0 ? index : undefined
+    if (context.config.mode == ConfigMode.NewSaaS) {
+      event.index = index > 0 ? index : undefined
+    } else {
+      event.index = (typeof index === 'number' && index >= 0) ? index : undefined
+    }
     event.attributes = attributes
     event.eventType = eventType
     return EventBuilder.build(event, context)
