@@ -1,9 +1,12 @@
 import web_webview from '@ohos.web.webview'
 import { GrowingAnalytics, GrowingAnalyticsInterface } from '@growingio/analytics'
 
+const SDK_MODE_SAAS: number = 1
+
 @Entry({useSharedStorage: true})
 @Component
 struct Hybrid {
+  @StorageProp('sdkMode') sdkMode: number = 0
   @LocalStorageProp('trackerId') trackerIdFromStorage: string = ''
   @State trackerIdFromRouterParams: string = this.getUIContext().getRouter().getParams()
     ? ((this.getUIContext().getRouter().getParams() as Record<string, Object>)['trackerId'] as string)
@@ -39,12 +42,26 @@ struct Hybrid {
       //       console.error(`ErrorCode: ${e.code},  Message: ${e.message}`);
       //     }
       //   })
-      Web({ src: $rawfile('newDemo.html'), controller: this.controller})
-        .javaScriptAccess(true)
-        .domStorageAccess(true)
-        .javaScriptProxy(this.getJavaScriptProxy('Web1'))
-        .height('90%')
-        .id('Web1')
+      if (this.sdkMode === SDK_MODE_SAAS) {
+        Web({ src: $rawfile('SaaSDemo.html'), controller: this.controller })
+          .javaScriptAccess(true)
+          .domStorageAccess(true)
+          .javaScriptProxy(this.getJavaScriptProxy('Web1'))
+          .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart())
+          .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd())
+          .onPageEnd(() => {
+            GrowingAnalytics.onPageEnd(this.controller, 'Web1')
+          })
+          .height('90%')
+          .id('Web1')
+      } else {
+        Web({ src: $rawfile('newDemo.html'), controller: this.controller })
+          .javaScriptAccess(true)
+          .domStorageAccess(true)
+          .javaScriptProxy(this.getJavaScriptProxy('Web1'))
+          .height('90%')
+          .id('Web1')
+      }
       Button('Back')
         .onClick(() => {
           // let context = getContext(this) as AppContext.UIAbilityContext

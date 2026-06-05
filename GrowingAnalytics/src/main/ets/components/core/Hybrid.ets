@@ -373,25 +373,45 @@ class SaaSHybrid {
         } catch (e) {}
       }
 
-      // changeXYtoHybrid: 服务端 vp 坐标 → WebView 本地 CSS 坐标（HarmonyOS 上 1CSS px = 1vp）
       let localDict: Record<string, Object> = JSON.parse(JSON.stringify(dict))
-      if (localDict['x'] !== undefined) {
-        let val = Number(localDict['x'])
-        if (!isNaN(val)) {
-          localDict['x'] = val - frameLeft
+      let uiContent = AnalyticsCore.uiContent
+      if (uiContent) {
+        if (localDict['x'] !== undefined) {
+          let val = Number(localDict['x'])
+          if (!isNaN(val)) {
+            localDict['x'] = uiContent.vp2px(val - frameLeft)
+          }
         }
-      }
-      if (localDict['y'] !== undefined) {
-        let val = Number(localDict['y'])
-        if (!isNaN(val)) {
-          localDict['y'] = val - frameTop
+        if (localDict['y'] !== undefined) {
+          let val = Number(localDict['y'])
+          if (!isNaN(val)) {
+            localDict['y'] = uiContent.vp2px(val - frameTop)
+          }
         }
-      }
-      if (localDict['ex'] !== undefined) {
-        localDict['ex'] = (localDict['ex'] as number) - frameLeft
-      }
-      if (localDict['ey'] !== undefined) {
-        localDict['ey'] = (localDict['ey'] as number) - frameTop
+        if (localDict['ex'] !== undefined) {
+          let val = Number(localDict['ex'])
+          if (!isNaN(val)) {
+            localDict['ex'] = uiContent.vp2px(val - frameLeft)
+          }
+        }
+        if (localDict['ey'] !== undefined) {
+          let val = Number(localDict['ey'])
+          if (!isNaN(val)) {
+            localDict['ey'] = uiContent.vp2px(val - frameTop)
+          }
+        }
+        if (localDict['ew'] !== undefined) {
+          let val = Number(localDict['ew'])
+          if (!isNaN(val)) {
+            localDict['ew'] = uiContent.vp2px(val)
+          }
+        }
+        if (localDict['eh'] !== undefined) {
+          let val = Number(localDict['eh'])
+          if (!isNaN(val)) {
+            localDict['eh'] = uiContent.vp2px(val)
+          }
+        }
       }
       let jsonStr = JSON.stringify(localDict)
       await niceTryAsync(() => hybrid.controller.runJavaScript(`window._vds_hybrid.helper.handleWebEvent(${jsonStr})`))

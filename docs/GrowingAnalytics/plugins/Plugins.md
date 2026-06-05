@@ -302,13 +302,13 @@ if (config.mode != ConfigMode.SaaS) {
 
 ```typescript
 class Circle implements PluginsInterface, WebSocketCallbackInterface {
-  // 仅在 NewSaaS 模式且开启 autotrack 时注册
+  // 在 NewSaaS 或 SaaS 模式且开启 autotrack 时注册（SaaS 圈选自 v2.8.0 起支持）
 }
 ```
 
 **注册条件**:
 ```typescript
-if (config.mode == ConfigMode.NewSaaS && config.autotrackEnabled) {
+if ((config.mode == ConfigMode.NewSaaS || config.mode == ConfigMode.SaaS) && config.autotrackEnabled) {
   plugins.push(new Circle())
 }
 ```
@@ -318,7 +318,7 @@ if (config.mode == ConfigMode.NewSaaS && config.autotrackEnabled) {
 | 插件 | NewSaaS | CDP | SaaS |
 |------|---------|-----|------|
 | MobileDebugger | ✅ | ✅ | ❌ |
-| Circle | ✅ (需 autotrack) | ❌ | ❌ |
+| Circle | ✅ (需 autotrack) | ❌ | ✅ (需 autotrack) |
 
 ---
 
@@ -402,6 +402,23 @@ static onWebViewDomTreeChanged() {
 
 **使用场景**:
 - Circle: 触发截图刷新，更新圈选数据
+
+### SaaS WebView 圈选事件回调
+
+当 SaaS 模式下 H5 页面上报圈选事件（`SaaSHybrid.webCircleHybridEvent`）时触发，转交给 Circle 做坐标转换后上报服务端：
+
+```typescript
+static onWebViewSaaSCircleEvent(message: string, webviewId?: string) {
+  Plugins.plugins.forEach(plugin => {
+    if (plugin.onWebViewSaaSCircleEvent) {
+      plugin.onWebViewSaaSCircleEvent(message, webviewId)
+    }
+  })
+}
+```
+
+**使用场景**:
+- Circle（SaaS）: 在 `onWebViewSaaSCircleEvent` 中把 H5 物理像素坐标转换为截图 vp 坐标并附带 `snapshotKey` 后转发服务端
 
 ---
 
@@ -588,4 +605,4 @@ Plugins 系统提供了灵活的扩展机制：
 ---
 
 *文档生成时间: 2026-02-25*
-*基于 GrowingIO HarmonyOS SDK v2.7.1*
+*基于 GrowingIO HarmonyOS SDK v2.8.0*

@@ -506,6 +506,85 @@ setupAnalytics() {
 }
 ```
 
+### 设置页面别名
+
+您也可以通过手动设置页面别名，设置后：
+
+* 页面路径为对应的别名
+* 无论是否开启页面浏览事件自动埋点，该页面的页面浏览事件都将生成
+
+#### 基于组件导航 (Navigation)
+
+```typescript
+let destination = new NavPathInfo(name, {
+  "growing_alias": "homePage"
+} as Record<string, Object>)
+this.pageStack.pushDestination(destination)
+```
+
+#### 基于页面路由 (@ohos.router)
+
+```typescript
+router.pushUrl({
+  url: path,
+  params: {
+    "growing_alias": "homePage"
+  }
+})
+```
+
+### 设置页面标题
+
+#### 基于组件导航 (Navigation)
+
+```typescript
+let destination = new NavPathInfo(name, {
+  "growing_title": "home"
+} as Record<string, Object>)
+this.pageStack.pushDestination(destination)
+```
+
+#### 基于页面路由 (@ohos.router)
+
+```typescript
+router.pushUrl({
+  url: path,
+  params: {
+    "growing_title": "home"
+  }
+})
+```
+
+### 设置页面属性
+
+通过手动设置页面属性为该页面添加事件发生时所伴随的维度信息。
+
+#### 基于组件导航 (Navigation)
+
+```typescript
+let destination = new NavPathInfo(name, {
+  "growing_attributes": {
+    "key1": "value1",
+    "key2": 100
+  } as Record<string, Object>
+} as Record<string, Object>)
+this.pageStack.pushDestination(destination)
+```
+
+#### 基于页面路由 (@ohos.router)
+
+```typescript
+router.pushUrl({
+  url: path,
+  params: {
+    "growing_attributes": {
+      "key1": "value1",
+      "key2": 100
+    }
+  }
+})
+```
+
 ### Hybrid 打通
 
 ```typescript

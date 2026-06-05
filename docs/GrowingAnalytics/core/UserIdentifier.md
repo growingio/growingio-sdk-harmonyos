@@ -462,4 +462,4 @@ UserIdentifier 模块提供了完整的用户标识管理功能：
 ---
 
 *文档生成时间: 2026-02-25*
-*基于 GrowingIO HarmonyOS SDK v2.7.1*
+*基于 GrowingIO HarmonyOS SDK v2.8.0*

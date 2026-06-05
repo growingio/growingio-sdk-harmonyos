@@ -387,4 +387,4 @@ DeviceInfo 和 AppInfo 提供了完整的设备和应用信息采集功能：
 ---
 
 *文档生成时间: 2026-02-25*
-*基于 GrowingIO HarmonyOS SDK v2.7.1*
+*基于 GrowingIO HarmonyOS SDK v2.8.0*

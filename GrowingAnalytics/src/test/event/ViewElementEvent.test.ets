@@ -238,6 +238,29 @@ export default function viewElementEventTests() {
       let e = ViewElementEvent.create('/p', 0, '', '/X', '', -1, {}, EventType.ViewClick, ctx)
       expect(e.index === undefined).assertTrue()
     })
+
+    // 老 SaaS / CDP 的列表 index 为 0-based，列表首项的合法 index 0 必须上报
+    it('SaaS 模式 index = 0（列表首项）→ 写入 0', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.SaaS)
+      seedContext(ctx)
+      let e = ViewElementEvent.create('/p', 0, '', '/X', '', 0, {}, EventType.ViewClick, ctx)
+      expect(e.index).assertEqual(0)
+    })
+
+    // 非列表元素由 AutotrackClick 以哨兵 -1 传入，老 SaaS 不应再上报 index 0
+    it('SaaS 模式 index = -1（非列表元素）→ undefined', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.SaaS)
+      seedContext(ctx)
+      let e = ViewElementEvent.create('/p', 0, '', '/X', '', -1, {}, EventType.ViewClick, ctx)
+      expect(e.index === undefined).assertTrue()
+    })
+
+    it('CDP 模式 index = -1（非列表元素）→ undefined', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.CDP)
+      seedContext(ctx)
+      let e = ViewElementEvent.create('/p', 0, '', '/X', '', -1, {}, EventType.ViewClick, ctx)
+      expect(e.index === undefined).assertTrue()
+    })
   })
 
   // ─── xpath / xcontent 透传 ────────────────────────────────────────────────

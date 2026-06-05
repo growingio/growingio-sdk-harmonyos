@@ -484,4 +484,4 @@ Session 模块是 GrowingIO SDK 中管理用户会话的核心组件，其设计
 ---
 
 *文档生成时间: 2026-02-25*
-*基于 GrowingIO HarmonyOS SDK v2.7.1*
+*基于 GrowingIO HarmonyOS SDK v2.8.0*

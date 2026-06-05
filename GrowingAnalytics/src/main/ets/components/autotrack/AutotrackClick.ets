@@ -239,7 +239,7 @@ class _PageInfo {
 class _XpathInfo {
   xpath: Array<string> = []
   xcontent: Array<string> = []
-  index = 0
+  index = -1
   eventType: EventType = EventType.ViewClick
   inList = false
 }

@@ -145,7 +145,8 @@ enum EventType {
 enum EventScene {
   Native = 0,    // 原生事件
   Hybrid,        // H5/Hybrid 事件
-  Flutter        // Flutter 事件
+  Flutter,       // Flutter 事件
+  UniApp         // UniApp 事件
 }
 ```
 
@@ -157,7 +158,7 @@ enum EventScene {
 | `PageEvent` | 页面浏览事件 | `path`, `title`, `orientation`, `referralPage` |
 | `HybridPageEvent` | H5 页面事件 | `title`, `referralPage`, `protocolType`, `path`, `query` |
 | `FlutterPageEvent` | Flutter 页面事件 | `path`, `title`, `orientation`, `referralPage` |
-| `ViewElementEvent` | 点击/变化事件 | `textValue`, `xpath`, `xcontent`, `index`, `query`(SaaS), `hyperlink`(SaaS) |
+| `ViewElementEvent` | 点击/变化事件 | `textValue`, `xpath`, `xcontent`, `index`, `query`(SaaS), `hyperlink`(SaaS), `pageShowTimestamp`(CDP/SaaS) |
 | `HybridViewElementEvent` | H5 点击事件 | `textValue`, `xpath`, `xcontent`, `index`, `hyperlink` |
 | `HybridCustomEvent` | H5 自定义事件 | `eventName`, `pageShowTimestamp` |
 | `LoginUserAttributesEvent` | 登录用户属性 | 无 |
@@ -643,4 +644,4 @@ Event 系统是 GrowingIO SDK 的数据处理核心，其设计特点包括：
 ---
 
 *文档生成时间: 2026-02-25*
-*基于 GrowingIO HarmonyOS SDK v2.7.1*
+*基于 GrowingIO HarmonyOS SDK v2.8.0*

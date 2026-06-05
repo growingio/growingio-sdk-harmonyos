@@ -1,0 +1,70 @@
+<!DO<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="data:image/ico;base64,aWNv">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>GrowingIO Hybrid In App</title>
+    <script>
+
+        function trackNative() {
+            var data = JSON.stringify({"gender":"male", "age":21});
+            GrowingWebViewJavascriptBridge.trackNative("cstm", data);
+        }
+    
+        function setNativePeopleVariable() {
+            GrowingWebViewJavascriptBridge.setNativePeopleVariable({"gender":"male", "age":21});
+        }
+
+        function setNativeVisitor() {
+            GrowingWebViewJavascriptBridge.setNativeVisitor({'testkey': 'testValue', 'testNumKey': 2333});
+        }
+        function setNativeEvar() {
+            GrowingWebViewJavascriptBridge.setNativeEvar({'campaignId': '1234567890', 'campaignOwner':'lisi'});
+        }
+
+        function setNativeUserId() {
+            GrowingWebViewJavascriptBridge.setNativeUserId("1234567890");
+        }
+
+        function clearUserId() {
+            GrowingWebViewJavascriptBridge.clearNativeUserId();
+        }
+    </script>
+</head>
+
+<body>
+    <div class='main'>
+        <div class='title' id="mark">
+            <h2>autotrack hybrid</h2>
+            <div>
+                <div class='title'>
+                    <h3>这仅仅是一个测试页面</h3>
+                    <button class="button" onclick="javascript:trackNative()" type="button">
+                        trackNative
+                    </button>
+                    <button class="button" onclick="javascript:setNativePeopleVariable()" type="button">
+                        setNativePeopleVariable
+                    </button>
+                    <button class="button" onclick="javascript:setNativeVisitor()" type="button">
+                        setNativeVisitor
+                    </button>
+                    <button class="button" onclick="javascript:setNativeEvar()" type="button">
+                        setNativeEvar
+                    </button>
+                    <button class="button" onclick="javascript:setNativeUserId()" type="button">
+                        setNativeUserId
+                    </button>
+                    <button class="button" onclick="javascript:clearUserId()" type="button">     
+                        clearUserId
+                    </button>
+                </div>
+            </div>
+</body>
+<footer>
+</footer>
+
+</html>

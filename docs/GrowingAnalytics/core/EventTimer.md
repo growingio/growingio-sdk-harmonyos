@@ -510,6 +510,6 @@ subTracker.trackTimerEnd(subTimerId)
 
 ## 参见
 
-- [interfaces/interfaces.md](../interfaces/interfaces.md) - 计时器 API 使用说明
-- [AnalyticsCore](./analytics_core.md) - 事件写入和发送
-- [Session](./session.md) - 应用前后台切换处理
+- [GrowingAnalytics](../interfaces/GrowingAnalytics.md) - 计时器 API 使用说明
+- [AnalyticsCore](./AnalyticsCore.md) - 事件写入和发送
+- [Session](./Session.md) - 应用前后台切换处理

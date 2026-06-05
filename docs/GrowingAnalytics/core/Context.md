@@ -299,6 +299,6 @@ private getTableName(): string {
 
 ## 参见
 
-- [AnalyticsCore](./analytics_core.md) - SDK 核心，Tracker 管理
-- [GrowingConfig](./config.md) - 配置管理
-- [EventSender](../event/event_system.md) - 事件发送器
+- [AnalyticsCore](./AnalyticsCore.md) - SDK 核心，Tracker 管理
+- [GrowingConfig](../interfaces/GrowingConfig.md) - 配置管理
+- [Event](../event/Event.md) - 事件系统（含事件发送器）
