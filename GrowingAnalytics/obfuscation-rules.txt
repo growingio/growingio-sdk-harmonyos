@@ -28,6 +28,24 @@ EventV3Dto
 ResourceItem
 
 -keep-property-name
+# --------- hybrid JS bridge methods (registerJavaScriptProxy methodList,
+#           must match the names called from web SDK across the native↔JS boundary) ---------
+# NewSaaS/default bridge: GrowingWebViewJavascriptBridge
+getConfiguration
+dispatchEvent
+onDomChanged
+setNativeUserId
+setNativeUserIdAndUserKey
+clearNativeUserId
+clearNativeUserIdAndUserKey
+# SaaS hybrid autotrack bridge: _vds_bridge
+saveEvent
+setUserId
+clearUserId
+setVisitor
+hoverNodes
+webCircleHybridEvent
+onDOMChanged
 # --------- event properties ---------
 userId
 userKey
