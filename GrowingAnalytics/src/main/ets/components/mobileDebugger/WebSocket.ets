@@ -47,7 +47,7 @@ export class WebSocket {
   queue: string[] = []
   isUploading: boolean = false
 
-  connect(url: string, callback: WebSocketCallbackInterface): Promise<boolean> {
+  connect(url: string, callback: WebSocketCallbackInterface, header?: Object): Promise<boolean> {
     this.disconnect()
 
     let ws = webSocket.createWebSocket()
@@ -64,7 +64,11 @@ export class WebSocket {
     ws.on('error', (err: BusinessError) => {
       callback.onWebSocketError(err)
     })
-    return niceTryAsync(() => ws.connect(url), false)
+    let options: webSocket.WebSocketRequestOptions | undefined = undefined
+    if (header) {
+      options = { header: header }
+    }
+    return niceTryAsync(() => options ? ws.connect(url, options) : ws.connect(url), false)
   }
 
   disconnect() {

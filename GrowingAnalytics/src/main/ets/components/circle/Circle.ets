@@ -20,6 +20,8 @@
 import webSocket from "@ohos.net.webSocket"
 import { BusinessError } from '@ohos.base'
 import url from "@ohos.url"
+import buffer from "@ohos.buffer"
+import cryptoFramework from "@ohos.security.cryptoFramework"
 
 import AutotrackPage from "../autotrack/AutotrackPage"
 import { EventScene, EventType } from "../event/Event"
@@ -47,7 +49,17 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
 
   connect(url: string) {
     if (AnalyticsCore.mainWindow && AnalyticsCore.uiContent) {
-      this.ws.connect(url, this)
+      let context = GrowingContext.getDefaultContext() as GrowingContext
+      if (context.config.mode == ConfigMode.SaaS) {
+        let timestamp = Date.now()
+        let path = url.split('?')[0]
+        let signedUrl = url + (url.includes('?') ? '&' : '?') + 'timestamp=' + timestamp
+        let signature = sha1Hex(path + ':' + timestamp)
+        let header: _SaaSRequestHeader = { Authorization: 'Sign SHA1 ' + signature }
+        this.ws.connect(signedUrl, this, header)
+      } else {
+        this.ws.connect(url, this)
+      }
       return
     }
     setTimeout(() => {
@@ -352,4 +364,21 @@ class _SaaSEventData {
   v: string | undefined = undefined
   p: string | undefined = undefined
   tl: string | undefined = undefined
+}
+
+class _SaaSRequestHeader {
+  Authorization: string = ''
+}
+
+function sha1Hex(input: string): string {
+  return niceTry(() => {
+    let md = cryptoFramework.createMd('SHA1')
+    let inputBuffer = buffer.from(input, 'utf-8')
+    let inputBlob: cryptoFramework.DataBlob = {
+      data: new Uint8Array(inputBuffer.buffer, inputBuffer.byteOffset, inputBuffer.length)
+    }
+    md.updateSync(inputBlob)
+    let digest = md.digestSync()
+    return buffer.from(digest.data).toString('hex')
+  }, '')
 }

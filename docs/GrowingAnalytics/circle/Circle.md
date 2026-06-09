@@ -220,6 +220,7 @@ class Circle implements PluginsInterface, WebSocketCallbackInterface {
 ```typescript
 connect(url: string) {
   if (AnalyticsCore.mainWindow && AnalyticsCore.uiContent) {
+    // SaaS 模式需对 wss 连接做时间戳 + 签名鉴权（见下「SaaS wss 签名鉴权」）
     this.ws.connect(url, this)
     return
   }
@@ -229,6 +230,30 @@ connect(url: string) {
   }, 300)
 }
 ```
+
+### SaaS wss 签名鉴权（仅 SaaS 模式）
+
+> **仅 SaaS 模式生效**：NewSaaS / CDP 仍按原 `wsUrl` 直连，不加时间戳、不加签名头。
+
+SaaS 模式下扫码圈选连接 wss 服务时，须在 URL 上附加当前时间戳，并在 **请求头** 携带签名，供服务端校验链接时效与合法性：
+
+1. **URL 追加时间戳**：`timestamp` 取 `Date.now()`（毫秒）。
+   ```
+   wss://<host>/v2/app/<ai>/circle/<room>?timestamp=<ts>
+   ```
+2. **签名计算**：`<path>` 为 `wsUrl` 去掉 query 的部分（即不含 `?timestamp=...`）。
+   ```
+   signature = SHA1("<path>:<ts>", UTF-8)
+   ```
+   结果为 **小写十六进制字符串**（40 字符，与 Guava `HashCode.toString()` 一致）。
+3. **请求头**：
+   ```
+   Authorization: Sign SHA1 <signature>
+   ```
+
+> URL 上的 `<ts>` 与签名输入里的 `<ts>` 必须为同一个值。签名通过 `@ohos.security.cryptoFramework` 的 `createMd('SHA1')` + `updateSync/digestSync` 同步计算（输入串短，主线程开销可忽略），并用 `niceTry` 包裹避免异常上抛宿主。
+
+`WebSocket.connect(url, callback, header?)` 第三个可选参数即为该请求头，最终作为 `webSocket.WebSocketRequestOptions.header` 传入；NewSaaS/CDP 与 MobileDebugger 不传 header，行为不变。
 
 ---
 
