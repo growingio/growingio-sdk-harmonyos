@@ -167,13 +167,27 @@ class Circle implements PluginsInterface, WebSocketCallbackInterface {
       if (!urlObject) {
         return false
       }
-      let serviceType = urlObject.params.get('serviceType')
-      let wsUrl = urlObject.params.get('wsUrl')
-      
-      // 检查是否为圈选服务
-      if (serviceType && serviceType == 'circle' && wsUrl && wsUrl.length > 0) {
-        this.connect(wsUrl)
-        return true
+      let context = GrowingContext.getDefaultContext() as GrowingContext
+      if (context.config.mode == ConfigMode.SaaS) {
+        // SaaS 模式：用 circleType 判断，wsUrl 由 wsHost + accountId + circleRoomNumber 手动拼接
+        let circleType = urlObject.params.get('circleType')
+        let wsHost = urlObject.params.get('wsHost')
+        let circleRoomNumber = urlObject.params.get('circleRoomNumber')
+        if (circleType && circleType.length > 0
+          && wsHost && wsHost.length > 0
+          && circleRoomNumber && circleRoomNumber.length > 0) {
+          let wsUrl = wsHost + '/v2/app/' + context.config.accountId + '/circle/' + circleRoomNumber
+          this.connect(wsUrl)
+          return true
+        }
+      } else {
+        // NewSaaS / CDP：直接取 serviceType + wsUrl
+        let serviceType = urlObject.params.get('serviceType')
+        let wsUrl = urlObject.params.get('wsUrl')
+        if (serviceType && serviceType == 'circle' && wsUrl && wsUrl.length > 0) {
+          this.connect(wsUrl)
+          return true
+        }
       }
     }
     return false
@@ -181,17 +195,33 @@ class Circle implements PluginsInterface, WebSocketCallbackInterface {
 }
 ```
 
+> **SaaS 模式的 URL 参数差异**：SaaS 扫码圈选的回跳 URL 不携带 `serviceType`/`wsUrl`，而是携带
+> `circleType`、`wsHost`（URL 编码的 `wss://...`，`params.get` 自动解码）与 `circleRoomNumber`。
+> 因此 SaaS 模式下用 **`circleType`** 判断是否为圈选，并按
+> `<wsHost>/v2/app/<accountId>/circle/<circleRoomNumber>` 手动拼接 `wsUrl`（`accountId` 取初始化配置）。
+> 拼接结果与下文「SaaS wss 签名鉴权」中的签名 `<path>` 同源。
+>
+> 示例 URL：
+> ```
+> growing.<scheme>://growing/oauth2/token?...&circleRoomNumber=bePxxfiTsALCzW8R
+>   &wsHost=wss%3A%2F%2Frelease-ws.growingio.cn&...&circleType=web
+> ```
+
 ### 连接建立流程
 
 ```
 用户扫码/点击链接
         │
         ▼
-┌───────────────┐
-│ 解析 URL 参数 │
-│ • serviceType │
-│ • wsUrl       │
-└───────┬───────┘
+┌──────────────────────────┐
+│ 解析 URL 参数（按 mode） │
+│ NewSaaS/CDP:             │
+│ • serviceType • wsUrl    │
+│ SaaS:                    │
+│ • circleType • wsHost    │
+│ • circleRoomNumber       │
+│   → 拼接 wsUrl           │
+└───────────┬──────────────┘
         │
         ▼
 ┌───────────────┐
@@ -901,6 +931,22 @@ SaaS 模式下，WebView 圈选通过双向通信实现：
 > JS 端以 `phoneWidth`（物理 px）为基准上报坐标，因此 native 用 `px2vp` 换算，**不是** CSS px。
 
 **服务端 → 移动端（下发）**：服务端下发 `hybridEvent` 消息（含圈选坐标），由 `Hybrid.handleSaaSCircleEventFromServer()` 按 `x/y`（vp）命中测试路由到对应 WebView（无坐标时广播给全部 WebView），经坐标反变换（vp → WebView 本地**物理像素 px**，用 `vp2px` 并扣除 WebView 偏移）后通过 `window._vds_hybrid.helper.handleWebEvent()` 传递给 H5 页面。
+
+#### `et` 指令类型（仅 SaaS 模式）
+
+> 仅 **SaaS** 模式 WebView 圈选使用。H5 端圈选插件（`vds_web_circle_plugin`）以 `et`（event type）字段区分下发指令，`handleWebEvent(ev)` 内 `switch (ev.et)` 路由到对应处理逻辑；处理结果经 `_vds_bridge.webCircleHybridEvent` 回传时**原样带回 `et`**，供服务端关联是对哪类指令的响应。
+>
+> NewSaaS / CDP 的 hybrid 圈选改走 `refreshScreenshot` 内嵌 `webView` DOM 树，**不使用** `et` 协议。
+
+| `et` | 含义 | H5 行为 | 回传内容 |
+|------|------|---------|---------|
+| `1` | **悬停高亮**（hover） | 手指/指针在屏幕移动时，实时计算当前位置下可圈选的元素并高亮 | 命中元素列表 `e` + xpath |
+| `2` | **点击选中**（click） | 在指定坐标点击确定要圈选的元素，回传该元素快照 | 元素 snapshot（含 `sk`/`seqid`） |
+| `3` | **回显已圈选元素**（circled） | 服务端下发已配置的埋点 `tags`，H5 在页面上把这些元素用框标记出来 | 已圈选元素列表 `el` + `tm` |
+| `4` | **页面级圈选**（circle page） | 圈选整个页面（PAGE 维度） | 页面 xpath、domain、path、query、`document.title` |
+| `5` | **获取相似元素**（get similar） | 基于一个 xpath 找出同类/列表项元素（列表「圈一个选一片」） | 相似元素列表 `similar` + xpath |
+
+> 公共回传字段：`sk`（截图序号，关联当前帧）、`d`（domain）、`p`（page path）、`q`（query）、`xpath`。
 
 ---
 

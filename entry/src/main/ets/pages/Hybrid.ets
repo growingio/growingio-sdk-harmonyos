@@ -43,7 +43,7 @@ struct Hybrid {
       //     }
       //   })
       if (this.sdkMode === SDK_MODE_SAAS) {
-        Web({ src: $rawfile('SaaSDemo.html'), controller: this.controller })
+        Web({ src: 'http://release-messages.growingio.cn/push/saas/index.html?timestamp=11111', controller: this.controller })
           .javaScriptAccess(true)
           .domStorageAccess(true)
           .javaScriptProxy(this.getJavaScriptProxy('Web1'))

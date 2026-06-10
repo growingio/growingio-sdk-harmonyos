@@ -21,6 +21,7 @@ import webSocket from "@ohos.net.webSocket"
 import { BusinessError } from '@ohos.base'
 import url from "@ohos.url"
 import buffer from "@ohos.buffer"
+import util from "@ohos.util"
 import cryptoFramework from "@ohos.security.cryptoFramework"
 
 import AutotrackPage from "../autotrack/AutotrackPage"
@@ -47,23 +48,23 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   snapshotProvider?: SnapshotProvider
   private _lastSnapshotKey: number = 0
 
-  connect(url: string) {
+  connect(connectUrl: string) {
     if (AnalyticsCore.mainWindow && AnalyticsCore.uiContent) {
       let context = GrowingContext.getDefaultContext() as GrowingContext
       if (context.config.mode == ConfigMode.SaaS) {
         let timestamp = Date.now()
-        let path = url.split('?')[0]
-        let signedUrl = url + (url.includes('?') ? '&' : '?') + 'timestamp=' + timestamp
+        let path = url.URL.parseURL(connectUrl).pathname
+        let signedUrl = connectUrl + (connectUrl.includes('?') ? '&' : '?') + 'timestamp=' + timestamp
         let signature = sha1Hex(path + ':' + timestamp)
         let header: _SaaSRequestHeader = { Authorization: 'Sign SHA1 ' + signature }
         this.ws.connect(signedUrl, this, header)
       } else {
-        this.ws.connect(url, this)
+        this.ws.connect(connectUrl, this)
       }
       return
     }
     setTimeout(() => {
-      this.connect(url)
+      this.connect(connectUrl)
     }, 300)
   }
 
@@ -149,11 +150,26 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
       if (!urlObject) {
         return false
       }
-      let serviceType = urlObject.params.get('serviceType')
-      let wsUrl = urlObject.params.get('wsUrl')
-      if (serviceType && serviceType == 'circle' && wsUrl && wsUrl.length > 0) {
-        this.connect(wsUrl)
-        return true
+      let context = GrowingContext.getDefaultContext() as GrowingContext
+      if (context.config.mode == ConfigMode.SaaS) {
+        // SaaS 模式：用 circleType 判断是否为圈选，wsUrl 由 wsHost + accountId + circleRoomNumber 手动拼接
+        let circleType = urlObject.params.get('circleType')
+        let wsHost = urlObject.params.get('wsHost')
+        let circleRoomNumber = urlObject.params.get('circleRoomNumber')
+        if (circleType && circleType.length > 0
+          && wsHost && wsHost.length > 0
+          && circleRoomNumber && circleRoomNumber.length > 0) {
+          let wsUrl = wsHost + '/v2/app/' + context.config.accountId + '/circle/' + circleRoomNumber
+          this.connect(wsUrl)
+          return true
+        }
+      } else {
+        let serviceType = urlObject.params.get('serviceType')
+        let wsUrl = urlObject.params.get('wsUrl')
+        if (serviceType && serviceType == 'circle' && wsUrl && wsUrl.length > 0) {
+          this.connect(wsUrl)
+          return true
+        }
       }
     }
 
@@ -373,9 +389,8 @@ class _SaaSRequestHeader {
 function sha1Hex(input: string): string {
   return niceTry(() => {
     let md = cryptoFramework.createMd('SHA1')
-    let inputBuffer = buffer.from(input, 'utf-8')
     let inputBlob: cryptoFramework.DataBlob = {
-      data: new Uint8Array(inputBuffer.buffer, inputBuffer.byteOffset, inputBuffer.length)
+      data: new util.TextEncoder().encodeInto(input)
     }
     md.updateSync(inputBlob)
     let digest = md.digestSync()

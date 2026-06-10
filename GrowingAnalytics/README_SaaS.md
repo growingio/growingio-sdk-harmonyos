@@ -141,6 +141,57 @@ GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext)
 | autotrackEnabled              | boolean  | false  | 是否开启无埋点采集，开启后自动采集用户点击和输入变更事件                                                          |
 | autotrackAllPages             | boolean  | false  | 是否采集所有页面（Page）事件，开启后所有页面均会自动上报，否则需手动调用页面相关 API                                         |
 
+### 添加 URL Scheme
+
+URL Scheme 是您在 GrowingIO 平台创建应用时生成的该应用的唯一标识。把 URL Scheme 添加到您的项目，以便使用扫码圈选等功能时唤醒您的应用。
+
+1. 在 module.json5 中 EntryAbility 对应的 skills 添加 URL Scheme：
+```typescript
+{
+  "module": {
+    "abilities": [
+      {
+        "name": "EntryAbility",
+        "skills": [
+          
+          // -- 添加 URL Scheme --
+          {
+            "actions": [
+              "ohos.want.action.viewData"
+            ],
+            "uris": [
+              {
+                "scheme":"Your URL Scheme", // 替换为您的应用的 URL Scheme
+                "host": "growing/oauth2/token"
+              }
+            ]
+          }
+          // -- 添加 URL Scheme --
+          
+        ]
+      },
+    ],
+  }
+}
+```
+
+2. 在 EntryAbility.ets 添加 URL Scheme 跳转处理方法
+```typescript
+onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  let uri = want?.uri
+  if (uri) {
+    GrowingAnalytics.handleOpenURL(uri)
+  }
+}
+
+onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  let uri = want?.uri
+  if (uri) {
+    GrowingAnalytics.handleOpenURL(uri)
+  }
+}
+```
+
 ### 数据采集 API
 
 #### 初始化是否成功

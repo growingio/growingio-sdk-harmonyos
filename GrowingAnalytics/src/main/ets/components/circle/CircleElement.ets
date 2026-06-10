@@ -579,7 +579,7 @@ export default class CircleElement {
     element.isTab = false
     element.isWebview = e.nodeType == CIRCLE_NODE_WEBVIEW ? 1 : 0
     element.zLevel = 0
-    if (e.inList && e.index > 0) {
+    if (e.inList && e.index >= 0) {
       element.index = String(e.index)
     }
     if (e.content && e.content.length > 0) {
