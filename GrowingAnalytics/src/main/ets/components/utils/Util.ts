@@ -19,6 +19,8 @@ import { ValueType, AttributesType } from '../utils/Constants'
 import { event_pb } from './protobuf/event_pb'
 import buffer from '@ohos.buffer'
 import snappy from 'snappyjs'
+import util from '@ohos.util'
+import cryptoFramework from '@ohos.security.cryptoFramework'
 
 export default class Util {
   static mapToObject(map: Map<string, ValueType>): AttributesType {
@@ -325,4 +327,16 @@ export async function niceTryAsync<T>(fn: () => Promise<T>, fallback?: T): Promi
   } catch {
     return fallback
   }
+}
+
+export function sha1Hex(input: string): string {
+  return niceTry(() => {
+    let md = cryptoFramework.createMd('SHA1')
+    let inputBlob: cryptoFramework.DataBlob = {
+      data: new util.TextEncoder().encodeInto(input)
+    }
+    md.updateSync(inputBlob)
+    let digest = md.digestSync()
+    return buffer.from(digest.data).toString('hex')
+  }, '')
 }

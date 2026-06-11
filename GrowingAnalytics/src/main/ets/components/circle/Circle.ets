@@ -20,9 +20,6 @@
 import webSocket from "@ohos.net.webSocket"
 import { BusinessError } from '@ohos.base'
 import url from "@ohos.url"
-import buffer from "@ohos.buffer"
-import util from "@ohos.util"
-import cryptoFramework from "@ohos.security.cryptoFramework"
 
 import AutotrackPage from "../autotrack/AutotrackPage"
 import { EventScene, EventType } from "../event/Event"
@@ -40,7 +37,7 @@ import { Flutter } from "../core/Flutter"
 import Hybrid from "../core/Hybrid"
 import { SnapshotProvider } from "../mobileDebugger/Snapshot"
 import CircleElement from "./CircleElement"
-import { niceTry } from "../utils/Util"
+import { niceTry, sha1Hex } from "../utils/Util"
 
 export default class Circle implements PluginsInterface, WebSocketCallbackInterface {
   ws: WebSocket = new WebSocket()
@@ -244,33 +241,26 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   // changeXYtoWeb: WebView JS 物理像素坐标 → 服务端截图 vp 坐标
   // JS 以 phoneWidth（物理px）为基准上报坐标，native 转换为 vp 并加上 WebView 在屏幕中的偏移
   private _changeXYtoWeb(element: Record<string, Object>, frameLeft: number, frameTop: number) {
-    if (!AnalyticsCore.uiContent) {
+    let uiContent = AnalyticsCore.uiContent
+    if (!uiContent) {
       return
     }
-    if (element['ex'] !== undefined) {
-      element['ex'] = AnalyticsCore.uiContent.px2vp(element['ex'] as number) + frameLeft
-    }
-    if (element['ey'] !== undefined) {
-      element['ey'] = AnalyticsCore.uiContent.px2vp(element['ey'] as number) + frameTop
-    }
-    if (element['ew'] !== undefined) {
-      element['ew'] = AnalyticsCore.uiContent.px2vp(element['ew'] as number)
-    }
-    if (element['eh'] !== undefined) {
-      element['eh'] = AnalyticsCore.uiContent.px2vp(element['eh'] as number)
-    }
-    if (element['x'] !== undefined) {
-      let val = Number(element['x'])
+    let convert = (key: string, offset: number) => {
+      let raw = element[key]
+      if (raw === undefined) {
+        return
+      }
+      let val = Number(raw)
       if (!isNaN(val)) {
-        element['x'] = AnalyticsCore.uiContent.px2vp(val) + frameLeft
+        element[key] = uiContent.px2vp(val) + offset
       }
     }
-    if (element['y'] !== undefined) {
-      let val = Number(element['y'])
-      if (!isNaN(val)) {
-        element['y'] = AnalyticsCore.uiContent.px2vp(val) + frameTop
-      }
-    }
+    convert('ex', frameLeft)
+    convert('ey', frameTop)
+    convert('ew', 0)
+    convert('eh', 0)
+    convert('x', frameLeft)
+    convert('y', frameTop)
   }
 
   // WebSocketCallbackInterface
@@ -283,33 +273,30 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   }
 
   onWebSocketReceive(err: BusinessError, value: string | ArrayBuffer) {
-    if (err) {
+    if (err || typeof value != 'string') {
       return
     }
-    try {
-      if (typeof value == 'string') {
-        if (value.trim().length == 0) {
-          return
-        }
-        let message: Message = JSON.parse(value)
-        if (message.msgId == 'hybridEvent') {
-          Hybrid.handleSaaSCircleEventFromServer(JSON.parse(value) as Record<string, Object>)
-          return
-        }
-        let context = GrowingContext.getDefaultContext() as GrowingContext
-        if (context.config.mode == ConfigMode.SaaS) {
-          this._handleSaaSMessage(message)
-        } else {
-          this._handleMessage(message)
-        }
-      }
-    } catch (e) {
+    let text = value.trim()
+    if (text.length == 0) {
+      return
+    }
+    niceTry(() => this._dispatchMessage(text))
+  }
 
+  private _dispatchMessage(text: string) {
+    let message: Message = JSON.parse(text)
+    let context = GrowingContext.getDefaultContext() as GrowingContext
+    if (context.config.mode == ConfigMode.SaaS) {
+      this._handleSaaSMessage(message)
+    } else {
+      this._handleMessage(message)
     }
   }
 
   private _handleSaaSMessage(message: Message) {
-    if (message.msgId == 'editor_ready') {
+    if (message.msgId == 'hybridEvent') {
+      Hybrid.handleSaaSCircleEventFromServer(message as object as Record<string, Object>)
+    } else if (message.msgId == 'editor_ready') {
       this._startCircling()
     } else if (message.msgId == 'editor_quit') {
       this.stop('当前设备已与Web端断开连接，如需继续圈选请扫码重新连接')
@@ -384,16 +371,4 @@ class _SaaSEventData {
 
 class _SaaSRequestHeader {
   Authorization: string = ''
-}
-
-function sha1Hex(input: string): string {
-  return niceTry(() => {
-    let md = cryptoFramework.createMd('SHA1')
-    let inputBlob: cryptoFramework.DataBlob = {
-      data: new util.TextEncoder().encodeInto(input)
-    }
-    md.updateSync(inputBlob)
-    let digest = md.digestSync()
-    return buffer.from(digest.data).toString('hex')
-  }, '')
 }
