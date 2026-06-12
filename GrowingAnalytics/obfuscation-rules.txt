@@ -128,6 +128,13 @@ top
 width
 height
 parentXPath
+# --------- SaaS circle auth header (Circle.ets _SaaSRequestHeader) ---------
+Authorization
+# --------- SaaS circle event short keys (Circle.ets _SaaSEventData) ---------
+x
+v
+p
+tl
 # --------- protobuf ---------
 roots
 fromBits
