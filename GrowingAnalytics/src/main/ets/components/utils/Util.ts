@@ -176,7 +176,6 @@ export default class Util {
         'ptm': event.pageShowTimestamp,
         'p': event.path,
         'q': event.query,
-        'r': r,
         'lat': event.latitude,
         'lng': event.longitude,
         'x': event.xpath,

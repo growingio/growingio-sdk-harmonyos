@@ -53,7 +53,7 @@ export function processEvents(events: EventPersistence[], useProtobuf: boolean, 
         let groupsMap: Record<string, Array<Record<string, Object>>> = {}
         for (let e of events) {
           let event = JSON.parse(e.data) as Record<string, Object>
-          let key = `${event['t']}_${event['u']}_${event['s']}_${event['d']}_${event['p']}_${event['ptm']}_${event['r']}`
+          let key = `${event['t']}_${event['u']}_${event['s']}_${event['d']}_${event['p']}_${event['ptm']}`
           if (!groupsMap[key]) {
             groupsMap[key] = []
           }
@@ -71,7 +71,6 @@ export function processEvents(events: EventPersistence[], useProtobuf: boolean, 
             'd': first['d'],
             'p': first['p'],
             'ptm': first['ptm'],
-            'r': first['r'],
           }
           if (first['cs1'] !== undefined && first['cs1'] !== null && String(first['cs1']).length > 0) {
             top['cs1'] = first['cs1']
