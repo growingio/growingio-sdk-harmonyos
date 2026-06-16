@@ -93,8 +93,16 @@ export default class Network {
   }
 
   static generateHeaders(time: number, useProtobuf: boolean, context: GrowingContext): Record<string, string> {
+    let contentType: string
+    if (context.config.mode == ConfigMode.SaaS) {
+      // 老 SaaS 模式使用 application/octet-stream
+      contentType = "application/octet-stream"
+    } else {
+      contentType = useProtobuf ? "application/protobuf" : "application/json"
+    }
+
     let headers: Record<string, string> = {
-      "Content-Type": useProtobuf ? "application/protobuf" : "application/json",
+      "Content-Type": contentType,
       "Accept": "application/json",
       "X-Timestamp": time + ''
     }
