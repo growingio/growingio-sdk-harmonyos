@@ -574,7 +574,7 @@ export default class CircleElement {
     element.top = rect.top
     element.width = rect.width
     element.height = rect.height
-    element.isClickable = isButton ? 1 : 0
+    element.isClickable = CircleElement._isClickable(e) ? 1 : 0
     element.isContainer = true
     element.isTab = false
     element.isWebview = e.nodeType == CIRCLE_NODE_WEBVIEW ? 1 : 0
