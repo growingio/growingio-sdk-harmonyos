@@ -1,3 +1,9 @@
+## [2.9.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.9.0) (2026-06-24)
+
+### Features 功能
+
+* feat(saas): 支持 SaaS 产品线无埋点采集与可视化圈选
+
 ## [2.8.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.8.0) (2026-03-03)
 
 ### Features 功能
