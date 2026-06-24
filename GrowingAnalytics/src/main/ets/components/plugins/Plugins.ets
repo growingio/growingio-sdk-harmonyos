@@ -38,6 +38,7 @@ export interface PluginsInterface {
   onResponseReceive?(response: rcp.Response): void
   onEventsDidSend?(events: EventPersistence[], request: rcp.Request): void
   onWebViewDomTreeChanged?(): void
+  onWebViewSaaSCircleEvent?(message: string, webviewId?: string): void
 }
 
 export default class Plugins {
@@ -164,6 +165,14 @@ export default class Plugins {
     Plugins.plugins.forEach(plugin => {
       if (plugin.onWebViewDomTreeChanged) {
         plugin.onWebViewDomTreeChanged()
+      }
+    })
+  }
+
+  static onWebViewSaaSCircleEvent(message: string, webviewId?: string) {
+    Plugins.plugins.forEach(plugin => {
+      if (plugin.onWebViewSaaSCircleEvent) {
+        plugin.onWebViewSaaSCircleEvent(message, webviewId)
       }
     })
   }

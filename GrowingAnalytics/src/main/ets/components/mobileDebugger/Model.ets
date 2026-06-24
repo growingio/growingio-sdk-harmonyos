@@ -20,7 +20,8 @@ import { AttributesType } from '../utils/Constants'
 import Util from '../utils/Util'
 
 export interface Message {
-  msgType: string
+  msgType?: string
+  msgId?: string
 }
 
 export class ReadyInfo implements Message {

@@ -450,4 +450,4 @@ GrowingConfig 提供了灵活的配置系统：
 ---
 
 *文档生成时间: 2026-02-25*
-*基于 GrowingIO HarmonyOS SDK v2.7.1*
+*基于 GrowingIO HarmonyOS SDK v2.8.0*

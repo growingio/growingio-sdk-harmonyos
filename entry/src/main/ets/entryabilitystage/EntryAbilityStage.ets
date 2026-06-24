@@ -58,16 +58,19 @@ export default class EntryAbilityStage extends AbilityStage {
 
     // let config = new GrowingConfig().SaaS(
     //   '0a1b4118dd954ec3bcc69da5138bdb96',
-    //   'growing.84ff920737d56b1d'
+    //   'growing.83cec9c13cde61b3'
     // )
     // config.debugEnabled = true
     // config.sessionInterval = 30
     // config.dataUploadInterval = 15
     // config.requestOptions.connectTimeout = 10
     // config.requestOptions.transferTimeout = 10
+    // config.autotrackEnabled = true
     // config.autotrackAllPages = true
     // config.plugins = [new GrowingToolsKit()]
     // GrowingAnalytics.configure(config)
+
+    AppStorage.setOrCreate('sdkMode', config.mode)
   }
 
   startAnalytics() {

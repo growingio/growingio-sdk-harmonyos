@@ -83,7 +83,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       // 仅支持 NewSaaS 和 CDP
       plugins.push(new MobileDebugger())
     }
-    if (config.mode == ConfigMode.NewSaaS && config.autotrackEnabled) {
+    if ((config.mode == ConfigMode.NewSaaS || config.mode == ConfigMode.SaaS) && config.autotrackEnabled) {
       plugins.push(new Circle())
     }
     Plugins.registerPlugins(plugins)
@@ -233,6 +233,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
 
   javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem> {
     return Hybrid.javaScriptOnDocumentEnd(this.context, scriptRules)
+  }
+
+  onPageEnd(controller: webview.WebviewController, webviewId?: string): Promise<void> {
+    return Hybrid.onPageEnd(controller, this.context, webviewId)
   }
 
   isInitializedSuccessfully(): boolean {

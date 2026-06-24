@@ -15,6 +15,7 @@
 - [SaaS 模式支持](#saas-模式支持)
 - [WebView 圈选支持](#webview-圈选支持)
 - [脚本注入机制](#脚本注入机制)
+  - [onPageEnd API](#公共-api-接口)
 
 ---
 
@@ -103,7 +104,9 @@ Hybrid 模块是 GrowingIO SDK 实现原生应用与 H5 页面数据打通的核
 ├─────────────────────────────────────────────────────────────────────────┤
 │  属性                                                                   │
 │  ├── name: string = '_vds_bridge'                                       │
-│  └── methodList: string[]              // SaaS 专用方法列表             │
+│  ├── methodList: string[]              // SaaS 专用方法列表             │
+│  ├── webviewId?: string                // WebView 唯一标识              │
+│  └── static _saasHybrids: SaaSHybrid[] // 所有 SaaS Hybrid 实例列表   │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  方法                                                                   │
 │  ├── saveEvent()                       // 保存事件                      │
@@ -111,8 +114,9 @@ Hybrid 模块是 GrowingIO SDK 实现原生应用与 H5 页面数据打通的核
 │  ├── clearUserId()                     // 清除用户 ID                   │
 │  ├── setVisitor()                      // 设置访客属性                  │
 │  ├── hoverNodes()                      // 圈选悬停节点                  │
-│  ├── webCircleHybridEvent()            // 圈选事件                      │
-│  └── onDOMChanged()                    // DOM 变化通知                  │
+│  ├── webCircleHybridEvent()            // 圈选事件上报                  │
+│  ├── onDOMChanged()                    // DOM 变化通知                  │
+│  └── static handleCircleEventFromServer() // 服务端圈选事件下发到 H5    │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
                                     │ 使用
@@ -264,7 +268,7 @@ static createHybridProxy(
     
   } else if (context.config.mode == ConfigMode.SaaS && context.config.hybridAutotrackEnabled) {
     // SaaS 模式且开启 Hybrid 无埋点
-    let hybrid = new SaaSHybrid(controller, context)
+    let hybrid = new SaaSHybrid(controller, context, webviewId)
     return {
       object: hybrid,
       name: hybrid.name,
@@ -482,7 +486,33 @@ class SaaSHybridEventHandler {
     let attributes: AttributesType = event.var ?? {} // 事件属性
     let d = AppInfo.domain + '::' + String(event.d ?? '')  // 域名
     
-    if (t == 'cstm' || t == 'pvar' || t == 'page') {
+    if (t == 'clck' || t == 'chng') {
+      // 点击/变更无埋点事件：遍历 event.e 中每个元素，构建 ViewElementEvent 写盘
+      let elements = event.e as Array<Record<string, Object>> | undefined
+      if (!elements || elements.length == 0) {
+        return
+      }
+      let p = String(event.p ?? '')
+      let lastPage = PageEvent.getLastPage(context)
+      if (lastPage) {
+        p = (lastPage.path ?? '') + '::' + p   // 拼接原生页面路径
+      }
+      let eventType = t == 'clck' ? EventType.ViewClick : EventType.ViewChange
+      for (let element of elements) {
+        let xpath = String(element.x ?? '')
+        let textValue = String(element.v ?? '')
+        let index = element.idx as number
+        let e = ViewElementEvent.create(p, event.ptm as number, textValue, xpath, '', index, {}, eventType, context)
+        if (t == 'chng' && textValue.length > 0) {
+          e.textValue = textValue
+        }
+        e.query = event.q as string | undefined
+        e.hyperlink = element.h as string | undefined
+        e.domain = d
+        e.timestamp = event.tm as number
+        AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
+      }
+    } else if (t == 'cstm' || t == 'pvar' || t == 'page') {
       let p = String(event.p ?? '')  // 页面路径
       let lastPage = PageEvent.getLastPage(context)
       if (lastPage) {
@@ -628,6 +658,38 @@ if (nodeType == CIRCLE_NODE_WEBVIEW) {
 
 ---
 
+### SaaS 模式 H5 圈选（双向）
+
+> NewSaaS/CDP 的 H5 圈选靠 `getDomTreeById` 把 DOM 树**内嵌**进 `refreshScreenshot`；**SaaS** 模式则是独立的双向消息链路，由 `SaaSHybrid` 维护。
+
+**实例注册**：每个 `SaaSHybrid` 在构造时把自己登记进静态数组 `SaaSHybrid._saasHybrids`（按 `webviewId` 去重，无 id 时按 `controller` 去重），供后续按坐标命中查找。
+
+**开关**：`Hybrid.saasCircleEnabled` 由 `Circle._startCircling()` 置 `true`、`Circle.stop()` 置 `false`。仅当其为 `true` 时 `webCircleHybridEvent` / `onPageEnd` 才生效。
+
+**上报（H5 → 服务端）**：
+```typescript
+webCircleHybridEvent = (message: string): void => {
+  if (!Hybrid.saasCircleEnabled) {
+    return
+  }
+  Plugins.onWebViewSaaSCircleEvent(message, this.webviewId)  // 转交 Circle 转换坐标后上报
+}
+```
+
+**下发（服务端 → H5）**：`Circle.onWebSocketReceive` 收到 `msgId == 'hybridEvent'` 后调 `Hybrid.handleSaaSCircleEventFromServer(dict)` → `SaaSHybrid.handleCircleEventFromServer(dict)`：
+```typescript
+static async handleCircleEventFromServer(dict: Record<string, Object>): Promise<void> {
+  // 1. 若带 x/y（vp）：遍历 _saasHybrids，用各 WebView 的 $rect（px2vp 后）做命中测试，
+  //    只转发给命中的那个 WebView；无 x/y 则广播给全部 WebView
+  // 2. 坐标反变换：x/y/ex/ey 用 vp2px(val - frameOffset)，ew/eh 用 vp2px(val)
+  // 3. 注入：window._vds_hybrid.helper.handleWebEvent(localDict)
+}
+```
+
+**圈选插件注入**：`onPageEnd` 在圈选进行中（`saasCircleEnabled == true`）向页面注入 `vds_web_circle_plugin.min.js`，并把该 WebView 对应的原生 xpath 写入 `window._vds_hybrid_native_info.x`（经 `_getNativeXPathByWebViewId` 计算）。
+
+---
+
 ## 脚本注入机制
 
 ### SaaS 模式脚本注入
@@ -668,7 +730,8 @@ static javaScriptOnDocumentStart(
       d: AppInfo.domain,
       u: DeviceInfo.deviceId,
       s: Session.getSessionId(context) ?? '',
-      cs1: UserIdentifier.getUser(context)?.userId ?? ''
+      cs1: UserIdentifier.getUser(context)?.userId ?? '',
+      p: PageEvent.getLastPage(context)?.path ?? ''   // 当前页面路径
     }
     scripts.push({
       script: 'window._vds_hybrid_native_info = ' + JSON.stringify(nativeInfo),
@@ -751,23 +814,37 @@ static javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem> {
  * @param webviewId WebView 唯一标识
  */
 static createHybridProxy(
-  controller: webview.WebviewController, 
+  controller: webview.WebviewController,
   webviewId?: string
 ): JavaScriptProxyType | undefined {
   return AnalyticsCore.core.createHybridProxy(controller, webviewId)
+}
+
+/**
+ * WebView 页面加载完成时调用，注入圈选插件
+ * @param controller WebView 控制器
+ * @param webviewId WebView 唯一标识
+ */
+static onPageEnd(
+  controller: webview.WebviewController,
+  webviewId?: string
+): Promise<void> {
+  return AnalyticsCore.core.onPageEnd(controller, webviewId)
 }
 ```
 
 ### 使用示例
 
 ```typescript
-// 在 WebView 组件中使用
+// 在 WebView 组件中使用（与 entry 示例一致）
 Web({ src: 'https://example.com', controller: this.controller })
-  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller, 'webview_1'))
-  .javaScriptOnDocumentStart(
-    GrowingAnalytics.javaScriptOnDocumentStart(),
-    GrowingAnalytics.javaScriptOnDocumentEnd()
-  )
+  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller, 'Web1'))
+  .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart())
+  .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd())
+  .onPageEnd(() => {
+    // SaaS 模式下注入 H5 圈选插件 / 更新 native_info
+    GrowingAnalytics.onPageEnd(this.controller, 'Web1')
+  })
 ```
 
 ---
@@ -820,4 +897,4 @@ Hybrid 模块实现了原生应用与 H5 页面的数据打通，是 GrowingIO S
 ---
 
 *文档生成时间: 2026-02-25*
-*基于 GrowingIO HarmonyOS SDK v2.7.1*
+*基于 GrowingIO HarmonyOS SDK v2.8.0*

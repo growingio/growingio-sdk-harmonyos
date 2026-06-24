@@ -9,6 +9,24 @@ EventV3Dto
 ResourceItem
 
 -keep-property-name
+# --------- hybrid JS bridge methods (registerJavaScriptProxy methodList,
+#           must match the names called from web SDK across the native↔JS boundary) ---------
+# NewSaaS/default bridge: GrowingWebViewJavascriptBridge
+getConfiguration
+dispatchEvent
+onDomChanged
+setNativeUserId
+setNativeUserIdAndUserKey
+clearNativeUserId
+clearNativeUserIdAndUserKey
+# SaaS hybrid autotrack bridge: _vds_bridge
+saveEvent
+setUserId
+clearUserId
+setVisitor
+hoverNodes
+webCircleHybridEvent
+onDOMChanged
 # --------- event properties ---------
 userId
 userKey
@@ -64,6 +82,40 @@ $rect
 $ID
 $type
 $attrs
+# --------- SaaS circle WS protocol (SaaSModel.ets) ---------
+msgId
+ai
+spn
+protocolVersion
+userAction
+actionDesc
+screenshot
+screenshotWidth
+screenshotHeight
+sdkConfig
+isTrackWebView
+sk
+impress
+targets
+nodeType
+page
+isClickable
+isContainer
+isTab
+isWebview
+zLevel
+left
+top
+width
+height
+parentXPath
+# --------- SaaS circle auth header (Circle.ets _SaaSRequestHeader) ---------
+Authorization
+# --------- SaaS circle event short keys (Circle.ets _SaaSEventData) ---------
+x
+v
+p
+tl
 # --------- protobuf ---------
 roots
 fromBits

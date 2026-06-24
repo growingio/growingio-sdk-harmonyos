@@ -15,6 +15,8 @@ import customEventTests from './event/CustomEvent.test'
 import viewElementEventTests from './event/ViewElementEvent.test'
 import eventPersistenceTests from './event/EventPersistence.test'
 import eventSendCycleTests from './event/EventSendCycle.test'
+import circleProtocolTests from './circle/CircleProtocol.test'
+import circleElementTests from './circle/CircleElement.test'
 
 export default function testsuite() {
   // Phase 1 · 纯函数层
@@ -43,4 +45,7 @@ export default function testsuite() {
 
   // Phase 5 · 工具类
   queueTests()
+
+  circleProtocolTests()
+  circleElementTests()
 }

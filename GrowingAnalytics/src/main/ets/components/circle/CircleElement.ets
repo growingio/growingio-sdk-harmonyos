@@ -23,6 +23,7 @@ import GrowingContext from "../core/Context"
 import Hybrid from '../core/Hybrid'
 import { ConfigMode } from "../interfaces/GrowingConfig"
 import { RefreshScreenshot } from "../mobileDebugger/Model"
+import { ImpressElement } from "../mobileDebugger/SaaSModel"
 import {
   BUTTON_COMPONENTS,
   DIALOG_PATH_PREFIXES,
@@ -43,10 +44,11 @@ import AutotrackPage from '../autotrack/AutotrackPage'
 import AutotrackClick from '../autotrack/AutotrackClick'
 
 export default class CircleElement {
+  private static readonly INSPECTOR_FILTER: Array<string> = ['id', 'content', 'focusable', 'label', 'opacity', 'visibility']
+
   static async setPagesAndElements(screenshot: RefreshScreenshot) {
     try {
-      let filter = ['id', 'content', 'focusable', 'label', 'opacity', 'visibility']
-      let inspectorTreeString = AnalyticsCore.uiContent.getFilteredInspectorTree(filter)
+      let inspectorTreeString = AnalyticsCore.uiContent.getFilteredInspectorTree(CircleElement.INSPECTOR_FILTER)
       let inspectorTree = JSON.parse(inspectorTreeString)
       if (!inspectorTree) {
         return
@@ -249,7 +251,11 @@ export default class CircleElement {
         xpath,
         xcontent,
       )
-      CircleElement._parseRectString(e.rect, element)
+      let rect = CircleElement._parseRectString(e.rect)
+      element.left = rect.left
+      element.top = rect.top
+      element.width = rect.width
+      element.height = rect.height
       if (element.left >= screenshot.screenWidth
         || element.top >= screenshot.screenHeight
         || element.width == 0
@@ -456,21 +462,21 @@ export default class CircleElement {
     }
   }
 
-  private static _parseRectString(rect: string, element: _ScreenshotElement) {
+  private static _parseRectString(rect: string): _Rect {
+    let result = new _Rect()
     let matches = rect.match(/\[([\d.]+),\s*([\d.]+)\],\[([\d.]+),\s*([\d.]+)\]/)
     if (!matches || matches.length < 5) {
-      return
+      return result
     }
-
     let left = parseFloat(matches[1])
     let top = parseFloat(matches[2])
     let right = parseFloat(matches[3])
     let bottom = parseFloat(matches[4])
-
-    element.top = AnalyticsCore.uiContent.px2vp(top)
-    element.left = AnalyticsCore.uiContent.px2vp(left)
-    element.width = AnalyticsCore.uiContent.px2vp(right - left)
-    element.height = AnalyticsCore.uiContent.px2vp(bottom - top)
+    result.left = AnalyticsCore.uiContent.px2vp(left)
+    result.top = AnalyticsCore.uiContent.px2vp(top)
+    result.width = AnalyticsCore.uiContent.px2vp(right - left)
+    result.height = AnalyticsCore.uiContent.px2vp(bottom - top)
+    return result
   }
 
   private static _getNodeType(nodeType: string): string {
@@ -498,13 +504,16 @@ export default class CircleElement {
     return visibility == 'Visibility.Visible' && opacity > 0
   }
 
-  private static _isClickable(element: _Element): boolean {
+  static _isClickable(element: _Element): boolean {
     let type = element.type
     if (type == 'overlay') {
       return false
     }
     if (element.nodeType && element.nodeType == CIRCLE_NODE_BUTTON) {
       // Button类型组件默认可点击
+      return true
+    }
+    if (element.nodeType && element.nodeType == CIRCLE_NODE_WEBVIEW) {
       return true
     }
     if (type == '__Common__') {
@@ -520,9 +529,116 @@ export default class CircleElement {
     }
     return false
   }
+
+  static async setImpressElements(screenWidth: number, screenHeight: number): Promise<Array<ImpressElement>> {
+    let elements: Array<ImpressElement> = []
+    try {
+      let inspectorTreeString = AnalyticsCore.uiContent.getFilteredInspectorTree(CircleElement.INSPECTOR_FILTER)
+      let inspectorTree = JSON.parse(inspectorTreeString)
+      if (!inspectorTree) {
+        return elements
+      }
+
+      let elementsTree = CircleElement._parseJsonTreeToElementsTree(inspectorTree)
+      await CircleElement._traverseAllNodes(elementsTree, async (e) => {
+        let element = CircleElement._buildImpressElement(e, screenWidth, screenHeight)
+        if (element) {
+          elements.push(element)
+        }
+      })
+      CircleElement._assignParentXPath(elements)
+    } catch (e) {
+    }
+    return elements
+  }
+
+  private static _buildImpressElement(e: _Element, screenWidth: number, screenHeight: number): ImpressElement | undefined {
+    let xpath = ''
+    for (let i = 0; i < e.xpath.length; i++) {
+      xpath = xpath + PATH_SEPARATOR + e.xpath[i] + '[' + e.xcontent[i] + ']'
+    }
+
+    let rect = CircleElement._parseRectString(e.rect)
+    if (rect.left >= screenWidth
+      || rect.top >= screenHeight
+      || rect.width == 0
+      || rect.height == 0
+      || (rect.width >= screenWidth && rect.height >= screenHeight)) {
+      return undefined
+    }
+
+    let isButton = e.nodeType == CIRCLE_NODE_BUTTON || e.nodeType == CIRCLE_NODE_INPUT
+    let nodeType = isButton ? 'button' : 'text'
+    let element = new ImpressElement(nodeType, xpath, AppInfo.domain)
+    element.left = rect.left
+    element.top = rect.top
+    element.width = rect.width
+    element.height = rect.height
+    element.isClickable = CircleElement._isClickable(e) ? 1 : 0
+    element.isContainer = true
+    element.isTab = false
+    element.isWebview = e.nodeType == CIRCLE_NODE_WEBVIEW ? 1 : 0
+    element.zLevel = 0
+    if (e.inList && e.index >= 0) {
+      element.index = String(e.index)
+    }
+    if (e.content && e.content.length > 0) {
+      element.content = encodeURIComponent(e.content.substring(0, 50))
+    }
+    element.page = CircleElement._getElementPagePath(e, xpath)
+    return element
+  }
+
+  static _assignParentXPath(elements: Array<ImpressElement>) {
+    let containers: Array<ImpressElement> = []
+    for (let el of elements) {
+      if (el.isContainer) {
+        containers.push(el)
+      }
+    }
+    containers.sort((a, b) => b.xpath.length - a.xpath.length)
+    for (let el of elements) {
+      for (let c of containers) {
+        if (c.xpath != el.xpath && el.xpath.startsWith(c.xpath)) {
+          el.parentXPath = c.xpath
+          break
+        }
+      }
+    }
+  }
+
+  private static _getElementPagePath(e: _Element, xpath: string): string {
+    let pageInfo = AnalyticsCore.uiContent.getPageInfoByUniqueId(e.ID)
+    let realPath: string | undefined = undefined
+    let alias = ''
+    if (pageInfo.navDestinationInfo) {
+      realPath = PATH_SEPARATOR + pageInfo.navDestinationInfo.name.toString()
+      alias = Util.getAliasFromNavInfoParameter(pageInfo.navDestinationInfo.param)
+    } else if (pageInfo.routerPageInfo) {
+      let param = AnalyticsCore.uiContent.getRouter().getParams()
+      realPath = PATH_SEPARATOR + pageInfo.routerPageInfo.name.toString()
+      alias = Util.getAliasFromNavInfoParameter(param)
+    }
+    if (realPath) {
+      return alias.length > 0 ? PATH_SEPARATOR + alias : realPath
+    }
+    for (let i = 0; i < DIALOG_PATH_PREFIXES.length; i++) {
+      if (xpath.startsWith(DIALOG_PATH_PREFIXES[i])) {
+        return AutotrackPage.lastNativePage?.path ?? ''
+      }
+    }
+    return ''
+  }
 }
 
-class _Element {
+class _Rect {
+  left: number = 0
+  top: number = 0
+  width: number = 0
+  height: number = 0
+}
+
+export class _Element {
   ID: number = 0 // unique id
   type: string = ''
   rect: string = '[0.00, 0.00],[0.00, 0.00]'

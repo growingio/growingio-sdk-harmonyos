@@ -138,6 +138,59 @@ GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext)
 | encryptEnabled                | boolean  | true   | 事件请求是否开启加密传输，加密上报时，不会明文显示                                                            |
 | compressEnabled               | boolean  | true   | 事件请求是否开启压缩传输 (snappy)                                                                |
 | hybridAutotrackEnabled        | boolean  | true   | 是否集成无埋点对应的 Hybrid JS SDK                                                             |
+| autotrackEnabled              | boolean  | false  | 是否开启无埋点采集，开启后自动采集用户点击和输入变更事件                                                          |
+| autotrackAllPages             | boolean  | false  | 是否采集所有页面（Page）事件，开启后所有页面均会自动上报，否则需手动调用页面相关 API                                         |
+
+### 添加 URL Scheme
+
+URL Scheme 是您在 GrowingIO 平台创建应用时生成的该应用的唯一标识。把 URL Scheme 添加到您的项目，以便使用扫码圈选等功能时唤醒您的应用。
+
+1. 在 module.json5 中 EntryAbility 对应的 skills 添加 URL Scheme：
+```typescript
+{
+  "module": {
+    "abilities": [
+      {
+        "name": "EntryAbility",
+        "skills": [
+          
+          // -- 添加 URL Scheme --
+          {
+            "actions": [
+              "ohos.want.action.viewData"
+            ],
+            "uris": [
+              {
+                "scheme":"Your URL Scheme", // 替换为您的应用的 URL Scheme
+                "host": "growing/oauth2/token"
+              }
+            ]
+          }
+          // -- 添加 URL Scheme --
+          
+        ]
+      },
+    ],
+  }
+}
+```
+
+2. 在 EntryAbility.ets 添加 URL Scheme 跳转处理方法
+```typescript
+onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  let uri = want?.uri
+  if (uri) {
+    GrowingAnalytics.handleOpenURL(uri)
+  }
+}
+
+onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  let uri = want?.uri
+  if (uri) {
+    GrowingAnalytics.handleOpenURL(uri)
+  }
+}
+```
 
 ### 数据采集 API
 
@@ -442,44 +495,194 @@ GrowingAnalytics.setDynamicGeneralProps(() => {
 GrowingAnalytics.setDynamicGeneralProps(() => ({}))
 ```
 
+### 无埋点采集
+
+无埋点可自动采集用户的点击、输入变更和页面浏览事件，无需逐个手动埋点。
+
+> 注意：无埋点采集**必须**先开启无埋点监听 (`onWindowStageCreate`)，仅设置 `autotrackEnabled` / `autotrackAllPages` 配置项而不注册监听，将**不会**产生任何无埋点事件。
+
+#### 开启无埋点监听
+
+在主窗口对应的 Ability 的 `onWindowStageCreate` 方法中，于 `windowStage.loadContent` 完成时开启无埋点监听：
+
+```typescript
+onWindowStageCreate(windowStage: window.WindowStage) {
+  try {
+    windowStage.loadContent('pages/Index', (err: BusinessError) => {
+      const errCode: number = err.code
+      if (errCode) {
+        console.error(`Failed to load the content. Cause code: ${err.code}, message: ${err.message}`)
+        return;
+      }
+      console.info('Succeeded in loading the content.')
+      // 在 windowStage.loadContent 完成时，开启无埋点监听
+      GrowingAnalytics.onWindowStageCreate(this, windowStage)
+    });
+  } catch (exception) {
+    console.error(`Failed to load the content. Cause code: ${exception.code}, message: ${exception.message}`)
+  }
+}
+```
+
+> 注意：该监听在未初始化 SDK 之前不会获取任何设备信息，以及产生事件数据。
+
+#### 开启无埋点采集
+
+在初始化配置中设置 `autotrackEnabled` 为 `true` (默认为 `false`)，开启后自动采集用户点击和输入变更事件：
+
+```typescript
+setupAnalytics() {
+  let config = new GrowingConfig().SaaS(
+    'Your AccountId',
+    'Your UrlScheme'
+  )
+  config.autotrackEnabled = true
+  GrowingAnalytics.configure(config)
+}
+```
+
+#### 开启页面浏览事件自动埋点
+
+在初始化配置中设置 `autotrackAllPages` 为 `true` (默认为 `false`)，开启页面浏览事件自动埋点，适配组件导航 (Navigation) 和页面路由 (@ohos.router)：
+
+```typescript
+setupAnalytics() {
+  let config = new GrowingConfig().SaaS(
+    'Your AccountId',
+    'Your UrlScheme'
+  )
+  config.autotrackEnabled = true
+  config.autotrackAllPages = true
+  GrowingAnalytics.configure(config)
+}
+```
+
+### 设置页面别名
+
+您也可以通过手动设置页面别名，设置后：
+
+* 页面路径为对应的别名
+* 无论是否开启页面浏览事件自动埋点，该页面的页面浏览事件都将生成
+
+#### 基于组件导航 (Navigation)
+
+```typescript
+let destination = new NavPathInfo(name, {
+  "growing_alias": "homePage"
+} as Record<string, Object>)
+this.pageStack.pushDestination(destination)
+```
+
+#### 基于页面路由 (@ohos.router)
+
+```typescript
+router.pushUrl({
+  url: path,
+  params: {
+    "growing_alias": "homePage"
+  }
+})
+```
+
+### 设置页面标题
+
+#### 基于组件导航 (Navigation)
+
+```typescript
+let destination = new NavPathInfo(name, {
+  "growing_title": "home"
+} as Record<string, Object>)
+this.pageStack.pushDestination(destination)
+```
+
+#### 基于页面路由 (@ohos.router)
+
+```typescript
+router.pushUrl({
+  url: path,
+  params: {
+    "growing_title": "home"
+  }
+})
+```
+
+### 设置页面属性
+
+通过手动设置页面属性为该页面添加事件发生时所伴随的维度信息。
+
+#### 基于组件导航 (Navigation)
+
+```typescript
+let destination = new NavPathInfo(name, {
+  "growing_attributes": {
+    "key1": "value1",
+    "key2": 100
+  } as Record<string, Object>
+} as Record<string, Object>)
+this.pageStack.pushDestination(destination)
+```
+
+#### 基于页面路由 (@ohos.router)
+
+```typescript
+router.pushUrl({
+  url: path,
+  params: {
+    "growing_attributes": {
+      "key1": "value1",
+      "key2": 100
+    }
+  }
+})
+```
+
 ### Hybrid 打通
 
 ```typescript
-static createHybridProxy(controller: webview.WebviewController): {
-object: object;
-name: string;
-methodList: Array<string>;
-controller: WebviewController;
-} | undefined
+static createHybridProxy(
+  controller: webview.WebviewController,
+  webviewId?: string
+): GrowingJSProxyType | undefined
 
 static javaScriptOnDocumentStart(
   scriptRules?: Array<string>,
   saasJavaScriptConfig?: {
     hashTagEnabled: boolean;
     impEnabled: boolean;
-}): Array<ScriptItem>
+  }): Array<ScriptItem>
 
 static javaScriptOnDocumentEnd(scriptRules?: Array<string>): Array<ScriptItem>
+
+static onPageEnd(
+  controller: webview.WebviewController,
+  webviewId?: string
+): Promise<void>
 ```
 
 ##### 参数说明
 
 | 参数    | 参数类型      | 默认值                      | 说明 |
 | ------- |-----------| -------------------------- | ------- |
+| `webviewId` | `string` | - | 可选参数，用于进行无埋点圈选时圈选 hybrid 页面；如需使用该功能，请将对应的 Web 控件的唯一标识 (id) 设为相同值，并保证 webviewId 全局唯一 |
 | `hashTagEnabled` | `boolean` | false | 设置是否启用 Hash Tag |
 | `impEnabled` | `boolean` | false | 设置是否发送元素的展现次数（浏览量、曝光量） |
 
 ##### 示例
 
-在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)，并在 onDocumentStart 和 onDocumentEnd 2 个时机注入 SDK 提供的脚本：
+在 webView 控件中注入 hybrid 实现打通 (javaScriptAccess 和 domStorageAccess 需同时设置为 true)，并在 onDocumentStart 和 onDocumentEnd 2 个时机注入 SDK 提供的脚本，同时在 onPageEnd 时机调用对应接口：
 ```typescript
 let url = 'https://www.example.com'
+let webviewId = 'customWebviewId'
 Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
-  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller))
+  .javaScriptProxy(GrowingAnalytics.createHybridProxy(this.controller, webviewId))
   .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart())
   .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd())
+  .onPageEnd(() => {
+    GrowingAnalytics.onPageEnd(this.controller, webviewId)
+  })
+  .id(webviewId)
 ```
 
 如果您的 H5 页面集成的是仅埋点的 Hybrid JS SDK (`gio_hybrid_track.js`)，那么需要修改 SDK 的初始化配置项 `hybridAutotrackEnabled` 为 `false`, 且仅注入 hybrid：
@@ -507,26 +710,31 @@ Web({ src: url, controller: this.controller})
 let url = 'https://www.example.com'
 // 通过permission配置权限管控
 let permission = 'Your Permission'
+let webviewId = 'customWebviewId'
 Web({ src: url, controller: this.controller})
   .javaScriptAccess(true)
   .domStorageAccess(true)
   .javaScriptOnDocumentStart(GrowingAnalytics.javaScriptOnDocumentStart()) // H5页面集成的是仅埋点的Hybrid JS SDK则不需要此操作
   .javaScriptOnDocumentEnd(GrowingAnalytics.javaScriptOnDocumentEnd()) // H5页面集成的是仅埋点的Hybrid JS SDK则不需要此操作
   .onControllerAttached(() => {
-    let proxy = GrowingAnalytics.createHybridProxy(this.controller)
+    let proxy = GrowingAnalytics.createHybridProxy(this.controller, webviewId)
     if (proxy) {
       this.controller.registerJavaScriptProxy(proxy.object, proxy.name, proxy.methodList, [], permission)
     }
-    
+
     // 如果需要注入多个JavaScript对象
     let yourProxy = new YourProxy()
     if (yourProxy) {
       this.controller.registerJavaScriptProxy(yourProxy.object, yourProxy.name, yourProxy.methodList, yourProxy.asyncMethodList, permission)
     }
   })
+  .onPageEnd(() => {
+    GrowingAnalytics.onPageEnd(this.controller, webviewId)
+  }) // H5页面集成的是仅埋点的Hybrid JS SDK则不需要此操作
+  .id(webviewId)
 ```
 
-> 当前 Hybrid 打通不支持点击事件、表单提交事件等无埋点事件
+> 当前 Hybrid 打通支持点击事件（clck）和输入变更事件（chng），不支持表单提交事件等其他无埋点事件
 
 ## License
 ```

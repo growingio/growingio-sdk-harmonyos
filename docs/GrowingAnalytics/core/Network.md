@@ -23,8 +23,8 @@
 `Network` 模块负责 SDK 的事件数据网络传输，主要功能包括：
 
 1. **事件发送**: 使用 HarmonyOS RCP (Remote Communication Proxy) 进行 HTTP 请求
-2. **数据加密**: 支持 AES 加密保护数据安全
-3. **数据压缩**: 支持 Gzip 压缩减少传输大小
+2. **数据加密**: 支持基于时间戳的 XOR 混淆保护数据
+3. **数据压缩**: 支持 Snappy 压缩减少传输大小
 4. **多格式支持**: 支持 JSON 和 Protobuf 两种数据格式
 5. **并发处理**: 使用 TaskPool 在子线程处理数据序列化
 
@@ -38,7 +38,7 @@ EventPersistence[]
 │ processEvents()     │  子线程处理
 │ • 序列化            │
 │ • Protobuf 编码     │
-│ • Gzip 压缩         │
+│ • Snappy 压缩       │
 └────────┬────────────┘
          │
          ▼
@@ -82,7 +82,8 @@ export default class Network {
   static async request(
     events: EventPersistence[], 
     urlPath: string, 
-    context: GrowingContext
+    context: GrowingContext,
+    mergeSaaSClick: boolean = false
   ): Promise<rcp.Response>
 
   // 生成 HTTP 请求
@@ -90,7 +91,8 @@ export default class Network {
     time: number, 
     url: string, 
     events: EventPersistence[], 
-    context: GrowingContext
+    context: GrowingContext,
+    mergeSaaSClick: boolean = false
   ): Promise<rcp.Request>
 
   // 生成请求头
@@ -131,7 +133,8 @@ let response = await Network.session.fetch(request)
 static async request(
   events: EventPersistence[], 
   urlPath: string, 
-  context: GrowingContext
+  context: GrowingContext,
+  mergeSaaSClick: boolean = false
 ): Promise<rcp.Response> {
   
   // 1. 检查会话是否初始化
@@ -147,7 +150,7 @@ static async request(
 
   try {
     // 4. 生成请求对象
-    let request = await Network.generateRequest(curTime, url, events, context)
+    let request = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick)
     
     // 5. 发送请求
     return Network.session.fetch(request)
@@ -215,7 +218,8 @@ static async generateRequest(
   time: number, 
   url: string, 
   events: EventPersistence[], 
-  context: GrowingContext
+  context: GrowingContext,
+  mergeSaaSClick: boolean = false   // SaaS 无埋点点击合并上报开关
 ): Promise<rcp.Request> {
 
   // 1. 判断是否使用 Protobuf
@@ -229,7 +233,8 @@ static async generateRequest(
     processEvents, 
     events, 
     useProtobuf, 
-    context.config.compressEnabled
+    context.config.compressEnabled,
+    mergeSaaSClick                   // 传入合并标志
   )
   
   let serialize: ArrayBuffer
@@ -274,35 +279,33 @@ static async generateRequest(
 数据序列化在子线程中执行，避免阻塞主线程：
 
 ```typescript
-// utils/Concurrent.ets
+// utils/Concurrent.ets（完整实现见 Utils.md）
 @Concurrent
 export function processEvents(
-  events: EventPersistence[], 
-  useProtobuf: boolean, 
-  compressEnabled: boolean
+  events: EventPersistence[],
+  useProtobuf: boolean,
+  compressEnabled: boolean,
+  mergeSaaSClick: boolean = false   // true 时对 SaaS 无埋点点击做分组合并序列化
 ): ArrayBuffer {
-  
-  // 1. 转换为 JSON 数组
-  let eventArray = events.map(event => event.data)
-  let jsonString = '[' + eventArray.join(',') + ']'
-
-  // 2. 转换为 ArrayBuffer
-  let buffer = new util.TextEncoder().encode(jsonString)
-
-  // 3. Protobuf 编码（如果启用）
+  let serialize: ArrayBuffer = new ArrayBuffer(0)
   if (useProtobuf) {
-    // Protobuf 编码逻辑
-    buffer = protobufEncode(buffer)
+    // event_pb.EventV3Dto.fromObject → EventV3List.encode().finish()
+    ...
+  } else if (mergeSaaSClick) {
+    // 按 t_u_s_d_p_ptm_r 分组，公共字段提顶层、专属字段收入 e 数组后 JSON.stringify
+    ...
+  } else {
+    // 普通 JSON： '[' + events.map(e => String(e.data)).join(',') + ']'
+    serialize = buffer.from(json, 'utf-8').buffer
   }
-
-  // 4. Gzip 压缩（如果启用）
   if (compressEnabled) {
-    buffer = gzipCompress(buffer)
+    serialize = snappy.compress(serialize) as ArrayBuffer   // Snappy（非 Gzip）
   }
-
-  return buffer
+  return serialize
 }
 ```
+
+> 序列化用 `buffer.from(...)`，Protobuf 走 `event_pb`，压缩用 **snappyjs**。完整逻辑（含 SaaS 合并字段）见 [Utils.md](../utils/Utils.md#processevents---事件批量处理)。
 
 ### 序列化流程
 
@@ -323,7 +326,7 @@ EventPersistence[]
          │
          ▼
 ┌─────────────────────┐
-│ TextEncoder         │
+│ buffer.from()       │
 │ 转为 ArrayBuffer    │
 └────────┬────────────┘
          │
@@ -354,7 +357,7 @@ EventPersistence[]
     │         │
     ▼         │
 ┌────────┐    │
-│ Gzip   │    │
+│ Snappy │    │
 │ 压缩   │    │
 └────┬───┘    │
      └────────┘
@@ -377,10 +380,10 @@ if (context.config.encryptEnabled) {
 
 ### 加密特点
 
-- **算法**: AES 加密
-- **密钥**: 基于时间戳生成
-- **作用**: 保护数据在传输过程中的安全性
-- **开关**: 通过 `config.encryptEnabled` 控制（默认开启）
+- **算法**: XOR 混淆（逐字节异或，非 AES）
+- **密钥**: 由时间戳经 `Util.getHintFromTime(time)` 生成的 hint
+- **作用**: 对传输数据做轻量混淆
+- **开关**: 通过 `config.encryptEnabled` 控制
 
 ---
 
@@ -389,18 +392,18 @@ if (context.config.encryptEnabled) {
 ### 压缩逻辑
 
 ```typescript
-// 在子线程中进行 Gzip 压缩
+// 在子线程中进行 Snappy 压缩
 if (compressEnabled) {
-  buffer = gzipCompress(buffer)
+  serialize = snappy.compress(serialize) as ArrayBuffer
 }
 ```
 
 ### 压缩特点
 
-- **算法**: Gzip
+- **算法**: Snappy（snappyjs）
 - **作用**: 减少数据传输大小，节省流量
-- **开关**: 通过 `config.compressEnabled` 控制（默认开启）
-- **标识**: 请求头 `X-Compress-Codec: 2` 表示使用 Gzip
+- **开关**: 通过 `config.compressEnabled` 控制
+- **标识**: 请求头 `X-Compress-Codec: 2` 表示使用 Snappy
 
 ---
 
@@ -423,12 +426,12 @@ static generateHeaders(
 
   // 压缩标识
   if (context.config.compressEnabled) {
-    headers['X-Compress-Codec'] = '2'  // 2 = Gzip
+    headers['X-Compress-Codec'] = '2'  // 2 = Snappy
   }
 
   // 加密标识
   if (context.config.encryptEnabled) {
-    headers['X-Crypt-Codec'] = '1'  // 1 = AES
+    headers['X-Crypt-Codec'] = '1'  // 1 = XOR 混淆
   }
 
   return headers
@@ -442,8 +445,8 @@ static generateHeaders(
 | `Content-Type` | `application/protobuf` 或 `application/json` | 内容类型 |
 | `Accept` | `application/json` | 接受响应类型 |
 | `X-Timestamp` | 时间戳 | 请求时间 |
-| `X-Compress-Codec` | `2` | 压缩算法（Gzip）|
-| `X-Crypt-Codec` | `1` | 加密算法（AES）|
+| `X-Compress-Codec` | `2` | 压缩算法（Snappy）|
+| `X-Crypt-Codec` | `1` | 加密算法（XOR 混淆）|
 
 ---
 
@@ -458,7 +461,7 @@ static generateUrl(time: number, urlPath: string, context: GrowingContext): stri
   
   // 去除末尾斜杠
   if (serverHost.endsWith('/')) {
-    serverHost = serverHost.substring(0, serverHost.length - 2)
+    serverHost = serverHost.substring(0, serverHost.length - 1)
   }
   
   let accountId = config.accountId
@@ -485,6 +488,7 @@ https://napi.growingio.com/v3/projects/123456/collect?stm=1708765432100
 | NewSaaS | `/v3/projects/{accountId}/collect` | 统一收集接口 |
 | SaaS PV | `/v3/{accountId}/harmonyos/pv` | 页面/访问事件 |
 | SaaS CSTM | `/v3/{accountId}/harmonyos/cstm` | 自定义事件 |
+| SaaS OTHER | `/v3/{accountId}/harmonyos/other` | 无埋点点击/变更事件（mergeSaaSClick 合并格式） |
 
 ---
 
@@ -542,4 +546,4 @@ Network 模块提供了完整的网络传输功能：
 ---
 
 *文档生成时间: 2026-02-25*
-*基于 GrowingIO HarmonyOS SDK v2.7.1*
+*基于 GrowingIO HarmonyOS SDK v2.8.0*

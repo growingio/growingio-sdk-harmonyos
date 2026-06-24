@@ -82,6 +82,16 @@ export default function networkTests() {
       expect(url).assertContain('saas-acct')
     })
 
+    it('SaaS OTHER 路径：accountId 模板应被正确替换', 0, () => {
+      const urlPath = '/v3/accountId/harmonyos/other'
+      let ctx = buildContext(ConfigMode.SaaS, 'saas-acct', 'https://api.growingio.com')
+      let url = Network.generateUrl(Date.now(), urlPath, ctx)
+
+      expect(url).assertContain('/harmonyos/other')
+      expect(url).assertContain('saas-acct')
+      expect(url.includes('/accountId/')).assertFalse()
+    })
+
     it('URL 应包含 stm 时间戳参数', 0, () => {
       let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://napi.growingio.com')
       let time = 1700000000000

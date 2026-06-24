@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 check_obfuscation_rules.py
 
@@ -285,6 +286,69 @@ def extract_circle_message_keys(content: str, filepath: Path) -> list[tuple[str,
     return results
 
 
+# ── 8. JSON.parse(...) as <Class> 反序列化 DTO 字段 ────────────────────────────
+# 风险模型：对象由「字符串字面量 key」写出（JSON.stringify / 服务端下发，不被属性混淆），
+# 读回时却用 `JSON.parse(x) as SomeClass` 再点访问 `obj.field`。点访问会被
+# -enable-property-obfuscation 改名，而 JSON 里的 key 仍是原名 → 永远读到 undefined。
+# 因此被 cast 的 DTO 类的所有声明字段都必须保留。
+#
+# 注意：这里用单独的字段正则（允许单字符字段名，如 SaaS 短 key x/v/p），
+#       因为 _EVENT_PROP_RE 要求字段名 ≥2 字符会漏掉它们。
+_JSON_PARSE_CAST_RE = re.compile(r"JSON\.parse\([^)]*\)\s*as\s+([A-Za-z_]\w*)")
+_DTO_FIELD_RE = re.compile(
+    r"^  ([a-zA-Z_][a-zA-Z0-9_]*)\s*[?!]?\s*:\s*"
+    r"(?:string|number|boolean|[A-Z]\w*|AttributesType)",
+    re.MULTILINE,
+)
+
+def _extract_class_field_names(content: str, class_name: str) -> list[str]:
+    """从同一文件中定位 `class <name> { ... }` 并返回其声明字段名（扁平 DTO）"""
+    m = re.search(r"\bclass\s+" + re.escape(class_name) + r"\b[^{]*\{", content)
+    if not m:
+        return []
+    rest = content[m.end():]
+    end = re.search(r"\n\}", rest)
+    body = rest[:end.start()] if end else rest
+    names = []
+    for fm in _DTO_FIELD_RE.finditer(body):
+        name = fm.group(1)
+        if name.startswith("_") or name.isupper():
+            continue
+        names.append(name)
+    return names
+
+def extract_json_parse_cast_fields(content: str, filepath: Path) -> list[tuple[str, str]]:
+    seen: set[str] = set()
+    results = []
+    for m in _JSON_PARSE_CAST_RE.finditer(content):
+        cls = m.group(1)
+        for name in _extract_class_field_names(content, cls):
+            if name not in seen:
+                seen.add(name)
+                results.append((
+                    name,
+                    f"JSON.parse(...) as {cls} 后点访问字段，混淆改名后与 JSON 字符串 key 不一致 → 读到 undefined",
+                ))
+    return results
+
+
+# ── 9. 已知 HTTP/WSS 请求头 key（对象字面量标识符）─────────────────────────────
+# 形如 `{ Authorization: 'Sign ...' }` 直接作为 webSocket/HTTP header 发出。
+# 标识符 key 会被属性混淆改名 → 服务端收不到该 header（如签名鉴权失效）。
+_KNOWN_HEADER_KEYS = {"Authorization", "Cookie", "Sec-WebSocket-Protocol"}
+_HEADER_LITERAL_RE = re.compile(r"[{,]\s*([A-Za-z][A-Za-z0-9-]*)\s*:")
+
+def extract_known_header_keys(content: str, filepath: Path) -> list[tuple[str, str]]:
+    seen: set[str] = set()
+    results = []
+    for m in _HEADER_LITERAL_RE.finditer(content):
+        name = m.group(1)
+        if name in _KNOWN_HEADER_KEYS and name not in seen:
+            seen.add(name)
+            results.append((name, "HTTP/WSS 请求头 key（对象字面量标识符），混淆改名后服务端无法识别"))
+    return results
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # 监控规则：哪些文件应该用哪些提取器检查哪些规则文件
 # ──────────────────────────────────────────────────────────────────────────────
@@ -361,6 +425,43 @@ MONITOR_RULES: list[MonitorRule] = [
         ],
         rules_files=ANALYTICS_RULES_FILES,
         label="GrowingAnalytics · 圈选/Hybrid JSON key",
+    ),
+
+    # ── GrowingAnalytics 圈选 SaaS DTO / 反序列化字段 / 请求头 ─────────────────
+    # Circle.ets：JSON.parse(...) as _SaaSEventData（x/v/p/tl）+ _SaaSRequestHeader（Authorization）
+    MonitorRule(
+        path_patterns=[
+            "GrowingAnalytics/src/main/ets/components/circle/Circle.ets",
+            "GrowingAnalytics/src/main/ets/components/circle/CircleElement.ets",
+        ],
+        extractors=[
+            (extract_json_parse_cast_fields, "property"),
+            (extract_known_header_keys,      "property"),
+        ],
+        rules_files=ANALYTICS_RULES_FILES,
+        label="GrowingAnalytics · 圈选 SaaS 反序列化字段/请求头",
+    ),
+
+    # ── GrowingAnalytics SaaS 圈选协议 DTO（SaaSModel.ets）────────────────────
+    # ClientInit/SdkConfig/ImpressElement/UserAction 整体 JSON.stringify 上报，
+    # 字段名即服务端协议 key，必须全部保留。
+    MonitorRule(
+        path_patterns=[
+            "GrowingAnalytics/src/main/ets/components/mobileDebugger/SaaSModel.ets",
+        ],
+        extractors=[(extract_event_properties, "property")],
+        rules_files=ANALYTICS_RULES_FILES,
+        label="GrowingAnalytics · SaaS 圈选协议 DTO",
+    ),
+
+    # ── GrowingAnalytics 圈选 WebSocket 请求头 ────────────────────────────────
+    MonitorRule(
+        path_patterns=[
+            "GrowingAnalytics/src/main/ets/components/mobileDebugger/WebSocket.ets",
+        ],
+        extractors=[(extract_known_header_keys, "property")],
+        rules_files=ANALYTICS_RULES_FILES,
+        label="GrowingAnalytics · 圈选 WebSocket 请求头",
     ),
 
     # ── GrowingToolsKit Event 属性（Tools 模块内部事件结构）──────────────────

@@ -768,4 +768,4 @@ static getTitleFromNavInfoParameter(param: any): string {
 ---
 
 *文档生成时间: 2026-02-25*
-*基于 GrowingIO HarmonyOS SDK v2.7.1*
+*基于 GrowingIO HarmonyOS SDK v2.8.0*
