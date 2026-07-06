@@ -83,6 +83,10 @@ export class Flutter {
     let pageInfo = new PageInfo(path, title, attributes)
     pageInfo.referralPage = referralPage
     pageInfo.eventScene = EventScene.Flutter
+    let timestamp = argument.get('timestamp') as number
+    if (timestamp != null && timestamp != undefined && timestamp > 0) {
+      pageInfo.timestamp = timestamp
+    }
     AutotrackPage.sendPage(pageInfo)
   }
 
