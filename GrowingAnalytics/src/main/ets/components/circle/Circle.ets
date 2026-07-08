@@ -308,6 +308,8 @@ export default class Circle implements PluginsInterface, WebSocketCallbackInterf
   private _handleMessage(message: Message) {
     if (message.msgType == 'ready') {
       this._startCircling()
+    } else if (message.msgType == 'quit') {
+      this.stop('当前设备已与Web端断开连接，如需继续圈选请扫码重新连接')
     } else if (message.msgType == 'incompatible_version') {
       this._showIncompatibleVersion()
     }

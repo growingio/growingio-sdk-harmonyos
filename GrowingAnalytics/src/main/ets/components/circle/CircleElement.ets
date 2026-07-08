@@ -63,6 +63,8 @@ export default class CircleElement {
 
   static setPagesAndElementsForFlutter(screenshot: RefreshScreenshot, data: Map<string, Object>) {
     try {
+      let context = GrowingContext.getDefaultContext() as GrowingContext
+      let isCDP = context.config.mode == ConfigMode.CDP
       let width = data.get("width") as number | undefined
       let height = data.get("height") as number | undefined
       let scale = data.get("scale") as number | undefined
@@ -87,9 +89,13 @@ export default class CircleElement {
           let height = pageData.get("height") as number | undefined
           let path = pageData.get("path") as string | undefined
           let title = pageData.get("title") as string | undefined
+          let isIgnored = pageData.get("isIgnored") as boolean | undefined
 
           if (left != undefined && top != undefined && width != undefined && height != undefined && path != undefined) {
             let page = new _ScreenshotPage(left, top, width, height, path, title)
+            if (isIgnored != undefined) {
+              page.isIgnored = isIgnored
+            }
             pages.push(page)
           }
         }
@@ -117,8 +123,10 @@ export default class CircleElement {
           let height = elementData.get("height") as number | undefined
           let page = elementData.get("page") as string | undefined
 
-          if (nodeType != undefined && zLevel != undefined && xpath != undefined && xcontent != undefined) {
-            let element = new _ScreenshotElement(nodeType, domain ?? AppInfo.domain, zLevel, xpath, xcontent)
+          // CDP 协议无 xcontent 概念，元素以 xpath + index + page 定位；NewSaaS 要求 xcontent
+          if (nodeType != undefined && zLevel != undefined && xpath != undefined && (isCDP || xcontent != undefined)) {
+            let element = new _ScreenshotElement(nodeType, domain ?? AppInfo.domain, zLevel, xpath,
+              isCDP ? undefined : xcontent)
             if (index != undefined) {
               element.index = index
             }
@@ -249,7 +257,7 @@ export default class CircleElement {
         domain,
         zLevel,
         xpath,
-        xcontent,
+        context.config.mode == ConfigMode.NewSaaS ? xcontent : undefined,
       )
       let rect = CircleElement._parseRectString(e.rect)
       element.left = rect.left
@@ -673,6 +681,7 @@ class _ScreenshotPage {
   height: number
   path: string
   title?: string
+  isIgnored?: boolean
 
   constructor(
     left: number,
@@ -696,7 +705,7 @@ class _ScreenshotElement {
   domain: string
   zLevel: number
   xpath: string
-  xcontent: string
+  xcontent?: string
   index?: number
   content?: string
   parentXPath?: string
@@ -715,7 +724,7 @@ class _ScreenshotElement {
     domain: string,
     zLevel: number,
     xpath: string,
-    xcontent: string,
+    xcontent?: string,
   ) {
     this.nodeType = nodeType
     this.domain = domain
