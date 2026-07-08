@@ -123,7 +123,6 @@ export default class CircleElement {
           let height = elementData.get("height") as number | undefined
           let page = elementData.get("page") as string | undefined
 
-          // CDP 协议无 xcontent 概念，元素以 xpath + index + page 定位；NewSaaS 要求 xcontent
           if (nodeType != undefined && zLevel != undefined && xpath != undefined && (isCDP || xcontent != undefined)) {
             let element = new _ScreenshotElement(nodeType, domain ?? AppInfo.domain, zLevel, xpath,
               isCDP ? undefined : xcontent)

@@ -84,7 +84,6 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       plugins.push(new MobileDebugger())
     }
     if (config.autotrackEnabled) {
-      // NewSaaS、SaaS、CDP 均支持圈选
       plugins.push(new Circle())
     }
     Plugins.registerPlugins(plugins)
