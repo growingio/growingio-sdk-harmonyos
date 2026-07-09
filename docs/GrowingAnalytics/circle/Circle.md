@@ -128,7 +128,7 @@ class _ScreenshotElement {
   domain: string                // 应用包名
   zLevel: number                // 层级
   xpath: string                 // XPath 路径
-  xcontent?: string             // XContent 路径（仅 NewSaaS；CDP 协议无 xcontent 概念，不发送）
+  xcontent?: string             // XContent 路径（仅 NewSaaS）
   index?: number                // 列表索引
   content?: string              // 文本内容
   parentXPath?: string          // 父 XPath
@@ -144,7 +144,7 @@ class _ScreenshotPage {
   left/top/width/height: number // 页面位置尺寸
   path: string                  // 页面路径
   title?: string                // 页面标题
-  isIgnored?: boolean           // 页面是否被忽略（当前仅 Flutter 数据透传）
+  isIgnored?: boolean           // 页面是否被忽略
 }
 ```
 
@@ -962,7 +962,6 @@ static setPagesAndElementsForFlutter(
   screenshot: RefreshScreenshot, 
   data: Map<string, Object>
 ) {
-  // 按 mode 区分协议：CDP 无 xcontent 概念（对齐 iOS 3.x CDP 产品线）
   let context = GrowingContext.getDefaultContext() as GrowingContext
   let isCDP = context.config.mode == ConfigMode.CDP
 
@@ -987,13 +986,11 @@ static setPagesAndElementsForFlutter(
       pageData.get("path"),
       pageData.get("title")
     )
-    // Flutter 侧提供 isIgnored 时透传
     pages.push(page)
   }
   screenshot.pages = pages
 
   // 元素信息
-  // 入选校验：nodeType / zLevel / xpath 必填；xcontent 仅 NewSaaS 要求（CDP 元素以 xpath + index + page 定位）
   let elements: Array<_ScreenshotElement> = []
   let elementsData = data.get("elements") as Array<Map<string, Object>>
   for (let elementData of elementsData) {
