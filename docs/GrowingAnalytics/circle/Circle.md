@@ -128,11 +128,11 @@ class _ScreenshotElement {
   domain: string                // 应用包名
   zLevel: number                // 层级
   xpath: string                 // XPath 路径
-  xcontent: string              // XContent 路径
+  xcontent?: string             // XContent 路径（仅 NewSaaS）
   index?: number                // 列表索引
   content?: string              // 文本内容
   parentXPath?: string          // 父 XPath
-  parentXContent?: string       // 父 XContent
+  parentXContent?: string       // 父 XContent（仅 NewSaaS）
   isContainer?: boolean         // 是否容器
   left/top/width/height: number // 位置尺寸
   page: string                  // 所属页面
@@ -144,6 +144,7 @@ class _ScreenshotPage {
   left/top/width/height: number // 页面位置尺寸
   path: string                  // 页面路径
   title?: string                // 页面标题
+  isIgnored?: boolean           // 页面是否被忽略
 }
 ```
 
@@ -961,6 +962,9 @@ static setPagesAndElementsForFlutter(
   screenshot: RefreshScreenshot, 
   data: Map<string, Object>
 ) {
+  let context = GrowingContext.getDefaultContext() as GrowingContext
+  let isCDP = context.config.mode == ConfigMode.CDP
+
   // 屏幕信息
   let width = data.get("width") as number
   let height = data.get("height") as number
@@ -995,7 +999,7 @@ static setPagesAndElementsForFlutter(
       elementData.get("domain") ?? AppInfo.domain,  // 优先用元素自带 domain
       elementData.get("zLevel"),
       elementData.get("xpath"),
-      elementData.get("xcontent")
+      isCDP ? undefined : elementData.get("xcontent")
     )
     // 设置其他属性...
     elements.push(element)
@@ -1083,6 +1087,7 @@ stop(error?: string) {
 |---------|---------|
 | WebSocket 连接失败 | 显示"服务器链接失败"对话框 |
 | WebSocket 断开 | 显示"设备已断开连接"提示 |
+| Web 端退出圈选（NewSaaS/CDP `quit`，SaaS `editor_quit`） | 停止圈选，显示"设备已断开连接"提示 |
 | 版本不兼容 | 显示升级 SDK 提示，自动断开连接 |
 | 窗口未就绪 | 延迟 300ms 重试连接 |
 | 滚动中 | 暂停截图，滚动结束后再刷新 |

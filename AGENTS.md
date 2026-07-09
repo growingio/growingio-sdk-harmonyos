@@ -20,3 +20,10 @@
 > - `docs/sdk-critical-rules.md` — 修改核心模块 **必读**（SDK 设计红线 + ArkTS 开发规范）
 > - `docs/sdk-doc-routing.md` — 按场景读取的模块文档索引表
 > - `docs/sdk-build-commands.md` — hvigor 构建命令速查
+
+## 注释纪律
+
+- **不写解释性注释**：协议依据、设计动机、"对齐 iOS xxx"等背景信息一律放 commit message，不放代码
+- 该规则**同样适用于 `docs/` 模块文档中的伪代码块**——文档会被读入上下文，冗余注释同样浪费 token
+- 允许保留的仅限：承载协议语义的短字段注释（如 `// 仅 NewSaaS`），且需遵循所在文件既有风格
+- 清理注释时核查范围 = 全分支 diff（源码 + 文档）：`git diff master...HEAD | grep -E '^\+.*//'`

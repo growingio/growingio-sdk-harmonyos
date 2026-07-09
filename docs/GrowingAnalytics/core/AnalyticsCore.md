@@ -208,8 +208,8 @@ static startCore(context: Context, config: GrowingConfig) {
   if (config.mode != ConfigMode.SaaS) {
     plugins.push(new MobileDebugger())  // 仅 NewSaaS 和 CDP
   }
-  if ((config.mode == ConfigMode.NewSaaS || config.mode == ConfigMode.SaaS) && config.autotrackEnabled) {
-    plugins.push(new Circle())  // NewSaaS 或 SaaS 且开启无埋点
+  if (config.autotrackEnabled) {
+    plugins.push(new Circle())  // NewSaaS、SaaS、CDP 均支持，需开启无埋点
   }
 
   // 2. 注册插件
@@ -261,7 +261,7 @@ static startCore(context: Context, config: GrowingConfig) {
 | 模式 | MobileDebugger | Circle | 说明 |
 |------|---------------|--------|------|
 | NewSaaS | ✅ | ✅ (需 autotrack) | 支持圈选和调试器 |
-| CDP | ✅ | ❌ | 仅支持调试器 |
+| CDP | ✅ | ✅ (需 autotrack) | 支持圈选和调试器 |
 | SaaS | ❌ | ✅ (需 autotrack) | 自 v2.8.0 起支持圈选 |
 
 ### 初始化时序图
