@@ -189,6 +189,6 @@ it('json_path_includes_eventSequenceId', ...)
 ## 关联 skill
 
 - **上游触发：** `writing-plans` 在"影响面自查清单"中判定本次涉及核心模块
-- **调度 subagent：** 无（本 skill 由实施者执行）
+- **使用方式：** 实施者自己执行
 - **完成后交接：** 测试通过 → 继续实施 / 交给 `verification-before-completion` 做最终验证
 - **替代路径：** 非核心路径（纯配置 / 文档）→ 跳过 TDD；运行时探索性改动 → `systematic-debugging` 的四阶段先于 TDD

@@ -65,7 +65,7 @@ Edit skill without testing? Same violation.
     <supporting-file>.md   # Only when content >100 lines or is a reusable prompt template
 ```
 
-Naming: lowercase with hyphens, verb/gerund preferred: `brainstorming`, `writing-plans`, `subagent-driven-development`.
+Naming: lowercase with hyphens, verb/gerund preferred: `brainstorming`, `writing-plans`, `verification-before-completion`.
 
 ## Frontmatter (only two fields)
 
@@ -103,7 +103,7 @@ When the description was changed to just triggering conditions (no workflow summ
 
 ```yaml
 # ❌ BAD: Summarizes workflow — Claude may follow this instead of reading skill
-description: Use when executing plans - dispatches subagent per task with code review between tasks
+description: Use when finishing a branch - run verification, then review against the checklist, then commit and tag
 
 # ❌ BAD: Too much process detail
 description: Use for TDD - write test first, watch it fail, write minimal code, refactor
@@ -115,7 +115,7 @@ description: 用于异步测试
 description: I help you write skills
 
 # ✅ GOOD: Just triggering conditions
-description: Use when executing an implementation plan with independent tasks in the current session
+description: Use when a change affects 3 or more files or alters public API, and an implementation plan is needed
 
 # ✅ GOOD: Temporal trigger + symptoms
 description: Use before claiming work is complete, fixed, or ready to review

@@ -156,6 +156,6 @@ ls -lh GrowingToolsKit/build/default/outputs/default/*.har
 ## 关联 skill
 
 - **上游触发：** 任何"声明完成 / 已修好 / 准备审查 / 准备 merge"的时刻
-- **调度 subagent：** 无（实施者/控制器自己执行验证命令）
-- **完成后交接：** 验证通过 → `sdk-code-review` 或 `finishing-a-development-branch`
+- **使用方式：** 实施者自己执行验证命令
+- **完成后交接：** 验证通过 → 对照 `docs/sdk-review-checklist.md` 自查 → `finishing-a-development-branch`
 - **替代路径：** 验证失败 → `systematic-debugging` 四阶段方法，不允许"再试一次"的无脑重跑

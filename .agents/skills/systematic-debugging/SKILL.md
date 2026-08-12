@@ -178,6 +178,6 @@ git log --oneline --grep="关键词" -10
 ## 关联 skill
 
 - **上游触发：** 任何编译 / 构建 / 测试 / 运行时失败，且第一次尝试没解决或原因不明
-- **调度 subagent：** 无（控制器/实施者自己执行四阶段）
+- **使用方式：** 实施者自己按顺序执行四阶段，不跳阶段
 - **完成后交接：** 修复后 → `verification-before-completion` 做完成前验证门
-- **替代路径：** ArkTS 语法类编译错误 → Phase 1 后对照 `growingio-arkts-coding-style` 查约束表；subagent 场景下 3 次失败 → 报告 BLOCKED 升级给控制器
+- **替代路径：** ArkTS 语法类编译错误 → Phase 1 后对照 `growingio-arkts-coding-style` 查约束表；连续 3 次修复失败 → 停下升级给用户讨论，不继续试

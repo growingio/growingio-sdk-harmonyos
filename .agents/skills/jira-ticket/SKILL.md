@@ -46,6 +46,6 @@ jira-ticket release create --yes      # 跳过确认
 ## 关联 skill
 
 - **上游触发：** 准备发版（版本号确定后、`ohpm-publish` 之前）
-- **调度 subagent：** 无（命令行工具，直接执行）
+- **使用方式：** 命令行工具，直接执行
 - **完成后交接：** `ohpm-publish` 发布 HAR → 发版完成后回到 ticket 更新状态
 - **替代路径：** 已有发版 ticket → 跳过本 skill，直接进入 ohpm-publish

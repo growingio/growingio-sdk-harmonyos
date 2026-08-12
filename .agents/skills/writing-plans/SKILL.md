@@ -1,19 +1,19 @@
 ---
 name: writing-plans
-description: Use when Planning Gate triggers (affected files ≥3 or public API change) and an implementation plan is needed
+description: Use when a change affects 3 or more files or alters public API, and an implementation plan is needed
 ---
 
 # Writing Plans
 
 > **Type:** Technique | **Discipline:** Rigid
 
-指导如何写好一份实施规划。Planning Gate（见 `using-growingio-sdk-skills` meta-skill）定义 plan 的**格式**（四节结构），本 skill 定义**内容质量**。
+指导如何写好一份实施规划。改动文件 ≥3 或涉及公开 API 变更时，先写 plan 再实施。
 
 **核心原则：** 写 plan 时多想 10 分钟，实施时少返工 1 小时。
 
 ## 何时触发
 
-Planning Gate 要求输出 plan 时（影响 ≥ 3 文件，或涉及公开 API 变更）。
+改动影响 ≥ 3 个文件，或涉及公开 API 变更时。
 
 ## 影响面自查清单
 
@@ -35,7 +35,7 @@ Planning Gate 要求输出 plan 时（影响 ≥ 3 文件，或涉及公开 API 
 **拆成多任务：** 变更逻辑独立且可并行 / 单任务描述 > 200 字还说不清。
 **合并为单任务：** 接口与其使用者（拆开编译不过） / 同模块内部重构 / TDD 内测试与被测代码。
 
-拆分后按 `subagent-driven-development` skill 判定是否走 subagent 模式。
+拆分后在当前会话内按任务顺序实施，每个任务完成即验证，不留到最后一起验。
 
 ## Rationalizations
 
@@ -51,13 +51,12 @@ Planning Gate 要求输出 plan 时（影响 ≥ 3 文件，或涉及公开 API 
 
 ## Red Flags — STOP if you catch yourself thinking these
 
-- "先改两个文件试试，plan 后面再写" → Planning Gate 触发那一刻就必须先写 plan
+- "先改两个文件试试，plan 后面再写" → 达到门槛那一刻就必须先写 plan
 - "影响面我心里有数，不用列全" → 没列出来的文件 = 会返工的文件
 - "这个字段变更只涉及 NewSaaS" → 三产品线必须逐一确认，未标注 = 后端出错
 
 ## 关联 skill
 
-- **上游触发：** 控制器判定 Planning Gate 触发
-- **调度 subagent：** 无（控制器直接执行）
-- **完成后交接：** `plan-document-review` → 用户确认 → `subagent-driven-development` 或直接实施
-- **替代路径：** 未触发 Planning Gate → 跳过本 skill，直接实施 + `sdk-code-review` 独立审查
+- **上游触发：** 改动文件 ≥3 或涉及公开 API 变更
+- **完成后交接：** 用户确认 plan → 按任务顺序实施 → `verification-before-completion`
+- **替代路径：** 改动面小于门槛 → 跳过本 skill 直接实施，完成后对照 `docs/sdk-review-checklist.md` 自查

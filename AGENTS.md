@@ -20,3 +20,4 @@
 > - `docs/sdk-critical-rules.md` — 修改核心模块 **必读**（SDK 设计红线 + ArkTS 开发规范）
 > - `docs/sdk-doc-routing.md` — 按场景读取的模块文档索引表
 > - `docs/sdk-build-commands.md` — hvigor 构建命令速查
+> - `docs/sdk-review-checklist.md` — 提 PR 前 **必读**（代码质量 + 规格对齐自查）

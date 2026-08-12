@@ -200,6 +200,6 @@ git commit -m "chore: upgrade build dependencies"
 ## 关联 skill
 
 - **上游触发：** 执行 `git commit` / `git push` / 创建分支 / 写 PR 标题时
-- **调度 subagent：** 无（本 skill 是参考手册，由执行者自己应用）
+- **使用方式：** 本 skill 是参考手册，由执行者自己应用
 - **完成后交接：** `finishing-a-development-branch`（分支收尾流程会引用本 skill 的 commit/tag/PR 规范）
 - **替代路径：** 无——所有 git 操作都应遵循本规范
