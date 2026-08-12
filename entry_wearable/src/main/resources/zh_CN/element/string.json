@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "GrowingIO 手表端 demo"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "GrowingIO 手表端 demo"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "GIO 手表"
+    }
+  ]
+}
