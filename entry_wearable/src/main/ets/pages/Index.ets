@@ -4,7 +4,8 @@ import { GrowingAnalytics, GrowingAttrType } from '@growingio/analytics'
 /**
  * 手表端 demo 首页。
  *
- * 与 entry（手机）demo 的关键差异：本模块不开启无埋点，页面浏览事件需要手动补。
+ * 与 entry（手机）demo 的关键差异：本模块不开启无埋点，因此不产生 PAGE 与
+ * VIEW_CLICK 事件，下面的事件全部来自手动埋点 API。
  * 圆形屏幕下所有可点区域集中在中心竖列，四角不放内容。
  */
 @Entry
