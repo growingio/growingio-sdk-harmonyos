@@ -412,9 +412,23 @@ static async writeEventToDisk<T extends Event>(
   // 4. VISIT 事件立即触发发送
   if (pst.eventType == EventType.Visit) {
     EventSender.sendEvent(context)
+  } else if (DeviceInfo.isWearable && pst.eventType == EventType.AppClosed) {
+    // 手表：APP_CLOSED（进入后台）立即触发发送
+    EventSender.sendEvent(context)
   }
 }
 ```
+
+### 立即上报的时机
+
+除 `setInterval` 定时上报外，以下两种事件写入磁盘后会立即触发一次上报：
+
+| 事件 | 适用设备 | 原因 |
+|---|---|---|
+| `VISIT` | 全部 | 保证会话起点及时到达服务端 |
+| `APP_CLOSED` | 仅手表（`DeviceInfo.isWearable`） | 手表退到后台后会被系统快速冻结，定时器大概率等不到，事件会积压到下次冷启动 |
+
+手表侧该行为不受 `dataUploadInterval` 配置影响 —— 调大间隔省电的同时，进入后台仍会冲刷一次，两者互补。手机/平板/PC 不做此处理，维持原有的定时上报节奏。
 
 ### 写入流程图
 

@@ -73,13 +73,27 @@ SDK 初始化
 ### 默认值
 
 ```typescript
-static defaultScreenHeight: number = 1260
-static defaultScreenWidth: number = 2720
+static defaultScreenHeight: number = 2720
+static defaultScreenWidth: number = 1260
 static defaultPlatformVersion: string = '5.0.0'
 static defaultDeviceBrand: string = 'HUAWEI'
 static defaultDeviceModel: string = '-'
 static defaultDeviceType: string = 'phone'
 ```
+
+上表为手机形态的默认值。手表（`deviceType == 'wearable'`）在 `initDeviceInfo()` 中会覆盖其中三项：
+
+| 字段 | 手机 | 手表 |
+|---|---|---|
+| `defaultScreenHeight` | 2720 | 466 |
+| `defaultScreenWidth` | 1260 | 466 |
+| `defaultDeviceType` | `'phone'` | `'wearable'` |
+
+手机默认值取竖屏形态（宽 1260 × 高 2720），与 `orientation` 的默认值 `'PORTRAIT'` 保持一致。
+
+默认值仅在 `display.getDefaultDisplaySync()` 等系统 API 取值失败时兜底，且只被圈选（`Hybrid`）与移动调试（`WebSocket`）使用，不进入事件上报字段。
+
+此外 `DeviceInfo.isWearable` 记录设备形态，供 SDK 内部策略使用（兜底值、上报时机，见 [`AnalyticsCore.md`](./AnalyticsCore.md)）。该字段不随事件上报，因此不受 `IgnoreFields.DeviceType` 约束。
 
 ### 初始化流程
 
@@ -87,6 +101,14 @@ static defaultDeviceType: string = 'phone'
 static initDeviceInfo(context: GrowingContext) {
   // 1. 设置平台
   DeviceInfo.platform = SDK_PLATFORM  // 'HarmonyOS'
+
+  // 1.1 设备形态：手表覆盖默认值
+  DeviceInfo.isWearable = niceTry(() => deviceInfo.deviceType, '') == 'wearable'
+  if (DeviceInfo.isWearable) {
+    DeviceInfo.defaultScreenHeight = 466
+    DeviceInfo.defaultScreenWidth = 466
+    DeviceInfo.defaultDeviceType = 'wearable'
+  }
 
   // 2. 屏幕信息
   if (DeviceInfo.isNotIgnoreField(context, IgnoreFields.ScreenSize)) {
@@ -345,6 +367,8 @@ static initNetworkState(context: GrowingContext) {
         DeviceInfo.networkState = 'WIFI'
       } else if (bearerType == connection.NetBearType.BEARER_ETHERNET) {
         DeviceInfo.networkState = 'WIFI'  // Ethernet 归类为 WIFI
+      } else if (bearerType == connection.NetBearType.BEARER_BLUETOOTH) {
+        DeviceInfo.networkState = 'WIFI'  // 蓝牙代理网络归类为 WIFI
       }
     })
   } else {
@@ -355,12 +379,16 @@ static initNetworkState(context: GrowingContext) {
 
 ### 网络类型映射
 
-| 系统网络类型 | SDK 网络状态 |
-|-------------|-------------|
-| BEARER_CELLULAR | 5G (简化处理) |
-| BEARER_WIFI | WIFI |
-| BEARER_ETHERNET | WIFI |
-| 无网络 | UNKNOWN |
+| 系统网络类型 | SDK 网络状态 | 说明 |
+|-------------|-------------|------|
+| BEARER_CELLULAR | 5G | 简化处理，未细分制式 |
+| BEARER_WIFI | WIFI | |
+| BEARER_ETHERNET | WIFI | |
+| BEARER_BLUETOOTH | WIFI | 手表默认网络优先级为「蓝牙 > WIFI > 蜂窝」，蓝牙代理网络归为 WIFI |
+| 其他（含 BEARER_VPN） | 保持上一个值 | 无 else 分支，不覆盖 |
+| 无网络 | UNKNOWN | |
+
+> **已知行为**：`networkState` 初始值为 `'UNKNOWN'`，由异步的 `netCapabilitiesChange` 回调填充；而 VISIT 事件在 `initDeviceInfo()` 的同步调用栈中生成（`AnalyticsCore.startCore` → `Session.refreshSession` → `Session.generateVisit`），回调赶不上。因此**每次冷启动的首个 VISIT 事件的 `networkState` 为 `UNKNOWN`**，其后的事件均为真实值。这是权衡后接受的行为（同步查询网络状态需两次 IPC，会挤占初始化的主线程预算），不是缺陷。
 
 ### 实时更新
 
