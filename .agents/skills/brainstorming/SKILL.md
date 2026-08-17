@@ -10,7 +10,7 @@ description: Use when receiving an ambiguous feature request, when scope is uncl
 把模糊需求通过"一次一个问题"的方式，收敛成一份可用于 `writing-plans` 的设计规格。
 
 <HARD-GATE>
-在完成规格并拿到用户批准之前，**不得**调用 `writing-plans`、不得动任何源文件、不得派 subagent 执行实现。
+在完成规格并拿到用户批准之前，**不得**调用 `writing-plans`、不得动任何源文件、不得开始实施。
 逃生条款：用户明确说 "skip brainstorming"、"已经有规格"、"直接按 X 做" 时可跳过。
 </HARD-GATE>
 
@@ -41,7 +41,7 @@ description: Use when receiving an ambiguous feature request, when scope is uncl
 5. **写规格文档** — 保存到 `docs/specs/YYYY-MM-DD-<topic>.md`
 6. **规格自查** — 有无占位符 `TODO`、有无自相矛盾、范围是否闭合
 7. **请用户审阅规格文件** — 等明确 "OK/确认/继续"
-8. **移交** — 规格确认后回到主流程（Read relevant docs → Planning Gate），由 Planning Gate 统一判定是否需要 plan
+8. **移交** — 规格确认后回到主流程（Read relevant docs → 判定影响面），统一判定是否需要 plan
 
 ## Process Flow
 
@@ -73,7 +73,7 @@ Self-review (placeholders / contradictions / scope)
 User reviews spec file ── approved? ─NO→ revise
   │ YES
   ▼
-回到主流程 → Read relevant docs → Planning Gate（统一判定）
+回到主流程 → Read relevant docs → 影响面判定（统一一次）
 ```
 
 ## Anti-Pattern：「这个需求太简单不需要规格」
@@ -105,7 +105,7 @@ User reviews spec file ── approved? ─NO→ revise
 brainstorming 收敛规格并拿到用户确认后，**不自行判定影响面**，直接回到主流程：
 
 ```
-规格确认 → Read relevant docs → Planning Gate（统一判定）
+规格确认 → Read relevant docs → 影响面判定（统一一次）
 ```
 
-影响面判定权归 Planning Gate 一处（`using-growingio-sdk-skills` meta-skill），brainstorming 不重复判定、不自行分叉。
+影响面判定（改动文件 ≥3 或涉及公开 API 变更 → 先写 plan）在规格确认之后统一做一次，brainstorming 不重复判定、不自行分叉。

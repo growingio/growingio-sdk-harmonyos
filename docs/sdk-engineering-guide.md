@@ -23,6 +23,10 @@
 
 **hvigor 构建命令 → [`docs/sdk-build-commands.md`](./sdk-build-commands.md)**
 
+## ✅ 合并前自查
+
+**提 PR 前 → 必读 [`docs/sdk-review-checklist.md`](./sdk-review-checklist.md)**（含开发流程图）
+
 ---
 
 ## 🎯 SDK 健康指标

@@ -17,7 +17,7 @@ description: Use after verification-before-completion passes and code review is 
 
 **强制：**
 - `verification-before-completion` skill 通过后
-- `sdk-code-review` skill 通过后
+- 对照 `docs/sdk-review-checklist.md` 自查通过后
 - 用户说"这个功能做完了" / "收个尾" / "合并吧"
 
 **不触发：**
@@ -153,7 +153,7 @@ git push origin --delete <branch-name>
 | "发版分支忘了打 tag 也没事" | 丢失版本追溯能力，补 tag 需要 cherry-pick 成本 |
 | "改动都 commit 了，用 `git add -A` 一把梭" | 容易把 .env / 密钥 / 构建产物带进去 |
 | "合并完分支保留吧以后说不定还用" | 仓库分支列表会膨胀；真要用再 checkout commit |
-| "没触发 Planning Gate 就不用走收尾" | 只要有 commit 产生就应该走本 skill，小改动可以跳过 PR 但不能跳过用户确认 |
+| "改动小、没写 plan 就不用走收尾" | 只要有 commit 产生就应该走本 skill，小改动可以跳过 PR 但不能跳过用户确认 |
 
 ## Red Flags — STOP if you catch yourself thinking these
 
@@ -164,7 +164,7 @@ git push origin --delete <branch-name>
 
 ## 关联 skill
 
-- **上游触发：** `verification-before-completion` 通过且 `sdk-code-review` 通过
-- **调度 subagent：** 无（本 skill 由控制器执行，用户决策哪条路径）
+- **上游触发：** `verification-before-completion` 通过，且 `docs/sdk-review-checklist.md` 自查通过
+- **决策方：** 用户决定走哪条终态路径
 - **完成后交接：** 合并到 master / PR 待评审 / 分支保留 / 分支废弃 四种终态之一
 - **替代路径：** 发版分支 → 调用 `jira-ticket`（发版单） + `ohpm-publish`（OHPM 发布） + `git-conventions`（tag 命名）

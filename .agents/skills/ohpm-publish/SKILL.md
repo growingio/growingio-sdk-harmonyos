@@ -137,6 +137,6 @@ ohpm publish GrowingToolsKit/build/default/outputs/default/GrowingToolsKit-signe
 ## 关联 skill
 
 - **上游触发：** 用户明确说"发布 SDK" / "ohpm 发布" / "发版" 等关键词
-- **调度 subagent：** 无（本 skill 是操作手册，由执行者按步骤执行）
+- **使用方式：** 本 skill 是操作手册，由执行者按步骤执行
 - **完成后交接：** `finishing-a-development-branch`（发版分支的打 tag / PR / 合并） + `jira-ticket`（同步更新发版单）
 - **替代路径：** 预发布验证阶段 → 只构建 HAR 不 publish（验证构建链路）

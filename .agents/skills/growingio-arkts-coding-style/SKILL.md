@@ -391,6 +391,6 @@ import { LogUtil } from '../utils/LogUtil'
 ## 关联 skill
 
 - **上游触发：** 写或审查任何 `.ets` / `.ts` 文件时
-- **调度 subagent：** 无（本 skill 是规范手册，由编码者/审查者自己对照）
-- **完成后交接：** `sdk-code-review` 的 code-reviewer subagent 必须用本 skill 的约束清单做审查
+- **使用方式：** 本 skill 是规范手册，由编码者/审查者自己对照
+- **完成后交接：** 审查阶段按 `docs/sdk-review-checklist.md` Part 1 第 1 项，用本 skill 的约束清单逐条核对
 - **替代路径：** 遇到 TypeScript 代码需迁移 → 交叉参考 `docs/typescript-to-arkts-migration-guide.md`
