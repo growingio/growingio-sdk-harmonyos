@@ -16,6 +16,8 @@
 | `dataUploadInterval` | 15s | 60s（减少网络唤醒，照顾续航） |
 | PAGE 事件 | 无埋点自动产生 | **不产生**，且不新增手动接口（见下） |
 
+`dataUploadInterval` 敢调到 60s，是因为 SDK 侧对手表做了特殊处理：**进入后台生成 `APP_CLOSED` 后会立即冲刷一次上报**（`AnalyticsCore.writeEventToDisk`，仅 `deviceType == 'wearable'` 生效）。手表落腕后会被系统快速冻结，只靠定时器大概率等不到下一次触发，事件会积压到下次冷启动。两者互补：平时低频省电，退出时保证送达。
+
 ## 如何关掉无埋点
 
 SDK 有两道独立开关，本 demo 两道都关：
