@@ -1,5 +1,4 @@
 import AbilityStage from '@ohos.app.ability.AbilityStage'
-import type Want from '@ohos.app.ability.Want'
 import { GrowingAnalytics, GrowingConfig } from '@growingio/analytics'
 
 export default class EntryAbilityStage extends AbilityStage {
@@ -9,10 +8,6 @@ export default class EntryAbilityStage extends AbilityStage {
 
     // 确保终端已授权个人隐私信息合规收集和处理后，开启 SDK 数据采集
     this.startAnalytics()
-  }
-
-  onAcceptWant(want: Want): string {
-    return 'EntryAbilityStage'
   }
 
   setupAnalytics() {
@@ -36,7 +31,6 @@ export default class EntryAbilityStage extends AbilityStage {
     // 真正决定是否注册 UI 监听的是 EntryAbility 里有没有调用
     // GrowingAnalytics.onWindowStageCreate —— 不调用则一个 UIObserver 都不会注册。
     config.autotrackEnabled = false
-    config.autotrackAllPages = false
 
     // 手表端无 WebView 场景，关闭 Hybrid 无埋点
     config.hybridAutotrackEnabled = false
@@ -44,8 +38,6 @@ export default class EntryAbilityStage extends AbilityStage {
     // GrowingToolsKit 是悬浮窗形态的调试工具，手表屏幕放不下，故不挂载
 
     GrowingAnalytics.configure(config)
-
-    AppStorage.setOrCreate('sdkMode', config.mode)
   }
 
   startAnalytics() {

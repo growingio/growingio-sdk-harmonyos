@@ -14,7 +14,7 @@
 | `hybridAutotrackEnabled` | 默认 `true` | `false`（无 WebView 场景） |
 | GrowingToolsKit 插件 | 挂载 | 不挂载（悬浮窗形态，手表放不下） |
 | `dataUploadInterval` | 15s | 60s（减少网络唤醒，照顾续航） |
-| PAGE 事件 | 无埋点自动产生 | 需手动补（见下） |
+| PAGE 事件 | 无埋点自动产生 | **不产生**，且不新增手动接口（见下） |
 
 ## 如何关掉无埋点
 
