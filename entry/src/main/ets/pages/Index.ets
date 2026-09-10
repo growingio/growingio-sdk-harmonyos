@@ -86,6 +86,10 @@ struct Index {
         .onClick(() => {
           Util.startAbility(this.getUIContext(), 'HybridAbility', 'pages/Hybrid')
         }).margin({ top: 15 })
+      Button('verify26')
+        .onClick(() => {
+          this.getUIContext().getRouter().pushUrl({ url: 'pages/verify26/Verify26Index' })
+        }).margin({ top: 15 })
     }
     .width('100%')
     .height('100%')

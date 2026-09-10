@@ -5,6 +5,10 @@
     "pages/SubTracker",
     "pages/GeneralProps",
     "pages/Track",
-    "pages/Hybrid"
+    "pages/Hybrid",
+    "pages/verify26/Verify26Index",
+    "pages/verify26/Verify26NavHome",
+    "pages/verify26/Verify26Dialogs",
+    "pages/verify26/Verify26Lists"
   ]
 }
