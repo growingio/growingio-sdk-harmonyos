@@ -4,9 +4,31 @@
 
 ## 0. 准备
 
-- 两台设备：一台 HarmonyOS **26.0.0**，一台 **6.0.0(20) 或 5.x** 作基线（模拟器也行）
+- 两台设备：一台 HarmonyOS **26.0.0**，一台低版本作基线（6.1.0(24) / 6.0.0(20) / 5.x 都行）
 - `hdc` 可用（DevEco Studio 自带；或设置环境变量 `HDC=/path/to/hdc`）
-- 设备打开 USB 调试，`hdc list targets` 能看到
+- 真机打开 USB 调试，`hdc list targets` 能看到
+
+### 没有 26.0.0 真机：用模拟器
+
+26 那一侧可以用模拟器，基线侧用手头任意低版本真机即可。
+
+- 需要 **DevEco Studio 26.0.0 Release（26.0.0.821）**，它配套 Emulator 26.0.0.400 与 26.0.0 镜像
+- macOS 上模拟器**只支持 Apple Silicon**（Intel Mac 不行），macOS ≥ 12.5，内存建议 16GB
+- 建法：`Tools > Device Manager > New Emulator` → 选 Phone → 下载 26.0.0 镜像 → Finish → 启动；
+  Phone/Tablet/2in1 镜像仅支持在中国境内使用
+- 模拟器推包一般免签名，DevEco 里直接 Run `entry` 即可
+- 模拟器同样支持 `uitest` 命令行，所以 `--auto` 能跑；它会像真机一样出现在 `hdc list targets` 里
+
+模拟器对本验证的可信度：
+
+| 检查 | 模拟器是否可信 |
+|------|---------------|
+| 主页 NavDestination path 归属 / 弹窗 xpath / 列表 index | 可信，纯 ArkUI 框架行为 |
+| Hybrid / ArkWeb | 可信，官方说明 ArkWeb Kit 支持模拟器 |
+| 圈选 UX（阴影、触摸热区） | 仅供参考，模拟器用电脑显示器，存在锯齿与色域差异 |
+
+升级 DevEco 到 26 后，本工程 `targetSdkVersion` 仍是显式配置的 `6.0.0(20)` 不会被动改，
+未显式配置的 `compileSdkVersion` 会变成 26.0.0 —— 正好对应第一轮"用 26 SDK 编译、target 仍在 20"。
 
 ## 1. 装包
 
