@@ -8,7 +8,7 @@
 
 ## 技术栈
 
-- HarmonyOS，兼容 API 12 (5.0.0) ~ 目标 API 20 (6.0.0)
+- HarmonyOS，兼容 API 12 (5.0.0) ~ 目标 API 26 (26.0.0)
 - 主要语言：ArkTS | 构建工具：hvigor | 包管理器：OHPM
 
 ## 工程指南
