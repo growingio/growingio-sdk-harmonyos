@@ -60,50 +60,50 @@ python3 scripts/verify26/compare.py verify26-api20.json verify26-api26.json
 - **Hybrid / ArkWeb 144**：`verify26` → `[4. Hybrid]`，在 H5 里点几下；事件照样进报告（`scene=1`）
 - **圈选 UX**：连上圈选，看 `verify26` 入口页底部表单组件与阴影卡片的高亮框是否贴合
 
-## 三点五、第一轮验证结果（2026-09-11）
+## 三点五、验证结果（2026-09-11，targetSdkVersion = 6.0.0(20)）
 
-采集环境：
+采集环境（第二轮已把模拟器分辨率调成与基线机一致，排除屏幕变量）：
 
 | | 基线 | 26 |
 |---|---|---|
 | 设备 | BRA-AL00 真机 | 模拟器 |
 | 系统 | OpenHarmony-6.1.1.120（API 24） | OpenHarmony-7.0.0.105（API 26） |
-| 屏幕 | 1216x2688 | 1320x2232 |
+| 屏幕 | 1216x2688 | 1216x2688 |
 | 应用 targetSdkVersion | 6.0.0(20) | 6.0.0(20) |
-
-结论：
 
 | 检查 | 结果 | 说明 |
 |------|------|------|
 | 主页 NavDestination path 归属 | **无影响** | 基线上 `click-in-home-navdestination` 的 path 已经是 `/Verify26NavHome`，PAGE 序列两边逐条一致。SDK 走的 `getPageInfoByUniqueId` 在 6.1.1 上就能拿到主页 NavDestination 信息 |
-| 弹窗 xpath 前缀 | **无需改动** | AlertDialog / Dialog / Popup / MenuWrapper / SheetWrapper / ModalPage 六类全部命中 `DIALOG_PATH_PREFIXES`，`path` 均正确回退到宿主页面 |
+| 弹窗 xpath 前缀 | **无需改动** | AlertDialog / Dialog / Popup / MenuWrapper / SheetWrapper / ModalPage / SelectOverlay 全部命中 `DIALOG_PATH_PREFIXES`，`path` 均正确回退到宿主页面 |
 | 列表 index | **无需改动** | ListItem / GridItem / FlowItem / GridCol 四类的 xpath、xcontent、index 两边完全一致 |
-| AlertDialog 内部节点树 | **待复测** | 见下 |
-| 文本选择菜单（SelectOverlay） | **未测到** | 26 侧第 42 步长按未唤起菜单（`stepProblems` 有记录），不是行为变更 |
+| 文本选择菜单 | **无影响** | xpath、xcontent 完全一致，仅按钮文案随设备语言不同（复制 / Copy） |
+| 系统 AlertDialog 内部节点树 | **确认变更**，见下 | SDK 无需改代码，但影响已圈选的元素 |
 
-### 待复测：AlertDialog 内部节点树
+### 确认变更：系统 AlertDialog 内部节点树
 
 ```
-基线：/root/AlertDialog/Column/Row/Button                  xcontent=/0/0/0/1/0
-26  ：/root/AlertDialog/Column/Scroll/Column/Column/Button  xcontent=/0/0/0/0/0/0/0
+基线：/root/AlertDialog/Column/Row/Button                   xcontent=/0/0/0/1/0
+26  ：/root/AlertDialog/Column/Scroll/Column/Column/Button   xcontent=/0/0/0/0/0/0/0
 ```
 
-多了 `Scroll` 包装层、按钮从 `Row` 变 `Column`。但**两台设备的屏幕分辨率不同**（模拟器矮 456px），
-而窄屏或按钮文案过长本来就会让 AlertDialog 把按钮改为竖排、内容超高时套一层 Scroll ——
-版本差异和屏幕差异目前混在一起，不能归因于 26。
+`Column` 下多了一层 `Scroll`，按钮容器由 `Row` 变 `Column`。两轮采集中第二轮已将模拟器分辨率
+调至与基线机一致，差异依旧存在，**排除了屏幕尺寸导致的布局差异**。
 
-复测方法：把 26 模拟器的屏幕改成和基线机一致（Device Manager → Screen Profile → Customize
-→ 1216x2688），只重跑弹窗场景。
-
-- 若 xpath 回到 `/root/AlertDialog/Column/Row/Button` → 属于布局差异，与版本无关
-- 若仍是 `.../Scroll/Column/Column/...` → 是 26 的真实结构变更，需要评估：
-  前缀没变所以 SDK 的 `path` 回退不受影响，但**针对系统 AlertDialog 按钮圈选出来的元素规则会失配**，
-  需要通知业务方重新圈选
+- **生效条件**：本轮 `targetSdkVersion` 是 6.0.0(20) 也复现，说明不受 targetSdkVersion 隔离，全部生效
+- **官方文档未列出这一条**（26.0.0 变更清单里与弹窗相关的只有"默认开启沉浸式系统材质"，且限定 targetSdkVersion ≥ 26）
+- **对 SDK**：xpath 前缀仍是 `/root/AlertDialog`，`DIALOG_PATH_PREFIXES` 命中、`path` 回退正常，**SDK 代码无需改动**
+- **对数据**：系统 AlertDialog 内按钮的 xpath / xcontent 变了，已针对这类按钮圈选的元素规则在 26 设备上会失配；
+  同一个按钮在 26 与低版本设备上会产生两条不同 xpath 的数据，看板上会分裂
+- **建议**：通知业务与数据侧；涉及系统弹窗按钮圈选的应用需在 26 上重新圈选；
+  如需跨版本聚合，需要在分析侧做 xpath 归一映射
+- **残余变量**：基线是真机、26 是模拟器。节点树由 ArkUI 框架决定，同版本下模拟器与真机应当一致，风险低；
+  拿到 26 真机后复测一次，或在同一套模拟器上再建一个 API 24 实例对跑，可彻底钉死
 
 ### 仍存在的覆盖缺口
 
-- 基线是 6.1.1(24) 而非 `compatibleSdkVersion` 所声明的 5.0.0(12)，低版本档位未覆盖
-- 第 2、4 项（沉浸式系统材质、触摸热区/阴影规格）要 `targetSdkVersion ≥ 26` 才生效，本轮 target 仍是 20，未覆盖
+- **`targetSdkVersion` 仍是 20**，第 2、4 项（弹窗默认开启沉浸式系统材质、触摸热区/阴影规格）
+  要 target ≥ 26 才生效，本轮**完全未覆盖** —— 升 target 后必须再跑一轮
+- 基线是 6.1.1(24)，不是 `compatibleSdkVersion` 所声明的 5.0.0(12)，低版本档位未覆盖
 - Hybrid / ArkWeb 144 与圈选 UX 两项本轮未跑
 
 ## 四、本 PR 之外仍需处理的事项

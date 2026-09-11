@@ -26,8 +26,16 @@ LIST_COMPONENTS = ['ListItem', 'GridItem', 'GridCol', 'FlowItem']
 
 DIALOG_CLICKS = [
     'click-in-alert-dialog', 'click-in-custom-dialog', 'click-in-popup',
-    'click-in-menu', 'click-in-sheet', 'click-in-modal',
+    'click-in-menu', 'click-in-sheet', 'click-in-modal', '复制',
 ]
+
+# 系统组件的按钮文案跟设备语言走，归一化后两次采集才能对上（textValue 本身不参与字段比对）
+TEXT_ALIASES = {
+    'Copy': '复制',
+    'Select all': '全选',
+    'Cut': '剪切',
+    'Paste': '粘贴',
+}
 LIST_CLICKS = ['ListItem-2', 'GridItem-3', 'FlowItem-1', 'GridCol-4']
 NAV_CLICKS = ['click-in-home-navdestination', 'click-in-detail-navdestination']
 
@@ -55,7 +63,7 @@ def clicks_by_text(report):
     for data in events_of(report, 'VIEW_CLICK'):
         text = data.get('textValue')
         if text:
-            table.setdefault(text, []).append(data)
+            table.setdefault(TEXT_ALIASES.get(text, text), []).append(data)
     return table
 
 
