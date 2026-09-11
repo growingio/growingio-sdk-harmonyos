@@ -6,7 +6,7 @@
 
 - **数据采集**：三种模式（NewSaaS/SaaS/CDP）初始化入口；标准埋点 API；无埋点自动采集（PAGE / VIEW_CLICK）
 - **数据管道**：本地 RDB 加密队列 + 批量上报（500条/2MB） + 指数退避重试 + Protobuf/JSON 双格式 + Snappy 压缩 + XOR 混淆
-- **平台适配**：UIAbility 生命周期 + `UIObserver.on('willClick')` + `FrameNode` 无埋点识别 + API 12~20 降级兼容
+- **平台适配**：UIAbility 生命周期 + `UIObserver.on('willClick')` + `FrameNode` 无埋点识别 + API 12~26 降级兼容
 - **隐私合规**：PIPL 合规、初始化前零采集、`setDataCollectionEnabled` 动态开关、`ignoreField` 位掩码脱敏
 
 详细行为见 `docs/GrowingAnalytics/` 下各模块文档。

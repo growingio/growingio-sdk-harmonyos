@@ -145,7 +145,10 @@ struct Verify26Dialogs {
           })
           .bindPopup(this.popupVisible, {
             builder: this.popupBuilder,
-            onStateChange: (event: PopupStateChangeParam) => {
+            // 不标注 PopupStateChangeParam：那个类型是 API 18 才有的，
+            // 而工程的 compatibleSdkVersion 是 5.0.0(12)，标注了会报兼容性告警。
+            // CustomPopupOptions.onStateChange 本身用的是更老的内联类型。
+            onStateChange: (event) => {
               if (!event.isVisible) {
                 this.popupVisible = false
               }
