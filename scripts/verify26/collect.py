@@ -232,6 +232,18 @@ def screen_size(tree):
     return (width or 1260), (height or 2720)
 
 
+_SCREEN = {}
+
+
+def get_screen(hdc):
+    """屏幕尺寸只探一次，之后缓存。用默认值猜坐标会滑出屏幕外，手势就没效果了。"""
+    if not _SCREEN:
+        width, height = screen_size(dump_layout(hdc))
+        _SCREEN['width'] = width
+        _SCREEN['height'] = height
+    return _SCREEN['width'], _SCREEN['height']
+
+
 def swipe(hdc, x_from, y_from, x_to, y_to, velocity=800):
     shell(hdc, ['uitest', 'uiInput', 'swipe', str(int(x_from)), str(int(y_from)),
                 str(int(x_to)), str(int(y_to)), str(velocity)], timeout=30)
@@ -248,7 +260,7 @@ def wait_for(hdc, key, retries=3, interval=0.6):
             return point
         time.sleep(interval)
 
-    width, height = screen_size(tree or {})
+    width, height = get_screen(hdc)
     center_x = width // 2
     top_y = int(height * 0.30)
     bottom_y = int(height * 0.75)
@@ -265,19 +277,90 @@ def wait_for(hdc, key, retries=3, interval=0.6):
     return None
 
 
-def ensure_anchor(hdc, key, max_back=3):
-    """确保界面上能看到 key（页面锚点）。看不到就按返回键，最多 max_back 次。
+# 页面模型：goto 靠它判断"现在在哪一页"，并决定该往回退还是往前点。
+# anchor 取各页顶部的稳定文案；detect 之前会先把页面滚回顶部，所以滚动位置不影响判断。
+PAGES = {
+    'home': {'anchor': 'getDeviceId', 'parent': None, 'enter_key': None},
+    'verify26': {'anchor': 'go-nav-home', 'parent': 'home', 'enter_key': 'verify26'},
+    'navhome': {'anchor': 'click-in-home-navdestination', 'parent': 'verify26', 'enter_key': 'go-nav-home'},
+    'dialogs': {'anchor': 'open-alert-dialog', 'parent': 'verify26', 'enter_key': 'go-dialogs'},
+    'lists': {'anchor': '列表 index 验证', 'parent': 'verify26', 'enter_key': 'go-lists'},
+}
 
-    用它代替"盲按返回"，前面的步骤失败时不会把导航栈退错层。
+
+def scroll_to_top(hdc):
+    """把当前页滚回顶部。已经在顶部时是无害的空操作。"""
+    width, height = get_screen(hdc)
+    center_x = width // 2
+    for _ in range(4):
+        swipe(hdc, center_x, int(height * 0.30), center_x, int(height * 0.75))
+
+
+def detect_page(tree):
+    for name in PAGES:
+        if find_center(tree, PAGES[name]['anchor']):
+            return name
+    return None
+
+
+def ancestors_of(page):
+    chain = []
+    node = PAGES[page]['parent']
+    while node:
+        chain.append(node)
+        node = PAGES[node]['parent']
+    return chain
+
+
+def press_back(hdc):
+    shell(hdc, ['uitest', 'uiInput', 'keyEvent', 'Back'], timeout=30)
+    time.sleep(1.0)
+
+
+def goto(hdc, target, max_moves=8, max_backs=3):
+    """把应用导航到 target 页。
+
+    比"盲按返回"稳的地方：认得出当前在哪一页，目标在上层就退、在下层就点进去，
+    识别不出来（弹窗盖着 / 未知界面）才退一步。在首页时绝不按返回，所以不会退到桌面。
     """
-    for attempt in range(max_back + 1):
+    backs = 0
+    for _ in range(max_moves):
+        scroll_to_top(hdc)
         tree = dump_layout(hdc)
-        if find_center(tree, key):
+        current = detect_page(tree)
+
+        if current == target:
             return True
-        if attempt == max_back:
-            break
-        shell(hdc, ['uitest', 'uiInput', 'keyEvent', 'Back'], timeout=30)
-        time.sleep(1.0)
+
+        if current is None:
+            # 认不出来：可能有弹窗盖着，退一步再看。
+            # 但认不出来时不能无限退，否则万一在首页就会退到桌面。
+            if backs >= max_backs:
+                return False
+            backs += 1
+            press_back(hdc)
+            continue
+
+        if current in ancestors_of(target):
+            # 目标在下层：沿着链路往前点一层
+            step_page = target
+            while PAGES[step_page]['parent'] != current:
+                step_page = PAGES[step_page]['parent']
+            point = wait_for(hdc, PAGES[step_page]['enter_key'])
+            if not point:
+                return False
+            shell(hdc, ['uitest', 'uiInput', 'click', str(point[0]), str(point[1])], timeout=30)
+            time.sleep(1.0)
+            continue
+
+        if current == 'home':
+            # 已经在最外层还没到目标，再退就出应用了
+            return False
+
+        if backs >= max_backs:
+            return False
+        backs += 1
+        press_back(hdc)
     return False
 
 
@@ -294,10 +377,18 @@ def do_step(hdc, item, auto):
         time.sleep(0.8)
         return True, ''
 
-    if kind == 'ensure':
-        if ensure_anchor(hdc, item['key']):
+    if kind == 'dismiss':
+        # 弹窗/气泡/菜单点完后可能还开着，也可能已经自己关了。
+        # 只在它确实还在屏幕上时按一次返回，避免多退一层把页面也退掉。
+        tree = dump_layout(hdc)
+        if find_center(tree, item['key']):
+            press_back(hdc)
+        return True, ''
+
+    if kind == 'goto':
+        if goto(hdc, item['key']):
             return True, ''
-        return False, '返回后仍然看不到 "%s"，后续步骤可能错位' % item['key']
+        return False, '没能导航到页面 "%s"，后续步骤可能错位' % item['key']
 
     point = wait_for(hdc, item['key'])
     if not point:
@@ -324,7 +415,7 @@ def drive_manual():
     print('\n请按下面的顺序在设备上操作（每步之间不用等，正常节奏点即可）：\n')
     number = 0
     for item in STEPS:
-        if item['kind'] in ('wait', 'ensure'):
+        if item['kind'] == 'wait':
             continue
         number += 1
         print('  %2d. %s' % (number, item['desc']))
