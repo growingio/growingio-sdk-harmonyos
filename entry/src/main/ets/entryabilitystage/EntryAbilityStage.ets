@@ -2,6 +2,7 @@ import AbilityStage from '@ohos.app.ability.AbilityStage'
 import type Want from '@ohos.app.ability.Want'
 import { GrowingAnalytics, GrowingConfig, GrowingIgnoreFields, GrowingIgnoreFieldsAll } from '@growingio/analytics'
 import { GrowingToolsKit } from '@growingio/tools'
+import { Verify26Recorder } from '../pages/verify26/Verify26Recorder'
 
 export default class EntryAbilityStage extends AbilityStage {
   onCreate(): void {
@@ -31,7 +32,8 @@ export default class EntryAbilityStage extends AbilityStage {
     config.requestOptions.transferTimeout = 10
     config.autotrackEnabled = true
     config.autotrackAllPages = true
-    config.plugins = [new GrowingToolsKit()]
+    // Verify26Recorder 仅用于 HarmonyOS 26.0.0 适配验证，见 scripts/verify26/
+    config.plugins = [new GrowingToolsKit(), new Verify26Recorder()]
     // config.ignoreField = GrowingIgnoreFieldsAll
     // config.ignoreField = GrowingIgnoreFields.NetworkState | GrowingIgnoreFields.PlatformVersion
     GrowingAnalytics.configure(config)

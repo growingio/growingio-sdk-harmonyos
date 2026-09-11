@@ -139,7 +139,7 @@ struct Verify26Dialogs {
             }
           })
 
-        Button('Menu 长按（预期 /root/MenuWrapper）')
+        Button('Menu（预期 /root/MenuWrapper）')
           .bindMenu(this.menuBuilder)
 
         Button('Sheet 半模态（预期 /root/SheetWrapper）')

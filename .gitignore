@@ -13,3 +13,7 @@ oh-package-lock.json5
 /.appanalyzer
 /build-profile.json5
 .DS_Store
+
+# python
+__pycache__/
+*.pyc

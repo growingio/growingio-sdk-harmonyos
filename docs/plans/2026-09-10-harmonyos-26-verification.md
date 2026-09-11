@@ -22,60 +22,43 @@ Hvigor 6.26.4、ohpm 26.0.0.630、Node.js 24.14.1；compatibleSdkVersion 最低�
 LazyColumnLayout/LazyVWaterFlowLayout/LazyDynamicLayout、ContainerReader、SelectionContainer
 等组件。它们需要 compileSdkVersion 升到 26 才能写进 demo，本 PR 暂未覆盖，等工具链升级后再补。
 
-## 二、验证方法
+## 二、验证方法（脚本化，不用肉眼比数据）
 
-1. 用**同一个 HAP**（当前 targetSdkVersion 6.0.0(20)）分别安装到 HarmonyOS 26.0.0 设备和
-   6.0.0(20)/5.x 设备上，得到"基线 vs 26"的对照组。
-2. 工程升到 targetSdkVersion 26.0.0 后再跑一遍，覆盖 targetSdkVersion ≥ 26 才生效的第 2、4 项。
-3. 事件通过 `config.debugEnabled = true` 的日志或 GrowingToolsKit 悬浮窗查看。
-4. 入口：demo 首页 → `verify26` 按钮。
+demo 里注册了 `Verify26Recorder` 插件（`entry/src/main/ets/pages/verify26/Verify26Recorder.ets`），
+通过 SDK 的 `onEventWroteToDisk` 回调把每条落库事件以 JSON 写进 hilog（tag `GIOV26`，分片输出）
+和沙箱文件，再由 `scripts/verify26/` 下的脚本采集、比对：
 
-## 三、逐项检查
+```bash
+# 两台设备各跑一次（26.0.0 一次，6.0.0(20)/5.x 基线一次）
+python3 scripts/verify26/collect.py --label api26 --auto
+python3 scripts/verify26/collect.py --label api20 --auto
 
-### 1. 主页 NavDestination（`Verify26NavHome`）
+# 出结论表
+python3 scripts/verify26/compare.py verify26-api20.json verify26-api26.json
+```
 
-页面用 `Navigation(stack, { name: 'Verify26NavHome' })`（HomePathInfo，API 20 起）把一个
-NavDestination 指定为主页。
+- `--auto` 用 `uitest dumpLayout` + `uitest uiInput click` 按控件文案自动点；设备不支持时去掉 `--auto`
+  走手动模式（脚本打印带序号的操作清单，人只负责点，数据仍由脚本抓）。
+- 产物 `verify26-compare.md` / `verify26-compare.json` 直接就是结论，退出码 0 = 全 PASS。
+- 详细说明见 `scripts/verify26/README.md`。
 
-- [ ] 进入页面时 PAGE 事件的 `path`：基线 vs 26 是否一致（`/pages/verify26/Verify26NavHome` 还是 `/Verify26NavHome`）
-- [ ] 点击 `click-in-home-navdestination`，VIEW_CLICK 的 `path` 两侧是否一致
-- [ ] push 到 Detail 再 pop 回主页，PAGE 事件的条数与顺序两侧是否一致（无重复、无丢失）
+两轮跑法：
+1. 先用当前 `targetSdkVersion 6.0.0(20)` 的同一个包在两台设备上跑 —— 覆盖"全部生效"的第 1、3 项；
+2. 工程升到 `targetSdkVersion 26.0.0` 后再跑一轮 —— 覆盖 targetSdkVersion ≥ 26 才生效的第 2、4 项。
 
-**判定**：两侧 `path` 不一致 → `AutotrackClick.getPageInfo()` / `AutotrackPage` 需要按主页
-NavDestination 场景补适配，且要评估历史数据口径的兼容处理。
+## 三、脚本给出的判定
 
-### 2. 弹窗族 xpath（`Verify26Dialogs`）
+| 检查 | 判定依据 | 不通过时要动的地方 |
+|------|----------|-------------------|
+| 弹窗 xpath 前缀 | `xpath` 命中 `DIALOG_PATH_PREFIXES`，且 `path` 回退到宿主页面 | `Constants.ts` 的 `DIALOG_PATH_PREFIXES` |
+| 列表 index | `index` == 按钮序号 + 1，且 xpath 含 `ListItem`/`GridItem`/`FlowItem`/`GridCol` | `LIST_COMPONENTS` / `CONTAINER_COMPONENTS` |
+| NavDestination path 归属 | 点击事件 `path` 非空；跨版本对照看是否从 router 路径变成 `/Verify26NavHome` | `AutotrackClick.getPageInfo()` / `AutotrackPage` |
+| PAGE 序列 | 两侧 PAGE 事件的 path 序列一致 | 同上，且需评估历史数据口径兼容 |
 
-覆盖 AlertDialog、CustomDialog、Popup、Menu、Sheet、ContentCover、Select、文本选择菜单、键盘。
+脚本覆盖不到、仍需人工的两项：
 
-- [ ] 每类弹窗内按钮的 VIEW_CLICK，`xpath` 前缀是否仍命中 `DIALOG_PATH_PREFIXES`：
-      `/root/AlertDialog`、`/root/Dialog`、`/root/Popup`、`/root/MenuWrapper`、
-      `/root/SheetWrapper`、`/root/ModalPage`、`/root/SelectOverlay`、`/root/Keyboard`
-- [ ] 前缀命中后，`path` 是否正确回退到宿主页面 `/pages/verify26/Verify26Dialogs`
-
-**判定**：任一前缀不再命中 → 需要更新 `Constants.ts` 的 `DIALOG_PATH_PREFIXES`，
-否则弹窗内点击的 `path` 会为空。
-
-### 3. 列表 index（`Verify26Lists`）
-
-覆盖 List/ListItem、Grid/GridItem、WaterFlow/FlowItem、GridRow/GridCol。
-
-- [ ] 点击每个 item 上的按钮，事件 `index` 与按钮上显示的序号是否对得上（NewSaaS 模式下列表内 `index` 会 +1）
-- [ ] `xpath` 对应层级是否仍为 `ListItem`/`GridItem`/`FlowItem`/`GridCol`，该层 `xcontent` 是否为 `-`
-
-**判定**：层级名或 index 变化 → 需要更新 `LIST_COMPONENTS` / `CONTAINER_COMPONENTS`。
-
-### 4. Hybrid / ArkWeb 144（复用已有 `pages/Hybrid`）
-
-- [ ] Hybrid 页面内的 H5 埋点事件是否正常上报（`window._vds_hybrid` 注入是否成功）
-- [ ] 圈选能否正常识别 Web 内元素
-- [ ] Mobile Debugger 的 WebSocket 连接与截图是否正常
-
-### 5. 圈选 UX 对照（`Verify26Index` 底部）
-
-Checkbox / Radio / Toggle / Slider + 带阴影卡片。
-
-- [ ] 开启圈选，元素高亮框的位置与大小是否仍与组件贴合（触摸热区最小高度、阴影模糊半径变更后）
+- **Hybrid / ArkWeb 144**：`verify26` → `[4. Hybrid]`，在 H5 里点几下；事件照样进报告（`scene=1`）
+- **圈选 UX**：连上圈选，看 `verify26` 入口页底部表单组件与阴影卡片的高亮框是否贴合
 
 ## 四、本 PR 之外仍需处理的事项
 
