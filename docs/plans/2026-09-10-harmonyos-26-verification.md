@@ -99,12 +99,39 @@ python3 scripts/verify26/compare.py verify26-api20.json verify26-api26.json
 - **残余变量**：基线是真机、26 是模拟器。节点树由 ArkUI 框架决定，同版本下模拟器与真机应当一致，风险低；
   拿到 26 真机后复测一次，或在同一套模拟器上再建一个 API 24 实例对跑，可彻底钉死
 
+### 第二轮：targetSdkVersion = 26.0.0（2026-09-11）
+
+升级 `targetSdkVersion` 到 26.0.0 后重跑，覆盖第一轮没覆盖到的 target ≥ 26 门控项。
+
+| 对照 | 变量 | 结果 |
+|------|------|------|
+| api24(target 20) → api26(target 26) | 系统版本 + target | 仅 `click-in-alert-dialog` 的 xpath/xcontent 不同，与第一轮完全相同 |
+| api26(target 20) → api26(target 26) | **仅 target** | **零差异，PASS** —— PAGE 序列逐条一致，全部 VIEW_CLICK 字段一致 |
+
+结论：
+
+- **targetSdkVersion 从 20 升到 26，对无埋点采集零影响**。26.0.0 变更清单里
+  "Dialog、Toast、AlphabetIndexer 和文本选择菜单默认开启沉浸式系统材质（target ≥ 26 生效）"
+  这一条**没有改变任何弹窗的节点树结构**，xpath / xcontent / index 全部保持不变
+- 前述 AlertDialog 节点树变化**与 targetSdkVersion 无关**：target 20 和 target 26 下表现一致，
+  说明它是随系统版本生效的，26 设备上所有应用都会遇到，与应用自身 target 无关
+- 文本选择菜单（SelectOverlay）本轮在两侧都采到，xpath、xcontent 完全一致
+
+### 最终结论
+
+**SDK 代码无需为 HarmonyOS 26.0.0 做任何改动。** `DIALOG_PATH_PREFIXES`、`LIST_COMPONENTS`、
+`AutotrackPage` / `AutotrackClick` 的页面归属逻辑全部无需调整。
+
+需要对外同步的只有一件事：**系统 AlertDialog 内部节点树在 26 上变了**，
+已针对系统弹窗按钮圈选的元素规则会在 26 设备上失配，需要业务方重新圈选；
+跨版本聚合需要在分析侧做 xpath 归一映射。
+
 ### 仍存在的覆盖缺口
 
-- **`targetSdkVersion` 仍是 20**，第 2、4 项（弹窗默认开启沉浸式系统材质、触摸热区/阴影规格）
-  要 target ≥ 26 才生效，本轮**完全未覆盖** —— 升 target 后必须再跑一轮
+- **圈选 UX 的视觉项**（表单组件触摸热区最小高度、组件阴影模糊半径）脚本无法度量，仍需人工比对
+- **Hybrid / ArkWeb 144** 两轮均未跑
 - 基线是 6.1.1(24)，不是 `compatibleSdkVersion` 所声明的 5.0.0(12)，低版本档位未覆盖
-- Hybrid / ArkWeb 144 与圈选 UX 两项本轮未跑
+- 26 侧全程是模拟器，未在 26 真机上复测
 
 ## 四、本 PR 之外仍需处理的事项
 
