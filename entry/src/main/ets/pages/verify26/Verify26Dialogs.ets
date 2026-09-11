@@ -9,6 +9,9 @@
  * 1) xpath 是否仍以 /root/AlertDialog、/root/Dialog、/root/Popup、/root/MenuWrapper、
  *    /root/SheetWrapper、/root/ModalPage、/root/SelectOverlay、/root/Keyboard 开头；
  * 2) path 是否正确回退到宿主页面 /pages/verify26/Verify26Dialogs。
+ *
+ * 注意：每个点击目标都必须挂 onClick，否则 UIObserver 的 willClick 不会针对该组件触发，
+ * 事件会冒泡记到祖先节点上。
  */
 @CustomDialog
 struct Verify26CustomDialog {
@@ -16,10 +19,12 @@ struct Verify26CustomDialog {
 
   build() {
     Column({ space: 16 }) {
-      Text('CustomDialog（预期 xpath 前缀 /root/Dialog）')
+      Text('预期 xpath 前缀 /root/Dialog')
         .fontSize(14)
       Button('click-in-custom-dialog')
-      Button('关闭')
+        .onClick(() => {
+        })
+      Button('close-custom-dialog')
         .onClick(() => {
           this.controller?.close()
         })
@@ -34,7 +39,7 @@ struct Verify26Dialogs {
   @State popupVisible: boolean = false
   @State sheetVisible: boolean = false
   @State modalVisible: boolean = false
-  @State selectValue: string = 'Select'
+  @State selectValue: string = 'open-select'
   private dialogController: CustomDialogController = new CustomDialogController({
     builder: Verify26CustomDialog()
   })
@@ -42,9 +47,11 @@ struct Verify26Dialogs {
   @Builder
   popupBuilder() {
     Column({ space: 12 }) {
-      Text('Popup（预期 /root/Popup）')
+      Text('预期 /root/Popup')
         .fontSize(14)
       Button('click-in-popup')
+        .onClick(() => {
+        })
     }
     .padding(16)
   }
@@ -52,9 +59,11 @@ struct Verify26Dialogs {
   @Builder
   menuBuilder() {
     Column({ space: 12 }) {
-      Text('Menu（预期 /root/MenuWrapper）')
+      Text('预期 /root/MenuWrapper')
         .fontSize(14)
       Button('click-in-menu')
+        .onClick(() => {
+        })
     }
     .padding(16)
   }
@@ -62,10 +71,12 @@ struct Verify26Dialogs {
   @Builder
   sheetBuilder() {
     Column({ space: 12 }) {
-      Text('Sheet 半模态（预期 /root/SheetWrapper）')
+      Text('预期 /root/SheetWrapper')
         .fontSize(14)
       Button('click-in-sheet')
-      Button('关闭')
+        .onClick(() => {
+        })
+      Button('close-sheet')
         .onClick(() => {
           this.sheetVisible = false
         })
@@ -76,10 +87,12 @@ struct Verify26Dialogs {
   @Builder
   modalBuilder() {
     Column({ space: 12 }) {
-      Text('ContentCover 全模态（预期 /root/ModalPage）')
+      Text('预期 /root/ModalPage')
         .fontSize(14)
       Button('click-in-modal')
-      Button('关闭')
+        .onClick(() => {
+        })
+      Button('close-modal')
         .onClick(() => {
           this.modalVisible = false
         })
@@ -92,41 +105,41 @@ struct Verify26Dialogs {
 
   build() {
     Scroll() {
-      Column({ space: 14 }) {
+      Column({ space: 12 }) {
         Text('弹窗 xpath 验证')
-          .fontSize(20)
+          .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .margin({ top: 12 })
-        Text('逐个打开并点击弹窗内的按钮，对比 xpath 前缀与 path 回退')
+        Text('逐个打开并点击弹窗内的 click-in-* 按钮，对比 xpath 前缀与 path 回退')
           .fontSize(12)
           .fontColor('#666666')
           .textAlign(TextAlign.Center)
           .padding({ left: 16, right: 16 })
 
-        Button('AlertDialog（预期 /root/AlertDialog）')
+        Button('open-alert-dialog')
           .onClick(() => {
             this.getUIContext().showAlertDialog({
               title: 'AlertDialog',
-              message: '点击下方按钮后对比 xpath 前缀',
+              message: '预期 xpath 前缀 /root/AlertDialog',
               primaryButton: {
                 value: 'click-in-alert-dialog',
                 action: () => {
                 }
               },
               secondaryButton: {
-                value: '关闭',
+                value: 'close-alert-dialog',
                 action: () => {
                 }
               }
             })
           })
 
-        Button('CustomDialog（预期 /root/Dialog）')
+        Button('open-custom-dialog')
           .onClick(() => {
             this.dialogController.open()
           })
 
-        Button('Popup（预期 /root/Popup）')
+        Button('open-popup')
           .onClick(() => {
             this.popupVisible = true
           })
@@ -139,10 +152,10 @@ struct Verify26Dialogs {
             }
           })
 
-        Button('Menu（预期 /root/MenuWrapper）')
+        Button('open-menu')
           .bindMenu(this.menuBuilder)
 
-        Button('Sheet 半模态（预期 /root/SheetWrapper）')
+        Button('open-sheet')
           .onClick(() => {
             this.sheetVisible = true
           })
@@ -153,7 +166,7 @@ struct Verify26Dialogs {
             }
           })
 
-        Button('ContentCover 全模态（预期 /root/ModalPage）')
+        Button('open-modal')
           .onClick(() => {
             this.modalVisible = true
           })
@@ -164,18 +177,18 @@ struct Verify26Dialogs {
             }
           })
 
-        Select([{ value: 'option-0' }, { value: 'option-1' }, { value: 'option-2' }])
+        Select([{ value: 'select-option-0' }, { value: 'select-option-1' }, { value: 'select-option-2' }])
           .value(this.selectValue)
           .onSelect((index: number, value: string) => {
             this.selectValue = value
           })
 
-        Text('长按选中这段文字，唤起文本选择菜单（预期 /root/SelectOverlay）')
+        Text('long-press-me 长按选中这段文字，唤起文本选择菜单（预期 /root/SelectOverlay）')
           .fontSize(14)
           .copyOption(CopyOptions.LocalDevice)
           .padding({ left: 16, right: 16 })
 
-        TextInput({ placeholder: '点击弹出键盘（预期 /root/Keyboard）' })
+        TextInput({ text: 'focus-textinput' })
           .width('80%')
           .margin({ bottom: 24 })
       }

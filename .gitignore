@@ -17,3 +17,8 @@ oh-package-lock.json5
 # python
 __pycache__/
 *.pyc
+
+# verify26 采集产物
+scripts/verify26/.layout.json
+verify26-*.json
+verify26-compare.md

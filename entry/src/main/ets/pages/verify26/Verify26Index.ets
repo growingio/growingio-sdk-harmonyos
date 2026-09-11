@@ -27,26 +27,26 @@ struct Verify26Index {
           .textAlign(TextAlign.Center)
           .padding({ left: 16, right: 16 })
 
-        Button('1. 主页 NavDestination（page path 归属）')
+        Button('go-nav-home · 主页 NavDestination（page path 归属）')
           .onClick(() => {
             this.getUIContext().getRouter().pushUrl({ url: 'pages/verify26/Verify26NavHome' })
           })
-        Button('2. 弹窗族（DIALOG_PATH_PREFIXES）')
+        Button('go-dialogs · 弹窗族（DIALOG_PATH_PREFIXES）')
           .onClick(() => {
             this.getUIContext().getRouter().pushUrl({ url: 'pages/verify26/Verify26Dialogs' })
           })
-        Button('3. 列表族（LIST_COMPONENTS 的 index）')
+        Button('go-lists · 列表族（LIST_COMPONENTS 的 index）')
           .onClick(() => {
             this.getUIContext().getRouter().pushUrl({ url: 'pages/verify26/Verify26Lists' })
           })
-        Button('4. Hybrid / ArkWeb 144（复用已有 Hybrid 页）')
+        Button('go-hybrid · Hybrid / ArkWeb 144（复用已有 Hybrid 页）')
           .onClick(() => {
             Util.startAbility(this.getUIContext(), 'HybridAbility', 'pages/Hybrid')
           })
 
         Divider().margin({ top: 8, bottom: 8 })
 
-        Text('5. 圈选 UX 对照区')
+        Text('圈选 UX 对照区')
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
         Text('26.0.0 变更了表单类组件触摸热区最小高度与组件阴影模糊半径规格（targetSdkVersion ≥ 26 生效）。\n开启圈选后，对比下方元素高亮框的位置与大小是否仍与组件贴合。')

@@ -215,17 +215,70 @@ def find_center(tree, key):
     return hits[0] if hits else None
 
 
-def wait_for(hdc, key, retries=6, interval=0.7):
+def screen_size(tree):
+    width = 0
+    height = 0
+    for node in iter_nodes(tree):
+        attrs = node_attrs(node)
+        bounds = attrs.get('bounds')
+        if isinstance(bounds, str):
+            match = BOUNDS_RE.search(bounds)
+            if match:
+                width = max(width, int(match.group(3)))
+                height = max(height, int(match.group(4)))
+        elif isinstance(bounds, dict):
+            width = max(width, int(bounds.get('right') or 0))
+            height = max(height, int(bounds.get('bottom') or 0))
+    return (width or 1260), (height or 2720)
+
+
+def swipe(hdc, x_from, y_from, x_to, y_to, velocity=800):
+    shell(hdc, ['uitest', 'uiInput', 'swipe', str(int(x_from)), str(int(y_from)),
+                str(int(x_to)), str(int(y_to)), str(velocity)], timeout=30)
+    time.sleep(0.6)
+
+
+def wait_for(hdc, key, retries=3, interval=0.6):
+    """先原地等几次（等动画/弹窗出现），再上下滚动找，控件在 Scroll 里被顶出屏幕时也能命中。"""
+    tree = None
     for _ in range(retries):
-        try:
-            tree = dump_layout(hdc)
-        except RuntimeError:
-            raise
+        tree = dump_layout(hdc)
         point = find_center(tree, key)
         if point:
             return point
         time.sleep(interval)
+
+    width, height = screen_size(tree or {})
+    center_x = width // 2
+    top_y = int(height * 0.30)
+    bottom_y = int(height * 0.75)
+
+    # 先尽量滚到顶部，再逐屏向下找
+    for _ in range(6):
+        swipe(hdc, center_x, top_y, center_x, bottom_y)
+    for _ in range(10):
+        tree = dump_layout(hdc)
+        point = find_center(tree, key)
+        if point:
+            return point
+        swipe(hdc, center_x, bottom_y, center_x, top_y)
     return None
+
+
+def ensure_anchor(hdc, key, max_back=3):
+    """确保界面上能看到 key（页面锚点）。看不到就按返回键，最多 max_back 次。
+
+    用它代替"盲按返回"，前面的步骤失败时不会把导航栈退错层。
+    """
+    for attempt in range(max_back + 1):
+        tree = dump_layout(hdc)
+        if find_center(tree, key):
+            return True
+        if attempt == max_back:
+            break
+        shell(hdc, ['uitest', 'uiInput', 'keyEvent', 'Back'], timeout=30)
+        time.sleep(1.0)
+    return False
 
 
 def do_step(hdc, item, auto):
@@ -240,6 +293,11 @@ def do_step(hdc, item, auto):
         shell(hdc, ['uitest', 'uiInput', 'keyEvent', 'Back'], timeout=30)
         time.sleep(0.8)
         return True, ''
+
+    if kind == 'ensure':
+        if ensure_anchor(hdc, item['key']):
+            return True, ''
+        return False, '返回后仍然看不到 "%s"，后续步骤可能错位' % item['key']
 
     point = wait_for(hdc, item['key'])
     if not point:
@@ -266,7 +324,7 @@ def drive_manual():
     print('\n请按下面的顺序在设备上操作（每步之间不用等，正常节奏点即可）：\n')
     number = 0
     for item in STEPS:
-        if item['kind'] == 'wait':
+        if item['kind'] in ('wait', 'ensure'):
             continue
         number += 1
         print('  %2d. %s' % (number, item['desc']))

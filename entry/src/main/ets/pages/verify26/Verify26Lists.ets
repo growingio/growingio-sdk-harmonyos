@@ -6,6 +6,8 @@
  * 26.0.0 新增了 LazyColumnLayout / LazyVWaterFlowLayout / LazyDynamicLayout 等
  * 懒加载布局容器，节点树层级有变化的可能。
  *
+ * 注意：每个点击目标都必须挂 onClick，否则 UIObserver 的 willClick 不会针对该组件触发。
+ *
  * 需要对比的内容：点击每个 item 上的按钮，检查 VIEW_CLICK 事件的
  * 1) index 是否与按钮上显示的序号一致（NewSaaS 模式下列表内 index 会 +1）；
  * 2) xpath 中对应层级是否仍为 ListItem / GridItem / GridCol / FlowItem，xcontent 是否为 '-'。
@@ -32,6 +34,8 @@ struct Verify26Lists {
             ListItem() {
               Button('ListItem-' + item.toString())
                 .width('80%')
+                .onClick(() => {
+                })
             }
           }, (item: number) => 'list-' + item.toString())
         }
@@ -44,6 +48,8 @@ struct Verify26Lists {
             GridItem() {
               Button('GridItem-' + item.toString())
                 .width('90%')
+                .onClick(() => {
+                })
             }
           }, (item: number) => 'grid-' + item.toString())
         }
@@ -59,6 +65,8 @@ struct Verify26Lists {
             FlowItem() {
               Button('FlowItem-' + item.toString())
                 .width('90%')
+                .onClick(() => {
+                })
             }
             .height(50)
           }, (item: number) => 'flow-' + item.toString())
@@ -75,6 +83,8 @@ struct Verify26Lists {
             GridCol({ span: 6 }) {
               Button('GridCol-' + item.toString())
                 .width('90%')
+                .onClick(() => {
+                })
             }
             .height(50)
           }, (item: number) => 'gridcol-' + item.toString())

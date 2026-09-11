@@ -1,6 +1,8 @@
 /**
  * 验证点 1：主页 NavDestination（HomePathInfo，API 20 起）
  *
+ * 注意：每个点击目标都必须挂 onClick，否则 UIObserver 的 willClick 不会针对该组件触发。
+ *
  * 26.0.0 行为变更（全部生效，不受 targetSdkVersion 隔离）：
  * queryNavDestinationInfo 变更后可以取到"主页 NavDestination"的信息，此前取不到。
  *
@@ -47,6 +49,8 @@ struct Verify26NavHomeDestination {
           .fontColor('#666666')
           .textAlign(TextAlign.Center)
         Button('click-in-home-navdestination')
+          .onClick(() => {
+          })
         Button('push -> Verify26NavDetail')
           .onClick(() => {
             this.queryNavigationInfo()?.pathStack.pushPath({ name: 'Verify26NavDetail' })
@@ -69,6 +73,8 @@ struct Verify26NavDetail {
         Text('二级 NavDestination')
           .fontSize(14)
         Button('click-in-detail-navdestination')
+          .onClick(() => {
+          })
         Button('pop -> 返回主页 NavDestination')
           .onClick(() => {
             this.queryNavigationInfo()?.pathStack.pop()
