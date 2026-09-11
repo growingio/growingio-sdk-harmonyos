@@ -21,12 +21,23 @@ hdc shell hilog -T GIOV26      # 启动 app 后应能看到 GIOV26 开头的日�
 
 ## 2. 采集（两台设备各跑一次）
 
+> 所有命令都在**电脑上**跑（仓库根目录），手机只负责被 hdc 连着。
+> 两条命令是同一条跑两遍，`--label` 只决定产出文件叫什么名字，不负责选设备。
+
 ```bash
-# 优先试自动模式：脚本用 uitest 自己点，全程无人值守
+# 只插 26.0.0 那台：自动模式，脚本用 uitest 自己点，全程无人值守
 python3 scripts/verify26/collect.py --label api26 --auto
 
-# 换基线设备再跑一次
+# 换成基线设备（6.0.0(20)/5.x）再跑一遍
 python3 scripts/verify26/collect.py --label api20 --auto
+```
+
+两台想同时连着也行，用 `--device` 指名道姓（不指定且连了多台时脚本会直接报错，不会蒙一台）：
+
+```bash
+hdc list targets                                   # 先看 connectKey
+python3 scripts/verify26/collect.py --label api26 --auto --device <26.0.0 的 connectKey>
+python3 scripts/verify26/collect.py --label api20 --auto --device <基线机的 connectKey>
 ```
 
 如果设备不支持 `uitest` 命令行（脚本会报 `dumpLayout 失败`），去掉 `--auto` 用手动模式：

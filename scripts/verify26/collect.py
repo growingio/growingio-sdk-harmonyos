@@ -51,7 +51,8 @@ def find_hdc():
 
 
 def run(hdc, args, timeout=60, check=False):
-    proc = subprocess.run([hdc] + args, capture_output=True, text=True, timeout=timeout)
+    """hdc 是一个命令前缀列表，例如 ['/path/to/hdc'] 或 ['/path/to/hdc', '-t', '<connectKey>']。"""
+    proc = subprocess.run(list(hdc) + args, capture_output=True, text=True, timeout=timeout)
     if check and proc.returncode != 0:
         sys.exit('hdc %s 失败: %s' % (' '.join(args), proc.stderr.strip() or proc.stdout.strip()))
     return proc
@@ -61,13 +62,18 @@ def shell(hdc, cmd, timeout=60, check=False):
     return run(hdc, ['shell'] + cmd, timeout=timeout, check=check)
 
 
-def pick_device(hdc):
+def pick_device(hdc, requested):
     proc = run(hdc, ['list', 'targets'], check=True)
     targets = [line.strip() for line in proc.stdout.splitlines() if line.strip() and 'Empty' not in line]
     if not targets:
         sys.exit('没有检测到设备，确认已连接并允许调试（hdc list targets 为空）。')
+    if requested:
+        if requested not in targets:
+            sys.exit('指定的设备 %s 不在已连接列表里：\n  %s' % (requested, '\n  '.join(targets)))
+        return requested
     if len(targets) > 1:
-        print('检测到多台设备，使用第一台：%s' % targets[0])
+        sys.exit('检测到多台设备，请用 --device 指定这次采哪一台（或者只插一台）：\n  %s\n\n'
+                 '例如：--device %s' % ('\n  '.join(targets), targets[0]))
     return targets[0]
 
 
@@ -84,7 +90,7 @@ class LogCapture(object):
         shell(self.hdc, ['hilog', '-r'])
         shell(self.hdc, ['hilog', '-G', '16M'])
         self.proc = subprocess.Popen(
-            [self.hdc, 'shell', 'hilog', '-T', TAG],
+            list(self.hdc) + ['shell', 'hilog', '-T', TAG],
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
         self.thread = threading.Thread(target=self._pump, daemon=True)
         self.thread.start()
@@ -276,11 +282,13 @@ def main():
     parser.add_argument('--label', required=True, help='本次采集的标签，例如 api26 / api20')
     parser.add_argument('--auto', action='store_true', help='用 uitest 自动点，不加则手动点')
     parser.add_argument('--out', default='.', help='报告输出目录，默认当前目录')
+    parser.add_argument('--device', help='指定设备（hdc list targets 里的 connectKey）；只插一台时可省略')
     parser.add_argument('--keep-running', action='store_true', help='采集前不重启应用')
     args = parser.parse_args()
 
-    hdc = find_hdc()
-    device = pick_device(hdc)
+    hdc = [find_hdc()]
+    device = pick_device(hdc, args.device)
+    hdc = hdc + ['-t', device]
     print('设备：%s' % device)
 
     capture = LogCapture(hdc)
