@@ -204,15 +204,19 @@ def center_of(node):
 
 
 def find_center(tree, key):
-    hits = []
-    for node in iter_nodes(tree):
-        attrs = node_attrs(node)
-        text = str(attrs.get('text') or '')
-        if key and key in text:
-            point = center_of(node)
-            if point:
-                hits.append(point)
-    return hits[0] if hits else None
+    """key 可以是字符串，也可以是多个候选（比如系统菜单的中英文文案）。"""
+    candidates = key if isinstance(key, (list, tuple)) else [key]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        for node in iter_nodes(tree):
+            attrs = node_attrs(node)
+            text = str(attrs.get('text') or '')
+            if candidate in text:
+                point = center_of(node)
+                if point:
+                    return point
+    return None
 
 
 def screen_size(tree):
@@ -392,7 +396,8 @@ def do_step(hdc, item, auto):
 
     point = wait_for(hdc, item['key'])
     if not point:
-        return False, '界面上找不到 "%s"' % item['key']
+        return False, '界面上找不到 "%s"' % (' / '.join(item['key'])
+                                          if isinstance(item['key'], (list, tuple)) else item['key'])
     action = 'longClick' if kind == 'longClick' else 'click'
     shell(hdc, ['uitest', 'uiInput', action, str(point[0]), str(point[1])], timeout=30)
     time.sleep(0.8)

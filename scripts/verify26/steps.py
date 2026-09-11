@@ -5,7 +5,8 @@
             - goto:    导航到指定页面（collect.py 的 PAGES 模型）。认得出当前在哪一页，
                        目标在上层就退、在下层就点进去；在首页绝不按返回，不会退到桌面。
             - dismiss: 只在指定的弹窗内容还在屏幕上时按一次返回，避免多退一层。
-  key     : goto 是页面名；其余是 uitest dumpLayout 里按 text 子串匹配的控件文案
+  key     : goto 是页面名；其余是 uitest dumpLayout 里按 text 子串匹配的控件文案，
+            也可以给一个候选列表（例如系统菜单的中英文文案），命中任意一个即可
   desc    : 手动模式下打印给操作者看的说明
   scenario: 归属的验证场景，写进报告，便于 compare.py 分组
 
@@ -72,7 +73,8 @@ STEPS = [
 
     step('longClick', 'dialog', '长按 [long-press-me] 那段文字，唤起文本选择菜单', 'long-press-me'),
     step('wait', 'dialog', '等待选择菜单出现', ms=1200),
-    step('click', 'dialog', '在文本选择菜单里点击 [复制]', '复制'),
+    # 系统文本选择菜单的按钮文案跟设备语言走，中英文都试一遍
+    step('click', 'dialog', '在文本选择菜单里点击 [复制 / Copy]', ['复制', 'Copy']),
     step('goto', 'dialog', '回到弹窗页', 'dialogs'),
 
     step('click', 'dialog', '点击输入框 [focus-textinput]（弹出键盘）', 'focus-textinput'),

@@ -146,12 +146,21 @@ def render_table(title, header, rows):
     return lines
 
 
+def screen_of(report):
+    for record in report.get('events', []):
+        data = record.get('data') or {}
+        if isinstance(data, dict) and data.get('screenWidth'):
+            return '%sx%s' % (data.get('screenWidth'), data.get('screenHeight'))
+    return '未知'
+
+
 def single_report(report, label):
     lines = ['## 单次采集检查：%s' % label, '']
     device = report.get('device') or {}
     lines += ['- 设备：%s / %s' % (device.get('osFullName', '未知'), device.get('productModel', '未知')),
               '- 设备 API：%s，应用 targetVersion：%s' % (device.get('sdkApiVersion', '未知'),
                                                         device.get('targetVersion', '未知')),
+              '- 屏幕分辨率：%s（两次采集分辨率不同时，组件内部布局差异可能被误读成版本差异）' % screen_of(report),
               '- 事件总数：%d' % len(report.get('events', [])),
               '- 页面事件 path 序列：%s' % ' → '.join([str(p) for p in page_paths(report)]) or '（无）',
               '']
