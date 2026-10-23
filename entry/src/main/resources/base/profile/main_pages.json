@@ -5,6 +5,7 @@
     "pages/SubTracker",
     "pages/GeneralProps",
     "pages/Track",
-    "pages/Hybrid"
+    "pages/Hybrid",
+    "pages/ViewImpression"
   ]
 }

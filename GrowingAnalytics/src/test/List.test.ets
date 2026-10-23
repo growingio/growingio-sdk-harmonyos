@@ -17,6 +17,7 @@ import eventPersistenceTests from './event/EventPersistence.test'
 import eventSendCycleTests from './event/EventSendCycle.test'
 import circleProtocolTests from './circle/CircleProtocol.test'
 import circleElementTests from './circle/CircleElement.test'
+import viewImpressionTests from './autotrack/ViewImpression.test'
 
 export default function testsuite() {
   // Phase 1 · 纯函数层
@@ -48,4 +49,6 @@ export default function testsuite() {
 
   circleProtocolTests()
   circleElementTests()
+
+  viewImpressionTests()
 }

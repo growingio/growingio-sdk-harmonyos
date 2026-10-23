@@ -35,6 +35,7 @@ import Hybrid from './Hybrid'
 import Session from './Session'
 import UserIdentifier from './UserIdentifier'
 import Autotrack from '../autotrack/Autotrack'
+import ViewImpression from '../autotrack/ViewImpression'
 import CustomEvent from '../event/CustomEvent'
 import Event, { EventScene, EventType } from '../event/Event'
 import EventDatabase from '../event/EventDatabase'
@@ -211,10 +212,12 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       onApplicationForeground() {
         Session.onForeground()
         EventTimer.handleAllTimersResume()
+        ViewImpression.onForeground()
       },
       onApplicationBackground() {
         Session.onBackground()
         EventTimer.handleAllTimersPause()
+        ViewImpression.onBackground()
       }
     }
 

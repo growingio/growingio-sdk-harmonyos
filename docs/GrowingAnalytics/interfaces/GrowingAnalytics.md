@@ -527,6 +527,25 @@ onWindowStageCreate(windowStage: window.WindowStage): void {
 
 ---
 
+#### trackViewImpression() 等 - 元素曝光
+
+```typescript
+static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType,
+  identifier?: string, config?: GrowingImpressionConfig): void
+static updateViewImpressionAttributes(componentId: string, attributes: GrowingAttrType, identifier?: string): void
+static stopTrackViewImpression(componentId: string, identifier?: string): void
+static addViewImpressionDelegate(delegate: GrowingImpressionDelegate): void
+static removeViewImpressionDelegate(delegate: GrowingImpressionDelegate): void
+static resetViewImpressionState(identifier: string): void
+static resetAllViewImpressionState(): void
+```
+
+- 前置条件：SDK 已初始化、已调用 `onWindowStageCreate`、`autotrackEnabled` 与 `viewImpressionEnabled` 均为 true，否则告警并忽略
+- `componentId` 为组件 `.id()`，建议在组件 `onAppear` 中标记；满足可见条件时发送 CUSTOM 事件（仅主 Tracker）
+- 接口与 iOS SDK ViewImpression 模块对齐，详见 [ViewImpression.md](../autotrack/ViewImpression.md)
+
+---
+
 ### 13. URL Scheme
 
 #### handleOpenURL() - 处理 URL Scheme

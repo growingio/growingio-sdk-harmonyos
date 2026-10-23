@@ -160,6 +160,9 @@ let config = new GrowingConfig().CDP(
 | `dataCollectionEnabled` | boolean | true | 数据采集总开关 |
 | `autotrackEnabled` | boolean | false | 无埋点功能开关 |
 | `autotrackAllPages` | boolean | false | 自动采集所有页面 |
+| `viewImpressionEnabled` | boolean | true | 元素曝光开关（需 `autotrackEnabled`）|
+| `viewImpressionConfig` | GrowingImpressionConfig | scale 0 / stay 0 / repeatable | 全局默认曝光配置，`copy()` 时深拷贝 |
+| `viewImpressionCheckInterval` | number | 0.5 | 曝光检测间隔（秒），负值/NaN 忽略，系统下限 0.1 |
 | `hybridAutotrackEnabled` | boolean | true | H5 无埋点开关（仅 SaaS）|
 | `idMappingEnabled` | boolean | false | ID Mapping 开关 |
 | `debugEnabled` | boolean | false | 调试模式开关 |

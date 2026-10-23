@@ -17,6 +17,7 @@
 
 // @doc-impl GrowingConfig.md
 
+import { GrowingImpressionConfig } from './GrowingImpression'
 import { PluginsInterface } from '../plugins/Plugins'
 
 class RequestOptions {
@@ -92,8 +93,33 @@ export class GrowingConfig {
   useProtobuf: boolean = true
   plugins: Array<PluginsInterface> = []
   ignoreField: number = 0
+  /**
+   * 曝光采集开关，默认 true。
+   * 曝光采集属于无埋点能力的一部分，autotrackEnabled 为 false 时曝光同样不采集，
+   * 此开关仅用于在无埋点开启的前提下单独关掉曝光
+   */
+  viewImpressionEnabled: boolean = true
+  /**
+   * 全局默认曝光配置，元素未单独指定 config 时使用
+   */
+  viewImpressionConfig: GrowingImpressionConfig = new GrowingImpressionConfig()
+  _viewImpressionCheckInterval: number = 0.5 * 1000
 
   constructor() {}
+
+  /**
+   * 曝光检测间隔，单位秒，默认 0.5；系统最小检测间隔为 0.1 秒，小于该值按 0.1 秒处理
+   */
+  set viewImpressionCheckInterval(interval: number) {
+    if (Number.isNaN(interval) || interval < 0) {
+      return
+    }
+    this._viewImpressionCheckInterval = interval * 1000
+  }
+
+  get viewImpressionCheckInterval(): number {
+    return this._viewImpressionCheckInterval / 1000
+  }
 
   set sessionInterval(interval: number) {
     if (interval <= 0) {
@@ -212,6 +238,9 @@ export class GrowingConfig {
     config.useProtobuf = this.useProtobuf
     config.plugins = [...this.plugins]
     config.ignoreField = this.ignoreField
+    config.viewImpressionEnabled = this.viewImpressionEnabled
+    config.viewImpressionConfig = this.viewImpressionConfig.copy()
+    config._viewImpressionCheckInterval = this._viewImpressionCheckInterval
 
     return config
   }

@@ -141,6 +141,105 @@ router.pushUrl({
 })
 ```
 
+### 元素曝光
+
+为组件打上曝光标记后，当组件满足可见条件（可见面积占比、停留时长）时，SDK 自动发送对应的埋点事件；需在分析云平台事件管理界面创建该埋点事件以及关联事件属性。
+
+元素曝光属于无埋点能力的一部分，需完成【开启无埋点监听】并开启 `autotrackEnabled`。
+
+#### 标记曝光元素
+
+`static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType, identifier?: string, config?: GrowingImpressionConfig)`
+
+组件需通过 `.id()` 设置唯一的 componentId，并在该组件的 `onAppear` 中调用（组件从组件树移除或所在页面销毁后，曝光标记随之移除，再次出现时需重新标记）
+
+| 参数          | 参数类型                      | 说明                                                                                     |
+|-------------|---------------------------|----------------------------------------------------------------------------------------|
+| `componentId` | `string`                  | 组件 id，与组件 `.id()` 一致，需在窗口内唯一                                                         |
+| `eventName`   | `string`                  | 埋点事件名                                                                                 |
+| `attributes`  | `GrowingAttrType`         | 事件属性（可选）                                                                              |
+| `identifier`  | `string`                  | 曝光标识（可选）。同一组件可挂载多个 identifier 不同的曝光标记；配置为不可重复曝光时必须传入，否则按可重复曝光处理                    |
+| `config`      | `GrowingImpressionConfig` | 单元素曝光配置（可选），不传则使用全局配置 `GrowingConfig.viewImpressionConfig`                                |
+
+`GrowingImpressionConfig`：
+
+| 属性                | 参数类型      | 说明                                           |
+|-------------------|-----------|----------------------------------------------|
+| `impressionScale` | `number`  | 可见面积占比阈值，有效范围 0~1，默认 0（露出即算曝光）              |
+| `stayDuration`    | `number`  | 最小可见时长，单位秒，默认 0（无需停留）                       |
+| `repeatable`      | `boolean` | 是否允许同一元素多次曝光，默认 `true`；为 `false` 时同一 identifier 只曝光一次 |
+
+曝光规则：
+- 元素离开可视区后再次进入，会再次曝光（`repeatable` 为 `false` 的元素除外）
+- 跳转到其他页面后返回，仍可见的元素会再次曝光
+- 退到后台再回到前台，不会再次曝光
+
+```typescript
+import { GrowingAnalytics, GrowingImpressionConfig } from '@growingio/analytics'
+
+List() {
+  ForEach(this.goodsList, (item: Goods) => {
+    ListItem() {
+      GoodsCell({ goods: item })
+    }
+    .id('goods_' + item.id)
+    .onAppear(() => {
+      GrowingAnalytics.trackViewImpression('goods_' + item.id, 'goodsImp', { 'goodsId': item.id },
+        'goods_' + item.id, GrowingImpressionConfig.create(0.5, 1, false))
+    })
+  }, (item: Goods) => item.id)
+}
+```
+
+#### 更新与移除
+
+`static updateViewImpressionAttributes(componentId: string, attributes: GrowingAttrType, identifier?: string)`
+
+仅更新已标记元素的属性，不重置曝光状态、不触发重新曝光
+
+`static stopTrackViewImpression(componentId: string, identifier?: string)`
+
+移除组件上的曝光标记；传入 identifier 时只移除该标记，否则移除全部
+
+`static resetViewImpressionState(identifier: string)` / `static resetAllViewImpressionState()`
+
+清除"已曝光"记录，之后对应元素可再次曝光，仅对 `repeatable` 为 `false` 的元素有意义，适用于下拉刷新、切换数据源等场景
+
+#### 曝光回调
+
+`static addViewImpressionDelegate(delegate: GrowingImpressionDelegate)` / `static removeViewImpressionDelegate(delegate: GrowingImpressionDelegate)`
+
+回调均在 UI 线程同步执行，实现中不要做耗时操作；不再需要时请调用 `removeViewImpressionDelegate` 移除
+
+```typescript
+let delegate: GrowingImpressionDelegate = {
+  // 返回 false 则本次不发送曝光事件，元素离开可视区再次进入时会重新询问
+  viewImpressionShouldTrack: (componentId: string, eventName: string, identifier?: string): boolean => {
+    return true
+  },
+  // 曝光时刻求值的动态属性，与标记时的属性合并，同名键以动态属性为准
+  viewImpressionDynamicAttributes: (componentId: string, eventName: string,
+    identifier?: string): GrowingAttrType | undefined => {
+    return { 'impTime': Date.now() }
+  },
+  // 曝光事件已生成
+  viewImpressionDidTrack: (componentId: string, eventName: string, identifier?: string) => {
+  }
+}
+GrowingAnalytics.addViewImpressionDelegate(delegate)
+```
+
+#### 全局配置
+
+| 配置项                           | 参数类型                      | 默认值   | 说明                                         |
+|-------------------------------|---------------------------|-------|--------------------------------------------|
+| `viewImpressionEnabled`       | `boolean`                 | `true` | 曝光采集开关；`autotrackEnabled` 为 `false` 时曝光同样不采集 |
+| `viewImpressionConfig`        | `GrowingImpressionConfig` | -     | 全局默认曝光配置                                   |
+| `viewImpressionCheckInterval` | `number`                  | `0.5` | 曝光检测间隔，单位秒，最小 0.1                          |
+
+> 注意：
+> 可见面积由系统计算，仅考虑祖先组件裁剪与窗口边界，不计算兄弟组件遮挡（如 Stack 叠放、zIndex）、窗口遮挡与旋转
+
 ### 最佳实践
 
 #### 设置组件标识

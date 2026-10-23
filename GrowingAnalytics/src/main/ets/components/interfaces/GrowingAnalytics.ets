@@ -23,7 +23,9 @@ import window from '@ohos.window'
 import webview from '@ohos.web.webview'
 
 import { GrowingConfig } from './GrowingConfig'
+import { GrowingImpressionConfig, GrowingImpressionDelegate } from './GrowingImpression'
 import Autotrack from '../autotrack/Autotrack'
+import ViewImpression from '../autotrack/ViewImpression'
 import AnalyticsCore from '../core/AnalyticsCore'
 import { Flutter } from '../core/Flutter'
 import GeneralProps from '../core/GeneralProps'
@@ -40,6 +42,7 @@ export {
   AUTOTRACK_ELEMENT_ID as GrowingAutotrackElementID
 } from '../utils/Constants'
 export { Flutter as GrowingFlutterPlugin } from '../core/Flutter'
+export { GrowingImpressionConfig, GrowingImpressionDelegate } from './GrowingImpression'
 export { UniApp as GrowingUniAppPlugin } from '../core/UniApp'
 
 export interface GrowingAnalyticsInterface {
@@ -283,6 +286,69 @@ export class GrowingAnalytics {
       return
     }
     Flutter.trackFlutterCircleData(argument)
+  }
+
+  /**
+   * 标记曝光元素，元素满足曝光条件时发送对应的埋点事件
+   * 组件需通过 .id() 设置唯一的 componentId，建议在该组件的 onAppear 中调用
+   * @param componentId 组件 id
+   * @param eventName 埋点事件名
+   * @param attributes 事件属性（可选）
+   * @param identifier 曝光标识。同一组件可挂载多个 identifier 不同的曝光标记；
+   *                   不传时写入默认槽位。config 指定不可重复曝光时必须传入（可选）
+   * @param config 单元素曝光配置，不传则使用全局配置 GrowingConfig.viewImpressionConfig（可选）
+   */
+  static trackViewImpression(
+    componentId: string,
+    eventName: string,
+    attributes?: GrowingAttrType,
+    identifier?: string,
+    config?: GrowingImpressionConfig
+  ) {
+    ViewImpression.mark(componentId, eventName, attributes, identifier, config)
+  }
+
+  /**
+   * 仅更新已标记元素的属性，不重置曝光状态、不触发重新曝光
+   */
+  static updateViewImpressionAttributes(componentId: string, attributes: GrowingAttrType, identifier?: string) {
+    ViewImpression.updateAttributes(componentId, attributes, identifier)
+  }
+
+  /**
+   * 移除组件上的曝光标记；传入 identifier 时只移除该标记，否则移除全部
+   */
+  static stopTrackViewImpression(componentId: string, identifier?: string) {
+    ViewImpression.unmark(componentId, identifier)
+  }
+
+  /**
+   * 添加曝光回调；重复添加同一个对象只生效一次，不再需要时请调用 removeViewImpressionDelegate 移除
+   */
+  static addViewImpressionDelegate(delegate: GrowingImpressionDelegate) {
+    ViewImpression.addDelegate(delegate)
+  }
+
+  static removeViewImpressionDelegate(delegate: GrowingImpressionDelegate) {
+    ViewImpression.removeDelegate(delegate)
+  }
+
+  /**
+   * 清除某个标识的"已曝光"记录，之后该标识的元素可再次曝光。
+   * 仅对配置了不可重复曝光的元素有意义，适用于下拉刷新、切换数据源等场景
+   */
+  static resetViewImpressionState(identifier: string) {
+    if (!identifier || identifier.length == 0) {
+      return
+    }
+    ViewImpression.resetState(identifier)
+  }
+
+  /**
+   * 清除全部"已曝光"记录
+   */
+  static resetAllViewImpressionState() {
+    ViewImpression.resetState()
   }
 
   static handleOpenURL(uri: string): boolean {
