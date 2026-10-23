@@ -140,7 +140,7 @@ static trackFlutterCircleData(argument: Map<string, Object>)
 // 窗口生命周期（自动追踪）
 static onWindowStageCreate(ability: UIAbility, windowStage: WindowStage)
 
-// 元素曝光（需 autotrackEnabled；曝光条件经 GrowingConfig.viewImpressionConfig 全局设置）
+// 元素曝光（仅 NewSaaS，需 autotrackEnabled；曝光条件经 GrowingConfig.viewImpressionConfig 全局设置）
 static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType)
 static stopTrackViewImpression(componentId: string)
 
@@ -175,7 +175,7 @@ class GrowingConfig {
   hybridAutotrackEnabled: boolean // 默认: true
   plugins: Array<PluginsInterface>
   ignoreField: number            // 忽略字段的位掩码
-  viewImpressionEnabled: boolean // 默认: true（需 autotrackEnabled）
+  viewImpressionEnabled: boolean // 默认: true（仅 NewSaaS，需 autotrackEnabled）
   viewImpressionConfig: GrowingImpressionConfig // 全局曝光条件（impressionScale / stayDuration）
   viewImpressionCheckInterval: number // 默认: 0.5（秒）
   requestOptions: RequestOptions

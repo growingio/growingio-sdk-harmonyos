@@ -23,6 +23,7 @@ import uiObserver from '@ohos.arkui.observer'
 import Autotrack from './Autotrack'
 import AnalyticsCore from '../core/AnalyticsCore'
 import GrowingContext from '../core/Context'
+import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
 import { GrowingImpressionConfig, GrowingImpressionDelegate } from '../interfaces/GrowingImpression'
 import { AttributesType } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -60,8 +61,9 @@ export interface ImpressionBinding {
  * 曝光模块依赖的外部环境，默认实现见 _DefaultHost，单元测试可替换
  */
 export interface ViewImpressionHost {
-  // SDK 已初始化 && 无埋点开启 && 曝光开启 && 已开启无埋点监听
-  isAvailable(): boolean
+  // 曝光采集不可用的原因，可用时返回空字符串。
+  // 可用条件：SDK 已初始化 && NewSaaS 模式 && 无埋点开启 && 曝光开启 && 已开启无埋点监听
+  unavailableReason(): string
 
   globalConfig(): GrowingImpressionConfig
 
@@ -167,20 +169,41 @@ class _FrameNodeBinding implements ImpressionBinding {
   }
 }
 
+/**
+ * 由配置决定的不可用原因，可用时返回空字符串
+ */
+export function unavailableReasonOfConfig(config: GrowingConfig): string {
+  // 元素曝光目前仅支持 NewSaaS 产品线，CDP / SaaS 不可用
+  if (config.mode != ConfigMode.NewSaaS) {
+    return '元素曝光仅支持 NewSaaS 模式'
+  }
+  // 曝光采集属于无埋点能力的一部分，随无埋点开关一起关闭
+  if (!config.autotrackEnabled) {
+    return 'autotrackEnabled 为 false'
+  }
+  if (!config.viewImpressionEnabled) {
+    return 'viewImpressionEnabled 为 false'
+  }
+  return ''
+}
+
 class _DefaultHost implements ViewImpressionHost {
-  isAvailable(): boolean {
+  unavailableReason(): string {
     if (!AnalyticsCore.core.isInitializedSuccessfully()) {
-      return false
-    }
-    if (!Autotrack.uiContent) {
-      return false
+      return 'SDK 尚未初始化'
     }
     let context = GrowingContext.getDefaultContext()
     if (!context) {
-      return false
+      return 'SDK 尚未初始化'
     }
-    // 曝光采集属于无埋点能力的一部分，随无埋点开关一起关闭
-    return context.config.autotrackEnabled && context.config.viewImpressionEnabled
+    let configReason = unavailableReasonOfConfig(context.config)
+    if (configReason.length > 0) {
+      return configReason
+    }
+    if (!Autotrack.uiContent) {
+      return '尚未调用 GrowingAnalytics.onWindowStageCreate'
+    }
+    return ''
   }
 
   globalConfig(): GrowingImpressionConfig {
@@ -353,9 +376,10 @@ export default class ViewImpression {
       LogUtil.warn(() => '[ViewImpression] eventName 为空，组件 ' + componentId + ' 的曝光标记被忽略')
       return
     }
-    if (!ViewImpression.host.isAvailable()) {
-      LogUtil.warn(() => '[ViewImpression] 曝光采集不可用：请确认 SDK 已初始化、已调用 onWindowStageCreate，' +
-        '且 autotrackEnabled 与 viewImpressionEnabled 均为 true')
+    let unavailableReason = ViewImpression.host.unavailableReason()
+    if (unavailableReason.length > 0) {
+      LogUtil.warn(() => '[ViewImpression] 曝光采集不可用（' + unavailableReason + '），组件 ' + componentId +
+        ' 的曝光标记被忽略')
       return
     }
 
@@ -517,10 +541,14 @@ export default class ViewImpression {
     }
 
     // 组件被重建（LazyForEach / if-else 等）：旧节点上的监听随节点失效，需重新注册。
-    // 曝光状态保留：元素若真的离开过可视区，旧节点已回调过 0，tracked 已被重置
+    // 新节点视为新的元素，曝光状态重置（与 iOS 新视图实例一致）；不依赖旧节点是否回调过 0 或 onDisappear
     target.binding?.dispose()
     target.binding = binding
     target.ratio = 0
+    target.slots.forEach((slot: ImpressionSlot) => {
+      slot.invalidate()
+      slot.tracked = false
+    })
     ViewImpression.observeTarget(target, true)
   }
 

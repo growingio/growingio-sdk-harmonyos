@@ -126,14 +126,14 @@ trackSlot 依次检查：
 | 页面重新显示 | 若隐藏期间经历过退后台（或隐藏时已在后台）→ 视为退后台，不重新曝光；否则视为页面跳转返回 → 重置曝光状态并复检，仍可见的元素重新曝光 | 一致（iOS 页面被覆盖时视图离开 window，返回后重新曝光） |
 | 页面销毁（ON_DISAPPEAR / ABOUT_TO_DISAPPEAR） | 移除该页面内的全部标记 | 一致（视图释放） |
 | 组件移除（onDisappear） | 移除该组件的全部标记 | 一致（视图释放） |
-| 组件重建（uniqueId 变化，如 LazyForEach） | 下次标记时重新绑定新节点，保留曝光状态 | 一致（cell 复用） |
+| 组件重建（uniqueId 变化，如 LazyForEach、if/else） | 下次标记时重新绑定新节点，曝光状态重置，新节点可见时重新曝光 | 一致（新视图实例） |
 | 标记时组件未挂载 | 每 50ms 重试查找，最多 5 次，仍找不到则放弃并告警 | — |
 
 > 页面隐藏与退后台两个系统回调的先后顺序不确定，因此页面隐藏时只中断计时，等页面重新显示时再根据期间是否经历过退后台决定是否重置曝光状态。已知边界：页面跳转离开后、返回前恰好经历过一次前后台切换，返回时不会重新曝光。
 
 ## 配置与限制
 
-- **前置条件**：SDK 已初始化、已调用 `GrowingAnalytics.onWindowStageCreate`、`autotrackEnabled == true`、`viewImpressionEnabled == true`；不满足时 `trackViewImpression` 告警并忽略
+- **前置条件**：SDK 已初始化、**NewSaaS 模式**（CDP / SaaS 不可用）、已调用 `GrowingAnalytics.onWindowStageCreate`、`autotrackEnabled == true`、`viewImpressionEnabled == true`；不满足时 `trackViewImpression` 输出具体原因并忽略（配置相关判定见 `unavailableReasonOfConfig`）
 - **数据采集开关**：发送走 `AnalyticsCore.core.track`，`dataCollectionEnabled == false` 时事件被丢弃
 - **线程**：全部在 UI 线程执行，无 IO
 - **componentId** 需在窗口内唯一；列表项请使用带数据标识的 id（如 `'goods_' + item.id`）

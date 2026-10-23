@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach } from '@ohos/hypium'
 import ViewImpression, {
   ImpressionBinding,
-  ViewImpressionHost
+  ViewImpressionHost,
+  unavailableReasonOfConfig
 } from '../../main/ets/components/autotrack/ViewImpression'
 import { GrowingImpressionConfig, GrowingImpressionDelegate } from '../../main/ets/components/interfaces/GrowingImpression'
-import { GrowingConfig } from '../../main/ets/components/interfaces/GrowingConfig'
+import { ConfigMode, GrowingConfig } from '../../main/ets/components/interfaces/GrowingConfig'
 import { AttributesType } from '../../main/ets/components/utils/Constants'
 
 // ─── 测试替身 ──────────────────────────────────────────────────────────────
@@ -47,14 +48,14 @@ class TrackedEvent {
 }
 
 class FakeHost implements ViewImpressionHost {
-  available: boolean = true
+  reason: string = ''
   config: GrowingImpressionConfig = new GrowingImpressionConfig()
   nodes: Map<string, FakeBinding> = new Map()
   tasks: Array<() => void> = []
   events: Array<TrackedEvent> = []
 
-  isAvailable(): boolean {
-    return this.available
+  unavailableReason(): string {
+    return this.reason
   }
 
   globalConfig(): GrowingImpressionConfig {
@@ -149,6 +150,35 @@ export default function viewImpressionTests() {
     })
   })
 
+  // ─── 可用条件 ────────────────────────────────────────────────────────────
+
+  describe('ViewImpression_availability', () => {
+
+    it('仅 NewSaaS 模式可用，CDP / SaaS 不可用', 0, () => {
+      let newSaaS = new GrowingConfig().NewSaaS('accountId', 'dataSourceId', 'growing.test')
+      newSaaS.autotrackEnabled = true
+      expect(unavailableReasonOfConfig(newSaaS)).assertEqual('')
+
+      let cdp = new GrowingConfig().CDP('accountId', 'dataSourceId', 'growing.test', 'https://cdp.example.com')
+      cdp.autotrackEnabled = true
+      expect(cdp.mode).assertEqual(ConfigMode.CDP)
+      expect(unavailableReasonOfConfig(cdp).length > 0).assertTrue()
+
+      let saas = new GrowingConfig().SaaS('accountId', 'growing.test')
+      saas.autotrackEnabled = true
+      expect(saas.mode).assertEqual(ConfigMode.SaaS)
+      expect(unavailableReasonOfConfig(saas).length > 0).assertTrue()
+    })
+
+    it('NewSaaS 下 autotrackEnabled 或 viewImpressionEnabled 关闭时不可用', 0, () => {
+      let config = new GrowingConfig().NewSaaS('accountId', 'dataSourceId', 'growing.test')
+      expect(unavailableReasonOfConfig(config).length > 0).assertTrue()
+      config.autotrackEnabled = true
+      config.viewImpressionEnabled = false
+      expect(unavailableReasonOfConfig(config).length > 0).assertTrue()
+    })
+  })
+
   // ─── 基础曝光 ────────────────────────────────────────────────────────────
 
   describe('ViewImpression_basic', () => {
@@ -159,8 +189,8 @@ export default function viewImpressionTests() {
       ViewImpression._reset(host)
     })
 
-    it('不可用时不标记', 0, () => {
-      host.available = false
+    it('不可用时不标记（如非 NewSaaS 模式）', 0, () => {
+      host.reason = '元素曝光仅支持 NewSaaS 模式'
       host.addNode('item')
       ViewImpression.mark('item', 'imp')
       expect(ViewImpression.targets.size).assertEqual(0)
@@ -298,6 +328,16 @@ export default function viewImpressionTests() {
       expect(host.events.length).assertEqual(0)
       newNode.emit(1)
       expect(host.events.length).assertEqual(1)
+    })
+
+    it('组件被移除后重建（未收到 onDisappear）时重新曝光', 0, () => {
+      let oldNode = host.addNode('item', 1)
+      ViewImpression.mark('item', 'imp')
+      oldNode.emit(1)
+      let newNode = host.addNode('item', 2)
+      ViewImpression.mark('item', 'imp')
+      newNode.emit(1)
+      expect(host.events.length).assertEqual(2)
     })
 
     it('标记时组件未挂载，重试找到后正常曝光', 0, () => {

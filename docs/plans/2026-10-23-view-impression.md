@@ -5,6 +5,11 @@
 > **修订记录**：
 >
 > **v2（2026-10-23）** 同步 iOS SDK 收窄 ViewImpression 公开接口的改动：对外只保留 `trackViewImpression(componentId, eventName, attributes?)`、`stopTrackViewImpression(componentId)`、`GrowingImpressionConfig.create(impressionScale, stayDuration)` 与 3 个全局配置项，默认支持重复曝光。identifier 多槽位、不可重复曝光（`repeatable`）、单元素配置、属性更新、按 identifier 移除、曝光回调、状态重置转为内部预留能力：实现与单元测试保留，不经 `GrowingAnalytics` / `index.ets` 暴露，待后续迭代再公开。
+>
+> **v3（2026-10-23）** 依据需求追加：
+> 1. 元素曝光仅支持 NewSaaS 模式，CDP / SaaS 模式下不可用；不可用原因（未初始化 / 非 NewSaaS / 开关关闭 / 未开启无埋点监听）分别输出，配置相关判定抽为 `unavailableReasonOfConfig` 并补充单测
+> 2. 组件重建（uniqueId 变化）时曝光状态改为重置：新节点视为新元素（与 iOS 新视图实例一致），不再依赖旧节点回调 0 或 onDisappear
+> 3. 示例应用改为逐场景验证页（基础标记/停止、带属性/重复标记、组件移除/重新出现、页面跳转/前后台、列表滚动），并在 EntryAbilityStage 设置全局曝光条件
 
 ## 1. Context（背景）
 
@@ -45,7 +50,8 @@ ArkUI 声明式组件没有可持有的视图对象，以组件 `.id()` 作为 c
 
 ### 2.4 开关
 
-与 iOS 一致，曝光属于无埋点能力：需 `autotrackEnabled = true`，`viewImpressionEnabled`（默认 true）用于单独关闭曝光。
+- **仅支持 NewSaaS 产品线**：CDP、SaaS 模式下 `trackViewImpression` 告警并忽略
+- 与 iOS 一致，曝光属于无埋点能力：需 `autotrackEnabled = true`，`viewImpressionEnabled`（默认 true）用于单独关闭曝光
 
 ## 3. 公开 API 变更
 
@@ -81,13 +87,13 @@ class GrowingImpressionConfig { impressionScale; stayDuration; static create(imp
 | `index.ets` | 导出新类型 |
 | `src/test/autotrack/ViewImpression.test.ets`、`src/test/utils/Util.test.ets`、`src/test/List.test.ets` | 单元测试 |
 | `docs/GrowingAnalytics/autotrack/ViewImpression.md` 等文档 | 模块文档、接入文档、文档路由 |
-| `entry/.../pages/ViewImpression.ets` | 示例页面 |
+| `entry/.../pages/ViewImpression.ets`、`ViewImpressionDetail.ets`、`EntryAbilityStage.ets` | 示例验证页、跳转目标页、全局曝光条件 |
 
 ## 5. 测试
 
 `ViewImpressionHost` 抽象外部依赖（可用性、节点查找、定时器、事件发送），单元测试以 FakeHost 驱动可见比例回调与定时器，覆盖：配置截断与拷贝、阈值与容差、重复标记、多槽位、复用、组件重建、挂载重试、不可重复曝光与 reset、停留时长、前后台、页面跳转/隐藏/销毁、delegate 拦截/动态属性/异常隔离。
 
-真机验收：示例应用 `viewImpression` 页面，覆盖列表滚动、页面跳转返回、前后台切换、resetAll。
+真机验收：示例应用 `viewImpression` 页面逐场景验证：基础标记/停止、带属性/重复标记、组件移除/重新出现、页面跳转返回、前后台切换、列表滚动；切换到 CDP / SaaS 配置后确认不上报。
 
 ## 6. 已知限制
 
