@@ -15,12 +15,7 @@
  * limitations under the License.
  */
 
-import {
-  GrowingAnalytics,
-  GrowingAttrType,
-  GrowingImpressionConfig,
-  GrowingImpressionDelegate
-} from '@growingio/analytics'
+import { GrowingAnalytics } from '@growingio/analytics'
 
 function makeGoodsList(count: number): Array<number> {
   let list: Array<number> = []
@@ -34,28 +29,10 @@ function makeGoodsList(count: number): Array<number> {
 @Component
 struct ViewImpression {
   @State goodsList: Array<number> = makeGoodsList(50)
-  @State logs: Array<string> = []
-  private delegate: GrowingImpressionDelegate = {
-    viewImpressionDynamicAttributes: (componentId: string, eventName: string,
-      identifier?: string): GrowingAttrType | undefined => {
-      return { 'impTime': Date.now() }
-    },
-    viewImpressionDidTrack: (componentId: string, eventName: string, identifier?: string) => {
-      this.logs = [componentId + ' -> ' + eventName, ...this.logs].slice(0, 5)
-    }
-  }
-
-  aboutToAppear() {
-    GrowingAnalytics.addViewImpressionDelegate(this.delegate)
-  }
-
-  aboutToDisappear() {
-    GrowingAnalytics.removeViewImpressionDelegate(this.delegate)
-  }
 
   build() {
     Column() {
-      Text('banner (scale 0, repeatable)')
+      Text('banner')
         .id('imp_banner')
         .width('100%')
         .height(80)
@@ -65,22 +42,16 @@ struct ViewImpression {
           GrowingAnalytics.trackViewImpression('imp_banner', 'bannerImp', { 'position': 'top' })
         })
 
-      Row() {
-        Button('resetAll')
-          .onClick(() => {
-            GrowingAnalytics.resetAllViewImpressionState()
-          })
-        Button('stop banner')
-          .margin({ left: 12 })
-          .onClick(() => {
-            GrowingAnalytics.stopTrackViewImpression('imp_banner')
-          })
-      }.margin({ top: 8, bottom: 8 })
+      Button('stop banner')
+        .margin({ top: 8, bottom: 8 })
+        .onClick(() => {
+          GrowingAnalytics.stopTrackViewImpression('imp_banner')
+        })
 
       List({ space: 8 }) {
         ForEach(this.goodsList, (item: number) => {
           ListItem() {
-            Text('goods ' + item + ' (scale 0.5, stay 1s, once)')
+            Text('goods ' + item)
               .width('100%')
               .height(100)
               .textAlign(TextAlign.Center)
@@ -88,16 +59,11 @@ struct ViewImpression {
           }
           .id('imp_goods_' + item)
           .onAppear(() => {
-            GrowingAnalytics.trackViewImpression('imp_goods_' + item, 'goodsImp', { 'goodsId': item },
-              'goods_' + item, GrowingImpressionConfig.create(0.5, 1, false))
+            GrowingAnalytics.trackViewImpression('imp_goods_' + item, 'goodsImp', { 'goodsId': item })
           })
         }, (item: number) => String(item))
       }
       .layoutWeight(1)
-
-      ForEach(this.logs, (log: string) => {
-        Text(log).fontSize(12).fontColor('#666666')
-      }, (log: string, index: number) => index + log)
     }
     .width('100%')
     .height('100%')

@@ -23,7 +23,7 @@ GrowingAnalytics/
 │   │   ├── interfaces/           # 公共 API 导出
 │   │   │   ├── GrowingAnalytics.ets   # 主 SDK API 类
 │   │   │   ├── GrowingConfig.ets      # 配置类
-│   │   │   └── GrowingImpression.ets  # 曝光配置 / 回调
+│   │   │   └── GrowingImpression.ets  # 曝光配置（回调为内部预留）
 │   │   ├── core/                 # 核心 SDK 功能
 │   │   │   ├── AnalyticsCore.ets      # 核心 SDK 引擎
 │   │   │   ├── Context.ets            # SDK 上下文管理
@@ -140,14 +140,9 @@ static trackFlutterCircleData(argument: Map<string, Object>)
 // 窗口生命周期（自动追踪）
 static onWindowStageCreate(ability: UIAbility, windowStage: WindowStage)
 
-// 元素曝光（需 autotrackEnabled）
-static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType, identifier?: string, config?: GrowingImpressionConfig)
-static updateViewImpressionAttributes(componentId: string, attributes: GrowingAttrType, identifier?: string)
-static stopTrackViewImpression(componentId: string, identifier?: string)
-static addViewImpressionDelegate(delegate: GrowingImpressionDelegate)
-static removeViewImpressionDelegate(delegate: GrowingImpressionDelegate)
-static resetViewImpressionState(identifier: string)
-static resetAllViewImpressionState()
+// 元素曝光（需 autotrackEnabled；曝光条件经 GrowingConfig.viewImpressionConfig 全局设置）
+static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType)
+static stopTrackViewImpression(componentId: string)
 
 // SaaS 特定
 static setPeopleVariable(attributes: GrowingAttrType)
@@ -181,7 +176,7 @@ class GrowingConfig {
   plugins: Array<PluginsInterface>
   ignoreField: number            // 忽略字段的位掩码
   viewImpressionEnabled: boolean // 默认: true（需 autotrackEnabled）
-  viewImpressionConfig: GrowingImpressionConfig // 全局默认曝光配置
+  viewImpressionConfig: GrowingImpressionConfig // 全局曝光条件（impressionScale / stayDuration）
   viewImpressionCheckInterval: number // 默认: 0.5（秒）
   requestOptions: RequestOptions
   dataValidityPeriod: number      // 默认: 7（天）

@@ -25,20 +25,16 @@ import { AttributesType } from '../utils/Constants'
 export class GrowingImpressionConfig {
   _impressionScale: number = 0
   _stayDuration: number = 0
-
-  /**
-   * 是否允许同一元素多次曝光，默认 true。
-   * 置为 false 时必须为元素指定 identifier，否则将被降级为 true 处理
-   */
-  repeatable: boolean = true
+  // 内部预留，暂不公开：是否允许同一元素多次曝光，默认 true（元素离开可视区再次进入时会再发送一次）。
+  // 置为 false 时必须为元素指定 identifier，否则将被降级为 true 处理
+  _repeatable: boolean = true
 
   constructor() {}
 
-  static create(impressionScale: number, stayDuration: number, repeatable: boolean): GrowingImpressionConfig {
+  static create(impressionScale: number, stayDuration: number): GrowingImpressionConfig {
     let config = new GrowingImpressionConfig()
     config.impressionScale = impressionScale
     config.stayDuration = stayDuration
-    config.repeatable = repeatable
     return config
   }
 
@@ -76,7 +72,7 @@ export class GrowingImpressionConfig {
     let config = new GrowingImpressionConfig()
     config._impressionScale = this._impressionScale
     config._stayDuration = this._stayDuration
-    config.repeatable = this.repeatable
+    config._repeatable = this._repeatable
     return config
   }
 
@@ -87,11 +83,13 @@ export class GrowingImpressionConfig {
   isEqual(other: GrowingImpressionConfig): boolean {
     return this._impressionScale == other._impressionScale &&
       this._stayDuration == other._stayDuration &&
-      this.repeatable == other.repeatable
+      this._repeatable == other._repeatable
   }
 }
 
 /**
+ * 内部预留，暂不公开（未经 index.ets 导出）
+ *
  * 元素曝光回调，三个回调均在 UI 线程同步执行，实现中不要做耗时操作
  *
  * componentId 为调用 trackViewImpression 时传入的组件 id，identifier 为曝光标识（未指定时为 undefined）

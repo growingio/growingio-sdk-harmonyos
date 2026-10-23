@@ -328,6 +328,16 @@ export default class ViewImpression {
 
   // ─── 标记 ────────────────────────────────────────────────────────────────
 
+  // 内部预留：带 repeatable 的配置构造，暂不公开
+  static createConfig(impressionScale: number, stayDuration: number, repeatable: boolean): GrowingImpressionConfig {
+    let config = GrowingImpressionConfig.create(impressionScale, stayDuration)
+    config._repeatable = repeatable
+    return config
+  }
+
+  // identifier、config、updateAttributes、按 identifier 移除、delegate、resetState 为内部预留能力，
+  // 对外仅开放 trackViewImpression(componentId, eventName, attributes?) 与 stopTrackViewImpression(componentId)
+
   static mark(
     componentId: string,
     eventName: string,
@@ -351,8 +361,8 @@ export default class ViewImpression {
 
     let nodeConfig = config ? config.copy() : ViewImpression.host.globalConfig().copy()
     let hasIdentifier = identifier != undefined && identifier.length > 0
-    if (!nodeConfig.repeatable && !hasIdentifier) {
-      nodeConfig.repeatable = true
+    if (!nodeConfig._repeatable && !hasIdentifier) {
+      nodeConfig._repeatable = true
       LogUtil.warn(() => '[ViewImpression] 事件 ' + eventName + ' 配置了不可重复曝光但未指定 identifier，已按可重复曝光处理')
     }
     let slotKey = hasIdentifier ? identifier as string : DEFAULT_SLOT
@@ -672,7 +682,7 @@ export default class ViewImpression {
     // 同一元素滚回来又可能落在另一个组件上，挂在组件上判不准。
     // identifier 缺失时配置已在标记阶段降级为可重复曝光，故此处 identifier 必非空
     let identifier = slot.identifier ?? ''
-    if (!slot.config.repeatable && ViewImpression.trackedIdentifiers.has(identifier)) {
+    if (!slot.config._repeatable && ViewImpression.trackedIdentifiers.has(identifier)) {
       return
     }
 
@@ -680,7 +690,7 @@ export default class ViewImpression {
       return
     }
 
-    if (!slot.config.repeatable) {
+    if (!slot.config._repeatable) {
       ViewImpression.rememberTrackedIdentifier(identifier)
     }
 
@@ -751,7 +761,7 @@ export default class ViewImpression {
     if (!ViewImpression.trackedIdentifiersOverflowWarned) {
       ViewImpression.trackedIdentifiersOverflowWarned = true
       LogUtil.warn(() => '[ViewImpression] 不可重复曝光的元素标识已超过 ' + TRACKED_IDENTIFIERS_CAPACITY +
-        ' 个，最早的记录将被淘汰，请在合适的时机调用 resetAllViewImpressionState 主动清理')
+        ' 个，最早的记录将被淘汰，请在合适的时机调用 resetState 主动清理')
     }
     let oldest = identifiers.values().next()
     if (!oldest.done) {

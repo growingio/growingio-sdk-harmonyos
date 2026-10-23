@@ -104,22 +104,29 @@ export default function viewImpressionTests() {
       let config = new GrowingImpressionConfig()
       expect(config.impressionScale).assertEqual(0)
       expect(config.stayDuration).assertEqual(0)
-      expect(config.repeatable).assertTrue()
+      expect(config._repeatable).assertTrue()
+    })
+
+    it('公开 create(scale, stay) 默认可重复曝光', 0, () => {
+      let config = GrowingImpressionConfig.create(0.5, 1)
+      expect(config.impressionScale).assertEqual(0.5)
+      expect(config.stayDuration).assertEqual(1)
+      expect(config._repeatable).assertTrue()
     })
 
     it('impressionScale 超出 0~1 被截断', 0, () => {
-      expect(GrowingImpressionConfig.create(-1, 0, true).impressionScale).assertEqual(0)
-      expect(GrowingImpressionConfig.create(2, 0, true).impressionScale).assertEqual(1)
-      expect(GrowingImpressionConfig.create(0.5, 0, true).impressionScale).assertEqual(0.5)
+      expect(ViewImpression.createConfig(-1, 0, true).impressionScale).assertEqual(0)
+      expect(ViewImpression.createConfig(2, 0, true).impressionScale).assertEqual(1)
+      expect(ViewImpression.createConfig(0.5, 0, true).impressionScale).assertEqual(0.5)
     })
 
     it('stayDuration 负值按 0 处理', 0, () => {
-      expect(GrowingImpressionConfig.create(0, -3, true).stayDuration).assertEqual(0)
-      expect(GrowingImpressionConfig.create(0, 1.5, true).stayDuration).assertEqual(1.5)
+      expect(ViewImpression.createConfig(0, -3, true).stayDuration).assertEqual(0)
+      expect(ViewImpression.createConfig(0, 1.5, true).stayDuration).assertEqual(1.5)
     })
 
     it('copy 与 isEqual', 0, () => {
-      let config = GrowingImpressionConfig.create(0.5, 1, false)
+      let config = ViewImpression.createConfig(0.5, 1, false)
       let copy = config.copy()
       expect(copy.isEqual(config)).assertTrue()
       copy.impressionScale = 0.500001
@@ -133,7 +140,7 @@ export default function viewImpressionTests() {
       config.viewImpressionEnabled = false
       config.viewImpressionCheckInterval = 1
       config.viewImpressionCheckInterval = -1
-      config.viewImpressionConfig = GrowingImpressionConfig.create(0.3, 2, true)
+      config.viewImpressionConfig = GrowingImpressionConfig.create(0.3, 2)
       let copy = config.copy()
       expect(copy.viewImpressionEnabled).assertFalse()
       expect(copy._viewImpressionCheckInterval).assertEqual(1000)
@@ -181,7 +188,7 @@ export default function viewImpressionTests() {
 
     it('impressionScale 阈值：未达阈值不曝光，阈值附近容差内曝光', 0, () => {
       let node = host.addNode('item')
-      ViewImpression.mark('item', 'imp', undefined, undefined, GrowingImpressionConfig.create(0.5, 0, true))
+      ViewImpression.mark('item', 'imp', undefined, undefined, ViewImpression.createConfig(0.5, 0, true))
       expect(node.ratios.join(',')).assertEqual('0,0.5')
       expect(node.intervalMs).assertEqual(500)
       node.emit(0.3)
@@ -191,7 +198,7 @@ export default function viewImpressionTests() {
     })
 
     it('未指定 config 时使用全局配置', 0, () => {
-      host.config = GrowingImpressionConfig.create(0.8, 0, true)
+      host.config = ViewImpression.createConfig(0.8, 0, true)
       let node = host.addNode('item')
       ViewImpression.mark('item', 'imp')
       node.emit(0.5)
@@ -324,7 +331,7 @@ export default function viewImpressionTests() {
     it('不可重复曝光：同一 identifier 只曝光一次，跨组件生效', 0, () => {
       let a = host.addNode('a', 1)
       let b = host.addNode('b', 2)
-      let once = GrowingImpressionConfig.create(0, 0, false)
+      let once = ViewImpression.createConfig(0, 0, false)
       ViewImpression.mark('a', 'imp', undefined, 'goods_1', once)
       a.emit(1)
       a.emit(0)
@@ -336,7 +343,7 @@ export default function viewImpressionTests() {
 
     it('不可重复曝光但未指定 identifier 时降级为可重复', 0, () => {
       let node = host.addNode('item')
-      ViewImpression.mark('item', 'imp', undefined, undefined, GrowingImpressionConfig.create(0, 0, false))
+      ViewImpression.mark('item', 'imp', undefined, undefined, ViewImpression.createConfig(0, 0, false))
       node.emit(1)
       node.emit(0)
       node.emit(1)
@@ -345,7 +352,7 @@ export default function viewImpressionTests() {
 
     it('resetState(identifier) 后仍可见的元素立即重新曝光', 0, () => {
       let node = host.addNode('item')
-      ViewImpression.mark('item', 'imp', undefined, 'goods_1', GrowingImpressionConfig.create(0, 0, false))
+      ViewImpression.mark('item', 'imp', undefined, 'goods_1', ViewImpression.createConfig(0, 0, false))
       node.emit(1)
       ViewImpression.resetState('goods_1')
       expect(host.events.length).assertEqual(2)
@@ -353,7 +360,7 @@ export default function viewImpressionTests() {
 
     it('resetState() 清除全部记录', 0, () => {
       let node = host.addNode('item')
-      ViewImpression.mark('item', 'imp', undefined, 'goods_1', GrowingImpressionConfig.create(0, 0, false))
+      ViewImpression.mark('item', 'imp', undefined, 'goods_1', ViewImpression.createConfig(0, 0, false))
       node.emit(1)
       expect(ViewImpression.trackedIdentifiers.size).assertEqual(1)
       ViewImpression.resetState()
@@ -373,7 +380,7 @@ export default function viewImpressionTests() {
 
     it('停留满时长后曝光', 0, () => {
       let node = host.addNode('item')
-      ViewImpression.mark('item', 'imp', undefined, undefined, GrowingImpressionConfig.create(0, 1, true))
+      ViewImpression.mark('item', 'imp', undefined, undefined, ViewImpression.createConfig(0, 1, true))
       node.emit(1)
       expect(host.events.length).assertEqual(0)
       host.flush()
@@ -382,7 +389,7 @@ export default function viewImpressionTests() {
 
     it('停留期间离开可视区则不曝光', 0, () => {
       let node = host.addNode('item')
-      ViewImpression.mark('item', 'imp', undefined, undefined, GrowingImpressionConfig.create(0, 1, true))
+      ViewImpression.mark('item', 'imp', undefined, undefined, ViewImpression.createConfig(0, 1, true))
       node.emit(1)
       node.emit(0)
       host.flush()
@@ -391,7 +398,7 @@ export default function viewImpressionTests() {
 
     it('停留期间退后台则计时中断，回前台重新计时', 0, () => {
       let node = host.addNode('item')
-      ViewImpression.mark('item', 'imp', undefined, undefined, GrowingImpressionConfig.create(0, 1, true))
+      ViewImpression.mark('item', 'imp', undefined, undefined, ViewImpression.createConfig(0, 1, true))
       node.emit(1)
       ViewImpression.onBackground()
       host.flush()

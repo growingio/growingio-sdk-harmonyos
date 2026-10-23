@@ -20,44 +20,49 @@
 
 ## 对外接口
 
+与 iOS 一致，对外只开放基础标记 / 移除能力，曝光条件经全局配置设置，默认支持重复曝光：
+
 ```typescript
 // GrowingAnalytics
-static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType,
-  identifier?: string, config?: GrowingImpressionConfig)
-static updateViewImpressionAttributes(componentId: string, attributes: GrowingAttrType, identifier?: string)
-static stopTrackViewImpression(componentId: string, identifier?: string)
-static addViewImpressionDelegate(delegate: GrowingImpressionDelegate)
-static removeViewImpressionDelegate(delegate: GrowingImpressionDelegate)
-static resetViewImpressionState(identifier: string)
-static resetAllViewImpressionState()
+static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType)
+static stopTrackViewImpression(componentId: string)
 
 // GrowingConfig
 viewImpressionEnabled: boolean                   // 默认 true
-viewImpressionConfig: GrowingImpressionConfig    // 全局默认配置
+viewImpressionConfig: GrowingImpressionConfig    // 全局曝光条件
 viewImpressionCheckInterval: number              // 秒，默认 0.5
 
 // GrowingImpressionConfig
+static create(impressionScale: number, stayDuration: number): GrowingImpressionConfig
 impressionScale: number   // 0~1，默认 0（露出即算）
 stayDuration: number      // 秒，默认 0
-repeatable: boolean       // 默认 true
 ```
 
 ArkUI 声明式组件没有可直接持有的视图对象，组件通过 `.id()` 设置的 **componentId** 作为曝光目标的句柄，对应 iOS 中 `UIView` 实例。
 
+### 内部预留能力
+
+以下能力已实现并有单元测试覆盖，与 iOS 一致暂不公开（iOS 置于私有头文件，HarmonyOS 不经 `GrowingAnalytics` / `index.ets` 暴露），待后续迭代再开放：
+
+| 能力 | 内部入口 |
+|------|---------|
+| identifier 多槽位、单元素配置 | `ViewImpression.mark(componentId, eventName, attributes?, identifier?, config?)` |
+| 不可重复曝光 | `GrowingImpressionConfig._repeatable` / `ViewImpression.createConfig(scale, stay, repeatable)` |
+| 属性更新（不重置曝光状态） | `ViewImpression.updateAttributes(componentId, attributes, identifier?)` |
+| 按 identifier 移除 | `ViewImpression.unmark(componentId, identifier)` |
+| 曝光回调 | `GrowingImpressionDelegate` / `ViewImpression.addDelegate` / `removeDelegate` |
+| 状态重置 | `ViewImpression.resetState(identifier?)` |
+
 ## 与 iOS 的接口映射
 
-| iOS | HarmonyOS |
+| iOS（公开） | HarmonyOS（公开） |
 |-----|-----------|
-| `-[UIView growingTrackViewImpression:attributes:identifier:config:]` | `trackViewImpression(componentId, eventName, attributes?, identifier?, config?)` |
-| `-[UIView growingUpdateViewImpressionAttributes:identifier:]` | `updateViewImpressionAttributes(componentId, attributes, identifier?)` |
-| `-[UIView growingStopTrackViewImpression]` / `...WithIdentifier:` | `stopTrackViewImpression(componentId, identifier?)` |
-| `GrowingImpressionDelegate` 三个可选方法 | `GrowingImpressionDelegate` 三个可选函数属性（参数中 view 换为 componentId） |
-| `+resetViewImpressionStateWithIdentifier:` / `+resetAllViewImpressionState` | `resetViewImpressionState(identifier)` / `resetAllViewImpressionState()` |
+| `-[UIView growingTrackViewImpression:]` / `growingTrackViewImpression:attributes:` | `trackViewImpression(componentId, eventName, attributes?)` |
+| `-[UIView growingStopTrackViewImpression]` | `stopTrackViewImpression(componentId)` |
+| `+[GrowingImpressionConfig configWithImpressionScale:stayDuration:]` | `GrowingImpressionConfig.create(impressionScale, stayDuration)` |
 | `GrowingTrackConfiguration.viewImpressionEnabled / viewImpressionConfig / viewImpressionCheckInterval` | `GrowingConfig` 同名配置项 |
 
-差异：
-- iOS delegate 为弱引用；ArkTS 侧为强引用，不再需要时需调用 `removeViewImpressionDelegate`
-- iOS 视图释放时标记随之消失；HarmonyOS 组件从组件树移除（`onDisappear`）或所在页面销毁时移除标记，组件再次出现需重新标记（建议在组件 `onAppear` 中调用）
+差异：iOS 视图释放时标记随之消失；HarmonyOS 组件从组件树移除（`onDisappear`）或所在页面销毁时移除标记，组件再次出现需重新标记（建议在组件 `onAppear` 中调用）。内部预留的 delegate 在 ArkTS 侧为强引用。
 
 ## 核心架构
 
