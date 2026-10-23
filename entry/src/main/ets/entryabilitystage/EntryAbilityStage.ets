@@ -1,6 +1,12 @@
 import AbilityStage from '@ohos.app.ability.AbilityStage'
 import type Want from '@ohos.app.ability.Want'
-import { GrowingAnalytics, GrowingConfig, GrowingIgnoreFields, GrowingIgnoreFieldsAll } from '@growingio/analytics'
+import {
+  GrowingAnalytics,
+  GrowingConfig,
+  GrowingIgnoreFields,
+  GrowingIgnoreFieldsAll,
+  GrowingImpressionConfig
+} from '@growingio/analytics'
 import { GrowingToolsKit } from '@growingio/tools'
 
 export default class EntryAbilityStage extends AbilityStage {
@@ -31,12 +37,18 @@ export default class EntryAbilityStage extends AbilityStage {
     config.requestOptions.transferTimeout = 10
     config.autotrackEnabled = true
     config.autotrackAllPages = true
+    // 元素曝光（仅 NewSaaS）：全局曝光条件，可见面积 ≥ 50% 且连续可见 ≥ 1 秒；
+    // 不设置时默认露出即算、无需停留，即 GrowingImpressionConfig.create(0, 0)
+    config.viewImpressionConfig = GrowingImpressionConfig.create(0.5, 1)
+    // config.viewImpressionEnabled = false     // 单独关闭元素曝光
+    // config.viewImpressionCheckInterval = 0.5 // 曝光检测间隔，单位秒
     config.plugins = [new GrowingToolsKit()]
     // config.ignoreField = GrowingIgnoreFieldsAll
     // config.ignoreField = GrowingIgnoreFields.NetworkState | GrowingIgnoreFields.PlatformVersion
     GrowingAnalytics.configure(config)
 
     // ---------------- CDP ----------------
+    // 注意：元素曝光仅支持 NewSaaS，CDP 模式下 trackViewImpression 将被忽略
 
     // let config = new GrowingConfig().CDP(
     //   '0a1b4118dd954ec3bcc69da5138bdb96',
@@ -55,6 +67,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // GrowingAnalytics.configure(config)
 
     // ---------------- SaaS ----------------
+    // 注意：元素曝光仅支持 NewSaaS，SaaS 模式下 trackViewImpression 将被忽略
 
     // let config = new GrowingConfig().SaaS(
     //   '0a1b4118dd954ec3bcc69da5138bdb96',

@@ -45,6 +45,35 @@ export default class Util {
     return { ...obj }
   }
 
+  static isAttributesEqual(attrA?: AttributesType, attrB?: AttributesType): boolean {
+    const a: AttributesType = attrA ?? {}
+    const b: AttributesType = attrB ?? {}
+    const keysA = Object.keys(a)
+    if (keysA.length != Object.keys(b).length) {
+      return false
+    }
+    for (const key of keysA) {
+      if (!Object.prototype.hasOwnProperty.call(b, key)) {
+        return false
+      }
+      let valueA = a[key] as ValueType
+      let valueB = b[key] as ValueType
+      if (Array.isArray(valueA) || Array.isArray(valueB)) {
+        if (!Array.isArray(valueA) || !Array.isArray(valueB) || valueA.length != valueB.length) {
+          return false
+        }
+        for (let i = 0; i < valueA.length; i++) {
+          if (valueA[i] !== valueB[i]) {
+            return false
+          }
+        }
+      } else if (valueA !== valueB) {
+        return false
+      }
+    }
+    return true
+  }
+
   static serializableAttributes(attr: AttributesType): AttributesType | undefined {
     let result: AttributesType = {}
     Object.keys(attr).forEach(key => {

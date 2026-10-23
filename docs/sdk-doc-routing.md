@@ -21,6 +21,7 @@
 | 修改计时事件（EventTimer 状态机、前后台处理） | `core/EventTimer.md` |
 | 修改无埋点页面采集（Navigation/Router 监听、双队列、NavBar 栈） | `autotrack/AutotrackPage.md` |
 | 修改无埋点点击采集（willClick、XPath 生成算法、弹窗处理） | `autotrack/AutotrackClick.md` |
+| 修改元素曝光采集（可见面积监听、曝光状态机、页面/前后台处理） | `autotrack/ViewImpression.md` |
 | 修改 Hybrid/WebView 集成（JSBridge、SaaS 脚本注入、onPageEnd） | `core/Hybrid.md` |
 | 修改 Flutter 桥接（Platform Channel、圈选状态、后台 PAGE 缓存） | `core/Flutter.md` |
 | 修改插件系统（PluginsInterface 生命周期、DeepLink 处理） | `plugins/Plugins.md` |

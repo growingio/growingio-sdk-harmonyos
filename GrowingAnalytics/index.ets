@@ -22,6 +22,7 @@ export {
   GrowingAnalyticsInterface,
   GrowingFlutterPlugin,
   GrowingUniAppPlugin,
+  GrowingImpressionConfig,
 } from './src/main/ets/components/interfaces/GrowingAnalytics'
 export { GrowingConfig, IgnoreFields as GrowingIgnoreFields, IgnoreFieldsAll as GrowingIgnoreFieldsAll } from './src/main/ets/components/interfaces/GrowingConfig'
 
