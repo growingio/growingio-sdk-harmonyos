@@ -297,7 +297,9 @@ export default class ViewImpression {
     // 只中断停留计时，是否重置曝光状态等页面重新显示时再判定：
     // 页面隐藏与应用退后台的回调先后不确定，此时无法区分是页面跳转还是退后台
     ViewImpression.forEachTargetInPage(key, (target: ImpressionTarget) => {
-      target.slots.forEach((slot: ImpressionSlot) => slot.invalidate())
+      target.slots.forEach((slot: ImpressionSlot) => {
+        slot.invalidate()
+      })
     })
   }
 
@@ -326,7 +328,9 @@ export default class ViewImpression {
     ViewImpression.forEachTargetInPage(key, (target: ImpressionTarget) => {
       removed.push(target.componentId)
     })
-    removed.forEach((componentId: string) => ViewImpression.removeTarget(componentId))
+    removed.forEach((componentId: string) => {
+      ViewImpression.removeTarget(componentId)
+    })
   }
 
   static onForeground() {
@@ -334,7 +338,9 @@ export default class ViewImpression {
       return
     }
     ViewImpression.inBackground = false
-    ViewImpression.targets.forEach((target: ImpressionTarget) => ViewImpression.evaluateTarget(target))
+    ViewImpression.targets.forEach((target: ImpressionTarget) => {
+      ViewImpression.evaluateTarget(target)
+    })
   }
 
   static onBackground() {
@@ -345,7 +351,9 @@ export default class ViewImpression {
     ViewImpression.backgroundEpoch += 1
     // 与 iOS 一致：只中断停留计时，不重置已曝光状态
     ViewImpression.targets.forEach((target: ImpressionTarget) => {
-      target.slots.forEach((slot: ImpressionSlot) => slot.invalidate())
+      target.slots.forEach((slot: ImpressionSlot) => {
+        slot.invalidate()
+      })
     })
   }
 
@@ -467,7 +475,9 @@ export default class ViewImpression {
     if (!target) {
       return
     }
-    target.slots.forEach((slot: ImpressionSlot) => slot.invalidate())
+    target.slots.forEach((slot: ImpressionSlot) => {
+      slot.invalidate()
+    })
     target.binding?.dispose()
     target.binding = undefined
     ViewImpression.targets.delete(componentId)
@@ -640,8 +650,12 @@ export default class ViewImpression {
 
   static evaluateTarget(target: ImpressionTarget) {
     let slots: Array<ImpressionSlot> = []
-    target.slots.forEach((slot: ImpressionSlot) => slots.push(slot))
-    slots.forEach((slot: ImpressionSlot) => ViewImpression.evaluateSlot(target, slot))
+    target.slots.forEach((slot: ImpressionSlot) => {
+      slots.push(slot)
+    })
+    slots.forEach((slot: ImpressionSlot) => {
+      ViewImpression.evaluateSlot(target, slot)
+    })
   }
 
   static evaluateSlot(target: ImpressionTarget, slot: ImpressionSlot) {
@@ -810,7 +824,9 @@ export default class ViewImpression {
   // test-only helper (do NOT call in production code)
   static _reset(host?: ViewImpressionHost) {
     ViewImpression.targets.forEach((target: ImpressionTarget) => {
-      target.slots.forEach((slot: ImpressionSlot) => slot.invalidate())
+      target.slots.forEach((slot: ImpressionSlot) => {
+        slot.invalidate()
+      })
     })
     ViewImpression.host = host ?? new _DefaultHost()
     ViewImpression.targets = new Map()

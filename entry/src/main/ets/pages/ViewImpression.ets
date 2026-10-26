@@ -178,7 +178,7 @@ struct ViewImpression {
           .onAppear(() => {
             GrowingAnalytics.trackViewImpression(ID_GOODS_PREFIX + item, 'imp_goods', { 'goodsId': item })
           })
-        }, (item: number) => String(item))
+        }, (item: number): string => String(item))
       }
       .layoutWeight(1)
       .margin({ top: 8 })

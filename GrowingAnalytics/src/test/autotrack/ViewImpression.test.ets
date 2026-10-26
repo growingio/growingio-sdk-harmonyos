@@ -85,7 +85,9 @@ class FakeHost implements ViewImpressionHost {
   flush() {
     let tasks = this.tasks
     this.tasks = []
-    tasks.forEach((task: () => void) => task())
+    tasks.forEach((task: () => void) => {
+      task()
+    })
   }
 
   addNode(componentId: string, uniqueId: number = 1, pageKeys: Array<string> = ['router:1']): FakeBinding {
