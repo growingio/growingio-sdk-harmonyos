@@ -24,6 +24,10 @@ class FakeBinding implements ImpressionBinding {
     this.pageKeys = pageKeys
   }
 
+  getPageKeys(): Array<string> {
+    return this.pageKeys
+  }
+
   observe(ratios: Array<number>, intervalMs: number, onRatio: (ratio: number) => void, onDisappear: () => void) {
     this.ratios = ratios
     this.intervalMs = intervalMs
@@ -351,9 +355,21 @@ export default function viewImpressionTests() {
       expect(host.events.length).assertEqual(1)
     })
 
+    it('列表项内容延迟创建：多次重试后找到仍能正常曝光', 0, () => {
+      ViewImpression.mark('lazy', 'imp')
+      for (let i = 0; i < 10; i++) {
+        host.flush()
+      }
+      expect(ViewImpression.targets.has('lazy')).assertTrue()
+      let node = host.addNode('lazy')
+      host.flush()
+      node.emit(1)
+      expect(host.events.length).assertEqual(1)
+    })
+
     it('重试多次仍找不到组件则放弃标记', 0, () => {
       ViewImpression.mark('missing', 'imp')
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 30; i++) {
         host.flush()
       }
       expect(ViewImpression.targets.size).assertEqual(0)

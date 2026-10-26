@@ -42,6 +42,8 @@ function makeGoodsList(count: number): Array<number> {
  * 3. hilog 中搜索 "[ViewImpression]" 查看标记被忽略的原因（如非 NewSaaS 模式）
  *
  * 全局曝光条件在 EntryAbilityStage 中通过 config.viewImpressionConfig 设置
+ *
+ * 注意：.id() 与调用 trackViewImpression 的 onAppear 需设置在同一个组件上
  */
 @Entry
 @Component
@@ -81,8 +83,9 @@ struct ViewImpression {
             this.CaseTitle('1. 基础标记 / 停止标记',
               '进入页面后上报 imp_basic；停止后滚出再滚回不再上报；重新标记后再上报一次')
             Column() {
-              this.Target(ID_BASIC, 'imp_basic（无属性）' + (this.basicMarked ? '' : ' - 已停止'), '#FFE7D2')
+              this.Target('imp_basic（无属性）' + (this.basicMarked ? '' : ' - 已停止'), '#FFE7D2')
             }
+            .id(ID_BASIC)
             .onAppear(() => {
               if (this.basicMarked) {
                 GrowingAnalytics.trackViewImpression(ID_BASIC, 'imp_basic')
@@ -111,8 +114,9 @@ struct ViewImpression {
             this.CaseTitle('2. 带属性 / 重复标记',
               '原样重标不应再上报；改属性重标应再上报一次，且属性 version 为新值')
             Column() {
-              this.Target(ID_ATTRS, 'imp_attrs（version = ' + this.attrsVersion + '）', '#E3F2FD')
+              this.Target('imp_attrs（version = ' + this.attrsVersion + '）', '#E3F2FD')
             }
+            .id(ID_ATTRS)
             .onAppear(() => {
               this.markAttrs()
             })
@@ -139,8 +143,9 @@ struct ViewImpression {
               '隐藏后组件被移除，标记随之移除；再次显示时在 onAppear 中重新标记并上报')
             if (this.toggleVisible) {
               Column() {
-                this.Target(ID_TOGGLE, 'imp_toggle', '#E8F5E9')
+                this.Target('imp_toggle', '#E8F5E9')
               }
+              .id(ID_TOGGLE)
               .onAppear(() => {
                 GrowingAnalytics.trackViewImpression(ID_TOGGLE, 'imp_toggle', { 'from': 'toggle' })
               })
@@ -173,8 +178,9 @@ struct ViewImpression {
 
         ForEach(this.goodsList, (item: number) => {
           ListItem() {
-            this.Target(ID_GOODS_PREFIX + item, 'imp_goods（goodsId = ' + item + '）', '#F1F3F5')
+            this.Target('imp_goods（goodsId = ' + item + '）', '#F1F3F5')
           }
+          .id(ID_GOODS_PREFIX + item)
           .onAppear(() => {
             GrowingAnalytics.trackViewImpression(ID_GOODS_PREFIX + item, 'imp_goods', { 'goodsId': item })
           })
@@ -203,9 +209,8 @@ struct ViewImpression {
   }
 
   @Builder
-  Target(id: string, label: string, color: string) {
+  Target(label: string, color: string) {
     Text(label)
-      .id(id)
       .width('100%')
       .height(100)
       .textAlign(TextAlign.Center)

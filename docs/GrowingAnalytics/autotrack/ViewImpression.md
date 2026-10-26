@@ -62,7 +62,7 @@ ArkUI 声明式组件没有可直接持有的视图对象，组件通过 `.id()`
 | `+[GrowingImpressionConfig configWithImpressionScale:stayDuration:]` | `GrowingImpressionConfig.create(impressionScale, stayDuration)` |
 | `GrowingTrackConfiguration.viewImpressionEnabled / viewImpressionConfig / viewImpressionCheckInterval` | `GrowingConfig` 同名配置项 |
 
-差异：iOS 视图释放时标记随之消失；HarmonyOS 组件从组件树移除（`onDisappear`）或所在页面销毁时移除标记，组件再次出现需重新标记（建议在组件 `onAppear` 中调用）。内部预留的 delegate 在 ArkTS 侧为强引用。
+差异：iOS 视图释放时标记随之消失；HarmonyOS 组件从组件树移除（`onDisappear`）或所在页面销毁时移除标记，组件再次出现需重新标记（需在设置了该 id 的同一组件的 `onAppear` 中调用）。内部预留的 delegate 在 ArkTS 侧为强引用。
 
 ## 核心架构
 
@@ -73,7 +73,7 @@ GrowingAnalytics.trackViewImpression
 ViewImpression.mark ──► ImpressionTarget (componentId)
                           ├── slots: Map<identifier | '@default', ImpressionSlot>
                           └── binding: ImpressionBinding
-                                  │  UIContext.getAttachedFrameNodeById(componentId)
+                                  │  UIContext.getAttachedFrameNodeById(componentId) ?? getFrameNodeById(componentId)
                                   ▼
                           FrameNode.commonEvent.setOnVisibleAreaApproximateChange
                           FrameNode.commonEvent.setOnDisappear
@@ -86,7 +86,7 @@ ViewImpression.mark ──► ImpressionTarget (componentId)
 - **ImpressionTarget**：一个组件及其全部槽位、当前可见比例、节点绑定
 - **ViewImpressionHost**：外部依赖（可用性判断、全局配置、节点查找、定时器、事件发送）的抽象，单元测试中替换为 FakeHost
 
-所需系统能力均为 API 12：`getAttachedFrameNodeById`、`getPageInfoByUniqueId`、`FrameNode.commonEvent.setOnVisibleAreaApproximateChange / setOnDisappear`、`UIObserver.on('navDestinationUpdate' | 'routerPageUpdate')`。
+所需系统能力均为 API 12：`getAttachedFrameNodeById`、`getFrameNodeById`、`getPageInfoByUniqueId`、`FrameNode.commonEvent.setOnVisibleAreaApproximateChange / setOnDisappear`、`UIObserver.on('navDestinationUpdate' | 'routerPageUpdate')`。
 
 `commonEvent` 设置的事件与业务侧声明式事件并存，不会覆盖业务回调。
 
@@ -127,7 +127,8 @@ trackSlot 依次检查：
 | 页面销毁（ON_DISAPPEAR / ABOUT_TO_DISAPPEAR） | 移除该页面内的全部标记 | 一致（视图释放） |
 | 组件移除（onDisappear） | 移除该组件的全部标记 | 一致（视图释放） |
 | 组件重建（uniqueId 变化，如 LazyForEach、if/else） | 下次标记时重新绑定新节点，曝光状态重置，新节点可见时重新曝光 | 一致（新视图实例） |
-| 标记时组件未挂载 | 每 50ms 重试查找，最多 5 次，仍找不到则放弃并告警 | — |
+| 标记时组件已创建但未挂载（如列表中尚未滑入的项） | 退而用 `getFrameNodeById` 查找并注册监听，挂载并进入可视区后自然生效；所在页面信息在可取到时再缓存 | — |
+| 标记时组件尚未创建 | 每 100ms 重试查找，最多 20 次，仍找不到则放弃并告警 | — |
 
 > 页面隐藏与退后台两个系统回调的先后顺序不确定，因此页面隐藏时只中断计时，等页面重新显示时再根据期间是否经历过退后台决定是否重置曝光状态。已知边界：页面跳转离开后、返回前恰好经历过一次前后台切换，返回时不会重新曝光。
 

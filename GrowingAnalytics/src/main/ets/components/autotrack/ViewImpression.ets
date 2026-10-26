@@ -37,9 +37,9 @@ const TRACKED_IDENTIFIERS_CAPACITY = 10000
 const SCALE_TOLERANCE = 0.001
 // 停留时长定时复检的额外余量，单位 ms
 const RECHECK_SLACK = 10
-// 标记时组件尚未挂树，按此间隔重试查找，单位 ms
-const BIND_RETRY_INTERVAL = 50
-const BIND_RETRY_TIMES = 5
+// 标记时组件尚未创建（如列表项内容懒加载），按此间隔重试查找，单位 ms
+const BIND_RETRY_INTERVAL = 100
+const BIND_RETRY_TIMES = 20
 const NAV_PAGE_KEY_PREFIX = 'nav:'
 const ROUTER_PAGE_KEY_PREFIX = 'router:'
 
@@ -49,8 +49,10 @@ const ROUTER_PAGE_KEY_PREFIX = 'router:'
 export interface ImpressionBinding {
   // 绑定的 FrameNode uniqueId，用于识别组件是否已被重建
   uniqueId: number
-  // 组件所在页面的标识（Navigation 子页 / router 页），用于页面隐藏/销毁时的状态处理
-  pageKeys: Array<string>
+
+  // 组件所在页面的标识（Navigation 子页 / router 页），用于页面隐藏/销毁时的状态处理。
+  // 组件尚未挂载到窗口时可能暂时取不到，实现方需在取到后缓存
+  getPageKeys(): Array<string>
 
   observe(ratios: Array<number>, intervalMs: number, onRatio: (ratio: number) => void, onDisappear: () => void): void
 
@@ -123,7 +125,7 @@ export class ImpressionTarget {
   }
 
   pageKeys(): Array<string> {
-    return this.binding ? this.binding.pageKeys : []
+    return this.binding ? this.binding.getPageKeys() : []
   }
 }
 
@@ -138,13 +140,37 @@ class _HiddenPageInfo {
 
 class _FrameNodeBinding implements ImpressionBinding {
   uniqueId: number
-  pageKeys: Array<string>
   node: FrameNode
+  uiContext: UIContext
+  pageKeys: Array<string> | undefined = undefined
 
-  constructor(node: FrameNode, pageKeys: Array<string>) {
+  constructor(node: FrameNode, uiContext: UIContext) {
     this.node = node
+    this.uiContext = uiContext
     this.uniqueId = node.getUniqueId()
-    this.pageKeys = pageKeys
+  }
+
+  getPageKeys(): Array<string> {
+    if (this.pageKeys) {
+      return this.pageKeys
+    }
+    let keys: Array<string> = []
+    try {
+      let pageInfo = this.uiContext.getPageInfoByUniqueId(this.uniqueId)
+      if (pageInfo?.navDestinationInfo) {
+        keys.push(NAV_PAGE_KEY_PREFIX + String(pageInfo.navDestinationInfo.navDestinationId ?? ''))
+      }
+      if (pageInfo?.routerPageInfo) {
+        keys.push(ROUTER_PAGE_KEY_PREFIX + String(pageInfo.routerPageInfo.pageId ?? ''))
+      }
+    } catch (e) {
+      // 节点已销毁
+    }
+    // 组件尚未挂载时取不到页面信息，留待下次再取；弹窗内的组件本身就没有页面信息，不影响判定
+    if (keys.length > 0) {
+      this.pageKeys = keys
+    }
+    return keys
   }
 
   observe(ratios: Array<number>, intervalMs: number, onRatio: (ratio: number) => void, onDisappear: () => void) {
@@ -218,20 +244,13 @@ class _DefaultHost implements ViewImpressionHost {
 
   findNode(componentId: string): ImpressionBinding | undefined {
     let uiContext = Autotrack.uiContent
-    let node = uiContext.getAttachedFrameNodeById(componentId)
+    // 优先查已挂载到窗口的组件；列表中尚未滑入的项可能已创建但未挂载，此时退而查整棵组件树，
+    // 可见面积监听在组件挂载、进入可视区后自然生效
+    let node = uiContext.getAttachedFrameNodeById(componentId) ?? uiContext.getFrameNodeById(componentId)
     if (!node) {
       return undefined
     }
-
-    let pageKeys: Array<string> = []
-    let pageInfo = uiContext.getPageInfoByUniqueId(node.getUniqueId())
-    if (pageInfo?.navDestinationInfo) {
-      pageKeys.push(NAV_PAGE_KEY_PREFIX + String(pageInfo.navDestinationInfo.navDestinationId ?? ''))
-    }
-    if (pageInfo?.routerPageInfo) {
-      pageKeys.push(ROUTER_PAGE_KEY_PREFIX + String(pageInfo.routerPageInfo.pageId ?? ''))
-    }
-    return new _FrameNodeBinding(node, pageKeys)
+    return new _FrameNodeBinding(node, uiContext)
   }
 
   schedule(task: () => void, delayMs: number) {
@@ -564,8 +583,8 @@ export default class ViewImpression {
 
   static scheduleBindRetry(target: ImpressionTarget) {
     if (target.bindRetryCount >= BIND_RETRY_TIMES) {
-      LogUtil.warn(() => '[ViewImpression] 未找到 id 为 ' + target.componentId + ' 的已挂载组件，曝光标记被忽略。' +
-        '请确认已为组件设置 .id()，并在组件的 onAppear 中调用 trackViewImpression')
+      LogUtil.warn(() => '[ViewImpression] 未找到 id 为 ' + target.componentId + ' 的组件，曝光标记被忽略。' +
+        '请确认已为组件设置 .id()，并在设置了该 id 的同一组件的 onAppear 中调用 trackViewImpression')
       ViewImpression.removeTarget(target.componentId)
       return
     }
