@@ -600,7 +600,7 @@ export default function viewImpressionTests() {
     it('delegate 抛异常不影响曝光', 0, () => {
       let delegate: GrowingImpressionDelegate = {
         viewImpressionShouldTrack: (componentId: string, eventName: string, identifier?: string): boolean => {
-          throw new Error('boom')
+          throw new Error('单测故意抛出的异常，用于验证异常隔离，可忽略')
         }
       }
       ViewImpression.addDelegate(delegate)
