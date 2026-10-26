@@ -619,14 +619,11 @@ export default function utilTests() {
       expect(json.hasKey('idx')).assertFalse()
     })
 
-    it('WIFI → r 字段应为 WIFI', 0, () => {
+    it('点击事件不携带网络状态 r 字段', 0, () => {
       let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
-      expect(json.getString('r')).assertEqual('WIFI')
-    })
-
-    it('4G → r 字段应为 CELL', 0, () => {
-      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), '4G'))
-      expect(json.getString('r')).assertEqual('CELL')
+      expect(json.hasKey('r')).assertFalse()
+      json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), '4G'))
+      expect(json.hasKey('r')).assertFalse()
     })
 
     it('latitude/longitude 有值时 lat/lng 字段应写入', 0, () => {
