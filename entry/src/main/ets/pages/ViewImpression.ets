@@ -25,6 +25,12 @@ const ID_ATTRS = 'imp_attrs'
 const ID_TOGGLE = 'imp_toggle'
 const ID_GOODS_PREFIX = 'imp_goods_'
 
+// @Builder 参数以对象字面量按引用传递，状态变化时才会刷新 UI（按值传递的基础类型不会刷新）
+interface TargetParams {
+  label: string
+  color: string
+}
+
 function makeGoodsList(count: number): Array<number> {
   let list: Array<number> = []
   for (let i = 0; i < count; i++) {
@@ -83,7 +89,7 @@ struct ViewImpression {
             this.CaseTitle('1. 基础标记 / 停止标记',
               '进入页面后上报 imp_basic；停止后滚出再滚回不再上报；重新标记后再上报一次')
             Column() {
-              this.Target('imp_basic（无属性）' + (this.basicMarked ? '' : ' - 已停止'), '#FFE7D2')
+              this.Target({ label: 'imp_basic（无属性）' + (this.basicMarked ? '' : ' - 已停止'), color: '#FFE7D2' })
             }
             .id(ID_BASIC)
             .onAppear(() => {
@@ -114,7 +120,7 @@ struct ViewImpression {
             this.CaseTitle('2. 带属性 / 重复标记',
               '原样重标不应再上报；改属性重标应再上报一次，且属性 version 为新值')
             Column() {
-              this.Target('imp_attrs（version = ' + this.attrsVersion + '）', '#E3F2FD')
+              this.Target({ label: 'imp_attrs（version = ' + this.attrsVersion + '）', color: '#E3F2FD' })
             }
             .id(ID_ATTRS)
             .onAppear(() => {
@@ -143,7 +149,7 @@ struct ViewImpression {
               '隐藏后组件被移除，标记随之移除；再次显示时在 onAppear 中重新标记并上报')
             if (this.toggleVisible) {
               Column() {
-                this.Target('imp_toggle', '#E8F5E9')
+                this.Target({ label: 'imp_toggle', color: '#E8F5E9' })
               }
               .id(ID_TOGGLE)
               .onAppear(() => {
@@ -178,7 +184,7 @@ struct ViewImpression {
 
         ForEach(this.goodsList, (item: number) => {
           ListItem() {
-            this.Target('imp_goods（goodsId = ' + item + '）', '#F1F3F5')
+            this.Target({ label: 'imp_goods（goodsId = ' + item + '）', color: '#F1F3F5' })
           }
           .id(ID_GOODS_PREFIX + item)
           .onAppear(() => {
@@ -209,12 +215,12 @@ struct ViewImpression {
   }
 
   @Builder
-  Target(label: string, color: string) {
-    Text(label)
+  Target(params: TargetParams) {
+    Text(params.label)
       .width('100%')
       .height(100)
       .textAlign(TextAlign.Center)
       .borderRadius(8)
-      .backgroundColor(color)
+      .backgroundColor(params.color)
   }
 }
