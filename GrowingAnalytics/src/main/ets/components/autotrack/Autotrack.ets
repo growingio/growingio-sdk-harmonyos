@@ -21,6 +21,7 @@ import window from '@ohos.window'
 
 import AutotrackClick from './AutotrackClick'
 import AutotrackPage from './AutotrackPage'
+import ViewImpression from './ViewImpression'
 import GrowingContext from '../core/Context'
 import { LogUtil } from '../utils/LogUtil'
 
@@ -34,6 +35,7 @@ export default class Autotrack {
       Autotrack.uiContent = context
       AutotrackClick.startObserver(context)
       AutotrackPage.startObserver(context)
+      ViewImpression.startObserver(context)
     } catch (e) {
       LogUtil.error(() => `Failed to obtain the main window. Cause code:${e.code}, message: ${e.message}`)
     }

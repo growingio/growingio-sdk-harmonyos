@@ -24,6 +24,7 @@ import webview from '@ohos.web.webview'
 
 import { GrowingConfig } from './GrowingConfig'
 import Autotrack from '../autotrack/Autotrack'
+import ViewImpression from '../autotrack/ViewImpression'
 import AnalyticsCore from '../core/AnalyticsCore'
 import { Flutter } from '../core/Flutter'
 import GeneralProps from '../core/GeneralProps'
@@ -40,6 +41,7 @@ export {
   AUTOTRACK_ELEMENT_ID as GrowingAutotrackElementID
 } from '../utils/Constants'
 export { Flutter as GrowingFlutterPlugin } from '../core/Flutter'
+export { GrowingImpressionConfig } from './GrowingImpression'
 export { UniApp as GrowingUniAppPlugin } from '../core/UniApp'
 
 export interface GrowingAnalyticsInterface {
@@ -283,6 +285,26 @@ export class GrowingAnalytics {
       return
     }
     Flutter.trackFlutterCircleData(argument)
+  }
+
+  /**
+   * 标记曝光元素，元素满足曝光条件时发送对应的埋点事件。默认支持重复曝光：
+   * 元素离开可视区再次进入时会再发送一次
+   * 组件需通过 .id() 设置唯一的 componentId，建议在该组件的 onAppear 中调用
+   * 曝光条件（可见面积占比、最小可见时长）通过 GrowingConfig.viewImpressionConfig 全局设置
+   * @param componentId 组件 id
+   * @param eventName 埋点事件名
+   * @param attributes 事件属性（可选）
+   */
+  static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType) {
+    ViewImpression.mark(componentId, eventName, attributes)
+  }
+
+  /**
+   * 移除组件上的全部曝光标记
+   */
+  static stopTrackViewImpression(componentId: string) {
+    ViewImpression.unmark(componentId)
   }
 
   static handleOpenURL(uri: string): boolean {

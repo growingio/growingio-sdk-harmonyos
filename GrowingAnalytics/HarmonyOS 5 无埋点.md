@@ -141,6 +141,86 @@ router.pushUrl({
 })
 ```
 
+### 元素曝光
+
+为组件打上曝光标记后，当组件满足曝光条件（可见面积占比、最小可见时长）时，SDK 自动发送对应的埋点事件；需在分析云平台事件管理界面创建该埋点事件以及关联事件属性。
+
+元素曝光属于无埋点能力的一部分，**仅支持 New SaaS**（CDP、SaaS 模式下调用将被忽略），需完成【开启无埋点监听】并开启 `autotrackEnabled`。
+
+#### 标记曝光元素
+
+`static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType)`
+
+标记曝光元素，默认支持重复曝光：元素离开可视区再次进入时会再发送一次
+
+`static stopTrackViewImpression(componentId: string)`
+
+移除组件上的全部曝光标记
+
+组件需通过 `.id()` 设置唯一的 componentId，并在**设置了该 id 的同一组件**的 `onAppear` 中调用（组件从组件树移除或所在页面销毁后，曝光标记随之移除，再次出现时需重新标记）。注意不要把 `.id()` 设在子组件上、却在父组件（如 `ListItem`）的 `onAppear` 中调用：列表项的子组件可能在滑入可视区时才创建，此时父组件的 `onAppear` 早已触发过
+
+| 参数          | 参数类型              | 说明                              |
+|-------------|-------------------|---------------------------------|
+| `componentId` | `string`          | 组件 id，与组件 `.id()` 一致，需在窗口内唯一 |
+| `eventName`   | `string`          | 埋点事件名                          |
+| `attributes`  | `GrowingAttrType` | 事件属性（可选）                       |
+
+以下情况不会重复发送：
+- 元素一直停留在可视区内，无论停留多久
+- 应用退到后台再回到前台，期间元素没有离开过可视区
+- 重复标记，但事件名、属性、配置都没有变化（因此列表刷新时对可见元素原样重标一次是安全的）
+
+跳转到其他页面后返回，仍可见的元素会再次曝光。
+
+```typescript
+import { GrowingAnalytics } from '@growingio/analytics'
+
+List() {
+  ForEach(this.goodsList, (item: Goods) => {
+    ListItem() {
+      GoodsCell({ goods: item })
+    }
+    .id('goods_' + item.id)
+    .onAppear(() => {
+      GrowingAnalytics.trackViewImpression('goods_' + item.id, 'goodsImp', { 'goodsId': item.id })
+    })
+  }, (item: Goods) => item.id)
+}
+```
+
+#### 曝光条件
+
+曝光条件通过全局配置统一设置：
+
+| 配置项                           | 参数类型                      | 默认值    | 说明                                         |
+|-------------------------------|---------------------------|--------|--------------------------------------------|
+| `viewImpressionConfig`        | `GrowingImpressionConfig` | -      | 全局曝光条件，见下表                                 |
+| `viewImpressionEnabled`       | `boolean`                 | `true` | 曝光采集开关；`autotrackEnabled` 为 `false` 时曝光同样不采集 |
+| `viewImpressionCheckInterval` | `number`                  | `0.5`  | 曝光检测间隔，单位秒，最小 0.1                          |
+
+`GrowingImpressionConfig`：
+
+| 属性                | 参数类型     | 说明                              |
+|-------------------|----------|---------------------------------|
+| `impressionScale` | `number` | 可见面积占比阈值，有效范围 0~1，默认 0（露出即算曝光） |
+| `stayDuration`    | `number` | 最小可见时长，单位秒，默认 0（无需停留）          |
+
+```typescript
+let config = new GrowingConfig().NewSaaS(
+  'Your AccountId',
+  'Your DataSourceId',
+  'Your UrlScheme',
+  'Your DataCollectionServerHost<Optional>'
+)
+config.autotrackEnabled = true
+config.viewImpressionConfig = GrowingImpressionConfig.create(0.5, 1)
+```
+
+配置在 SDK 初始化时读取，初始化之后再改不会生效。
+
+> 注意：
+> 可见面积由系统计算，仅考虑祖先组件裁剪与窗口边界，不计算兄弟组件遮挡（如 Stack 叠放、zIndex）、窗口遮挡与旋转
+
 ### 最佳实践
 
 #### 设置组件标识

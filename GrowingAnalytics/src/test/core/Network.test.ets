@@ -131,9 +131,16 @@ export default function networkTests() {
 
     it('useProtobuf=false → Content-Type 应为 application/json', 0, () => {
       let opts: NetworkTestOptions = { encrypt: false, compress: false, protobuf: false }
-      let ctx = buildContext(ConfigMode.SaaS, 'a', 'https://x.com', opts)
+      let ctx = buildContext(ConfigMode.NewSaaS, 'a', 'https://x.com', opts)
       let headers = Network.generateHeaders(Date.now(), false, ctx)
       expect(headers['Content-Type']).assertEqual('application/json')
+    })
+
+    it('SaaS 模式 → Content-Type 固定为 application/octet-stream', 0, () => {
+      let opts: NetworkTestOptions = { encrypt: false, compress: false, protobuf: false }
+      let ctx = buildContext(ConfigMode.SaaS, 'a', 'https://x.com', opts)
+      let headers = Network.generateHeaders(Date.now(), false, ctx)
+      expect(headers['Content-Type']).assertEqual('application/octet-stream')
     })
 
     it('Accept 应始终为 application/json', 0, () => {

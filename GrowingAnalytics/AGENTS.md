@@ -22,7 +22,8 @@ GrowingAnalytics/
 │   ├── components/
 │   │   ├── interfaces/           # 公共 API 导出
 │   │   │   ├── GrowingAnalytics.ets   # 主 SDK API 类
-│   │   │   └── GrowingConfig.ets      # 配置类
+│   │   │   ├── GrowingConfig.ets      # 配置类
+│   │   │   └── GrowingImpression.ets  # 曝光配置（回调为内部预留）
 │   │   ├── core/                 # 核心 SDK 功能
 │   │   │   ├── AnalyticsCore.ets      # 核心 SDK 引擎
 │   │   │   ├── Context.ets            # SDK 上下文管理
@@ -54,7 +55,8 @@ GrowingAnalytics/
 │   │   ├── autotrack/            # 自动事件追踪
 │   │   │   ├── Autotrack.ets
 │   │   │   ├── AutotrackPage.ets
-│   │   │   └── AutotrackClick.ets
+│   │   │   ├── AutotrackClick.ets
+│   │   │   └── ViewImpression.ets     # 元素曝光
 │   │   ├── circle/               # 可视化圈选
 │   │   │   ├── Circle.ets
 │   │   │   └── CircleElement.ets
@@ -138,6 +140,10 @@ static trackFlutterCircleData(argument: Map<string, Object>)
 // 窗口生命周期（自动追踪）
 static onWindowStageCreate(ability: UIAbility, windowStage: WindowStage)
 
+// 元素曝光（仅 NewSaaS，需 autotrackEnabled；曝光条件经 GrowingConfig.viewImpressionConfig 全局设置）
+static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType)
+static stopTrackViewImpression(componentId: string)
+
 // SaaS 特定
 static setPeopleVariable(attributes: GrowingAttrType)
 static setEvar(attributes: GrowingAttrType)
@@ -169,6 +175,9 @@ class GrowingConfig {
   hybridAutotrackEnabled: boolean // 默认: true
   plugins: Array<PluginsInterface>
   ignoreField: number            // 忽略字段的位掩码
+  viewImpressionEnabled: boolean // 默认: true（仅 NewSaaS，需 autotrackEnabled）
+  viewImpressionConfig: GrowingImpressionConfig // 全局曝光条件（impressionScale / stayDuration）
+  viewImpressionCheckInterval: number // 默认: 0.5（秒）
   requestOptions: RequestOptions
   dataValidityPeriod: number      // 默认: 7（天）
 }
@@ -234,6 +243,7 @@ config.autotrackAllPages = true     // 追踪所有页面
 ### 追踪的事件
 - **页面事件**: 页面导航（通过 NavPathStack）
 - **点击事件**: 组件点击（带 `growing_attributes`）
+- **曝光事件**: 通过 `trackViewImpression` 标记的组件满足可见条件时发送 CUSTOM 事件
 
 ### 自定义属性
 ```typescript

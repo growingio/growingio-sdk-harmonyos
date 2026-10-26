@@ -619,14 +619,11 @@ export default function utilTests() {
       expect(json.hasKey('idx')).assertFalse()
     })
 
-    it('WIFI → r 字段应为 WIFI', 0, () => {
+    it('点击事件不携带网络状态 r 字段', 0, () => {
       let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
-      expect(json.getString('r')).assertEqual('WIFI')
-    })
-
-    it('4G → r 字段应为 CELL', 0, () => {
-      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), '4G'))
-      expect(json.getString('r')).assertEqual('CELL')
+      expect(json.hasKey('r')).assertFalse()
+      json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), '4G'))
+      expect(json.hasKey('r')).assertFalse()
     })
 
     it('latitude/longitude 有值时 lat/lng 字段应写入', 0, () => {
@@ -697,6 +694,27 @@ export default function utilTests() {
       expect(json.getString('eventType')).assertEqual('CUSTOM')
       expect(json.getString('eventName')).assertEqual('purchase')
       expect(json.getNumber('eventSequenceId')).assertEqual(42)
+    })
+  })
+
+  describe('Util_isAttributesEqual', () => {
+
+    it('均为空（含 undefined）视为相等', 0, () => {
+      expect(Util.isAttributesEqual(undefined, undefined)).assertTrue()
+      expect(Util.isAttributesEqual(undefined, {})).assertTrue()
+    })
+
+    it('键值完全一致视为相等，与键顺序无关', 0, () => {
+      let a: AttributesType = { 'a': 1, 'b': 'x', 'c': [1, 2] }
+      let b: AttributesType = { 'c': [1, 2], 'b': 'x', 'a': 1 }
+      expect(Util.isAttributesEqual(a, b)).assertTrue()
+    })
+
+    it('值、数组元素或键数量不同视为不等', 0, () => {
+      expect(Util.isAttributesEqual({ 'a': 1 }, { 'a': '1' })).assertFalse()
+      expect(Util.isAttributesEqual({ 'a': [1, 2] }, { 'a': [2, 1] })).assertFalse()
+      expect(Util.isAttributesEqual({ 'a': 1 }, { 'a': 1, 'b': 2 })).assertFalse()
+      expect(Util.isAttributesEqual({ 'a': 1 }, { 'b': 1 })).assertFalse()
     })
   })
 }

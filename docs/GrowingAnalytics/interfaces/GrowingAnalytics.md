@@ -527,6 +527,20 @@ onWindowStageCreate(windowStage: window.WindowStage): void {
 
 ---
 
+#### trackViewImpression() / stopTrackViewImpression() - 元素曝光
+
+```typescript
+static trackViewImpression(componentId: string, eventName: string, attributes?: GrowingAttrType): void
+static stopTrackViewImpression(componentId: string): void
+```
+
+- 前置条件：SDK 已初始化、仅 NewSaaS 模式（CDP / SaaS 不可用）、已调用 `onWindowStageCreate`、`autotrackEnabled` 与 `viewImpressionEnabled` 均为 true，否则告警并忽略
+- `componentId` 为组件 `.id()`，需在设置了该 id 的同一组件的 `onAppear` 中标记；满足可见条件时发送 CUSTOM 事件（仅主 Tracker），默认支持重复曝光
+- 曝光条件通过 `GrowingConfig.viewImpressionConfig` 全局设置
+- 与 iOS 一致，identifier 多槽位、不可重复曝光、单元素配置、属性更新、曝光回调、状态重置为内部预留能力，暂不公开；详见 [ViewImpression.md](../autotrack/ViewImpression.md)
+
+---
+
 ### 13. URL Scheme
 
 #### handleOpenURL() - 处理 URL Scheme
