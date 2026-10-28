@@ -118,6 +118,13 @@ export default class EventDatabase {
     context: GrowingContext,
     eventTypes?: string[]
   ): Promise<EventPersistence[]> {
+    // 与 removeEvents 保持一致：数据库未就绪时不读取。
+    // 否则冷启动时可读到上次残留的事件并上报成功，但 removeEvents 因 store 未就绪无法删除，
+    // 待数据库初始化完成后同一批事件会被再次上报。
+    if (!EventDatabase.store) {
+      return []
+    }
+
     try {
       const events = await taskpool.execute(
         queryEventsTask,
@@ -142,8 +149,13 @@ export default class EventDatabase {
   }
 
   static async removeEvents(events: EventPersistence[]) {
-    if (!EventDatabase.store || events.length === 0) {
+    if (events.length === 0) {
       return
+    }
+
+    if (!EventDatabase.store) {
+      // 不能静默返回：调用方会误以为事件已删除（并通知插件 onEventsRemoveFromDisk）
+      throw new Error('Database is not initialized, events are not removed')
     }
 
     try {

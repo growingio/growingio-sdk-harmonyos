@@ -63,6 +63,7 @@ export interface SendCycleIO {
  * - 发送成功（2xx-3xx） → 删除事件，若还有更多返回 true，否则 false
  * - 发送失败（4xx/5xx）→ 不删除，返回 false
  * - sendEvents 抛出异常 → 不删除，异常向上传播
+ * - removeEvents 抛出异常 → 不调用 afterRemove，异常向上传播
  *
  * @returns true 表示还有事件需要继续发送（调用方负责递归）
  */
