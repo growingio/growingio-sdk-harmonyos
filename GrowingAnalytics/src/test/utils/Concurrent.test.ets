@@ -66,13 +66,19 @@ export default function concurrentTests() {
       expect(decodeJson(result.serialize).deviceId).assertEqual('old-device')
     })
 
-    it('protobuf_should_replace_device_id', 0, () => {
-      let result = processEvents([makeEvent()], true, false, false, 'new-device')
+    it('protobuf_should_replace_device_id_and_preserve_source', 0, () => {
+      let event = makeEvent()
+      let source = event.data
+      let result = processEvents([event], true, false, false, 'new-device')
       let decoded = event_pb.EventV3List.decode(new Uint8Array(result.serialize))
+      let sentEvent = JSON.parse(result.events[0].data) as SerializedEvent
       expect(decoded.values.length).assertEqual(1)
       expect(decoded.values[0].deviceId).assertEqual('new-device')
       expect(decoded.values[0].eventName).assertEqual('purchase')
       expect(decoded.values[0].eventSequenceId).assertEqual(7)
+      expect(sentEvent.deviceId).assertEqual('new-device')
+      expect(result.events[0].uuid).assertEqual(event.uuid)
+      expect(event.data).assertEqual(source)
     })
 
     it('compressed_json_should_replace_device_id', 0, () => {

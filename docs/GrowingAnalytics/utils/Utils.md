@@ -62,38 +62,52 @@ export function processEvents(
 **实现细节：**
 
 ```typescript
-// NewSaaS identify 后：在后台复制事件并替换访问用户 ID，数据库原文不变
-if (deviceId.length > 0) {
-    events = events.map(e => {
-        let event = JSON.parse(e.data) as Event
-        event.deviceId = deviceId
-        return EventPersistence.fromDatabase(
-            e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
-        )
-    })
-}
+let shouldReplaceDeviceId = deviceId.length > 0
 
-// Protobuf 序列化流程
+// Protobuf：每条事件只解析一次，同一对象用于 DTO 和发送副本
 if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
+    let sentEvents: EventPersistence[] = shouldReplaceDeviceId ? [] : events
     events.forEach(e => {
-        let event = JSON.parse(e.data) as object
-        let dto = event_pb.EventV3Dto.fromObject(event)
-        values.push(dto)
+        let sentEvent = e
+        let event = JSON.parse(e.data) as Event
+        if (shouldReplaceDeviceId) {
+            event.deviceId = deviceId
+            sentEvent = EventPersistence.fromDatabase(
+                e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+            )
+        }
+        values.push(event_pb.EventV3Dto.fromObject(event))
+        if (shouldReplaceDeviceId) {
+            sentEvents.push(sentEvent)
+        }
     })
+    events = sentEvents
     let list = event_pb.EventV3List.create({values: values})
     let arrayBuffer: Uint8Array = event_pb.EventV3List.encode(list).finish()
     serialize = buffer.from(arrayBuffer).buffer
-} else if (mergeSaaSClick) {
-    // SaaS 点击合并：按 t/u/s/d/p/ptm/r 分组，公共字段提到顶层，
-    // 每条点击的专属字段（tm/x/gesid/esid，及可选 v/idx/h）收入 e 数组
-    // → 减少 SaaS 无埋点 VIEW_CLICK 的上报体积
-    let json = JSON.stringify(mergeGroups(events))
-    serialize = buffer.from(json, 'utf-8').buffer
 } else {
-    // JSON 序列化
-    let json = '[' + events.map(event => String(event.data)).join(',') + ']'
-    serialize = buffer.from(json, 'utf-8').buffer
+    // NewSaaS identify 后：在后台复制事件并替换访问用户 ID，数据库原文不变
+    if (shouldReplaceDeviceId) {
+        events = events.map(e => {
+            let event = JSON.parse(e.data) as Event
+            event.deviceId = deviceId
+            return EventPersistence.fromDatabase(
+                e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+            )
+        })
+    }
+    if (mergeSaaSClick) {
+        // SaaS 点击合并：按 t/u/s/d/p/ptm/r 分组，公共字段提到顶层，
+        // 每条点击的专属字段（tm/x/gesid/esid，及可选 v/idx/h）收入 e 数组
+        // → 减少 SaaS 无埋点 VIEW_CLICK 的上报体积
+        let json = JSON.stringify(mergeGroups(events))
+        serialize = buffer.from(json, 'utf-8').buffer
+    } else {
+        // JSON 序列化
+        let json = '[' + events.map(event => String(event.data)).join(',') + ']'
+        serialize = buffer.from(json, 'utf-8').buffer
+    }
 }
 
 // Snappy 压缩

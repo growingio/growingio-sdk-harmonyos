@@ -35,31 +35,30 @@ export function processEvents(
   deviceId: string = ''
 ): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
-  if (deviceId.length > 0) {
-    events = events.map(e => {
-      try {
-        let event = JSON.parse(e.data) as Event
-        event.deviceId = deviceId
-        return EventPersistence.fromDatabase(
-          e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
-        )
-      } catch (error) {
-        LogUtil.error(() => 'Failed to replace event deviceId: ' + error)
-        return e
-      }
-    })
-  }
+  let shouldReplaceDeviceId = deviceId.length > 0
   if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
+    let sentEvents: EventPersistence[] = shouldReplaceDeviceId ? [] : events
     events.forEach(e => {
+      let sentEvent = e
       try {
-        let event = JSON.parse(e.data) as object
+        let event = JSON.parse(e.data) as Event
+        if (shouldReplaceDeviceId) {
+          event.deviceId = deviceId
+          sentEvent = EventPersistence.fromDatabase(
+            e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+          )
+        }
         let dto = event_pb.EventV3Dto.fromObject(event)
         values.push(dto)
       } catch (error) {
         LogUtil.error(() => 'Failed to parse event data: ' + error)
       }
+      if (shouldReplaceDeviceId) {
+        sentEvents.push(sentEvent)
+      }
     })
+    events = sentEvents
     try {
       let list = event_pb.EventV3List.create({values: values})
       let arrayBuffer: Uint8Array = event_pb.EventV3List.encode(list).finish()
@@ -68,6 +67,20 @@ export function processEvents(
       LogUtil.error(() => 'Failed to create protobuf: ' + error)
     }
   } else {
+    if (shouldReplaceDeviceId) {
+      events = events.map(e => {
+        try {
+          let event = JSON.parse(e.data) as Event
+          event.deviceId = deviceId
+          return EventPersistence.fromDatabase(
+            e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+          )
+        } catch (error) {
+          LogUtil.error(() => 'Failed to replace event deviceId: ' + error)
+          return e
+        }
+      })
+    }
     try {
       let json: string
       if (mergeSaaSClick) {

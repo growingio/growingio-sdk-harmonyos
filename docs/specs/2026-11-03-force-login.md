@@ -107,7 +107,7 @@ GrowingAnalytics.identify('访问用户ID')
 ## 6. 数据协议与隐私
 
 - 不新增事件字段，不修改 Protobuf schema、SaaS JSON 协议、请求路径或请求头。
-- NewSaaS Protobuf 与 JSON 共用替换后的中间事件 JSON。
+- NewSaaS Protobuf 与 JSON 的发送副本均使用替换后的事件 JSON；Protobuf 构造 DTO 时复用已解析对象，避免重复解析。
 - `compressEnabled`、`encryptEnabled` 仍在现有网络层处理，组合行为不变。
 - 不新增设备信息采集，不新增权限，不扩展 `ignoreField`。
 - 不修改 `dataCollectionEnabled`、事件有效期、本地加密数据库和事件序列号语义。
