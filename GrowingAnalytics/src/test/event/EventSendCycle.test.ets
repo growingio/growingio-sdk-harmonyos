@@ -205,4 +205,32 @@ export default function eventSendCycleTests() {
       done()
     })
   })
+
+  describe('runSendCycle_removeFailure', () => {
+
+    it('removeEvents 抛出异常时不调用 afterRemove，异常向上传播', 0, async (done: Function) => {
+      let afterRemoveCalled = false
+      let caught = false
+
+      try {
+        await runSendCycle({
+          fetchEvents: () => Promise.resolve([makeFakePersistence('e1')]),
+          sendEvents: async (_events: EventPersistence[]): Promise<SendResult> => fakeSendResult(200),
+          removeEvents: (_events: EventPersistence[]): Promise<void> => {
+            return Promise.reject(new Error('Database is not initialized, events are not removed'))
+          },
+          afterRemove: (_events: EventPersistence[], _request: rcp.Request) => {
+            afterRemoveCalled = true
+          },
+          countRemaining: () => Promise.resolve(0)
+        })
+      } catch (_e) {
+        caught = true
+      }
+
+      expect(caught).assertTrue()
+      expect(afterRemoveCalled).assertFalse()
+      done()
+    })
+  })
 }
