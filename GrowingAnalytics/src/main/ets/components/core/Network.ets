@@ -24,8 +24,19 @@ import GrowingContext from './Context'
 import EventPersistence from '../event/EventPersistence'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import { processEvents } from '../utils/Concurrent'
+import { ProcessEventsResult } from '../utils/ProcessEventsResult'
 import Util from '../utils/Util'
 import { LogUtil } from '../utils/LogUtil'
+
+export interface GeneratedRequest {
+  request: rcp.Request
+  sentEvents: EventPersistence[]
+}
+
+export interface NetworkResponse {
+  response: rcp.Response
+  sentEvents: EventPersistence[]
+}
 
 export default class Network {
   static session: rcp.Session
@@ -44,20 +55,23 @@ export default class Network {
     context: GrowingContext,
     mergeSaaSClick: boolean = false,
     deviceId: string = ''
-  ): Promise<rcp.Response> {
+  ): Promise<NetworkResponse> {
     if (!Network.session) {
       return Promise.reject(new Error('Network session not initialized'))
     }
 
     let curTime = Date.now()
     let url = Network.generateUrl(curTime, urlPath, context)
+    let generated: GeneratedRequest
     try {
-      let request = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick, deviceId)
-      return Network.session.fetch(request)
+      generated = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick, deviceId)
     } catch (error) {
       LogUtil.error(() => 'Failed to generate request: ' + error)
       return Promise.reject(error)
     }
+    let response = await Network.session.fetch(generated.request)
+    let result: NetworkResponse = { response: response, sentEvents: generated.sentEvents }
+    return result
   }
 
   static async generateRequest(
@@ -67,7 +81,7 @@ export default class Network {
     context: GrowingContext,
     mergeSaaSClick: boolean = false,
     deviceId: string = ''
-  ): Promise<rcp.Request> {
+  ): Promise<GeneratedRequest> {
     let useProtobuf = context.config.useProtobuf
     if (context.config.mode == ConfigMode.SaaS) {
       // SaaS mode have not protobuf support
@@ -77,13 +91,14 @@ export default class Network {
     let processTask = new taskpool.Task(
       processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick, deviceId
     )
-    let serialize: ArrayBuffer
+    let processed: ProcessEventsResult
     try {
-      serialize = await taskpool.execute(processTask) as ArrayBuffer
+      processed = await taskpool.execute(processTask) as ProcessEventsResult
     } catch (error) {
       LogUtil.error(() => 'Failed to execute taskpool task: ' + error)
       return Promise.reject(error)
     }
+    let serialize = processed.serialize
     if (context.config.encryptEnabled) {
       serialize = Util.encrypt(serialize, time)
     }
@@ -104,7 +119,8 @@ export default class Network {
       tracing: tracingConfig,
     }
     request.configuration = requestConfig
-    return request
+    let result: GeneratedRequest = { request: request, sentEvents: processed.events }
+    return result
   }
 
   static generateHeaders(time: number, useProtobuf: boolean, context: GrowingContext): Record<string, string> {

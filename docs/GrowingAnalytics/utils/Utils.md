@@ -18,7 +18,7 @@ export function processEvents(
     compressEnabled: boolean,
     mergeSaaSClick: boolean = false,
     deviceId: string = ''
-): ArrayBuffer
+): ProcessEventsResult
 ```
 
 **参数：**
@@ -29,6 +29,10 @@ export function processEvents(
 | `compressEnabled` | `boolean` | 是否启用 Snappy 压缩 |
 | `mergeSaaSClick` | `boolean` | 是否启用 SaaS 点击合并（仅 JSON 分支生效，默认 `false`） |
 | `deviceId` | `string` | NewSaaS 当前访问用户 ID；非空时在后台复制事件并替换原 `deviceId` |
+
+**返回值：**
+- `serialize: ArrayBuffer`：序列化并按配置压缩后的请求体。
+- `events: EventPersistence[]`：实际发送副本；替换 ID 时保留原 UUID 和其他元数据，数据库原对象不变。
 
 **处理流程：**
 
@@ -52,7 +56,7 @@ export function processEvents(
         Snappy 压缩
             │
             ▼
-    输出: ArrayBuffer
+    输出: ProcessEventsResult（serialize + events）
 ```
 
 **实现细节：**
@@ -96,6 +100,8 @@ if (useProtobuf) {
 if (compressEnabled) {
     serialize = snappy.compress(serialize) as ArrayBuffer
 }
+
+return new ProcessEventsResult(serialize, events)
 ```
 
 > **SaaS 点击合并细节**：分组 key 为 `t_u_s_d_p_ptm_r`；顶层公共字段含 `t/tm/u/s/d/p/ptm/r`，并按需带上 `cs1/q/lat/lng`（有值才写）；`e` 数组中每个元素含 `tm/x/gesid/esid`，按需带上 `v/idx/h`。仅在 `mergeSaaSClick == true`（即 SaaS 无埋点点击批量上报）时走此分支。

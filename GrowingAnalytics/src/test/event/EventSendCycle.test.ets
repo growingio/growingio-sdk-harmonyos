@@ -8,7 +8,7 @@ import EventPersistence from '../../main/ets/components/event/EventPersistence'
 /** 构造测试用的最小 SendResult */
 function fakeSendResult(statusCode: number): SendResult {
   let request = new rcp.Request('https://fake.growingio.com/collect')
-  return { statusCode: statusCode, request: request } as SendResult
+  return { statusCode: statusCode, request: request, sentEvents: [] } as SendResult
 }
 
 export default function eventSendCycleTests() {
@@ -115,6 +115,33 @@ export default function eventSendCycleTests() {
       expect(callOrder[0]).assertEqual('remove')
       expect(callOrder[1]).assertEqual('afterRemove')
       expect(receivedRequest !== null).assertTrue()
+      done()
+    })
+
+    it('afterRemove 应收到实际发送副本，removeEvents 仍收到原事件', 0, async (done: Function) => {
+      const storedEvent = makeFakePersistence('stored-event')
+      const sentEvent = makeFakePersistence('sent-event')
+      let removedEvents: EventPersistence[] = []
+      let callbackEvents: EventPersistence[] = []
+
+      await runSendCycle({
+        fetchEvents: () => Promise.resolve([storedEvent]),
+        sendEvents: async (_events: EventPersistence[]): Promise<SendResult> => {
+          let request = new rcp.Request('https://fake.growingio.com/collect')
+          return { statusCode: 200, request: request, sentEvents: [sentEvent] } as SendResult
+        },
+        removeEvents: (events: EventPersistence[]) => {
+          removedEvents = events
+          return Promise.resolve()
+        },
+        afterRemove: (events: EventPersistence[], _request: rcp.Request) => {
+          callbackEvents = events
+        },
+        countRemaining: () => Promise.resolve(0)
+      })
+
+      expect(removedEvents[0].uuid).assertEqual('stored-event')
+      expect(callbackEvents[0].uuid).assertEqual('sent-event')
       done()
     })
 

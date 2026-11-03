@@ -33,12 +33,13 @@ const URL_PATH_SAAS_CSTM = '/v3/accountId/harmonyos/cstm'
 const URL_PATH_SAAS_OTHER = '/v3/accountId/harmonyos/other'
 
 /**
- * sendEvents 的返回结果，将 statusCode 和 request 显式绑定，
+ * sendEvents 的返回结果，将 statusCode、request 和实际发送副本显式绑定，
  * 避免调用方通过闭包共享可变状态。
  */
 export interface SendResult {
   statusCode: number
   request: rcp.Request
+  sentEvents: EventPersistence[]
 }
 
 /**
@@ -82,7 +83,7 @@ export async function runSendCycle(io: SendCycleIO): Promise<boolean> {
 
   if (result.statusCode >= 200 && result.statusCode < 400) {
     await io.removeEvents(events)
-    io.afterRemove(events, result.request)
+    io.afterRemove(result.sentEvents, result.request)
     const count = await io.countRemaining()
     return count > REQUEST_MAX_EVENT_COUNT
   }
@@ -171,8 +172,9 @@ export default class EventSender {
           eventTypes
         ),
         sendEvents: async (events: EventPersistence[]): Promise<SendResult> => {
-          let response = await Network.request(events, urlPath, context, this.mergeSaaSClick,
+          let networkResponse = await Network.request(events, urlPath, context, this.mergeSaaSClick,
             ForceLogin.getOverrideDeviceId(context))
+          let response = networkResponse.response
           Plugins.onResponseReceive(response)
           if (response.statusCode >= 200 && response.statusCode < 400) {
             LogUtil.info(() => 'Request Success, Url = ' + response.request.url)
@@ -180,7 +182,9 @@ export default class EventSender {
           } else {
             LogUtil.info(() => 'Request Failure, responseCode: ' + String(response.statusCode))
           }
-          return { statusCode: response.statusCode, request: response.request } as SendResult
+          return {
+            statusCode: response.statusCode, request: response.request, sentEvents: networkResponse.sentEvents
+          } as SendResult
         },
         removeEvents: (events: EventPersistence[]): Promise<void> => EventDatabase.removeEvents([...events]),
         afterRemove: (events: EventPersistence[], request: rcp.Request) => {

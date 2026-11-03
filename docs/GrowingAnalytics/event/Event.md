@@ -448,15 +448,16 @@ class EventSender {
 
     // 4. 发送请求，后台序列化时替换 NewSaaS 访问用户 ID
     try {
-      let response = await Network.request(
+      let networkResponse = await Network.request(
         events, this.urlPath, context, this.mergeSaaSClick, ForceLogin.getOverrideDeviceId(context)
       )
+      let response = networkResponse.response
       Plugins.onResponseReceive(response)
 
       if (response.statusCode >= 200 && response.statusCode < 400) {
-        // 5. 发送成功，删除已发送事件
+        // 5. 原事件用于删除，实际发送副本用于插件回调
         await EventDatabase.removeEvents([...events])
-        Plugins.onEventsDidSend(events, response.request)
+        Plugins.onEventsDidSend(networkResponse.sentEvents, response.request)
         Plugins.onEventsRemoveFromDisk(events.map(e => e.uuid))
         this.isUploading = false
 

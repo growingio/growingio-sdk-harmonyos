@@ -24,6 +24,7 @@ import EventPersistence from "../event/EventPersistence"
 import { LogUtil } from './LogUtil'
 import snappy from 'snappyjs'
 import { event_pb } from './protobuf/event_pb'
+import { ProcessEventsResult } from './ProcessEventsResult'
 
 @Concurrent
 export function processEvents(
@@ -32,7 +33,7 @@ export function processEvents(
   compressEnabled: boolean,
   mergeSaaSClick: boolean = false,
   deviceId: string = ''
-): ArrayBuffer {
+): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
   if (deviceId.length > 0) {
     events = events.map(e => {
@@ -143,5 +144,5 @@ export function processEvents(
     }
   }
 
-  return serialize
+  return new ProcessEventsResult(serialize, events)
 }
