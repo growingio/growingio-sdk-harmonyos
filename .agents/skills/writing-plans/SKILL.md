@@ -1,62 +1,51 @@
 ---
 name: writing-plans
-description: Use when a change affects 3 or more files or alters public API, and an implementation plan is needed
+description: Use when a request has unclear scope, affects multiple modules or public APIs, or needs an implementation plan before coding
 ---
 
-# Writing Plans
+# 按需澄清与实施计划
 
-> **Type:** Technique | **Discipline:** Rigid
+计划的目的是暴露决策和遗漏，不是为每个改动增加文档和审批。能够从代码、规格或用户指令中得到答案时，直接继续；只有答案会改变实现方向时才询问用户。
 
-指导如何写好一份实施规划。改动文件 ≥3 或涉及公开 API 变更时，先写 plan 再实施。
+## 先判断所需粒度
 
-**核心原则：** 写 plan 时多想 10 分钟，实施时少返工 1 小时。
+- 范围清楚的小改动：直接实施，完成后验证。
+- 用户已经确认方案或明确要求直接实施、提交 PR：不重复要求审批，不强制新增规格或计划文件。
+- 跨模块、修改公开 API 或数据协议、存在多种实现方向：先给出简短计划和主要取舍。
+- 复杂且需要留存决策的变更：可写入 `docs/plans/YYYY-MM-DD-<topic>.md`；不要把计划文档数量当作完成度。
 
-## 何时触发
+计划至少说明：目标、受影响行为、关键实现路径和验证方式。任务拆分按依赖顺序组织，测试与被测代码放在同一实施单元。
 
-改动影响 ≥ 3 个文件，或涉及公开 API 变更时。
+## 开始前的项目上下文
 
-## 影响面自查清单
+按需读取：
 
-按改动类型对照清单列全受影响的文件/路径，漏一项 = 返工：
+1. `docs/sdk-engineering-guide.md` 的项目索引。
+2. `docs/sdk-doc-routing.md` 中与改动场景对应的模块文档。
+3. 核心模块改动前读取 `docs/sdk-critical-rules.md`。
+4. 相关源码、测试和近期相关变更，不凭名称猜行为。
 
-| 改动类型 | 必须同时覆盖 |
-|---|---|
-| **公开 API 新增/改/删** | `Index.ets` + `obfuscation-rules.txt` + `docs/GrowingAnalytics/interfaces/*.md`（涉及 SaaS 差异加 `README_SaaS.md`） |
-| **事件字段变更** | SaaS（JSON MPv2）+ NewSaaS（Protobuf）+ CDP（Protobuf）三产品线在"影响产品线"列显式标注 |
-| **核心模块** (`core/` `event/` `autotrack/`) | 实现文件 + `*.test.ets` 单测 + `docs/GrowingAnalytics/<module>/*.md` |
-| **GrowingConfig 变更** | NewSaaS / SaaS / CDP 三种工厂方法的默认值 + `copy()` 校验逻辑 |
-| **autotrack 改动** | Native / Hybrid / Flutter 三场景 + **SaaS 模式不支持无埋点，路径上显式跳过** |
-| **session 改动** | 前台触发 + 后台 APP_CLOSED + `sessionInterval`（30s）超时逻辑 |
-| **事件上报改动** | Protobuf 路径 + JSON 路径 + `compressEnabled` / `encryptEnabled` 开关 + `eventSequenceId` |
-| **生命周期与线程** | UIAbility `onForeground`/`onBackground` + 主线程零阻塞（IO 走 TaskPool） + `dataCollectionEnabled` 开关尊重 |
+## 影响面检查
 
-## 任务拆分
+只列实际适用的项目：
 
-**拆成多任务：** 变更逻辑独立且可并行 / 单任务描述 > 200 字还说不清。
-**合并为单任务：** 接口与其使用者（拆开编译不过） / 同模块内部重构 / TDD 内测试与被测代码。
+| 改动 | 必查内容 |
+|------|----------|
+| 公开 API | 模块入口、声明、混淆规则、公开文档、调用方和测试 |
+| GrowingConfig | NewSaaS / SaaS / CDP 的适用性、默认值和 `copy()` |
+| 事件字段或上报 | 各受影响产品线、Protobuf / JSON、压缩 / 加密、事件序号 |
+| 核心模块 | 实现、单元测试、对应模块文档、隐私与线程约束 |
+| Autotrack / Hybrid / Flutter | 各入口的支持范围和明确的跳过行为 |
+| Session / 生命周期 | 前后台、超时、重复初始化和状态清理 |
 
-拆分后在当前会话内按任务顺序实施，每个任务完成即验证，不留到最后一起验。
+逐项确认 NewSaaS / SaaS / CDP 是受影响还是明确不变，避免把单产品线需求扩展到全部模式。
 
-## Rationalizations
+## 需要用户决策的情况
 
-| Excuse | Reality |
-|---|---|
-| "plan 写得越细越安全" | 过度设计 = 浪费；plan 划边界和决策点，不是代码草稿 |
-| "先动手改两个文件再补 plan" | ≥3 文件动手那刻已经违规 |
-| "影响文件只列改到的源码" | 文档 / 混淆规则 / 测试都算影响，漏一个就返工 |
-| "公开 API 改只动 `Index.ets`" | 三件套缺一即规格不完整 |
-| "事件字段只影响当前产品线" | 三产品线字段要求不同，未标注 = 后端仓库出错 |
-| "autotrack 不用管 SaaS" | 必须显式声明"SaaS 跳过"，否则会出现错误降级分支 |
-| "这次规划口述就行" | 必须落地到 `docs/plans/YYYY-MM-DD-*.md`，reviewer 要读文件 |
+- 产品语义、公开 API 或线上协议存在无法从现有证据确定的歧义。
+- 多个方案的兼容性、性能或接入成本取舍需要需求方选择。
+- 请求涉及发布、合并、删除远程数据等高风险操作。
 
-## Red Flags — STOP if you catch yourself thinking these
+用户作出决定后继续执行，不反复重开已确认的问题。
 
-- "先改两个文件试试，plan 后面再写" → 达到门槛那一刻就必须先写 plan
-- "影响面我心里有数，不用列全" → 没列出来的文件 = 会返工的文件
-- "这个字段变更只涉及 NewSaaS" → 三产品线必须逐一确认，未标注 = 后端出错
-
-## 关联 skill
-
-- **上游触发：** 改动文件 ≥3 或涉及公开 API 变更
-- **完成后交接：** 用户确认 plan → 按任务顺序实施 → `verification-before-completion`
-- **替代路径：** 改动面小于门槛 → 跳过本 skill 直接实施，完成后对照 `docs/sdk-review-checklist.md` 自查
+核心路径实施使用 `test-driven-development`，交付前使用 `verification-before-completion`，提交规范见 `git-conventions`。
