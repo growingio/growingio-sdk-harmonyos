@@ -30,6 +30,7 @@ import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
 import AppInfo from './AppInfo'
 import GrowingContext from './Context'
 import DeviceInfo from './DeviceInfo'
+import ForceLogin from './ForceLogin'
 import EventTimer from './EventTimer'
 import Hybrid from './Hybrid'
 import Session from './Session'
@@ -100,6 +101,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     SharedPreferences.initWithContext(context)
     AppInfo.initAppInfo(context)
     DeviceInfo.initDeviceInfo(gContext)
+    ForceLogin.init()
     UserIdentifier.initUser(gContext)
     EventDatabase.initDatabase(context)
     Network.initNetwork(gContext)
@@ -286,8 +288,24 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     LogUtil.info(() => 'Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
 
+  static identify(userId: string): void {
+    if (!AnalyticsCore.core.isInitializedSuccessfully()) {
+      LogUtil.info(() => 'Failed to identify, GrowingAnalytics is not initialized')
+      return
+    }
+    let context = GrowingContext.getDefaultContext()
+    if (!ForceLogin.identify(userId, context)) {
+      return
+    }
+    for (let tracker of AnalyticsCore.trackers) {
+      if (tracker.context.config.mode == ConfigMode.NewSaaS && tracker.context.config.forceLogin) {
+        EventSender.sendEvent(tracker.context)
+      }
+    }
+  }
+
   getDeviceId(): string {
-    return DeviceInfo.deviceId
+    return ForceLogin.getDeviceId(this.context, DeviceInfo.deviceId)
   }
 
   track(
@@ -378,6 +396,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     await EventDatabase.writeEvent(pst)
     Plugins.onEventWroteToDisk(pst, eventScene)
     if (pst.eventType == EventType.Visit) {
+      // 强制登录未解锁时由发送闸门拦截
       EventSender.sendEvent(context)
     }
   }

@@ -205,4 +205,31 @@ export default function eventSendCycleTests() {
       done()
     })
   })
+
+  describe('runSendCycle_forceLoginGate', () => {
+    it('强制登录未解锁时不读取事件也不发送请求', 0, async (done: Function) => {
+      let fetchCalled = false
+      let sendCalled = false
+
+      const hasMore = await runSendCycle({
+        canSend: () => false,
+        fetchEvents: () => {
+          fetchCalled = true
+          return Promise.resolve([makeFakePersistence('e1')])
+        },
+        sendEvents: async (_events: EventPersistence[]): Promise<SendResult> => {
+          sendCalled = true
+          return fakeSendResult(200)
+        },
+        removeEvents: (_events: EventPersistence[]) => Promise.resolve(),
+        afterRemove: (_events: EventPersistence[], _request: rcp.Request) => {},
+        countRemaining: () => Promise.resolve(0)
+      })
+
+      expect(hasMore).assertFalse()
+      expect(fetchCalled).assertFalse()
+      expect(sendCalled).assertFalse()
+      done()
+    })
+  })
 }

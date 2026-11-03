@@ -38,7 +38,13 @@ export default class Network {
     }
   }
 
-  static async request(events: EventPersistence[], urlPath: string, context: GrowingContext, mergeSaaSClick: boolean = false): Promise<rcp.Response> {
+  static async request(
+    events: EventPersistence[],
+    urlPath: string,
+    context: GrowingContext,
+    mergeSaaSClick: boolean = false,
+    deviceId: string = ''
+  ): Promise<rcp.Response> {
     if (!Network.session) {
       return Promise.reject(new Error('Network session not initialized'))
     }
@@ -46,7 +52,7 @@ export default class Network {
     let curTime = Date.now()
     let url = Network.generateUrl(curTime, urlPath, context)
     try {
-      let request = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick)
+      let request = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick, deviceId)
       return Network.session.fetch(request)
     } catch (error) {
       LogUtil.error(() => 'Failed to generate request: ' + error)
@@ -54,14 +60,23 @@ export default class Network {
     }
   }
 
-  static async generateRequest(time: number, url: string, events: EventPersistence[], context: GrowingContext, mergeSaaSClick: boolean = false): Promise<rcp.Request> {
+  static async generateRequest(
+    time: number,
+    url: string,
+    events: EventPersistence[],
+    context: GrowingContext,
+    mergeSaaSClick: boolean = false,
+    deviceId: string = ''
+  ): Promise<rcp.Request> {
     let useProtobuf = context.config.useProtobuf
     if (context.config.mode == ConfigMode.SaaS) {
       // SaaS mode have not protobuf support
       useProtobuf = false
     }
 
-    let processTask = new taskpool.Task(processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick)
+    let processTask = new taskpool.Task(
+      processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick, deviceId
+    )
     let serialize: ArrayBuffer
     try {
       serialize = await taskpool.execute(processTask) as ArrayBuffer

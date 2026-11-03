@@ -19,14 +19,35 @@
 
 import buffer from '@ohos.buffer'
 
+import Event from '../event/Event'
 import EventPersistence from "../event/EventPersistence"
 import { LogUtil } from './LogUtil'
 import snappy from 'snappyjs'
 import { event_pb } from './protobuf/event_pb'
 
 @Concurrent
-export function processEvents(events: EventPersistence[], useProtobuf: boolean, compressEnabled: boolean, mergeSaaSClick: boolean = false): ArrayBuffer {
+export function processEvents(
+  events: EventPersistence[],
+  useProtobuf: boolean,
+  compressEnabled: boolean,
+  mergeSaaSClick: boolean = false,
+  deviceId: string = ''
+): ArrayBuffer {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
+  if (deviceId.length > 0) {
+    events = events.map(e => {
+      try {
+        let event = JSON.parse(e.data) as Event
+        event.deviceId = deviceId
+        return EventPersistence.fromDatabase(
+          e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+        )
+      } catch (error) {
+        LogUtil.error(() => 'Failed to replace event deviceId: ' + error)
+        return e
+      }
+    })
+  }
   if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
     events.forEach(e => {

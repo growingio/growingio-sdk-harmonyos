@@ -184,7 +184,7 @@ class EventBuilder {
     event.sdkVersion = SDK_VERSION
 
     // 3. 设备信息
-    event.deviceId = DeviceInfo.deviceId
+    event.deviceId = ForceLogin.getDeviceId(context, DeviceInfo.deviceId)
     event.platform = DeviceInfo.platform
     event.platformVersion = DeviceInfo.platformVersion
     event.screenHeight = DeviceInfo.screenHeight
@@ -416,6 +416,8 @@ enum EventSenderType {
 
 ### 发送流程
 
+NewSaaS 开启 `forceLogin` 且本次启动尚未有效 `identify` 时，发送器在读取数据库批次前返回。首次有效 `identify` 会触发所有 NewSaaS 强制登录上下文补发。实际请求传入当前访问用户 ID，由 TaskPool 在 Protobuf/JSON 序列化前复制并替换历史事件的 `deviceId`，数据库原文不变。
+
 ```typescript
 class EventSender {
   async sendEvent(gContext?: GrowingContext) {
@@ -425,8 +427,12 @@ class EventSender {
     }
     this.isUploading = true
 
-    // 2. 获取上下文
+    // 2. 获取上下文并检查强制登录发送闸门
     let context = gContext ?? GrowingContext.getContext(this.trackerId)
+    if (!ForceLogin.canSend(context)) {
+      this.isUploading = false
+      return
+    }
 
     // 3. 从数据库获取事件
     let events = await EventDatabase.getEventsByCount(
@@ -440,9 +446,11 @@ class EventSender {
       return
     }
 
-    // 4. 发送请求
+    // 4. 发送请求，后台序列化时替换 NewSaaS 访问用户 ID
     try {
-      let response = await Network.request(events, this.urlPath, context)
+      let response = await Network.request(
+        events, this.urlPath, context, this.mergeSaaSClick, ForceLogin.getOverrideDeviceId(context)
+      )
       Plugins.onResponseReceive(response)
 
       if (response.statusCode >= 200 && response.statusCode < 400) {

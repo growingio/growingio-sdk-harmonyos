@@ -16,7 +16,8 @@ export function processEvents(
     events: EventPersistence[],
     useProtobuf: boolean,
     compressEnabled: boolean,
-    mergeSaaSClick: boolean = false
+    mergeSaaSClick: boolean = false,
+    deviceId: string = ''
 ): ArrayBuffer
 ```
 
@@ -27,6 +28,7 @@ export function processEvents(
 | `useProtobuf` | `boolean` | 是否使用 Protobuf 序列化 |
 | `compressEnabled` | `boolean` | 是否启用 Snappy 压缩 |
 | `mergeSaaSClick` | `boolean` | 是否启用 SaaS 点击合并（仅 JSON 分支生效，默认 `false`） |
+| `deviceId` | `string` | NewSaaS 当前访问用户 ID；非空时在后台复制事件并替换原 `deviceId` |
 
 **处理流程：**
 
@@ -56,6 +58,17 @@ export function processEvents(
 **实现细节：**
 
 ```typescript
+// NewSaaS identify 后：在后台复制事件并替换访问用户 ID，数据库原文不变
+if (deviceId.length > 0) {
+    events = events.map(e => {
+        let event = JSON.parse(e.data) as Event
+        event.deviceId = deviceId
+        return EventPersistence.fromDatabase(
+            e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+        )
+    })
+}
+
 // Protobuf 序列化流程
 if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
@@ -88,7 +101,7 @@ if (compressEnabled) {
 > **SaaS 点击合并细节**：分组 key 为 `t_u_s_d_p_ptm_r`；顶层公共字段含 `t/tm/u/s/d/p/ptm/r`，并按需带上 `cs1/q/lat/lng`（有值才写）；`e` 数组中每个元素含 `tm/x/gesid/esid`，按需带上 `v/idx/h`。仅在 `mergeSaaSClick == true`（即 SaaS 无埋点点击批量上报）时走此分支。
 
 **调用位置：**
-- `Network.generateRequest()` 内通过 `taskpool.Task(processEvents, …)` 调度到子线程执行（由 `Network.request(events, urlPath, context, mergeSaaSClick)` 触发）
+- `Network.generateRequest()` 内通过 `taskpool.Task(processEvents, …)` 调度到子线程执行（由 `Network.request(events, urlPath, context, mergeSaaSClick, deviceId)` 触发）；`deviceId` 仅用于 NewSaaS identify 后的发送副本替换
 - `SaaS_OTHER` 发送器（处理 `ViewClick` / `ViewChange`）以 `mergeSaaSClick = true` 触发合并
 
 ---
