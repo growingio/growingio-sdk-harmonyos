@@ -11,28 +11,26 @@
 ```
 需求
  │
- ├─ 模糊 / 范围不清 → brainstorming（一次一问，收敛成 docs/specs/ 规格）
+ ├─ 缺少会改变实现的决策 → 先澄清；已有明确方案不重复审批
+ ├─ 跨模块 / 公开 API / 数据协议 → writing-plans（按需记录计划）
  │
  ▼
 读相关文档（docs/sdk-doc-routing.md 按场景路由）
  │
  ▼
-影响面判定：改动 ≥3 文件 或 涉及公开 API？
- ├─ 是 → writing-plans（落地 docs/plans/YYYY-MM-DD-*.md，用户确认后实施）
- └─ 否 → 直接实施
+实施（核心模块走 test-driven-development）
  │
  ▼
-实施（改核心模块走 test-driven-development）
- │
- ▼
-verification-before-completion（跑构建 + 测试，不靠"应该没问题"）
+verification-before-completion（验证最终版本；失败时先定位再修复）
  │
  ▼
 ◀── 本清单：对照下方两部分自查 ──▶
  │
- ▼
-finishing-a-development-branch（commit / PR / tag / 分支清理）
+ ├─ 用户要求提交 / PR → git-conventions
+ └─ 用户明确发版 → release（版本 / Jira / OHPM / tag）
 ```
+
+小改动不强制新增规格或计划文件。计划用于记录复杂决策，不作为重复等待用户确认的流程门槛。
 
 ## 审查步骤
 

@@ -12,4 +12,5 @@
 oh-package-lock.json5
 /.appanalyzer
 /build-profile.json5
+/.claude/settings.local.json
 .DS_Store
