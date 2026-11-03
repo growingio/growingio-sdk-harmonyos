@@ -71,7 +71,7 @@ if (useProtobuf) {
     events.forEach(e => {
         let sentEvent = e
         let event = JSON.parse(e.data) as Event
-        if (shouldReplaceDeviceId) {
+        if (shouldReplaceDeviceId && event.deviceId !== deviceId) {
             event.deviceId = deviceId
             sentEvent = EventPersistence.fromDatabase(
                 e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
@@ -87,10 +87,13 @@ if (useProtobuf) {
     let arrayBuffer: Uint8Array = event_pb.EventV3List.encode(list).finish()
     serialize = buffer.from(arrayBuffer).buffer
 } else {
-    // NewSaaS identify 后：在后台复制事件并替换访问用户 ID，数据库原文不变
+    // NewSaaS identify 后：仅为 ID 不同的事件创建发送副本，数据库原文不变
     if (shouldReplaceDeviceId) {
         events = events.map(e => {
             let event = JSON.parse(e.data) as Event
+            if (event.deviceId === deviceId) {
+                return e
+            }
             event.deviceId = deviceId
             return EventPersistence.fromDatabase(
                 e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId

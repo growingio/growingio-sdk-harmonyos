@@ -43,7 +43,7 @@ export function processEvents(
       let sentEvent = e
       try {
         let event = JSON.parse(e.data) as Event
-        if (shouldReplaceDeviceId) {
+        if (shouldReplaceDeviceId && event.deviceId !== deviceId) {
           event.deviceId = deviceId
           sentEvent = EventPersistence.fromDatabase(
             e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
@@ -71,6 +71,9 @@ export function processEvents(
       events = events.map(e => {
         try {
           let event = JSON.parse(e.data) as Event
+          if (event.deviceId === deviceId) {
+            return e
+          }
           event.deviceId = deviceId
           return EventPersistence.fromDatabase(
             e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId

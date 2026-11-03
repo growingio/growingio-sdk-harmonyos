@@ -99,7 +99,7 @@ GrowingAnalytics.identify('访问用户ID')
 
 - 数据库存储内容保持不变，不做 schema 迁移或批量回写。
 - 每个 NewSaaS 发送批次在现有 TaskPool `processEvents` 后台任务中，将事件 JSON 的 `deviceId` 设置为当前有效访问用户 ID，再进入 Protobuf 或 JSON 序列化。
-- 替换仅生成实际请求数据，不修改原事件的 UUID、事件类型、时间戳、`eventSequenceId`、`userId/userKey` 或其他字段。
+- 替换仅生成实际请求数据；`deviceId` 已相同的事件复用原对象，不同事件才创建发送副本，不修改原事件的 UUID、事件类型、时间戳、`eventSequenceId`、`userId/userKey` 或其他字段。
 - 覆盖当前进程及此前启动遗留的待上报事件；已经成功上传的事件不追改。
 - 网络失败的数据库原文继续保留，重试时再次以当前访问用户 ID 构造请求。
 - JSON 转换在后台任务执行，不在 UI 线程增加整批解析开销。

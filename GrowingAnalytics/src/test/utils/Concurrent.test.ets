@@ -81,6 +81,22 @@ export default function concurrentTests() {
       expect(event.data).assertEqual(source)
     })
 
+    it('json_with_same_device_id_should_reuse_event', 0, () => {
+      let event = makeEvent()
+      let result = processEvents([event], false, false, false, 'old-device')
+      expect(result.events[0] === event).assertTrue()
+      expect(decodeJson(result.serialize).deviceId).assertEqual('old-device')
+    })
+
+    it('protobuf_with_same_device_id_should_reuse_event', 0, () => {
+      let event = makeEvent()
+      let result = processEvents([event], true, false, false, 'old-device')
+      let decoded = event_pb.EventV3List.decode(new Uint8Array(result.serialize))
+      expect(result.events[0] === event).assertTrue()
+      expect(decoded.values.length).assertEqual(1)
+      expect(decoded.values[0].deviceId).assertEqual('old-device')
+    })
+
     it('compressed_json_should_replace_device_id', 0, () => {
       let result = processEvents([makeEvent()], false, true, false, 'new-device')
       let uncompressed = snappy.uncompress(result.serialize) as ArrayBuffer
