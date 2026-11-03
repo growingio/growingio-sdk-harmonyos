@@ -14,7 +14,7 @@ GrowingAnalytics 当前自动持久化设备 ID，并立即按既有调度上报
 
 - 仅支持 `ConfigMode.NewSaaS`。
 - 新增公开配置 `GrowingConfig.forceLogin: boolean`，默认 `false`。
-- 新增公开静态接口 `GrowingAnalytics.identify(userId: string): void`。
+- 新增公开静态接口 `GrowingAnalytics.identify(deviceId: string): void`。
 - 不将 `identify` 加入 `GrowingAnalyticsInterface`，子 Tracker 不提供独立入口。
 - 主入口首次有效 `identify` 统一设置全部 NewSaaS 实例的访问用户 ID，并释放所有 NewSaaS 强制登录实例的发送阻塞。
 - 每次进程启动都重新等待 `identify`；解锁状态不跨启动保留。

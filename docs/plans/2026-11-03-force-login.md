@@ -20,7 +20,7 @@
 - `Constants.ts`：增加独立的访问用户 ID 偏好设置 key。
 - 新增 `core/ForceLogin.ets`：集中管理持久化 ID、每次启动解锁状态、输入 trim/长度校验、模式判断与发送条件；提供测试重置方法。
 - `AnalyticsCore.ets`：主初始化时重置并恢复 ForceLogin；新增静态 identify，首次成功后触发所有 NewSaaS 强制登录上下文补发；`getDeviceId()` 返回当前上下文有效 ID。初始化前调用无副作用。
-- `interfaces/GrowingAnalytics.ets`：新增静态 `identify(userId: string)`，不修改 `GrowingAnalyticsInterface`。
+- `interfaces/GrowingAnalytics.ets`：新增静态 `identify(deviceId: string)`，不修改 `GrowingAnalyticsInterface`。
 - `index.ets` 已导出 GrowingAnalytics，不增加新导出符号。
 - `obfuscation-rules.txt`：保留 `forceLogin`、`identify` 公开名称。
 - 运行任务 1 相关测试并修正到通过。

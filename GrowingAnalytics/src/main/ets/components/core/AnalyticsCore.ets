@@ -288,13 +288,13 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     LogUtil.info(() => 'Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
 
-  static identify(userId: string): void {
+  static identify(deviceId: string): void {
     if (!AnalyticsCore.core.isInitializedSuccessfully()) {
       LogUtil.info(() => 'Failed to identify, GrowingAnalytics is not initialized')
       return
     }
     let context = GrowingContext.getDefaultContext()
-    if (!ForceLogin.identify(userId, context)) {
+    if (!ForceLogin.identify(deviceId, context)) {
       return
     }
     for (let tracker of AnalyticsCore.trackers) {

@@ -392,12 +392,12 @@ SDK 支持两种初始化时机：
 主 Tracker 初始化时调用 `ForceLogin.init()` 恢复访问用户 ID，并将本次启动的解锁状态重置为 `false`。子 Tracker 初始化不重置该状态，因此主入口 identify 后新增的 NewSaaS 子 Tracker 也沿用首次设置的 ID。
 
 ```typescript
-static identify(userId: string): void {
+static identify(deviceId: string): void {
   if (!AnalyticsCore.core.isInitializedSuccessfully()) {
     return
   }
   let context = GrowingContext.getDefaultContext()
-  if (!ForceLogin.identify(userId, context)) {
+  if (!ForceLogin.identify(deviceId, context)) {
     return
   }
   for (let tracker of AnalyticsCore.trackers) {

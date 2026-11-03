@@ -169,8 +169,8 @@ export class GrowingAnalytics {
     AnalyticsCore.core.setLoginUserId('')
   }
 
-  static identify(userId: string): void {
-    AnalyticsCore.identify(userId)
+  static identify(deviceId: string): void {
+    AnalyticsCore.identify(deviceId)
   }
 
   static setLoginUserAttributes(attributes: GrowingAttrType) {

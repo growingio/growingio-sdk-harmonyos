@@ -178,8 +178,13 @@ GrowingAnalytics.setLoginUserId('user123', 'phone')
 #### identify() - 设置访问用户 ID（仅 NewSaaS 强制登录）
 
 ```typescript
-static identify(userId: string): void
+static identify(deviceId: string): void
 ```
+
+**参数：**
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `deviceId` | `string` | 访问用户 ID，与登录用户 ID（`userId`）相互独立 |
 
 **用途：**
 - 在主 Tracker 为 NewSaaS 且 `forceLogin=true` 时，动态设置事件的 `deviceId`（访问用户 ID）。

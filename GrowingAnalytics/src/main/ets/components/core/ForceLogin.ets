@@ -24,33 +24,33 @@ import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
 export default class ForceLogin {
-  private static identifiedUserId: string = ''
+  private static identifiedDeviceId: string = ''
   private static unlocked: boolean = false
 
   static init() {
-    ForceLogin.identifiedUserId = SharedPreferences.getValue(PREFERENCE_IDENTIFY_DEVICE_ID, '') as string
+    ForceLogin.identifiedDeviceId = SharedPreferences.getValue(PREFERENCE_IDENTIFY_DEVICE_ID, '') as string
     ForceLogin.unlocked = false
   }
 
-  static identify(userId: string, context: GrowingContext | undefined): boolean {
+  static identify(deviceId: string, context: GrowingContext | undefined): boolean {
     if (!context || context.config.mode != ConfigMode.NewSaaS || !context.config.forceLogin || ForceLogin.unlocked) {
       LogUtil.info(() => 'Failed to identify, only available once when NewSaaS forceLogin is enabled')
       return false
     }
-    if (!userId) {
-      LogUtil.info(() => 'Failed to identify, userId is empty')
+    if (!deviceId) {
+      LogUtil.info(() => 'Failed to identify, deviceId is empty')
       return false
     }
 
-    let identifiedUserId = userId.trim()
-    if (identifiedUserId.length == 0 || identifiedUserId.length > 1000) {
-      LogUtil.info(() => 'Failed to identify, userId must contain 1 to 1000 non-whitespace characters')
+    let identifiedDeviceId = deviceId.trim()
+    if (identifiedDeviceId.length == 0 || identifiedDeviceId.length > 1000) {
+      LogUtil.info(() => 'Failed to identify, deviceId must contain 1 to 1000 non-whitespace characters')
       return false
     }
 
-    ForceLogin.identifiedUserId = identifiedUserId
+    ForceLogin.identifiedDeviceId = identifiedDeviceId
     ForceLogin.unlocked = true
-    SharedPreferences.put(PREFERENCE_IDENTIFY_DEVICE_ID, identifiedUserId)
+    SharedPreferences.put(PREFERENCE_IDENTIFY_DEVICE_ID, identifiedDeviceId)
     LogUtil.info(() => 'Identify deviceId for all NewSaaS trackers')
     return true
   }
@@ -60,21 +60,21 @@ export default class ForceLogin {
   }
 
   static getDeviceId(context: GrowingContext, generatedDeviceId: string): string {
-    if (context.config.mode == ConfigMode.NewSaaS && ForceLogin.identifiedUserId.length > 0) {
-      return ForceLogin.identifiedUserId
+    if (context.config.mode == ConfigMode.NewSaaS && ForceLogin.identifiedDeviceId.length > 0) {
+      return ForceLogin.identifiedDeviceId
     }
     return generatedDeviceId
   }
 
   static getOverrideDeviceId(context: GrowingContext): string {
     if (context.config.mode == ConfigMode.NewSaaS) {
-      return ForceLogin.identifiedUserId
+      return ForceLogin.identifiedDeviceId
     }
     return ''
   }
 
   static _reset() {
-    ForceLogin.identifiedUserId = ''
+    ForceLogin.identifiedDeviceId = ''
     ForceLogin.unlocked = false
   }
 }
