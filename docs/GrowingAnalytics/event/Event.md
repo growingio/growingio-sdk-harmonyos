@@ -154,7 +154,7 @@ enum EventScene {
 
 | 事件类 | 说明 | 特有字段 |
 |--------|------|----------|
-| `CustomEvent` | 自定义事件 | `eventName: string` |
+| `CustomEvent` | 自定义事件 | `eventName`, `referralPage`(NewSaaS), `path`(SaaS), `pageShowTimestamp`(SaaS) |
 | `PageEvent` | 页面浏览事件 | `path`, `title`, `orientation`, `referralPage` |
 | `HybridPageEvent` | H5 页面事件 | `title`, `referralPage`, `protocolType`, `path`, `query` |
 | `FlutterPageEvent` | Flutter 页面事件 | `path`, `title`, `orientation`, `referralPage` |

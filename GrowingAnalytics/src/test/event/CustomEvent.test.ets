@@ -87,11 +87,13 @@ function resetAll() {
  * 两个事件类在 SaaS 模式下都读取 PageEvent.lastPage：
  *   - CustomEvent：填充 event.path + event.pageShowTimestamp
  *   - AppClosedEvent：填充 event.path
+ * CustomEvent 在 NewSaaS 模式下额外填充 event.referralPage。
  *
  * 共同测试点：
- *   SaaS + lastPage 存在 → 字段填充
- *   SaaS + lastPage 不存在 → 字段为 undefined
- *   NewSaaS / CDP → 字段为 undefined（不读 lastPage）
+ *   SaaS + lastPage 存在 → SaaS 字段填充
+ *   SaaS + lastPage 不存在 → SaaS 字段为 undefined
+ *   NewSaaS → CustomEvent 填充 referralPage，SaaS 专属字段为 undefined
+ *   CDP → 不注入 lastPage 字段
  *
  * seedLastPage() 直接调用 PageEvent.setLastPage() 构造前驱状态，
  * 不依赖 PageEvent.create() 触发完整副作用链。
@@ -160,9 +162,32 @@ export default function customEventTests() {
     })
   })
 
-  // ─── CustomEvent 非 SaaS 模式不注入 lastPage ─────────────────────────────
+  // ─── CustomEvent NewSaaS 模式 referralPage ───────────────────────────────
 
-  describe('CustomEvent_nonSaaS', () => {
+  describe('CustomEvent_NewSaaS_referralPage', () => {
+
+    beforeEach(() => { resetAll() })
+
+    it('NewSaaS + lastPage 存在：referralPage = 上一页 path', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.NewSaaS)
+      seedContext(ctx)
+      seedLastPage(ctx, '/product/detail')
+      let e = CustomEvent.create('add_cart', {}, ctx)
+      expect(e.referralPage).assertEqual('/product/detail')
+      expect(e.toSerialize(ctx)).assertContain('"referralPage":"/product/detail"')
+    })
+
+    it('NewSaaS + 无 lastPage：referralPage 为 undefined', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.NewSaaS)
+      seedContext(ctx)
+      let e = CustomEvent.create('add_cart', {}, ctx)
+      expect(e.referralPage === undefined).assertTrue()
+    })
+  })
+
+  // ─── CustomEvent SaaS 专属字段在非 SaaS 模式下的行为 ─────────────────────
+
+  describe('CustomEvent_nonSaaS_saasFields', () => {
 
     beforeEach(() => { resetAll() })
 
@@ -175,13 +200,14 @@ export default function customEventTests() {
       expect(e.pageShowTimestamp === undefined).assertTrue()
     })
 
-    it('CDP：path 和 pageShowTimestamp 为 undefined', 0, () => {
+    it('CDP：不注入 lastPage 字段', 0, () => {
       let ctx = makeCtx('t', ConfigMode.CDP)
       seedContext(ctx)
       seedLastPage(ctx)
       let e = CustomEvent.create('test', {}, ctx)
       expect(e.path === undefined).assertTrue()
       expect(e.pageShowTimestamp === undefined).assertTrue()
+      expect(e.referralPage === undefined).assertTrue()
     })
   })
 
