@@ -181,22 +181,22 @@ export const SDK_VERSION: string = HAR_VERSION
          │
          ▼
 ┌─────────────────────┐
-│ 7. 通知初始化完成   │
+│ 7. 标记初始化成功   │
+│ _isInitialized      │
+│ Successfully = true │
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│ 8. 通知初始化完成   │
 │ EMIT_EVENT_MAIN_    │
 │ TRACKER_INITIALIZE  │
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│ 8. 通知插件已完成   │
+│ 9. 通知插件已完成   │
 │ onSDKDidInitialize  │
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│ 9. 标记初始化成功   │
-│ _isInitialized      │
-│ Successfully = true │
 └─────────────────────┘
 ```
 
@@ -248,15 +248,17 @@ static startCore(context: Context, config: GrowingConfig) {
     EventSender.sendEvent(gContext)
   }, delay)
 
-  // 8. 通知初始化完成
+  // 8. 标记初始化成功
+  core._isInitializedSuccessfully = true
+
+  // 9. 通知初始化完成
   emitter.emit(EMIT_EVENT_MAIN_TRACKER_INITIALIZE)
   LogUtil.info(() => 'Thank you very much for using GrowingIO...')
   Plugins.onSDKDidInitialize(config, SDK_VERSION)
-
-  // 9. 标记初始化成功
-  core._isInitializedSuccessfully = true
 }
 ```
+
+初始化完成通知发出前，核心实例已标记为就绪。插件可在 `onSDKDidInitialize` 中调用 `GrowingAnalytics.identify`，解除 NewSaaS 强制登录阻塞；`onSDKWillInitialize` 中的调用仍被忽略。
 
 ### 插件注册策略
 
@@ -289,6 +291,8 @@ Application          GrowingAnalytics    AnalyticsCore       Plugins         Mod
      │                     │                   │                │               │
      │                     │                   │ setInterval    │               │
      │                     │                   │ (sendEvent)    │               │
+     │                     │                   │                │               │
+     │                     │                   │ mark initialized               │
      │                     │                   │                │               │
      │                     │                   │ emit(MAIN_    │               │
      │                     │                   │ TRACKER_INIT)  │               │

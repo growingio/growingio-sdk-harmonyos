@@ -199,6 +199,8 @@ static onSDKWillInitialize() {
 
 ### 2. SDK 初始化完成
 
+此回调执行前，SDK 已标记为初始化成功；NewSaaS 强制登录插件可在此调用 `GrowingAnalytics.identify` 设置访问用户 ID 并解锁上报。
+
 ```typescript
 static onSDKDidInitialize(config: GrowingConfig, version: string) {
   Plugins.plugins.forEach(plugin => {

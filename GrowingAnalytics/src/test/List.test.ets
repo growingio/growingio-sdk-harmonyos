@@ -19,6 +19,7 @@ import circleProtocolTests from './circle/CircleProtocol.test'
 import circleElementTests from './circle/CircleElement.test'
 import forceLoginTests from './core/ForceLogin.test'
 import concurrentTests from './utils/Concurrent.test'
+import analyticsCoreTests from './core/AnalyticsCore.test'
 
 export default function testsuite() {
   // Phase 1 · 纯函数层
@@ -52,4 +53,5 @@ export default function testsuite() {
   circleProtocolTests()
   circleElementTests()
   concurrentTests()
+  analyticsCoreTests()
 }

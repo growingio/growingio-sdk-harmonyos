@@ -112,11 +112,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       EventSender.sendEvent(gContext)
     }, delay)
 
+    core._isInitializedSuccessfully = true
     emitter.emit(EMIT_EVENT_MAIN_TRACKER_INITIALIZE)
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
       + 'GrowingIO version: ' + SDK_VERSION)
     Plugins.onSDKDidInitialize(config, SDK_VERSION)
-    core._isInitializedSuccessfully = true
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
