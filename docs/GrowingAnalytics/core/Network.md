@@ -274,7 +274,7 @@ export function processEvents(
     // event_pb.EventV3Dto.fromObject → EventV3List.encode().finish()
     ...
   } else if (mergeSaaSClick) {
-    // 按 t_u_s_d_p_ptm_r 分组，公共字段提顶层、专属字段收入 e 数组后 JSON.stringify
+    // 按 t_u_s_d_p_ptm 分组，公共字段提顶层、专属字段收入 e 数组后 JSON.stringify
     ...
   } else {
     // 普通 JSON： '[' + events.map(e => String(e.data)).join(',') + ']'
@@ -399,9 +399,15 @@ static generateHeaders(
   useProtobuf: boolean, 
   context: GrowingContext
 ): Record<string, string> {
-  
+  let contentType: string
+  if (context.config.mode == ConfigMode.SaaS) {
+    contentType = "application/octet-stream"
+  } else {
+    contentType = useProtobuf ? "application/protobuf" : "application/json"
+  }
+
   let headers: Record<string, string> = {
-    "Content-Type": useProtobuf ? "application/protobuf" : "application/json",
+    "Content-Type": contentType,
     "Accept": "application/json",
     "X-Timestamp": time + ''
   }
@@ -424,11 +430,13 @@ static generateHeaders(
 
 | Header | 值 | 说明 |
 |--------|-----|------|
-| `Content-Type` | `application/protobuf` 或 `application/json` | 内容类型 |
+| `Content-Type` | `application/octet-stream` / `application/protobuf` / `application/json` | SaaS 固定为 `application/octet-stream`；NewSaaS/CDP 按 `useProtobuf` 选择 |
 | `Accept` | `application/json` | 接受响应类型 |
 | `X-Timestamp` | 时间戳 | 请求时间 |
 | `X-Compress-Codec` | `2` | 压缩算法（Snappy）|
 | `X-Crypt-Codec` | `1` | 加密算法（XOR 混淆）|
+
+SaaS 的请求体使用 JSON 编码，`Content-Type` 固定为 `application/octet-stream`。
 
 ---
 

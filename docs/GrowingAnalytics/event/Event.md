@@ -412,7 +412,7 @@ enum EventSenderType {
 | SaaS_CSTM | `/v3/accountId/harmonyos/cstm` | 自定义事件 |
 | SaaS_OTHER | `/v3/accountId/harmonyos/other` | 无埋点点击/变更事件（合并格式） |
 
-> **SaaS click 合并上报：** `SaaS_OTHER` 发送时会启用 `mergeSaaSClick` 模式——相同页面、会话、网络环境下的多个点击/变更事件按 `t_u_s_d_p_ptm_r` 为 key 分组，公共字段提升至顶层，每条事件的专属字段（`x`、`gesid`、`esid`、`v`、`idx`、`h` 等）收入 `e[]` 数组，减少冗余字段传输。
+> **SaaS click 合并上报：** `SaaS_OTHER` 发送时会启用 `mergeSaaSClick` 模式，多个点击/变更事件按 `t_u_s_d_p_ptm` 为 key 分组，公共字段提升至顶层，每条事件的专属字段（`x`、`gesid`、`esid`、`v`、`idx`、`h` 等）收入 `e[]` 数组，减少冗余字段传输。分组和输出均不包含网络状态字段 `r`。
 
 ### 发送流程
 

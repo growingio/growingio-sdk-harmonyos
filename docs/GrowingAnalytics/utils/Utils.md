@@ -101,7 +101,7 @@ if (useProtobuf) {
         })
     }
     if (mergeSaaSClick) {
-        // SaaS 点击合并：按 t/u/s/d/p/ptm/r 分组，公共字段提到顶层，
+        // SaaS 点击合并：按 t/u/s/d/p/ptm 分组，公共字段提到顶层，
         // 每条点击的专属字段（tm/x/gesid/esid，及可选 v/idx/h）收入 e 数组
         // → 减少 SaaS 无埋点 VIEW_CLICK 的上报体积
         let json = JSON.stringify(mergeGroups(events))
@@ -121,7 +121,7 @@ if (compressEnabled) {
 return new ProcessEventsResult(serialize, events)
 ```
 
-> **SaaS 点击合并细节**：分组 key 为 `t_u_s_d_p_ptm_r`；顶层公共字段含 `t/tm/u/s/d/p/ptm/r`，并按需带上 `cs1/q/lat/lng`（有值才写）；`e` 数组中每个元素含 `tm/x/gesid/esid`，按需带上 `v/idx/h`。仅在 `mergeSaaSClick == true`（即 SaaS 无埋点点击批量上报）时走此分支。
+> **SaaS 点击合并细节**：分组 key 为 `t_u_s_d_p_ptm`；顶层公共字段含 `t/tm/u/s/d/p/ptm`，并按需带上 `cs1/q/lat/lng`（有值才写）；`e` 数组中每个元素含 `tm/x/gesid/esid`，按需带上 `v/idx/h`。分组和输出均不包含 `r`。仅在 `mergeSaaSClick == true`（即 SaaS 无埋点点击/变更批量上报）时走此分支。
 
 **调用位置：**
 - `Network.generateRequest()` 内通过 `taskpool.Task(processEvents, …)` 调度到子线程执行（由 `Network.request(events, urlPath, context, mergeSaaSClick, deviceId)` 触发）；`deviceId` 仅用于 NewSaaS identify 后的发送副本替换
@@ -362,12 +362,13 @@ static toSerializeByMeasurementProtocolV2(
 | `q` | query | 页面查询参数（undefined 时不写入） |
 | `h` | hyperlink | 超链接地址（undefined 时不写入） |
 | `idx` | index | 列表索引，以字符串写入（undefined 时不写入） |
-| `r` | networkState | 网络状态（WIFI/CELL/UNKNOWN/NONE） |
 | `lat`/`lng` | latitude/longitude | 地理位置（undefined 时不写入） |
+
+点击/变更事件不输出网络状态字段 `r`。
 
 *VISIT (`t: vst`)*：设备信息字段（`db`, `dm`, `sh`, `sw`, `os`, `cv` 等）
 
-*APP_CLOSED (`t: cls`)*：`p`(path)
+*APP_CLOSED (`t: cls`)*：`p`(path), `r`(networkState→WIFI/CELL/UNKNOWN/NONE)
 
 #### toSerializeByMeasurementProtocolV3() - CDP 协议
 
