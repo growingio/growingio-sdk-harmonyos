@@ -34,13 +34,22 @@ import { ConfigMode, IgnoreFields } from '../interfaces/GrowingConfig'
 
 export const SDK_PLATFORM: string = 'HarmonyOS'
 
+export const DEVICE_TYPE_WEARABLE: string = 'wearable'
+
+// 手表主流分辨率为 466 x 466（圆屏取外接正方形）
+const WEARABLE_DEFAULT_SCREEN_SIZE: number = 466
+
 export default class DeviceInfo {
-  static defaultScreenHeight: number = 1260
-  static defaultScreenWidth: number = 2720
+  static defaultScreenHeight: number = 2720
+  static defaultScreenWidth: number = 1260
   static defaultPlatformVersion: string = '5.0.0'
   static defaultDeviceBrand: string = 'HUAWEI'
   static defaultDeviceModel: string = '-'
   static defaultDeviceType: string = 'phone'
+
+  // 设备形态，仅用于 SDK 内部策略（兜底值、上报时机），不随事件上报，
+  // 因此不受 IgnoreFields.DeviceType 约束
+  static isWearable: boolean = false
 
   static deviceId: string = ''
   static platform: string = ''
@@ -58,6 +67,13 @@ export default class DeviceInfo {
 
   static initDeviceInfo(context: GrowingContext) {
     DeviceInfo.platform = SDK_PLATFORM
+
+    DeviceInfo.isWearable = niceTry(() => deviceInfo.deviceType, '') == DEVICE_TYPE_WEARABLE
+    if (DeviceInfo.isWearable) {
+      DeviceInfo.defaultScreenHeight = WEARABLE_DEFAULT_SCREEN_SIZE
+      DeviceInfo.defaultScreenWidth = WEARABLE_DEFAULT_SCREEN_SIZE
+      DeviceInfo.defaultDeviceType = DEVICE_TYPE_WEARABLE
+    }
 
     if (DeviceInfo.isNotIgnoreField(context, IgnoreFields.ScreenSize)) {
       let displayInfo = niceTry(() => display.getDefaultDisplaySync())
@@ -137,6 +153,10 @@ export default class DeviceInfo {
         } else if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_ETHERNET) {
           LogUtil.info(() => 'NetCapability change to Ethernet')
           DeviceInfo.networkState = 'WIFI' //Ethernet
+        } else if (data.netCap.bearerTypes[0] == connection.NetBearType.BEARER_BLUETOOTH) {
+          // 手表默认网络优先级为「蓝牙 > WIFI > 蜂窝」，蓝牙代理网络归为 WIFI
+          LogUtil.info(() => 'NetCapability change to Bluetooth')
+          DeviceInfo.networkState = 'WIFI' //Bluetooth
         }
       })
     } else {

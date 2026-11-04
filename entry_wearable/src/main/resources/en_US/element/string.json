@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "GrowingIO Analytics wearable demo"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "GrowingIO Analytics wearable demo"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "GIO Wear"
+    }
+  ]
+}

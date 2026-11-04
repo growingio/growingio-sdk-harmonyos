@@ -1,0 +1,12 @@
+{
+  "name": "entry_wearable",
+  "version": "1.0.0",
+  "description": "GrowingIO Analytics demo for HarmonyOS wearable (watch).",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "@growingio/analytics": "file:../GrowingAnalytics"
+  },
+  "devDependencies": {}
+}
