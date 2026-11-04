@@ -175,6 +175,36 @@ GrowingAnalytics.setLoginUserId('user123')
 GrowingAnalytics.setLoginUserId('user123', 'phone')
 ```
 
+#### identify() - 设置访问用户 ID（仅 NewSaaS 强制登录）
+
+```typescript
+static identify(deviceId: string): void
+```
+
+**参数：**
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `deviceId` | `string` | 访问用户 ID，与登录用户 ID（`userId`）相互独立 |
+
+**用途：**
+- 在主 Tracker 为 NewSaaS 且 `forceLogin=true` 时，动态设置事件的 `deviceId`（访问用户 ID）。
+- 首次有效调用会解除全部 NewSaaS 强制登录实例的上报阻塞，并立即尝试补发暂存事件。
+- 暂存事件在实际 Protobuf/JSON 序列化前统一替换 `deviceId`，其他字段不变。
+
+**示例：**
+```typescript
+let config = new GrowingConfig().NewSaaS('accountId', 'dataSourceId', 'urlScheme')
+config.forceLogin = true
+GrowingAnalytics.start(context, config)
+GrowingAnalytics.identify('visitor123')
+```
+
+**注意：**
+- 与 `setLoginUserId` 设置的 `userId` 相互独立。
+- 输入先去除首尾空白；空白或超过 1000 字符的输入无效，不解除阻塞。
+- 每次启动仅首次有效调用生效，后续调用忽略；访问用户 ID 持久化，但解锁状态不持久化。
+- 不提供给子 Tracker 的独立接口；SaaS/CDP 不受影响。
+
 #### cleanLoginUserId() - 清除登录用户 ID
 
 ```typescript
@@ -206,8 +236,9 @@ static getDeviceId(): string
 ```
 
 **用途：**
-- 获取 SDK 生成的唯一设备标识
-- 可用于与业务系统关联
+- 获取当前主 Tracker 的访问用户 ID，可用于与业务系统关联。
+- NewSaaS 首次有效 `identify` 后返回动态设置的访问用户 ID；未设置时返回 SDK 自动生成的设备标识。
+- SaaS/CDP 始终返回 SDK 自动生成的设备标识。
 
 ---
 

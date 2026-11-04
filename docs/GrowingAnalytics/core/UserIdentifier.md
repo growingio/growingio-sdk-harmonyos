@@ -449,6 +449,38 @@ GrowingAnalytics.tracker('trackerB').setLoginUserId('user456')
 
 ---
 
+## NewSaaS 强制登录与访问用户 ID
+
+`ForceLogin` 管理 NewSaaS 的访问用户 ID 和每次启动的上报解锁状态，与登录用户 ID 分开处理。
+
+```typescript
+let config = new GrowingConfig().NewSaaS('accountId', 'dataSourceId', 'urlScheme')
+config.forceLogin = true
+GrowingAnalytics.start(context, config)
+GrowingAnalytics.identify('visitor-id')
+```
+
+### 行为规则
+
+- 未调用有效 `identify` 前，事件继续生成和入库，但 NewSaaS 发送器不读取批次、不发起请求。
+- 首次有效 `identify` 统一设置所有 NewSaaS 实例的访问用户 ID，并触发全部强制登录上下文补发。
+- 输入先 trim；空白或超过 1000 字符的输入无效。每次启动只接受首次有效调用。
+- 动态访问用户 ID 使用 `growing_identify_device_id` 独立持久化，不覆盖自动生成的 `growing_device_id`。
+- 解锁状态只在当前进程有效；下次强制登录启动仍需调用 `identify`。
+- 事件构建时使用当前有效访问用户 ID。历史待上报事件保留数据库原文，在 TaskPool 序列化请求时替换其 `deviceId` 副本。
+- SaaS/CDP 不使用该访问用户 ID，也不受强制登录开关影响。
+
+### 与登录用户 ID 的区别
+
+| 标识 | 设置接口 | 事件字段 | 用途 |
+|------|----------|----------|------|
+| 访问用户 ID | `GrowingAnalytics.identify` | `deviceId` | NewSaaS 强制登录与访问用户识别 |
+| 登录用户 ID | `GrowingAnalytics.setLoginUserId` | `userId` | 业务登录用户识别与 ID Mapping |
+
+`setLoginUserId` 不会解除强制登录阻塞，`identify` 也不会修改登录用户 ID 或触发 Session 刷新。
+
+---
+
 ## 总结
 
 UserIdentifier 模块提供了完整的用户标识管理功能：

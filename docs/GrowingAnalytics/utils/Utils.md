@@ -16,8 +16,9 @@ export function processEvents(
     events: EventPersistence[],
     useProtobuf: boolean,
     compressEnabled: boolean,
-    mergeSaaSClick: boolean = false
-): ArrayBuffer
+    mergeSaaSClick: boolean = false,
+    deviceId: string = ''
+): ProcessEventsResult
 ```
 
 **参数：**
@@ -27,6 +28,11 @@ export function processEvents(
 | `useProtobuf` | `boolean` | 是否使用 Protobuf 序列化 |
 | `compressEnabled` | `boolean` | 是否启用 Snappy 压缩 |
 | `mergeSaaSClick` | `boolean` | 是否启用 SaaS 点击合并（仅 JSON 分支生效，默认 `false`） |
+| `deviceId` | `string` | NewSaaS 当前访问用户 ID；非空时在后台复制事件并替换原 `deviceId` |
+
+**返回值：**
+- `serialize: ArrayBuffer`：序列化并按配置压缩后的请求体。
+- `events: EventPersistence[]`：实际发送副本；替换 ID 时保留原 UUID 和其他元数据，数据库原对象不变。
 
 **处理流程：**
 
@@ -50,45 +56,75 @@ export function processEvents(
         Snappy 压缩
             │
             ▼
-    输出: ArrayBuffer
+    输出: ProcessEventsResult（serialize + events）
 ```
 
 **实现细节：**
 
 ```typescript
-// Protobuf 序列化流程
+let shouldReplaceDeviceId = deviceId.length > 0
+
+// Protobuf：每条事件只解析一次，同一对象用于 DTO 和发送副本
 if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
+    let sentEvents: EventPersistence[] = shouldReplaceDeviceId ? [] : events
     events.forEach(e => {
-        let event = JSON.parse(e.data) as object
-        let dto = event_pb.EventV3Dto.fromObject(event)
-        values.push(dto)
+        let sentEvent = e
+        let event = JSON.parse(e.data) as Event
+        if (shouldReplaceDeviceId && event.deviceId !== deviceId) {
+            event.deviceId = deviceId
+            sentEvent = EventPersistence.fromDatabase(
+                e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+            )
+        }
+        values.push(event_pb.EventV3Dto.fromObject(event))
+        if (shouldReplaceDeviceId) {
+            sentEvents.push(sentEvent)
+        }
     })
+    events = sentEvents
     let list = event_pb.EventV3List.create({values: values})
     let arrayBuffer: Uint8Array = event_pb.EventV3List.encode(list).finish()
     serialize = buffer.from(arrayBuffer).buffer
-} else if (mergeSaaSClick) {
-    // SaaS 点击合并：按 t/u/s/d/p/ptm/r 分组，公共字段提到顶层，
-    // 每条点击的专属字段（tm/x/gesid/esid，及可选 v/idx/h）收入 e 数组
-    // → 减少 SaaS 无埋点 VIEW_CLICK 的上报体积
-    let json = JSON.stringify(mergeGroups(events))
-    serialize = buffer.from(json, 'utf-8').buffer
 } else {
-    // JSON 序列化
-    let json = '[' + events.map(event => String(event.data)).join(',') + ']'
-    serialize = buffer.from(json, 'utf-8').buffer
+    // NewSaaS identify 后：仅为 ID 不同的事件创建发送副本，数据库原文不变
+    if (shouldReplaceDeviceId) {
+        events = events.map(e => {
+            let event = JSON.parse(e.data) as Event
+            if (event.deviceId === deviceId) {
+                return e
+            }
+            event.deviceId = deviceId
+            return EventPersistence.fromDatabase(
+                e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+            )
+        })
+    }
+    if (mergeSaaSClick) {
+        // SaaS 点击合并：按 t/u/s/d/p/ptm 分组，公共字段提到顶层，
+        // 每条点击的专属字段（tm/x/gesid/esid，及可选 v/idx/h）收入 e 数组
+        // → 减少 SaaS 无埋点 VIEW_CLICK 的上报体积
+        let json = JSON.stringify(mergeGroups(events))
+        serialize = buffer.from(json, 'utf-8').buffer
+    } else {
+        // JSON 序列化
+        let json = '[' + events.map(event => String(event.data)).join(',') + ']'
+        serialize = buffer.from(json, 'utf-8').buffer
+    }
 }
 
 // Snappy 压缩
 if (compressEnabled) {
     serialize = snappy.compress(serialize) as ArrayBuffer
 }
+
+return new ProcessEventsResult(serialize, events)
 ```
 
-> **SaaS 点击合并细节**：分组 key 为 `t_u_s_d_p_ptm_r`；顶层公共字段含 `t/tm/u/s/d/p/ptm/r`，并按需带上 `cs1/q/lat/lng`（有值才写）；`e` 数组中每个元素含 `tm/x/gesid/esid`，按需带上 `v/idx/h`。仅在 `mergeSaaSClick == true`（即 SaaS 无埋点点击批量上报）时走此分支。
+> **SaaS 点击合并细节**：分组 key 为 `t_u_s_d_p_ptm`；顶层公共字段含 `t/tm/u/s/d/p/ptm`，并按需带上 `cs1/q/lat/lng`（有值才写）；`e` 数组中每个元素含 `tm/x/gesid/esid`，按需带上 `v/idx/h`。分组和输出均不包含 `r`。仅在 `mergeSaaSClick == true`（即 SaaS 无埋点点击/变更批量上报）时走此分支。
 
 **调用位置：**
-- `Network.generateRequest()` 内通过 `taskpool.Task(processEvents, …)` 调度到子线程执行（由 `Network.request(events, urlPath, context, mergeSaaSClick)` 触发）
+- `Network.generateRequest()` 内通过 `taskpool.Task(processEvents, …)` 调度到子线程执行（由 `Network.request(events, urlPath, context, mergeSaaSClick, deviceId)` 触发）；`deviceId` 仅用于 NewSaaS identify 后的发送副本替换
 - `SaaS_OTHER` 发送器（处理 `ViewClick` / `ViewChange`）以 `mergeSaaSClick = true` 触发合并
 
 ---
@@ -326,12 +362,13 @@ static toSerializeByMeasurementProtocolV2(
 | `q` | query | 页面查询参数（undefined 时不写入） |
 | `h` | hyperlink | 超链接地址（undefined 时不写入） |
 | `idx` | index | 列表索引，以字符串写入（undefined 时不写入） |
-| `r` | networkState | 网络状态（WIFI/CELL/UNKNOWN/NONE） |
 | `lat`/`lng` | latitude/longitude | 地理位置（undefined 时不写入） |
+
+点击/变更事件不输出网络状态字段 `r`。
 
 *VISIT (`t: vst`)*：设备信息字段（`db`, `dm`, `sh`, `sw`, `os`, `cv` 等）
 
-*APP_CLOSED (`t: cls`)*：`p`(path)
+*APP_CLOSED (`t: cls`)*：`p`(path), `r`(networkState→WIFI/CELL/UNKNOWN/NONE)
 
 #### toSerializeByMeasurementProtocolV3() - CDP 协议
 

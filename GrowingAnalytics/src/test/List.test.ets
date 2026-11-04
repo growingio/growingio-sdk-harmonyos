@@ -17,6 +17,9 @@ import eventPersistenceTests from './event/EventPersistence.test'
 import eventSendCycleTests from './event/EventSendCycle.test'
 import circleProtocolTests from './circle/CircleProtocol.test'
 import circleElementTests from './circle/CircleElement.test'
+import forceLoginTests from './core/ForceLogin.test'
+import concurrentTests from './utils/Concurrent.test'
+import analyticsCoreTests from './core/AnalyticsCore.test'
 
 export default function testsuite() {
   // Phase 1 · 纯函数层
@@ -30,6 +33,7 @@ export default function testsuite() {
   generalPropsTests()
   contextTests()
   userIdentifierTests()
+  forceLoginTests()
 
   // Phase 3 · 数据管道层
   eventBuilderTests()
@@ -48,4 +52,6 @@ export default function testsuite() {
 
   circleProtocolTests()
   circleElementTests()
+  concurrentTests()
+  analyticsCoreTests()
 }

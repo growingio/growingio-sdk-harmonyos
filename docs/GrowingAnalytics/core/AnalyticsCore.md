@@ -165,6 +165,7 @@ export const SDK_VERSION: string = HAR_VERSION
 │ • SharedPreferences │
 │ • AppInfo           │
 │ • DeviceInfo        │
+│ • ForceLogin        │
 │ • UserIdentifier    │
 │ • EventDatabase     │
 │ • Network           │
@@ -180,22 +181,22 @@ export const SDK_VERSION: string = HAR_VERSION
          │
          ▼
 ┌─────────────────────┐
-│ 7. 通知初始化完成   │
+│ 7. 标记初始化成功   │
+│ _isInitialized      │
+│ Successfully = true │
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│ 8. 通知初始化完成   │
 │ EMIT_EVENT_MAIN_    │
 │ TRACKER_INITIALIZE  │
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│ 8. 通知插件已完成   │
+│ 9. 通知插件已完成   │
 │ onSDKDidInitialize  │
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│ 9. 标记初始化成功   │
-│ _isInitialized      │
-│ Successfully = true │
 └─────────────────────┘
 ```
 
@@ -235,6 +236,7 @@ static startCore(context: Context, config: GrowingConfig) {
   SharedPreferences.initWithContext(context)
   AppInfo.initAppInfo(context)
   DeviceInfo.initDeviceInfo(gContext)
+  ForceLogin.init()  // 恢复 NewSaaS 访问用户 ID，并重置本次启动解锁状态
   UserIdentifier.initUser(gContext)
   EventDatabase.initDatabase(context)
   Network.initNetwork(gContext)
@@ -246,15 +248,17 @@ static startCore(context: Context, config: GrowingConfig) {
     EventSender.sendEvent(gContext)
   }, delay)
 
-  // 8. 通知初始化完成
+  // 8. 标记初始化成功
+  core._isInitializedSuccessfully = true
+
+  // 9. 通知初始化完成
   emitter.emit(EMIT_EVENT_MAIN_TRACKER_INITIALIZE)
   LogUtil.info(() => 'Thank you very much for using GrowingIO...')
   Plugins.onSDKDidInitialize(config, SDK_VERSION)
-
-  // 9. 标记初始化成功
-  core._isInitializedSuccessfully = true
 }
 ```
+
+初始化完成通知发出前，核心实例已标记为就绪。插件可在 `onSDKDidInitialize` 中调用 `GrowingAnalytics.identify`，解除 NewSaaS 强制登录阻塞；`onSDKWillInitialize` 中的调用仍被忽略。
 
 ### 插件注册策略
 
@@ -287,6 +291,8 @@ Application          GrowingAnalytics    AnalyticsCore       Plugins         Mod
      │                     │                   │                │               │
      │                     │                   │ setInterval    │               │
      │                     │                   │ (sendEvent)    │               │
+     │                     │                   │                │               │
+     │                     │                   │ mark initialized               │
      │                     │                   │                │               │
      │                     │                   │ emit(MAIN_    │               │
      │                     │                   │ TRACKER_INIT)  │               │
@@ -382,6 +388,31 @@ SDK 支持两种初始化时机：
 |------|------|----------|
 | **正常初始化** | 在 `onWindowStageCreate` 之前调用 `start()` | 注册生命周期监听，等待窗口创建 |
 | **延迟初始化** | 在 `onWindowStageCreate` 之后调用 `start()` | 直接获取 windowStage，调用 `onDeferStart()` |
+
+---
+
+## NewSaaS 强制登录
+
+主 Tracker 初始化时调用 `ForceLogin.init()` 恢复访问用户 ID，并将本次启动的解锁状态重置为 `false`。子 Tracker 初始化不重置该状态，因此主入口 identify 后新增的 NewSaaS 子 Tracker 也沿用首次设置的 ID。
+
+```typescript
+static identify(deviceId: string): void {
+  if (!AnalyticsCore.core.isInitializedSuccessfully()) {
+    return
+  }
+  let context = GrowingContext.getDefaultContext()
+  if (!ForceLogin.identify(deviceId, context)) {
+    return
+  }
+  for (let tracker of AnalyticsCore.trackers) {
+    if (tracker.context.config.mode == ConfigMode.NewSaaS && tracker.context.config.forceLogin) {
+      EventSender.sendEvent(tracker.context)
+    }
+  }
+}
+```
+
+仅主 Tracker 为 NewSaaS 且开启 `forceLogin` 时接受首次有效输入。解锁后遍历所有 NewSaaS 强制登录上下文并立即尝试补发；普通 NewSaaS、SaaS 和 CDP 不触发额外发送。
 
 ---
 

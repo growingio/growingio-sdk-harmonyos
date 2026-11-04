@@ -19,25 +19,46 @@
 
 import buffer from '@ohos.buffer'
 
+import Event from '../event/Event'
 import EventPersistence from "../event/EventPersistence"
 import { LogUtil } from './LogUtil'
 import snappy from 'snappyjs'
 import { event_pb } from './protobuf/event_pb'
+import { ProcessEventsResult } from './ProcessEventsResult'
 
 @Concurrent
-export function processEvents(events: EventPersistence[], useProtobuf: boolean, compressEnabled: boolean, mergeSaaSClick: boolean = false): ArrayBuffer {
+export function processEvents(
+  events: EventPersistence[],
+  useProtobuf: boolean,
+  compressEnabled: boolean,
+  mergeSaaSClick: boolean = false,
+  deviceId: string = ''
+): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
+  let shouldReplaceDeviceId = deviceId.length > 0
   if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
+    let sentEvents: EventPersistence[] = shouldReplaceDeviceId ? [] : events
     events.forEach(e => {
+      let sentEvent = e
       try {
-        let event = JSON.parse(e.data) as object
+        let event = JSON.parse(e.data) as Event
+        if (shouldReplaceDeviceId && event.deviceId !== deviceId) {
+          event.deviceId = deviceId
+          sentEvent = EventPersistence.fromDatabase(
+            e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+          )
+        }
         let dto = event_pb.EventV3Dto.fromObject(event)
         values.push(dto)
       } catch (error) {
         LogUtil.error(() => 'Failed to parse event data: ' + error)
       }
+      if (shouldReplaceDeviceId) {
+        sentEvents.push(sentEvent)
+      }
     })
+    events = sentEvents
     try {
       let list = event_pb.EventV3List.create({values: values})
       let arrayBuffer: Uint8Array = event_pb.EventV3List.encode(list).finish()
@@ -46,6 +67,23 @@ export function processEvents(events: EventPersistence[], useProtobuf: boolean, 
       LogUtil.error(() => 'Failed to create protobuf: ' + error)
     }
   } else {
+    if (shouldReplaceDeviceId) {
+      events = events.map(e => {
+        try {
+          let event = JSON.parse(e.data) as Event
+          if (event.deviceId === deviceId) {
+            return e
+          }
+          event.deviceId = deviceId
+          return EventPersistence.fromDatabase(
+            e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+          )
+        } catch (error) {
+          LogUtil.error(() => 'Failed to replace event deviceId: ' + error)
+          return e
+        }
+      })
+    }
     try {
       let json: string
       if (mergeSaaSClick) {
@@ -122,5 +160,5 @@ export function processEvents(events: EventPersistence[], useProtobuf: boolean, 
     }
   }
 
-  return serialize
+  return new ProcessEventsResult(serialize, events)
 }

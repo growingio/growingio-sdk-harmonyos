@@ -78,34 +78,36 @@ export default class Network {
   // 初始化网络模块
   static initNetwork(context: GrowingContext)
 
-  // 发送事件请求
+  // 发送事件请求，返回响应和实际发送副本
   static async request(
-    events: EventPersistence[], 
-    urlPath: string, 
+    events: EventPersistence[],
+    urlPath: string,
     context: GrowingContext,
-    mergeSaaSClick: boolean = false
-  ): Promise<rcp.Response>
+    mergeSaaSClick: boolean = false,
+    deviceId: string = ''
+  ): Promise<NetworkResponse>
 
-  // 生成 HTTP 请求
+  // 生成 HTTP 请求，同时保留 TaskPool 返回的实际发送副本
   static async generateRequest(
-    time: number, 
-    url: string, 
-    events: EventPersistence[], 
+    time: number,
+    url: string,
+    events: EventPersistence[],
     context: GrowingContext,
-    mergeSaaSClick: boolean = false
-  ): Promise<rcp.Request>
+    mergeSaaSClick: boolean = false,
+    deviceId: string = ''
+  ): Promise<GeneratedRequest>
 
   // 生成请求头
   static generateHeaders(
-    time: number, 
-    useProtobuf: boolean, 
+    time: number,
+    useProtobuf: boolean,
     context: GrowingContext
   ): Record<string, string>
 
   // 生成请求 URL
   static generateUrl(
-    time: number, 
-    urlPath: string, 
+    time: number,
+    urlPath: string,
     context: GrowingContext
   ): string
 }
@@ -131,33 +133,29 @@ let response = await Network.session.fetch(request)
 
 ```typescript
 static async request(
-  events: EventPersistence[], 
-  urlPath: string, 
+  events: EventPersistence[],
+  urlPath: string,
   context: GrowingContext,
-  mergeSaaSClick: boolean = false
-): Promise<rcp.Response> {
-  
-  // 1. 检查会话是否初始化
+  mergeSaaSClick: boolean = false,
+  deviceId: string = ''
+): Promise<NetworkResponse> {
   if (!Network.session) {
     return Promise.reject(new Error('Network session not initialized'))
   }
 
-  // 2. 生成时间戳
   let curTime = Date.now()
-  
-  // 3. 生成 URL
   let url = Network.generateUrl(curTime, urlPath, context)
-
+  let generated: GeneratedRequest
   try {
-    // 4. 生成请求对象
-    let request = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick)
-    
-    // 5. 发送请求
-    return Network.session.fetch(request)
+    generated = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick, deviceId)
   } catch (error) {
     LogUtil.error(() => 'Failed to generate request: ' + error)
     return Promise.reject(error)
   }
+
+  let response = await Network.session.fetch(generated.request)
+  let result: NetworkResponse = { response: response, sentEvents: generated.sentEvents }
+  return result
 }
 ```
 
@@ -215,64 +213,43 @@ EventSender.sendEvent()
 
 ```typescript
 static async generateRequest(
-  time: number, 
-  url: string, 
-  events: EventPersistence[], 
+  time: number,
+  url: string,
+  events: EventPersistence[],
   context: GrowingContext,
-  mergeSaaSClick: boolean = false   // SaaS 无埋点点击合并上报开关
-): Promise<rcp.Request> {
-
-  // 1. 判断是否使用 Protobuf
+  mergeSaaSClick: boolean = false,
+  deviceId: string = ''
+): Promise<GeneratedRequest> {
   let useProtobuf = context.config.useProtobuf
   if (context.config.mode == ConfigMode.SaaS) {
-    useProtobuf = false  // SaaS 模式不支持 Protobuf
+    useProtobuf = false
   }
 
-  // 2. 在子线程处理事件序列化
   let processTask = new taskpool.Task(
-    processEvents, 
-    events, 
-    useProtobuf, 
-    context.config.compressEnabled,
-    mergeSaaSClick                   // 传入合并标志
+    processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick, deviceId
   )
-  
-  let serialize: ArrayBuffer
+  let processed: ProcessEventsResult
   try {
-    serialize = await taskpool.execute(processTask) as ArrayBuffer
+    processed = await taskpool.execute(processTask) as ProcessEventsResult
   } catch (error) {
     LogUtil.error(() => 'Failed to execute taskpool task: ' + error)
     return Promise.reject(error)
   }
 
-  // 3. 加密（如果启用）
+  let serialize = processed.serialize
   if (context.config.encryptEnabled) {
     serialize = Util.encrypt(serialize, time)
   }
 
-  // 4. 生成请求头
   let headers = Network.generateHeaders(time, useProtobuf, context)
-
-  // 5. 创建请求对象
   let request = new rcp.Request(url, "POST", headers, serialize)
-
-  // 6. 配置请求参数
-  const requestConfig: rcp.Configuration = {
-    transfer: {
-      timeout: {
-        connectMs: context.config.requestOptions._connectTimeout,
-        transferMs: context.config.requestOptions._transferTimeout,
-      }
-    },
-    tracing: {
-      collectTimeInfo: true
-    }
-  }
-  request.configuration = requestConfig
-
-  return request
+  // 省略 request.configuration 的超时与 tracing 配置
+  let result: GeneratedRequest = { request: request, sentEvents: processed.events }
+  return result
 }
 ```
+
+`GeneratedRequest` 同时携带请求对象和 `processed.events`。后者是 TaskPool 中实际用于序列化的事件副本，最终由 `Network.request()` 透传给 `EventSender`，供发送完成回调使用。
 
 ### processEvents 并发任务
 
@@ -285,23 +262,28 @@ export function processEvents(
   events: EventPersistence[],
   useProtobuf: boolean,
   compressEnabled: boolean,
-  mergeSaaSClick: boolean = false   // true 时对 SaaS 无埋点点击做分组合并序列化
-): ArrayBuffer {
+  mergeSaaSClick: boolean = false,
+  deviceId: string = ''
+): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
+  if (deviceId.length > 0) {
+    // 复制事件并替换 deviceId，保留 UUID 和数据库原对象
+    ...
+  }
   if (useProtobuf) {
     // event_pb.EventV3Dto.fromObject → EventV3List.encode().finish()
     ...
   } else if (mergeSaaSClick) {
-    // 按 t_u_s_d_p_ptm_r 分组，公共字段提顶层、专属字段收入 e 数组后 JSON.stringify
+    // 按 t_u_s_d_p_ptm 分组，公共字段提顶层、专属字段收入 e 数组后 JSON.stringify
     ...
   } else {
     // 普通 JSON： '[' + events.map(e => String(e.data)).join(',') + ']'
     serialize = buffer.from(json, 'utf-8').buffer
   }
   if (compressEnabled) {
-    serialize = snappy.compress(serialize) as ArrayBuffer   // Snappy（非 Gzip）
+    serialize = snappy.compress(serialize) as ArrayBuffer
   }
-  return serialize
+  return new ProcessEventsResult(serialize, events)
 }
 ```
 
@@ -417,9 +399,15 @@ static generateHeaders(
   useProtobuf: boolean, 
   context: GrowingContext
 ): Record<string, string> {
-  
+  let contentType: string
+  if (context.config.mode == ConfigMode.SaaS) {
+    contentType = "application/octet-stream"
+  } else {
+    contentType = useProtobuf ? "application/protobuf" : "application/json"
+  }
+
   let headers: Record<string, string> = {
-    "Content-Type": useProtobuf ? "application/protobuf" : "application/json",
+    "Content-Type": contentType,
     "Accept": "application/json",
     "X-Timestamp": time + ''
   }
@@ -442,11 +430,13 @@ static generateHeaders(
 
 | Header | 值 | 说明 |
 |--------|-----|------|
-| `Content-Type` | `application/protobuf` 或 `application/json` | 内容类型 |
+| `Content-Type` | `application/octet-stream` / `application/protobuf` / `application/json` | SaaS 固定为 `application/octet-stream`；NewSaaS/CDP 按 `useProtobuf` 选择 |
 | `Accept` | `application/json` | 接受响应类型 |
 | `X-Timestamp` | 时间戳 | 请求时间 |
 | `X-Compress-Codec` | `2` | 压缩算法（Snappy）|
 | `X-Crypt-Codec` | `1` | 加密算法（XOR 混淆）|
+
+SaaS 的请求体使用 JSON 编码，`Content-Type` 固定为 `application/octet-stream`。
 
 ---
 

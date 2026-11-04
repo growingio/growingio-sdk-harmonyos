@@ -184,7 +184,7 @@ class EventBuilder {
     event.sdkVersion = SDK_VERSION
 
     // 3. 设备信息
-    event.deviceId = DeviceInfo.deviceId
+    event.deviceId = ForceLogin.getDeviceId(context, DeviceInfo.deviceId)
     event.platform = DeviceInfo.platform
     event.platformVersion = DeviceInfo.platformVersion
     event.screenHeight = DeviceInfo.screenHeight
@@ -412,9 +412,11 @@ enum EventSenderType {
 | SaaS_CSTM | `/v3/accountId/harmonyos/cstm` | 自定义事件 |
 | SaaS_OTHER | `/v3/accountId/harmonyos/other` | 无埋点点击/变更事件（合并格式） |
 
-> **SaaS click 合并上报：** `SaaS_OTHER` 发送时会启用 `mergeSaaSClick` 模式——相同页面、会话、网络环境下的多个点击/变更事件按 `t_u_s_d_p_ptm_r` 为 key 分组，公共字段提升至顶层，每条事件的专属字段（`x`、`gesid`、`esid`、`v`、`idx`、`h` 等）收入 `e[]` 数组，减少冗余字段传输。
+> **SaaS click 合并上报：** `SaaS_OTHER` 发送时会启用 `mergeSaaSClick` 模式，多个点击/变更事件按 `t_u_s_d_p_ptm` 为 key 分组，公共字段提升至顶层，每条事件的专属字段（`x`、`gesid`、`esid`、`v`、`idx`、`h` 等）收入 `e[]` 数组，减少冗余字段传输。分组和输出均不包含网络状态字段 `r`。
 
 ### 发送流程
+
+NewSaaS 开启 `forceLogin` 且本次启动尚未有效 `identify` 时，发送器在读取数据库批次前返回。首次有效 `identify` 会触发所有 NewSaaS 强制登录上下文补发。实际请求传入当前访问用户 ID，由 TaskPool 在 Protobuf/JSON 序列化前复制并替换历史事件的 `deviceId`，数据库原文不变。
 
 ```typescript
 class EventSender {
@@ -425,8 +427,12 @@ class EventSender {
     }
     this.isUploading = true
 
-    // 2. 获取上下文
+    // 2. 获取上下文并检查强制登录发送闸门
     let context = gContext ?? GrowingContext.getContext(this.trackerId)
+    if (!ForceLogin.canSend(context)) {
+      this.isUploading = false
+      return
+    }
 
     // 3. 从数据库获取事件
     let events = await EventDatabase.getEventsByCount(
@@ -440,15 +446,18 @@ class EventSender {
       return
     }
 
-    // 4. 发送请求
+    // 4. 发送请求，后台序列化时替换 NewSaaS 访问用户 ID
     try {
-      let response = await Network.request(events, this.urlPath, context)
+      let networkResponse = await Network.request(
+        events, this.urlPath, context, this.mergeSaaSClick, ForceLogin.getOverrideDeviceId(context)
+      )
+      let response = networkResponse.response
       Plugins.onResponseReceive(response)
 
       if (response.statusCode >= 200 && response.statusCode < 400) {
-        // 5. 发送成功，删除已发送事件
+        // 5. 原事件用于删除，实际发送副本用于插件回调
         await EventDatabase.removeEvents([...events])
-        Plugins.onEventsDidSend(events, response.request)
+        Plugins.onEventsDidSend(networkResponse.sentEvents, response.request)
         Plugins.onEventsRemoveFromDisk(events.map(e => e.uuid))
         this.isUploading = false
 
