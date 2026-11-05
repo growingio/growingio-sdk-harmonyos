@@ -12,6 +12,7 @@ import queueTests from './mobileDebugger/Queue.test'
 import eventBuilderTests from './event/EventBuilder.test'
 import pageEventTests from './event/PageEvent.test'
 import customEventTests from './event/CustomEvent.test'
+import hybridCustomEventTests from './event/HybridCustomEvent.test'
 import viewElementEventTests from './event/ViewElementEvent.test'
 import eventPersistenceTests from './event/EventPersistence.test'
 import eventSendCycleTests from './event/EventSendCycle.test'
@@ -35,6 +36,7 @@ export default function testsuite() {
   eventBuilderTests()
   pageEventTests()
   customEventTests()
+  hybridCustomEventTests()
   viewElementEventTests()
   eventPersistenceTests()
   eventSendCycleTests()

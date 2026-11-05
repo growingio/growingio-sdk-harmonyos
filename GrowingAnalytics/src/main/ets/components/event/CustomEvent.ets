@@ -24,8 +24,13 @@ import { ConfigMode } from '../interfaces/GrowingConfig'
 export default class CustomEvent extends Event {
   eventName: string = ''
 
-  // mode SaaS
+  // mode NewSaaS / SaaS
   path: string | undefined = undefined
+
+  // mode NewSaaS
+  referralPage: string | undefined = undefined
+
+  // mode SaaS
   pageShowTimestamp: number | undefined = undefined
 
   static create(
@@ -38,7 +43,18 @@ export default class CustomEvent extends Event {
     event.attributes = attributes
     event.eventType = EventType.Custom
 
-    if (context.config.mode == ConfigMode.SaaS) {
+    if (context.config.mode == ConfigMode.NewSaaS) {
+      let lastPage = PageEvent.getLastPage(context)
+      if (lastPage) {
+        if (context.config.customEventWithPath && lastPage.path != undefined && lastPage.path.length > 0) {
+          event.path = lastPage.path
+        }
+        if (context.config.customEventWithReferralPath && lastPage.referralPage != undefined &&
+          lastPage.referralPage.length > 0) {
+          event.referralPage = lastPage.referralPage
+        }
+      }
+    } else if (context.config.mode == ConfigMode.SaaS) {
       let lastPage = PageEvent.getLastPage(context)
       if (lastPage) {
         event.path = lastPage.path ?? ''

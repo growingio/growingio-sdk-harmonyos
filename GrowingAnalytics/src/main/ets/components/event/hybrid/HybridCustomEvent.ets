@@ -19,11 +19,15 @@ import HybridEvent from './HybridEvent'
 import Event, { EventType, AttributesType } from '../Event'
 import EventBuilder from '../EventBuilder'
 import GrowingContext from '../../core/Context'
+import { ConfigMode } from '../../interfaces/GrowingConfig'
 
 export default class HybridCustomEvent extends Event implements HybridEvent {
   eventName: string = ''
   path: string | undefined = undefined
   query: string | undefined = undefined
+
+  // mode NewSaaS
+  referralPage: string | undefined = undefined
 
   // mode SaaS
   pageShowTimestamp: number | undefined = undefined
@@ -35,12 +39,16 @@ export default class HybridCustomEvent extends Event implements HybridEvent {
     query: string,
     timestamp: number,
     domain: string,
+    referralPage: string | undefined,
     context: GrowingContext
   ): HybridCustomEvent {
     let event = new HybridCustomEvent()
     event.eventName = eventName ?? ''
     event.attributes = attributes
     event.path = path
+    if (context.config.mode == ConfigMode.NewSaaS && referralPage != undefined && referralPage.length > 0) {
+      event.referralPage = referralPage
+    }
     event.query = query
     event.timestamp = Number(timestamp ?? 0)
     event.domain = String(domain ?? '')
