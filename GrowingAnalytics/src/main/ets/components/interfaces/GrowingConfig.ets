@@ -90,6 +90,8 @@ export class GrowingConfig {
   autotrackEnabled: boolean = false
   autotrackAllPages: boolean = false
   useProtobuf: boolean = true
+  customEventWithPath: boolean = false
+  customEventWithReferralPath: boolean = false
   plugins: Array<PluginsInterface> = []
   ignoreField: number = 0
 
@@ -210,6 +212,8 @@ export class GrowingConfig {
     config.autotrackEnabled = this.autotrackEnabled
     config.autotrackAllPages = this.autotrackAllPages
     config.useProtobuf = this.useProtobuf
+    config.customEventWithPath = this.customEventWithPath
+    config.customEventWithReferralPath = this.customEventWithReferralPath
     config.plugins = [...this.plugins]
     config.ignoreField = this.ignoreField
 

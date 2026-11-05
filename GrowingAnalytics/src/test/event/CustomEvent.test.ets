@@ -19,6 +19,7 @@ import { describe, it, expect, beforeEach } from '@ohos/hypium'
 import CustomEvent from '../../main/ets/components/event/CustomEvent'
 import AppClosedEvent from '../../main/ets/components/event/AppClosedEvent'
 import PageEvent, { Page } from '../../main/ets/components/event/PageEvent'
+import FlutterPageEvent from '../../main/ets/components/event/flutter/FlutterPageEvent'
 import EventBuilder from '../../main/ets/components/event/EventBuilder'
 import Session from '../../main/ets/components/core/Session'
 import UserIdentifier from '../../main/ets/components/core/UserIdentifier'
@@ -34,6 +35,8 @@ interface MinimalCustomConfig {
   mode: ConfigMode
   idMappingEnabled: boolean
   dataCollectionEnabled: boolean
+  customEventWithPath: boolean
+  customEventWithReferralPath: boolean
 }
 
 interface MinimalCustomContext {
@@ -51,7 +54,9 @@ function makeCtx(
     urlScheme: 'growing.test',
     mode: mode,
     idMappingEnabled: false,
-    dataCollectionEnabled: false
+    dataCollectionEnabled: false,
+    customEventWithPath: false,
+    customEventWithReferralPath: false
   }
   let ctx: MinimalCustomContext = { trackerId: trackerId, config: config }
   return ctx as ESObject as GrowingContext
@@ -63,13 +68,18 @@ function seedContext(ctx: GrowingContext) {
 }
 
 /** 直接写 PageEvent.lastPage，绕过 create() 副作用 */
-function seedLastPage(ctx: GrowingContext, path: string = '/last-page', ts: number = 1700000000000) {
+function seedLastPage(
+  ctx: GrowingContext,
+  path: string = '/last-page',
+  ts: number = 1700000000000,
+  referralPath: string | undefined = undefined
+) {
   let page: Page = {
     path: path,
     title: 'Last Page',
     timestamp: ts,
     attributes: undefined,
-    referralPage: undefined
+    referralPage: referralPath
   }
   PageEvent.setLastPage(page, ctx)
 }
@@ -87,12 +97,12 @@ function resetAll() {
  * 两个事件类在 SaaS 模式下都读取 PageEvent.lastPage：
  *   - CustomEvent：填充 event.path + event.pageShowTimestamp
  *   - AppClosedEvent：填充 event.path
- * CustomEvent 在 NewSaaS 模式下额外填充 event.referralPage。
+ * CustomEvent 在 NewSaaS 模式下按两个独立配置填充 path 和 referralPage。
  *
  * 共同测试点：
- *   SaaS + lastPage 存在 → SaaS 字段填充
+ *   SaaS + lastPage 存在 → SaaS 字段填充，不受新配置影响
  *   SaaS + lastPage 不存在 → SaaS 字段为 undefined
- *   NewSaaS → CustomEvent 填充 referralPage，SaaS 专属字段为 undefined
+ *   NewSaaS → 默认不携带页面字段，开启后分别填充当前页 path / 上一页 referralPage
  *   CDP → 不注入 lastPage 字段
  *
  * seedLastPage() 直接调用 PageEvent.setLastPage() 构造前驱状态，
@@ -162,48 +172,100 @@ export default function customEventTests() {
     })
   })
 
-  // ─── CustomEvent NewSaaS 模式 referralPage ───────────────────────────────
+  // ─── CustomEvent NewSaaS 模式页面信息开关 ────────────────────────────────
 
-  describe('CustomEvent_NewSaaS_referralPage', () => {
+  describe('CustomEvent_NewSaaS_pageInfo', () => {
 
     beforeEach(() => { resetAll() })
 
-    it('NewSaaS + lastPage 存在：referralPage = 上一页 path', 0, () => {
+    it('两个开关默认关闭：path 和 referralPage 均为 undefined', 0, () => {
       let ctx = makeCtx('t', ConfigMode.NewSaaS)
       seedContext(ctx)
-      seedLastPage(ctx, '/product/detail')
+      seedLastPage(ctx, '/current', 1700000000000, '/previous')
       let e = CustomEvent.create('add_cart', {}, ctx)
-      expect(e.referralPage).assertEqual('/product/detail')
-      expect(e.toSerialize(ctx)).assertContain('"referralPage":"/product/detail"')
+      expect(e.path === undefined).assertTrue()
+      expect(e.referralPage === undefined).assertTrue()
+      expect(e.pageShowTimestamp === undefined).assertTrue()
     })
 
-    it('NewSaaS + 无 lastPage：referralPage 为 undefined', 0, () => {
+    it('customEventWithPath 独立开启：path = 当前页，referralPage 不携带', 0, () => {
       let ctx = makeCtx('t', ConfigMode.NewSaaS)
+      ctx.config.customEventWithPath = true
+      seedContext(ctx)
+      seedLastPage(ctx, '/current', 1700000000000, '/previous')
+      let e = CustomEvent.create('add_cart', {}, ctx)
+      expect(e.path).assertEqual('/current')
+      expect(e.referralPage === undefined).assertTrue()
+      expect(e.pageShowTimestamp === undefined).assertTrue()
+      expect(e.toSerialize(ctx)).assertContain('"path":"/current"')
+    })
+
+    it('customEventWithReferralPath 独立开启：referralPage = 当前页的上一页，path 不携带', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.NewSaaS)
+      ctx.config.customEventWithReferralPath = true
+      seedContext(ctx)
+      seedLastPage(ctx, '/current', 1700000000000, '/previous')
+      let e = CustomEvent.create('add_cart', {}, ctx)
+      expect(e.referralPage).assertEqual('/previous')
+      expect(e.path === undefined).assertTrue()
+      expect(e.toSerialize(ctx)).assertContain('"referralPage":"/previous"')
+    })
+
+    it('当前页无上一页：开启 referralPath 开关也不携带 referralPage', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.NewSaaS)
+      ctx.config.customEventWithReferralPath = true
+      seedContext(ctx)
+      seedLastPage(ctx, '/first')
+      let e = CustomEvent.create('add_cart', {}, ctx)
+      expect(e.referralPage === undefined).assertTrue()
+    })
+
+    it('Flutter PAGE 后 CUSTOM 可携带当前页 path 和上一页 referralPage', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.NewSaaS)
+      ctx.config.customEventWithPath = true
+      ctx.config.customEventWithReferralPath = true
+      seedContext(ctx)
+      FlutterPageEvent.create('/flutter/current', 'Current', {}, 1700000000000, '/flutter/previous', ctx)
+      let e = CustomEvent.create('add_cart', {}, ctx)
+      expect(e.path).assertEqual('/flutter/current')
+      expect(e.referralPage).assertEqual('/flutter/previous')
+    })
+
+    it('无 lastPage：两个开关开启也不携带页面字段', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.NewSaaS)
+      ctx.config.customEventWithPath = true
+      ctx.config.customEventWithReferralPath = true
       seedContext(ctx)
       let e = CustomEvent.create('add_cart', {}, ctx)
+      expect(e.path === undefined).assertTrue()
       expect(e.referralPage === undefined).assertTrue()
     })
   })
 
-  // ─── CustomEvent SaaS 专属字段在非 SaaS 模式下的行为 ─────────────────────
+  // ─── CustomEvent 非 NewSaaS 模式不受两个开关影响 ─────────────────────────
 
-  describe('CustomEvent_nonSaaS_saasFields', () => {
+  describe('CustomEvent_nonNewSaaS_pageInfo', () => {
 
     beforeEach(() => { resetAll() })
 
-    it('NewSaaS：path 和 pageShowTimestamp 为 undefined（即使 lastPage 存在）', 0, () => {
-      let ctx = makeCtx('t', ConfigMode.NewSaaS)
+    it('SaaS：保持原有 path 和 pageShowTimestamp 行为，不携带 referralPage', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.SaaS)
+      ctx.config.customEventWithPath = true
+      ctx.config.customEventWithReferralPath = true
       seedContext(ctx)
-      seedLastPage(ctx)
+      seedLastPage(ctx, '/current', 1700000000000, '/previous')
       let e = CustomEvent.create('test', {}, ctx)
-      expect(e.path === undefined).assertTrue()
-      expect(e.pageShowTimestamp === undefined).assertTrue()
+      expect(e.path).assertEqual('/current')
+      expect(e.pageShowTimestamp).assertEqual(1700000000000)
+      expect(e.referralPage === undefined).assertTrue()
     })
 
-    it('CDP：不注入 lastPage 字段', 0, () => {
+    it('CDP：两个开关开启也不注入页面字段', 0, () => {
       let ctx = makeCtx('t', ConfigMode.CDP)
+      ctx.config.customEventWithPath = true
+      ctx.config.customEventWithReferralPath = true
       seedContext(ctx)
-      seedLastPage(ctx)
+      seedLastPage(ctx, '/current', 1700000000000, '/previous')
       let e = CustomEvent.create('test', {}, ctx)
       expect(e.path === undefined).assertTrue()
       expect(e.pageShowTimestamp === undefined).assertTrue()

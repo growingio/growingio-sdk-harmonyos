@@ -59,6 +59,12 @@ export default function configTests() {
       expect(config.useProtobuf).assertTrue()
     })
 
+    it('默认 CUSTOM 事件不携带 path 和 referralPage', 0, () => {
+      let config = new GrowingConfig()
+      expect(config.customEventWithPath).assertFalse()
+      expect(config.customEventWithReferralPath).assertFalse()
+    })
+
     it('默认 ignoreField 为 0（不忽略任何字段）', 0, () => {
       let config = new GrowingConfig()
       expect(config.ignoreField).assertEqual(0)
@@ -298,6 +304,8 @@ export default function configTests() {
       original.debugEnabled = true
       original.encryptEnabled = false
       original.sessionInterval = 60
+      original.customEventWithPath = true
+      original.customEventWithReferralPath = true
 
       let copied = original.copy()
       expect(copied.accountId).assertEqual('acct')
@@ -305,6 +313,8 @@ export default function configTests() {
       expect(copied.debugEnabled).assertTrue()
       expect(copied.encryptEnabled).assertFalse()
       expect(copied._sessionInterval).assertEqual(60000)
+      expect(copied.customEventWithPath).assertTrue()
+      expect(copied.customEventWithReferralPath).assertTrue()
     })
 
     it('copy() 应返回新对象（深拷贝），修改副本不影响原始配置', 0, () => {

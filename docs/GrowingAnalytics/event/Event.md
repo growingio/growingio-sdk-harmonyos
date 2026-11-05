@@ -154,15 +154,20 @@ enum EventScene {
 
 | 事件类 | 说明 | 特有字段 |
 |--------|------|----------|
-| `CustomEvent` | 自定义事件 | `eventName`, `referralPage`(NewSaaS), `path`(SaaS), `pageShowTimestamp`(SaaS) |
+| `CustomEvent` | 自定义事件 | `eventName`, `path`(NewSaaS 需开启配置 / SaaS), `referralPage`(NewSaaS 需开启配置), `pageShowTimestamp`(SaaS) |
 | `PageEvent` | 页面浏览事件 | `path`, `title`, `orientation`, `referralPage` |
 | `HybridPageEvent` | H5 页面事件 | `title`, `referralPage`, `protocolType`, `path`, `query` |
 | `FlutterPageEvent` | Flutter 页面事件 | `path`, `title`, `orientation`, `referralPage` |
 | `ViewElementEvent` | 点击/变化事件 | `textValue`, `xpath`, `xcontent`, `index`, `query`(SaaS), `hyperlink`(SaaS), `pageShowTimestamp`(CDP/SaaS) |
 | `HybridViewElementEvent` | H5 点击事件 | `textValue`, `xpath`, `xcontent`, `index`, `hyperlink` |
-| `HybridCustomEvent` | H5 自定义事件 | `eventName`, `pageShowTimestamp` |
+| `HybridCustomEvent` | H5 自定义事件 | `eventName`, `path`, `query`, `referralPage`(NewSaaS), `pageShowTimestamp`(SaaS) |
 | `LoginUserAttributesEvent` | 登录用户属性 | 无 |
 | `AppClosedEvent` | 应用关闭 | `eventDuration` |
+
+NewSaaS 的原生及 Flutter CUSTOM 默认不携带 `path` 和 `referralPage`。开启 `customEventWithPath` 后携带当前页
+`path`；开启 `customEventWithReferralPath` 后携带上一页面路径作为 `referralPage`，无上一页时不携带。
+Hybrid CUSTOM 独立处理：无条件携带 H5 消息中的 `path`，NewSaaS 下 `referralPage` 有非空值即携带，均不受上述
+两个开关影响。SaaS / CDP 的既有行为不变。
 
 ---
 

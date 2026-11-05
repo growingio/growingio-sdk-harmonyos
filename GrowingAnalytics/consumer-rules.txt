@@ -9,6 +9,9 @@ EventV3Dto
 ResourceItem
 
 -keep-property-name
+# --------- public configuration properties ---------
+customEventWithPath
+customEventWithReferralPath
 # --------- hybrid JS bridge methods (registerJavaScriptProxy methodList,
 #           must match the names called from web SDK across the native↔JS boundary) ---------
 # NewSaaS/default bridge: GrowingWebViewJavascriptBridge
