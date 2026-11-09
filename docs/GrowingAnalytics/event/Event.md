@@ -416,7 +416,7 @@ enum EventSenderType {
 
 ### 发送流程
 
-NewSaaS 开启 `forceLogin` 且本次启动尚未有效 `identify` 时，发送器在读取数据库批次前返回。首次有效 `identify` 会触发所有 NewSaaS 强制登录上下文补发。实际请求传入当前访问用户 ID，由 TaskPool 在 Protobuf/JSON 序列化前复制并替换历史事件的 `deviceId`，数据库原文不变。
+主 Tracker 为 NewSaaS 且开启 `forceLogin`、本次启动尚未有效 `identify` 时，所有 NewSaaS 发送器（含子 Tracker）在读取数据库批次前返回。首次有效 `identify` 会触发所有 NewSaaS 上下文补发。实际请求传入当前访问用户 ID，由 TaskPool 在 Protobuf/JSON 序列化前复制并替换历史事件的 `deviceId`，数据库原文不变。
 
 ```typescript
 class EventSender {

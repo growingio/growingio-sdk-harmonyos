@@ -181,8 +181,8 @@ GrowingAnalytics.identify('visitor-id')
 
 - SaaS/CDP 不识别该开关，不暂停上报，也不替换 `deviceId`。
 - 访问用户 ID 独立持久化，但解锁状态不持久化；每次以强制登录模式启动都需重新调用 `identify`。
-- 空字符串、纯空白或 trim 后超过 1000 字符的输入不会解锁。
-- 主 Tracker 必须开启强制登录；主入口解锁全部 NewSaaS 强制登录子 Tracker。
+- 与 Web SDK 一致：仅空字符串不会解锁；不去除首尾空白，超过 1000 字符截断。
+- 强制登录只由主 Tracker 的配置决定：主 Tracker 开启后所有 NewSaaS 子 Tracker 一并阻塞，并由主入口统一解锁；子 Tracker 上设置的 `forceLogin` 不生效。
 
 ### 数据传输配置
 

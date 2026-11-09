@@ -51,7 +51,7 @@ class IdentifyOnInitializePlugin implements PluginsInterface {
     this.initializedInDidCallback = GrowingAnalytics.isInitializedSuccessfully()
     let context = GrowingContext.getDefaultContext()!
     context.eventSender = []
-    GrowingAnalytics.identify('  visitor-from-callback  ')
+    GrowingAnalytics.identify('visitor-from-callback')
   }
 }
 

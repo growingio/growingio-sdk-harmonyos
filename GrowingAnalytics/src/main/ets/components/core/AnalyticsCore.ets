@@ -124,6 +124,11 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       return false
     }
 
+    if (config.mode == ConfigMode.NewSaaS && config.forceLogin != ForceLogin.isEnabled()) {
+      LogUtil.warn(() => 'forceLogin of sub tracker ' + trackerId
+        + ' is ignored, NewSaaS sub trackers follow forceLogin of the main tracker')
+    }
+
     GrowingContext.setContext(trackerId, config)
     let context = GrowingContext.getContext(trackerId) as GrowingContext
     let subTracker = new AnalyticsCore(context)
@@ -298,7 +303,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       return
     }
     for (let tracker of AnalyticsCore.trackers) {
-      if (tracker.context.config.mode == ConfigMode.NewSaaS && tracker.context.config.forceLogin) {
+      // 强制登录由主 Tracker 配置决定，解锁后所有 NewSaaS Tracker 统一补发
+      if (tracker.context.config.mode == ConfigMode.NewSaaS) {
         EventSender.sendEvent(tracker.context)
       }
     }

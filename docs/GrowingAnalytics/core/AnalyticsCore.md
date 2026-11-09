@@ -405,14 +405,15 @@ static identify(deviceId: string): void {
     return
   }
   for (let tracker of AnalyticsCore.trackers) {
-    if (tracker.context.config.mode == ConfigMode.NewSaaS && tracker.context.config.forceLogin) {
+    // 强制登录由主 Tracker 配置决定，解锁后所有 NewSaaS Tracker 统一补发
+    if (tracker.context.config.mode == ConfigMode.NewSaaS) {
       EventSender.sendEvent(tracker.context)
     }
   }
 }
 ```
 
-仅主 Tracker 为 NewSaaS 且开启 `forceLogin` 时接受首次有效输入。解锁后遍历所有 NewSaaS 强制登录上下文并立即尝试补发；普通 NewSaaS、SaaS 和 CDP 不触发额外发送。
+仅主 Tracker 为 NewSaaS 且开启 `forceLogin` 时接受首次有效输入。与 Web SDK 一致，强制登录只由主 Tracker 配置决定：所有 NewSaaS 子 Tracker 跟随主 Tracker 阻塞与解锁，子 Tracker 自身的 `forceLogin` 不生效（`startSubTracker` 时与主 Tracker 不一致会输出 warn 日志）。解锁后遍历所有 NewSaaS 上下文并立即尝试补发；SaaS 和 CDP 不触发额外发送。
 
 ---
 

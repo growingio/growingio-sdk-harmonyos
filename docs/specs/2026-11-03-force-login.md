@@ -34,7 +34,8 @@ GrowingAnalytics.start(context, config)
 - 默认值为 `false`，现有接入行为不变。
 - `copy()` 必须保留该配置。
 - SaaS/CDP 中即使设置为 `true` 也不阻塞、不替换 ID。
-- 仅主 Tracker 为 NewSaaS 且启用 `forceLogin` 时，主入口 `identify` 才可生效；因此不支持仅在子 Tracker 开启强制登录的接入方式。
+- 与 Web SDK 一致，强制登录只由主 Tracker 配置决定：仅主 Tracker 为 NewSaaS 且启用 `forceLogin` 时，所有 NewSaaS 实例（含子 Tracker）统一阻塞，并由主入口 `identify` 统一解锁。
+- 子 Tracker 自身的 `forceLogin` 不生效：主 Tracker 未开启时子 Tracker 正常上报，主 Tracker 开启时子 Tracker 一并阻塞；两者不一致时 `startSubTracker` 输出 warn 日志。
 
 ### 3.2 动态设置访问用户 ID
 
@@ -45,7 +46,7 @@ GrowingAnalytics.identify('访问用户ID')
 处理规则：
 
 1. SDK 未初始化、主 Tracker 非 NewSaaS、主 Tracker 未启用 `forceLogin` 或本次启动已解锁：记录日志并忽略。
-2. 对输入去除首尾空白；空字符串或处理后长度超过 1000 字符时，记录日志并忽略，发送保持阻塞。
+2. 校验规则与 Web SDK 一致：空字符串记录日志并忽略，发送保持阻塞；非空字符串即有效，不去除首尾空白；超过 1000 字符时截断为前 1000 个字符。
 3. 首次有效调用保存访问用户 ID、将本次启动标记为已解锁，并立即尝试发送所有被阻塞的 NewSaaS 实例。
 4. 后续 NewSaaS 事件使用新的访问用户 ID；SaaS/CDP 事件不受影响。
 5. 本次启动内再次调用不修改 ID，也不再次触发解锁流程。
@@ -90,8 +91,8 @@ GrowingAnalytics.identify('访问用户ID')
 ### 5.2 发送闸门
 
 - `EventSender` 在读取待发送批次前检查当前上下文。
-- NewSaaS 且 `forceLogin=true`、本次未解锁时，不读取发送批次、不构造请求、不访问网络。
-- `identify` 成功后，对所有被阻塞的 NewSaaS 上下文触发既有 `EventSender.sendEvent`。
+- 主 Tracker 为 NewSaaS 且 `forceLogin=true`、本次未解锁时，所有 NewSaaS 上下文不读取发送批次、不构造请求、不访问网络。
+- `identify` 成功后，对所有 NewSaaS 上下文触发既有 `EventSender.sendEvent`。
 - 既有 `isUploading`、2xx/3xx 成功后删除、失败保留、500 条/2MB 分批和递归补发机制保持不变。
 - 首次解锁后 ID 固定，因此并发批次不会使用不同身份。
 
@@ -126,9 +127,9 @@ GrowingAnalytics.identify('访问用户ID')
 
 1. 默认配置及 `copy()` 后 `forceLogin=false`，既有行为不变。
 2. NewSaaS 强制登录模式下，未有效 identify 时事件可入库，但发送批次读取和网络请求均为零。
-3. 空白、空字符串、超长 ID、未初始化、非 NewSaaS、未开启 forceLogin 和重复 identify 均不错误解锁。
-4. 首次有效 identify 后，主 Tracker 与已启动的强制登录子 Tracker 均立即尝试补发；此后新增的强制登录子 Tracker 使用本次已设置的 ID 和解锁状态。
-5. 当前启动和跨启动遗留事件的实际上报 `deviceId` 均为首次有效 identify 的 trimmed ID，其他字段保持不变。
+3. 空字符串、未初始化、非 NewSaaS、主 Tracker 未开启 forceLogin 和重复 identify 均不错误解锁；纯空白输入按原样接受，超长 ID 截断为 1000 字符后解锁。
+4. 首次有效 identify 后，主 Tracker 与已启动的 NewSaaS 子 Tracker 均立即尝试补发；此后新增的 NewSaaS 子 Tracker 使用本次已设置的 ID 和解锁状态。子 Tracker 的 `forceLogin` 配置不影响阻塞与解锁。
+5. 当前启动和跨启动遗留事件的实际上报 `deviceId` 均为首次有效 identify 的 ID（原样保留，超长截断至 1000 字符），其他字段保持不变。
 6. NewSaaS Protobuf 与 JSON 请求均正确替换；压缩/加密开启和关闭时均保持现有格式。
 7. 上传失败保留事件，后续重试仍使用同一访问用户 ID；成功事件只删除一次，不重复上报。
 8. SaaS/CDP 的阻塞、事件 ID 和公开用户 API 行为不变；`setLoginUserId` 不触发挥强制登录解锁。

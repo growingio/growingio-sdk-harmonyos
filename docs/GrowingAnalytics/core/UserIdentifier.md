@@ -463,8 +463,9 @@ GrowingAnalytics.identify('visitor-id')
 ### 行为规则
 
 - 未调用有效 `identify` 前，事件继续生成和入库，但 NewSaaS 发送器不读取批次、不发起请求。
-- 首次有效 `identify` 统一设置所有 NewSaaS 实例的访问用户 ID，并触发全部强制登录上下文补发。
-- 输入先 trim；空白或超过 1000 字符的输入无效。每次启动只接受首次有效调用。
+- 强制登录只由主 Tracker 配置决定，NewSaaS 子 Tracker 跟随主 Tracker 阻塞与解锁（与 Web SDK 一致）。
+- 首次有效 `identify` 统一设置所有 NewSaaS 实例的访问用户 ID，并触发全部 NewSaaS 上下文补发。
+- 校验与 Web SDK 一致：非空字符串即有效，不 trim，超过 1000 字符截断。每次启动只接受首次有效调用。
 - 动态访问用户 ID 使用 `growing_identify_device_id` 独立持久化，不覆盖自动生成的 `growing_device_id`。
 - 解锁状态只在当前进程有效；下次强制登录启动仍需调用 `identify`。
 - 事件构建时使用当前有效访问用户 ID。历史待上报事件保留数据库原文，在 TaskPool 序列化请求时替换其 `deviceId` 副本。

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { describe, beforeEach, it, expect } from '@ohos/hypium'
+import { describe, beforeEach, afterEach, it, expect } from '@ohos/hypium'
 import ForceLogin from '../../main/ets/components/core/ForceLogin'
 import GrowingContext from '../../main/ets/components/core/Context'
 import { ConfigMode } from '../../main/ets/components/interfaces/GrowingConfig'
@@ -27,35 +27,63 @@ function makeContext(mode: ConfigMode = ConfigMode.NewSaaS, forceLogin: boolean 
   return context
 }
 
+// 强制登录由主 Tracker（defaultContext）配置决定
+function makeMainContext(mode: ConfigMode = ConfigMode.NewSaaS, forceLogin: boolean = true): GrowingContext {
+  let context = makeContext(mode, forceLogin)
+  GrowingContext.defaultContext = context
+  return context
+}
+
 export default function forceLoginTests() {
   describe('ForceLogin', () => {
     beforeEach(() => {
       ForceLogin._reset()
+      GrowingContext._reset()
+    })
+
+    afterEach(() => {
+      ForceLogin._reset()
+      GrowingContext._reset()
     })
 
     it('default_and_non_new_saas_should_allow_send', 0, () => {
       expect(ForceLogin.canSend(makeContext(ConfigMode.NewSaaS, false))).assertTrue()
+      expect(ForceLogin.canSend(makeMainContext(ConfigMode.NewSaaS, false))).assertTrue()
+      makeMainContext()
       expect(ForceLogin.canSend(makeContext(ConfigMode.SaaS, true))).assertTrue()
       expect(ForceLogin.canSend(makeContext(ConfigMode.CDP, true))).assertTrue()
     })
 
     it('new_saas_force_login_should_block_before_identify', 0, () => {
-      expect(ForceLogin.canSend(makeContext())).assertFalse()
+      expect(ForceLogin.canSend(makeMainContext())).assertFalse()
     })
 
-    it('first_valid_identify_should_trim_id_and_unlock', 0, () => {
-      let context = makeContext()
+    it('first_valid_identify_should_keep_raw_id_like_web_and_unlock', 0, () => {
+      let context = makeMainContext()
       expect(ForceLogin.identify('  visitor-001  ', context)).assertTrue()
       expect(ForceLogin.canSend(context)).assertTrue()
-      expect(ForceLogin.getDeviceId(context, 'generated-id')).assertEqual('visitor-001')
-      expect(ForceLogin.getOverrideDeviceId(context)).assertEqual('visitor-001')
+      expect(ForceLogin.getDeviceId(context, 'generated-id')).assertEqual('  visitor-001  ')
+      expect(ForceLogin.getOverrideDeviceId(context)).assertEqual('  visitor-001  ')
     })
 
-    it('blank_and_overlong_id_should_stay_blocked', 0, () => {
-      let context = makeContext()
-      expect(ForceLogin.identify('   ', context)).assertFalse()
-      expect(ForceLogin.identify('x'.repeat(1001), context)).assertFalse()
+    it('empty_id_should_stay_blocked', 0, () => {
+      let context = makeMainContext()
+      expect(ForceLogin.identify('', context)).assertFalse()
       expect(ForceLogin.canSend(context)).assertFalse()
+    })
+
+    it('whitespace_id_should_be_accepted_like_web', 0, () => {
+      let context = makeMainContext()
+      expect(ForceLogin.identify('   ', context)).assertTrue()
+      expect(ForceLogin.canSend(context)).assertTrue()
+      expect(ForceLogin.getDeviceId(context, 'generated-id')).assertEqual('   ')
+    })
+
+    it('overlong_id_should_be_truncated_to_1000_and_unlock', 0, () => {
+      let context = makeMainContext()
+      expect(ForceLogin.identify('x'.repeat(1000) + 'y', context)).assertTrue()
+      expect(ForceLogin.canSend(context)).assertTrue()
+      expect(ForceLogin.getDeviceId(context, 'generated-id')).assertEqual('x'.repeat(1000))
     })
 
     it('identify_should_require_new_saas_and_force_login', 0, () => {
@@ -66,21 +94,21 @@ export default function forceLoginTests() {
     })
 
     it('repeated_identify_should_keep_first_id', 0, () => {
-      let context = makeContext()
+      let context = makeMainContext()
       ForceLogin.identify('first', context)
       expect(ForceLogin.identify('second', context)).assertFalse()
       expect(ForceLogin.getDeviceId(context, 'generated-id')).assertEqual('first')
     })
 
     it('init_should_relock_for_a_new_process', 0, () => {
-      let context = makeContext()
+      let context = makeMainContext()
       ForceLogin.identify('visitor', context)
       ForceLogin.init()
       expect(ForceLogin.canSend(context)).assertFalse()
     })
 
     it('identified_id_should_only_override_new_saas', 0, () => {
-      let context = makeContext()
+      let context = makeMainContext()
       ForceLogin.identify('visitor', context)
       expect(ForceLogin.getDeviceId(makeContext(ConfigMode.SaaS, false), 'generated-id')).assertEqual('generated-id')
       expect(ForceLogin.getDeviceId(makeContext(ConfigMode.CDP, false), 'generated-id')).assertEqual('generated-id')
@@ -89,12 +117,33 @@ export default function forceLoginTests() {
     })
 
     it('all_new_saas_trackers_should_share_the_first_unlock', 0, () => {
-      let main = makeContext()
+      let main = makeMainContext()
       let sub = makeContext()
       ForceLogin.identify('visitor', main)
       expect(ForceLogin.canSend(main)).assertTrue()
       expect(ForceLogin.canSend(sub)).assertTrue()
       expect(ForceLogin.getDeviceId(sub, 'generated-id')).assertEqual('visitor')
+    })
+
+    it('sub_tracker_should_follow_main_force_login_when_main_enabled', 0, () => {
+      makeMainContext(ConfigMode.NewSaaS, true)
+      let sub = makeContext(ConfigMode.NewSaaS, false)
+      expect(ForceLogin.isEnabled()).assertTrue()
+      expect(ForceLogin.canSend(sub)).assertFalse()
+    })
+
+    it('sub_tracker_force_login_should_be_ignored_when_main_disabled', 0, () => {
+      let main = makeMainContext(ConfigMode.NewSaaS, false)
+      let sub = makeContext(ConfigMode.NewSaaS, true)
+      expect(ForceLogin.isEnabled()).assertFalse()
+      expect(ForceLogin.canSend(sub)).assertTrue()
+      expect(ForceLogin.identify('visitor', main)).assertFalse()
+    })
+
+    it('force_login_should_be_disabled_when_main_is_not_new_saas', 0, () => {
+      makeMainContext(ConfigMode.CDP, true)
+      expect(ForceLogin.isEnabled()).assertFalse()
+      expect(ForceLogin.canSend(makeContext(ConfigMode.NewSaaS, true))).assertTrue()
     })
   })
 }
