@@ -24,7 +24,14 @@ import { FORCE_LOGIN_PENDING_DEVICE_ID } from './Constants'
 import { LogUtil } from './LogUtil'
 import snappy from 'snappyjs'
 import { event_pb } from './protobuf/event_pb'
-import { ProcessEventsResult } from './ProcessEventsResult'
+
+/**
+ * processEvents 的返回结果：请求体与实际用于序列化的发送副本
+ */
+export interface ProcessEventsResult {
+  serialize: ArrayBuffer
+  sentEvents: EventPersistence[]
+}
 
 interface DeviceIdHolder {
   deviceId: string
@@ -40,37 +47,45 @@ export function processEvents(
 ): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
   // 强制登录未解锁时写入的事件带待替换标记，发送副本替换为有效设备 ID；其他事件原样复用。
-  // 解析结果按下标保存，Protobuf 构造 DTO 时复用，避免重复解析
-  let parsedEvents: Array<DeviceIdHolder | undefined> = []
+  // 只有出现带标记的事件时才复制数组；解析结果按下标保存，Protobuf 构造 DTO 时复用，避免重复解析
+  let parsedByIndex: Map<number, DeviceIdHolder> | undefined = undefined
   if (pendingDeviceIdReplacement.length > 0) {
-    let sentEvents: EventPersistence[] = []
-    for (let e of events) {
-      let sentEvent = e
-      let parsed: DeviceIdHolder | undefined = undefined
-      if (e.data.indexOf(FORCE_LOGIN_PENDING_DEVICE_ID) >= 0) {
-        try {
-          parsed = JSON.parse(e.data) as DeviceIdHolder
-          if (parsed.deviceId === FORCE_LOGIN_PENDING_DEVICE_ID) {
-            parsed.deviceId = pendingDeviceIdReplacement
-            sentEvent = EventPersistence.fromDatabase(
-              e.uuid, JSON.stringify(parsed), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
-            )
-          }
-        } catch (error) {
-          LogUtil.error(() => 'Failed to replace pending deviceId: ' + error)
-        }
+    let sentEvents: EventPersistence[] | undefined = undefined
+    for (let i = 0; i < events.length; i++) {
+      let e = events[i]
+      if (e.data.indexOf(FORCE_LOGIN_PENDING_DEVICE_ID) < 0) {
+        continue
       }
-      sentEvents.push(sentEvent)
-      parsedEvents.push(parsed)
+      try {
+        let parsed = JSON.parse(e.data) as DeviceIdHolder
+        if (!parsedByIndex) {
+          parsedByIndex = new Map<number, DeviceIdHolder>()
+        }
+        parsedByIndex.set(i, parsed)
+        if (parsed.deviceId !== FORCE_LOGIN_PENDING_DEVICE_ID) {
+          continue
+        }
+        parsed.deviceId = pendingDeviceIdReplacement
+        if (!sentEvents) {
+          sentEvents = events.slice()
+        }
+        sentEvents[i] = EventPersistence.fromDatabase(
+          e.uuid, JSON.stringify(parsed), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+        )
+      } catch (error) {
+        LogUtil.error(() => 'Failed to replace pending deviceId: ' + error)
+      }
     }
-    events = sentEvents
+    if (sentEvents) {
+      events = sentEvents
+    }
   }
 
   if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
     events.forEach((e, i) => {
       try {
-        let event = parsedEvents[i] ?? (JSON.parse(e.data) as DeviceIdHolder)
+        let event = parsedByIndex?.get(i) ?? (JSON.parse(e.data) as DeviceIdHolder)
         let dto = event_pb.EventV3Dto.fromObject(event)
         values.push(dto)
       } catch (error) {
@@ -161,5 +176,6 @@ export function processEvents(
     }
   }
 
-  return new ProcessEventsResult(serialize, events)
+  let result: ProcessEventsResult = { serialize: serialize, sentEvents: events }
+  return result
 }

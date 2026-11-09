@@ -246,12 +246,12 @@ static async generateRequest(
   let headers = Network.generateHeaders(time, useProtobuf, context)
   let request = new rcp.Request(url, "POST", headers, serialize)
   // 省略 request.configuration 的超时与 tracing 配置
-  let result: GeneratedRequest = { request: request, sentEvents: processed.events }
+  let result: GeneratedRequest = { request: request, sentEvents: processed.sentEvents }
   return result
 }
 ```
 
-`GeneratedRequest` 同时携带请求对象和 `processed.events`。后者是 TaskPool 中实际用于序列化的事件副本，最终由 `Network.request()` 透传给 `EventSender`，供发送完成回调使用。
+`GeneratedRequest` 同时携带请求对象和 `processed.sentEvents`。后者是 TaskPool 中实际用于序列化的事件副本，最终由 `Network.request()` 透传给 `EventSender`，供发送完成回调使用。
 
 ### processEvents 并发任务
 
@@ -285,7 +285,8 @@ export function processEvents(
   if (compressEnabled) {
     serialize = snappy.compress(serialize) as ArrayBuffer
   }
-  return new ProcessEventsResult(serialize, events)
+  let result: ProcessEventsResult = { serialize: serialize, sentEvents: events }
+  return result
 }
 ```
 

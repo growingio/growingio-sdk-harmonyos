@@ -400,8 +400,7 @@ static identify(deviceId: string): void {
   if (!AnalyticsCore.core.isInitializedSuccessfully()) {
     return
   }
-  let context = GrowingContext.getDefaultContext()
-  if (!ForceLogin.identify(deviceId, context)) {
+  if (!ForceLogin.identify(deviceId)) {
     return
   }
   for (let tracker of AnalyticsCore.trackers) {

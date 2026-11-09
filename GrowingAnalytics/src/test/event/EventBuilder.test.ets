@@ -565,7 +565,8 @@ export default function eventBuilderTests() {
     it('NewSaaS identify 后应使用访问用户 ID', 0, () => {
       let ctx = makeCtx()
       seedContext(ctx)
-      ForceLogin.identify('visitor', ctx)
+      GrowingContext.defaultContext = ctx
+      ForceLogin.identify('visitor')
       let e = new VisitEvent()
       EventBuilder.build(e, ctx)
       expect(e.deviceId).assertEqual('visitor')
@@ -582,7 +583,8 @@ export default function eventBuilderTests() {
 
     it('CDP 不应使用 NewSaaS 访问用户 ID', 0, () => {
       let newSaaSCtx = makeCtx()
-      ForceLogin.identify('visitor', newSaaSCtx)
+      GrowingContext.defaultContext = newSaaSCtx
+      ForceLogin.identify('visitor')
       let cdpCtx = makeCtx('cdp', 'acct', 'ds', false, ConfigMode.CDP)
       seedContext(cdpCtx)
       let e = new VisitEvent()

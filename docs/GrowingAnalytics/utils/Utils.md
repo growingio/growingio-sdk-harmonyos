@@ -32,7 +32,7 @@ export function processEvents(
 
 **返回值：**
 - `serialize: ArrayBuffer`：序列化并按配置压缩后的请求体。
-- `events: EventPersistence[]`：实际发送副本；仅带待替换标记的事件生成新副本（保留原 UUID 和其他元数据），其余复用原对象，数据库原文不变。
+- `sentEvents: EventPersistence[]`：实际发送副本；仅带待替换标记的事件生成新副本（保留原 UUID 和其他元数据），其余复用原对象，数据库原文不变。
 
 **处理流程：**
 
@@ -56,39 +56,44 @@ export function processEvents(
         Snappy 压缩
             │
             ▼
-    输出: ProcessEventsResult（serialize + events）
+    输出: ProcessEventsResult（serialize + sentEvents）
 ```
 
 **实现细节：**
 
 ```typescript
-// 强制登录未解锁时写入的事件带待替换标记；先做字符串预筛，命中才解析
-let parsedEvents: Array<DeviceIdHolder | undefined> = []
+// 强制登录未解锁时写入的事件带待替换标记；先做字符串预筛，命中才解析。
+// 没有带标记的事件时不分配任何额外数组；出现标记时才复制一次事件数组
+let parsedByIndex: Map<number, DeviceIdHolder> | undefined = undefined
 if (pendingDeviceIdReplacement.length > 0) {
-    let sentEvents: EventPersistence[] = []
-    for (let e of events) {
-        let sentEvent = e
-        let parsed: DeviceIdHolder | undefined = undefined
-        if (e.data.indexOf(FORCE_LOGIN_PENDING_DEVICE_ID) >= 0) {
-            parsed = JSON.parse(e.data) as DeviceIdHolder
-            if (parsed.deviceId === FORCE_LOGIN_PENDING_DEVICE_ID) {
-                parsed.deviceId = pendingDeviceIdReplacement
-                sentEvent = EventPersistence.fromDatabase(
-                    e.uuid, JSON.stringify(parsed), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
-                )
-            }
+    let sentEvents: EventPersistence[] | undefined = undefined
+    for (let i = 0; i < events.length; i++) {
+        let e = events[i]
+        if (e.data.indexOf(FORCE_LOGIN_PENDING_DEVICE_ID) < 0) {
+            continue
         }
-        sentEvents.push(sentEvent)
-        parsedEvents.push(parsed)
+        let parsed = JSON.parse(e.data) as DeviceIdHolder
+        parsedByIndex = parsedByIndex ?? new Map<number, DeviceIdHolder>()
+        parsedByIndex.set(i, parsed)
+        if (parsed.deviceId !== FORCE_LOGIN_PENDING_DEVICE_ID) {
+            continue
+        }
+        parsed.deviceId = pendingDeviceIdReplacement
+        sentEvents = sentEvents ?? events.slice()
+        sentEvents[i] = EventPersistence.fromDatabase(
+            e.uuid, JSON.stringify(parsed), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+        )
     }
-    events = sentEvents
+    if (sentEvents) {
+        events = sentEvents
+    }
 }
 
 // Protobuf：复用预处理阶段的解析结果，每条事件只解析一次
 if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
     events.forEach((e, i) => {
-        let event = parsedEvents[i] ?? (JSON.parse(e.data) as DeviceIdHolder)
+        let event = parsedByIndex?.get(i) ?? (JSON.parse(e.data) as DeviceIdHolder)
         values.push(event_pb.EventV3Dto.fromObject(event))
     })
     let list = event_pb.EventV3List.create({values: values})
@@ -113,7 +118,8 @@ if (compressEnabled) {
     serialize = snappy.compress(serialize) as ArrayBuffer
 }
 
-return new ProcessEventsResult(serialize, events)
+let result: ProcessEventsResult = { serialize: serialize, sentEvents: events }
+return result
 ```
 
 > **SaaS 点击合并细节**：分组 key 为 `t_u_s_d_p_ptm`；顶层公共字段含 `t/tm/u/s/d/p/ptm`，并按需带上 `cs1/q/lat/lng`（有值才写）；`e` 数组中每个元素含 `tm/x/gesid/esid`，按需带上 `v/idx/h`。分组和输出均不包含 `r`。仅在 `mergeSaaSClick == true`（即 SaaS 无埋点点击/变更批量上报）时走此分支。

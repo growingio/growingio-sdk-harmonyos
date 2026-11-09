@@ -185,7 +185,7 @@ class EventBuilder {
 
     // 3. 设备信息
     // 强制登录未解锁时写入待替换标记，否则为当前有效设备 ID
-    event.deviceId = ForceLogin.getEventDeviceId(context, DeviceInfo.deviceId)
+    event.deviceId = ForceLogin.getEventDeviceId(context)
     event.platform = DeviceInfo.platform
     event.platformVersion = DeviceInfo.platformVersion
     event.screenHeight = DeviceInfo.screenHeight
@@ -450,7 +450,7 @@ class EventSender {
     // 4. 发送请求，后台序列化时替换 NewSaaS 访问用户 ID
     try {
       let networkResponse = await Network.request(
-        events, this.urlPath, context, this.mergeSaaSClick, ForceLogin.getPendingReplacement(context, DeviceInfo.deviceId)
+        events, this.urlPath, context, this.mergeSaaSClick, ForceLogin.getPendingReplacement(context)
       )
       let response = networkResponse.response
       Plugins.onResponseReceive(response)

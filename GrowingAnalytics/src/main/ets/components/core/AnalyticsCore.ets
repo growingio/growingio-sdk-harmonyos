@@ -298,8 +298,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       LogUtil.info(() => 'Failed to identify, GrowingAnalytics is not initialized')
       return
     }
-    let context = GrowingContext.getDefaultContext()
-    if (!ForceLogin.identify(deviceId, context)) {
+    if (!ForceLogin.identify(deviceId)) {
       return
     }
     for (let tracker of AnalyticsCore.trackers) {
@@ -311,7 +310,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
   }
 
   getDeviceId(): string {
-    return ForceLogin.getDeviceId(this.context, DeviceInfo.deviceId)
+    return ForceLogin.getDeviceId(this.context)
   }
 
   track(

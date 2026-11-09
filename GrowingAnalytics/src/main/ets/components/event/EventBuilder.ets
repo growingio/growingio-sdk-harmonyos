@@ -38,7 +38,7 @@ export default class EventBuilder {
     event.sdkVersion = SDK_VERSION
 
     // device info
-    event.deviceId = ForceLogin.getEventDeviceId(context, DeviceInfo.deviceId)
+    event.deviceId = ForceLogin.getEventDeviceId(context)
     event.platform = DeviceInfo.platform
     event.platformVersion = DeviceInfo.platformVersion
     event.screenHeight = DeviceInfo.screenHeight

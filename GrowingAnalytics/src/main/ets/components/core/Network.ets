@@ -23,8 +23,7 @@ import taskpool from '@ohos.taskpool'
 import GrowingContext from './Context'
 import EventPersistence from '../event/EventPersistence'
 import { ConfigMode } from '../interfaces/GrowingConfig'
-import { processEvents } from '../utils/Concurrent'
-import { ProcessEventsResult } from '../utils/ProcessEventsResult'
+import { processEvents, ProcessEventsResult } from '../utils/Concurrent'
 import Util from '../utils/Util'
 import { LogUtil } from '../utils/LogUtil'
 
@@ -121,7 +120,7 @@ export default class Network {
       tracing: tracingConfig,
     }
     request.configuration = requestConfig
-    let result: GeneratedRequest = { request: request, sentEvents: processed.events }
+    let result: GeneratedRequest = { request: request, sentEvents: processed.sentEvents }
     return result
   }
 

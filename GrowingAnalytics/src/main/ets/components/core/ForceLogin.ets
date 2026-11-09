@@ -18,6 +18,7 @@
 // @doc-impl UserIdentifier.md
 
 import GrowingContext from './Context'
+import DeviceInfo from './DeviceInfo'
 import { ConfigMode } from '../interfaces/GrowingConfig'
 import { FORCE_LOGIN_PENDING_DEVICE_ID, PREFERENCE_IDENTIFY_DEVICE_ID } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -46,8 +47,8 @@ export default class ForceLogin {
     return main != undefined && main.config.mode == ConfigMode.NewSaaS && main.config.forceLogin
   }
 
-  static identify(deviceId: string, context: GrowingContext | undefined): boolean {
-    if (!context || context.config.mode != ConfigMode.NewSaaS || !context.config.forceLogin || ForceLogin.unlocked) {
+  static identify(deviceId: string): boolean {
+    if (!ForceLogin.isEnabled() || ForceLogin.unlocked) {
       LogUtil.info(() => 'Failed to identify, only available once when NewSaaS forceLogin is enabled')
       return false
     }
@@ -76,11 +77,11 @@ export default class ForceLogin {
   /**
    * 当前有效设备 ID：NewSaaS 优先使用已持久化的访问用户 ID，否则使用自动生成的设备 ID
    */
-  static getDeviceId(context: GrowingContext, generatedDeviceId: string): string {
+  static getDeviceId(context: GrowingContext): string {
     if (context.config.mode == ConfigMode.NewSaaS && ForceLogin.identifiedDeviceId.length > 0) {
       return ForceLogin.identifiedDeviceId
     }
-    return generatedDeviceId
+    return DeviceInfo.deviceId
   }
 
   /**
@@ -89,22 +90,22 @@ export default class ForceLogin {
    * 强制登录未解锁时 NewSaaS 事件写入待替换标记，发送前替换为当时的有效设备 ID；
    * 已带真实 ID 的事件（老版本遗留、此前启动已确认身份）发送时不改写。
    */
-  static getEventDeviceId(context: GrowingContext, generatedDeviceId: string): string {
+  static getEventDeviceId(context: GrowingContext): string {
     // canSend 对 SaaS/CDP 恒为 true，标记只会出现在 NewSaaS 事件中
     if (!ForceLogin.canSend(context)) {
       return FORCE_LOGIN_PENDING_DEVICE_ID
     }
-    return ForceLogin.getDeviceId(context, generatedDeviceId)
+    return ForceLogin.getDeviceId(context)
   }
 
   /**
    * 发送时替换待替换标记的设备 ID；SaaS/CDP 事件不会带标记，返回空字符串表示无需替换
    */
-  static getPendingReplacement(context: GrowingContext, generatedDeviceId: string): string {
+  static getPendingReplacement(context: GrowingContext): string {
     if (context.config.mode != ConfigMode.NewSaaS) {
       return ''
     }
-    return ForceLogin.getDeviceId(context, generatedDeviceId)
+    return ForceLogin.getDeviceId(context)
   }
 
   static _reset() {

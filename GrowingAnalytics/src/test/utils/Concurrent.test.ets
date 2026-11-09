@@ -56,12 +56,12 @@ export default function concurrentTests() {
       let source = event.data
       let result = processEvents([event], false, false, false, 'new-device')
       let decoded = decodeJson(result.serialize)
-      let sentEvent = JSON.parse(result.events[0].data) as SerializedEvent
+      let sentEvent = JSON.parse(result.sentEvents[0].data) as SerializedEvent
       expect(decoded.deviceId).assertEqual('new-device')
       expect(decoded.eventName).assertEqual('purchase')
       expect(decoded.eventSequenceId).assertEqual(7)
       expect(sentEvent.deviceId).assertEqual('new-device')
-      expect(result.events[0].uuid).assertEqual(event.uuid)
+      expect(result.sentEvents[0].uuid).assertEqual(event.uuid)
       expect(event.data).assertEqual(source)
     })
 
@@ -70,13 +70,13 @@ export default function concurrentTests() {
       let source = event.data
       let result = processEvents([event], true, false, false, 'new-device')
       let decoded = event_pb.EventV3List.decode(new Uint8Array(result.serialize))
-      let sentEvent = JSON.parse(result.events[0].data) as SerializedEvent
+      let sentEvent = JSON.parse(result.sentEvents[0].data) as SerializedEvent
       expect(decoded.values.length).assertEqual(1)
       expect(decoded.values[0].deviceId).assertEqual('new-device')
       expect(decoded.values[0].eventName).assertEqual('purchase')
       expect(decoded.values[0].eventSequenceId).assertEqual(7)
       expect(sentEvent.deviceId).assertEqual('new-device')
-      expect(result.events[0].uuid).assertEqual(event.uuid)
+      expect(result.sentEvents[0].uuid).assertEqual(event.uuid)
       expect(event.data).assertEqual(source)
     })
 
@@ -86,8 +86,8 @@ export default function concurrentTests() {
       let confirmed = makeEvent('previous-visitor', 'uuid-confirmed')
       let result = processEvents([legacy, confirmed], false, false, false, 'new-device')
       let decoded = decodeJsonList(result.serialize)
-      expect(result.events[0] === legacy).assertTrue()
-      expect(result.events[1] === confirmed).assertTrue()
+      expect(result.sentEvents[0] === legacy).assertTrue()
+      expect(result.sentEvents[1] === confirmed).assertTrue()
       expect(decoded[0].deviceId).assertEqual('generated-device')
       expect(decoded[1].deviceId).assertEqual('previous-visitor')
     })
@@ -97,8 +97,8 @@ export default function concurrentTests() {
       let confirmed = makeEvent('previous-visitor', 'uuid-confirmed')
       let result = processEvents([legacy, confirmed], true, false, false, 'new-device')
       let decoded = event_pb.EventV3List.decode(new Uint8Array(result.serialize))
-      expect(result.events[0] === legacy).assertTrue()
-      expect(result.events[1] === confirmed).assertTrue()
+      expect(result.sentEvents[0] === legacy).assertTrue()
+      expect(result.sentEvents[1] === confirmed).assertTrue()
       expect(decoded.values.length).assertEqual(2)
       expect(decoded.values[0].deviceId).assertEqual('generated-device')
       expect(decoded.values[1].deviceId).assertEqual('previous-visitor')
@@ -109,9 +109,9 @@ export default function concurrentTests() {
       let legacy = makeEvent('generated-device', 'uuid-legacy')
       for (let useProtobuf of [false, true]) {
         let result = processEvents([pending, legacy], useProtobuf, false, false, 'new-device')
-        expect(result.events.length).assertEqual(2)
-        expect((JSON.parse(result.events[0].data) as SerializedEvent).deviceId).assertEqual('new-device')
-        expect(result.events[1] === legacy).assertTrue()
+        expect(result.sentEvents.length).assertEqual(2)
+        expect((JSON.parse(result.sentEvents[0].data) as SerializedEvent).deviceId).assertEqual('new-device')
+        expect(result.sentEvents[1] === legacy).assertTrue()
         expect(buffer.from(result.serialize).toString().indexOf(FORCE_LOGIN_PENDING_DEVICE_ID)).assertEqual(-1)
       }
     })
@@ -119,7 +119,7 @@ export default function concurrentTests() {
     it('without_replacement_should_keep_events_untouched', 0, () => {
       let event = makeEvent('generated-device')
       let result = processEvents([event], false, false)
-      expect(result.events[0] === event).assertTrue()
+      expect(result.sentEvents[0] === event).assertTrue()
       expect(decodeJson(result.serialize).deviceId).assertEqual('generated-device')
     })
 
