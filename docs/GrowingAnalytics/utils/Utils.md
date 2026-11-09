@@ -17,7 +17,7 @@ export function processEvents(
     useProtobuf: boolean,
     compressEnabled: boolean,
     mergeSaaSClick: boolean = false,
-    deviceId: string = ''
+    pendingDeviceIdReplacement: string = ''
 ): ProcessEventsResult
 ```
 
@@ -28,11 +28,11 @@ export function processEvents(
 | `useProtobuf` | `boolean` | 是否使用 Protobuf 序列化 |
 | `compressEnabled` | `boolean` | 是否启用 Snappy 压缩 |
 | `mergeSaaSClick` | `boolean` | 是否启用 SaaS 点击合并（仅 JSON 分支生效，默认 `false`） |
-| `deviceId` | `string` | NewSaaS 当前访问用户 ID；非空时在后台复制事件并替换原 `deviceId` |
+| `pendingDeviceIdReplacement` | `string` | NewSaaS 当前有效设备 ID；非空时把带强制登录待替换标记（`FORCE_LOGIN_PENDING_DEVICE_ID`）的事件复制并替换 `deviceId`，已带真实 ID 的事件不改写 |
 
 **返回值：**
 - `serialize: ArrayBuffer`：序列化并按配置压缩后的请求体。
-- `events: EventPersistence[]`：实际发送副本；替换 ID 时保留原 UUID 和其他元数据，数据库原对象不变。
+- `events: EventPersistence[]`：实际发送副本；仅带待替换标记的事件生成新副本（保留原 UUID 和其他元数据），其余复用原对象，数据库原文不变。
 
 **处理流程：**
 
@@ -62,44 +62,39 @@ export function processEvents(
 **实现细节：**
 
 ```typescript
-let shouldReplaceDeviceId = deviceId.length > 0
+// 强制登录未解锁时写入的事件带待替换标记；先做字符串预筛，命中才解析
+let parsedEvents: Array<DeviceIdHolder | undefined> = []
+if (pendingDeviceIdReplacement.length > 0) {
+    let sentEvents: EventPersistence[] = []
+    for (let e of events) {
+        let sentEvent = e
+        let parsed: DeviceIdHolder | undefined = undefined
+        if (e.data.indexOf(FORCE_LOGIN_PENDING_DEVICE_ID) >= 0) {
+            parsed = JSON.parse(e.data) as DeviceIdHolder
+            if (parsed.deviceId === FORCE_LOGIN_PENDING_DEVICE_ID) {
+                parsed.deviceId = pendingDeviceIdReplacement
+                sentEvent = EventPersistence.fromDatabase(
+                    e.uuid, JSON.stringify(parsed), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+                )
+            }
+        }
+        sentEvents.push(sentEvent)
+        parsedEvents.push(parsed)
+    }
+    events = sentEvents
+}
 
-// Protobuf：每条事件只解析一次，同一对象用于 DTO 和发送副本
+// Protobuf：复用预处理阶段的解析结果，每条事件只解析一次
 if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
-    let sentEvents: EventPersistence[] = shouldReplaceDeviceId ? [] : events
-    events.forEach(e => {
-        let sentEvent = e
-        let event = JSON.parse(e.data) as Event
-        if (shouldReplaceDeviceId && event.deviceId !== deviceId) {
-            event.deviceId = deviceId
-            sentEvent = EventPersistence.fromDatabase(
-                e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
-            )
-        }
+    events.forEach((e, i) => {
+        let event = parsedEvents[i] ?? (JSON.parse(e.data) as DeviceIdHolder)
         values.push(event_pb.EventV3Dto.fromObject(event))
-        if (shouldReplaceDeviceId) {
-            sentEvents.push(sentEvent)
-        }
     })
-    events = sentEvents
     let list = event_pb.EventV3List.create({values: values})
     let arrayBuffer: Uint8Array = event_pb.EventV3List.encode(list).finish()
     serialize = buffer.from(arrayBuffer).buffer
 } else {
-    // NewSaaS identify 后：仅为 ID 不同的事件创建发送副本，数据库原文不变
-    if (shouldReplaceDeviceId) {
-        events = events.map(e => {
-            let event = JSON.parse(e.data) as Event
-            if (event.deviceId === deviceId) {
-                return e
-            }
-            event.deviceId = deviceId
-            return EventPersistence.fromDatabase(
-                e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
-            )
-        })
-    }
     if (mergeSaaSClick) {
         // SaaS 点击合并：按 t/u/s/d/p/ptm 分组，公共字段提到顶层，
         // 每条点击的专属字段（tm/x/gesid/esid，及可选 v/idx/h）收入 e 数组

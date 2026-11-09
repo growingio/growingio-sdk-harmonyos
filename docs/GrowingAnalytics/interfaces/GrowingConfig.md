@@ -168,7 +168,7 @@ let config = new GrowingConfig().CDP(
 
 ### 强制登录模式（仅 NewSaaS）
 
-`forceLogin=true` 时，SDK 继续采集并持久化事件，但暂停 NewSaaS 网络上报。调用 `GrowingAnalytics.identify(deviceId)` 后，首次有效访问用户 ID 会写入后续事件，并替换所有待上报 NewSaaS 事件的 `deviceId` 后补发。
+`forceLogin=true` 时，SDK 继续采集并持久化事件，但暂停 NewSaaS 网络上报。调用 `GrowingAnalytics.identify(deviceId)` 后，首次有效访问用户 ID 会写入后续事件，并替换解锁前生成的待上报 NewSaaS 事件的 `deviceId` 后补发；老版本遗留及此前启动已确认身份的事件保留原 ID。
 
 ```typescript
 let config = new GrowingConfig().NewSaaS('accountId', 'dataSourceId', 'urlScheme')

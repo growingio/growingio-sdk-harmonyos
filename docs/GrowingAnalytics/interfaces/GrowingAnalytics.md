@@ -189,7 +189,7 @@ static identify(deviceId: string): void
 **用途：**
 - 在主 Tracker 为 NewSaaS 且 `forceLogin=true` 时，动态设置事件的 `deviceId`（访问用户 ID）。
 - 首次有效调用会解除全部 NewSaaS 强制登录实例的上报阻塞，并立即尝试补发暂存事件。
-- 暂存事件在实际 Protobuf/JSON 序列化前统一替换 `deviceId`，其他字段不变。
+- 解锁前生成的暂存事件在实际 Protobuf/JSON 序列化前替换 `deviceId`，其他字段不变；老版本遗留及此前启动已确认身份的事件保留原 ID。
 
 **示例：**
 ```typescript

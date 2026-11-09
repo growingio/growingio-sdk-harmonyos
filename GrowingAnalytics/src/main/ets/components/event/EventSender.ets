@@ -19,6 +19,7 @@ import rcp from '@hms.collaboration.rcp'
 import emitter from '@ohos.events.emitter'
 import EventDatabase from './EventDatabase'
 import EventPersistence from './EventPersistence'
+import DeviceInfo from '../core/DeviceInfo'
 import Network from '../core/Network'
 import ForceLogin from '../core/ForceLogin'
 import GrowingContext from '../core/Context'
@@ -173,7 +174,7 @@ export default class EventSender {
         ),
         sendEvents: async (events: EventPersistence[]): Promise<SendResult> => {
           let networkResponse = await Network.request(events, urlPath, context, this.mergeSaaSClick,
-            ForceLogin.getOverrideDeviceId(context))
+            ForceLogin.getPendingReplacement(context, DeviceInfo.deviceId))
           let response = networkResponse.response
           Plugins.onResponseReceive(response)
           if (response.statusCode >= 200 && response.statusCode < 400) {

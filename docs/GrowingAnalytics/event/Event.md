@@ -184,7 +184,8 @@ class EventBuilder {
     event.sdkVersion = SDK_VERSION
 
     // 3. 设备信息
-    event.deviceId = ForceLogin.getDeviceId(context, DeviceInfo.deviceId)
+    // 强制登录未解锁时写入待替换标记，否则为当前有效设备 ID
+    event.deviceId = ForceLogin.getEventDeviceId(context, DeviceInfo.deviceId)
     event.platform = DeviceInfo.platform
     event.platformVersion = DeviceInfo.platformVersion
     event.screenHeight = DeviceInfo.screenHeight
@@ -416,7 +417,7 @@ enum EventSenderType {
 
 ### 发送流程
 
-主 Tracker 为 NewSaaS 且开启 `forceLogin`、本次启动尚未有效 `identify` 时，所有 NewSaaS 发送器（含子 Tracker）在读取数据库批次前返回。首次有效 `identify` 会触发所有 NewSaaS 上下文补发。实际请求传入当前访问用户 ID，由 TaskPool 在 Protobuf/JSON 序列化前复制并替换历史事件的 `deviceId`，数据库原文不变。
+主 Tracker 为 NewSaaS 且开启 `forceLogin`、本次启动尚未有效 `identify` 时，所有 NewSaaS 发送器（含子 Tracker）在读取数据库批次前返回。首次有效 `identify` 会触发所有 NewSaaS 上下文补发。解锁前生成的 NewSaaS 事件以待替换标记 `FORCE_LOGIN_PENDING_DEVICE_ID` 入库；实际请求传入当前有效设备 ID，由 TaskPool 在 Protobuf/JSON 序列化前只替换带标记事件的 `deviceId` 副本。老版本遗留事件和此前启动已确认身份的事件保留原 ID，数据库原文不变。
 
 ```typescript
 class EventSender {
@@ -449,7 +450,7 @@ class EventSender {
     // 4. 发送请求，后台序列化时替换 NewSaaS 访问用户 ID
     try {
       let networkResponse = await Network.request(
-        events, this.urlPath, context, this.mergeSaaSClick, ForceLogin.getOverrideDeviceId(context)
+        events, this.urlPath, context, this.mergeSaaSClick, ForceLogin.getPendingReplacement(context, DeviceInfo.deviceId)
       )
       let response = networkResponse.response
       Plugins.onResponseReceive(response)

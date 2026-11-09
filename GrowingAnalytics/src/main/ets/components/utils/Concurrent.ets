@@ -19,12 +19,16 @@
 
 import buffer from '@ohos.buffer'
 
-import Event from '../event/Event'
 import EventPersistence from "../event/EventPersistence"
+import { FORCE_LOGIN_PENDING_DEVICE_ID } from './Constants'
 import { LogUtil } from './LogUtil'
 import snappy from 'snappyjs'
 import { event_pb } from './protobuf/event_pb'
 import { ProcessEventsResult } from './ProcessEventsResult'
+
+interface DeviceIdHolder {
+  deviceId: string
+}
 
 @Concurrent
 export function processEvents(
@@ -32,33 +36,47 @@ export function processEvents(
   useProtobuf: boolean,
   compressEnabled: boolean,
   mergeSaaSClick: boolean = false,
-  deviceId: string = ''
+  pendingDeviceIdReplacement: string = ''
 ): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
-  let shouldReplaceDeviceId = deviceId.length > 0
+  // 强制登录未解锁时写入的事件带待替换标记，发送副本替换为有效设备 ID；其他事件原样复用。
+  // 解析结果按下标保存，Protobuf 构造 DTO 时复用，避免重复解析
+  let parsedEvents: Array<DeviceIdHolder | undefined> = []
+  if (pendingDeviceIdReplacement.length > 0) {
+    let sentEvents: EventPersistence[] = []
+    for (let e of events) {
+      let sentEvent = e
+      let parsed: DeviceIdHolder | undefined = undefined
+      if (e.data.indexOf(FORCE_LOGIN_PENDING_DEVICE_ID) >= 0) {
+        try {
+          parsed = JSON.parse(e.data) as DeviceIdHolder
+          if (parsed.deviceId === FORCE_LOGIN_PENDING_DEVICE_ID) {
+            parsed.deviceId = pendingDeviceIdReplacement
+            sentEvent = EventPersistence.fromDatabase(
+              e.uuid, JSON.stringify(parsed), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+            )
+          }
+        } catch (error) {
+          LogUtil.error(() => 'Failed to replace pending deviceId: ' + error)
+        }
+      }
+      sentEvents.push(sentEvent)
+      parsedEvents.push(parsed)
+    }
+    events = sentEvents
+  }
+
   if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
-    let sentEvents: EventPersistence[] = shouldReplaceDeviceId ? [] : events
-    events.forEach(e => {
-      let sentEvent = e
+    events.forEach((e, i) => {
       try {
-        let event = JSON.parse(e.data) as Event
-        if (shouldReplaceDeviceId && event.deviceId !== deviceId) {
-          event.deviceId = deviceId
-          sentEvent = EventPersistence.fromDatabase(
-            e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
-          )
-        }
+        let event = parsedEvents[i] ?? (JSON.parse(e.data) as DeviceIdHolder)
         let dto = event_pb.EventV3Dto.fromObject(event)
         values.push(dto)
       } catch (error) {
         LogUtil.error(() => 'Failed to parse event data: ' + error)
       }
-      if (shouldReplaceDeviceId) {
-        sentEvents.push(sentEvent)
-      }
     })
-    events = sentEvents
     try {
       let list = event_pb.EventV3List.create({values: values})
       let arrayBuffer: Uint8Array = event_pb.EventV3List.encode(list).finish()
@@ -67,23 +85,6 @@ export function processEvents(
       LogUtil.error(() => 'Failed to create protobuf: ' + error)
     }
   } else {
-    if (shouldReplaceDeviceId) {
-      events = events.map(e => {
-        try {
-          let event = JSON.parse(e.data) as Event
-          if (event.deviceId === deviceId) {
-            return e
-          }
-          event.deviceId = deviceId
-          return EventPersistence.fromDatabase(
-            e.uuid, JSON.stringify(event), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
-          )
-        } catch (error) {
-          LogUtil.error(() => 'Failed to replace event deviceId: ' + error)
-          return e
-        }
-      })
-    }
     try {
       let json: string
       if (mergeSaaSClick) {

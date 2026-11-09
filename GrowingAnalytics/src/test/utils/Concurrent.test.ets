@@ -20,6 +20,7 @@ import { describe, it, expect } from '@ohos/hypium'
 import snappy from 'snappyjs'
 import EventPersistence from '../../main/ets/components/event/EventPersistence'
 import { processEvents } from '../../main/ets/components/utils/Concurrent'
+import { FORCE_LOGIN_PENDING_DEVICE_ID } from '../../main/ets/components/utils/Constants'
 import { event_pb } from '../../main/ets/components/utils/protobuf/event_pb'
 
 interface SerializedEvent {
@@ -29,25 +30,28 @@ interface SerializedEvent {
   eventSequenceId: number
 }
 
-function makeEvent(): EventPersistence {
+function makeEvent(deviceId: string = FORCE_LOGIN_PENDING_DEVICE_ID, uuid: string = 'uuid-1'): EventPersistence {
   let data: SerializedEvent = {
-    deviceId: 'old-device',
+    deviceId: deviceId,
     eventType: 'CUSTOM',
     eventName: 'purchase',
     eventSequenceId: 7
   }
-  return EventPersistence.fromDatabase('uuid-1', JSON.stringify(data), 'CUSTOM', '2.8.0', 'account', 'datasource')
+  return EventPersistence.fromDatabase(uuid, JSON.stringify(data), 'CUSTOM', '2.8.0', 'account', 'datasource')
+}
+
+function decodeJsonList(data: ArrayBuffer): SerializedEvent[] {
+  let json = buffer.from(data).toString()
+  return JSON.parse(json) as SerializedEvent[]
 }
 
 function decodeJson(data: ArrayBuffer): SerializedEvent {
-  let json = buffer.from(data).toString()
-  let events = JSON.parse(json) as SerializedEvent[]
-  return events[0]
+  return decodeJsonList(data)[0]
 }
 
 export default function concurrentTests() {
   describe('processEvents_force_login_device_id', () => {
-    it('json_should_replace_device_id_and_preserve_source', 0, () => {
+    it('json_should_replace_pending_marker_and_preserve_source', 0, () => {
       let event = makeEvent()
       let source = event.data
       let result = processEvents([event], false, false, false, 'new-device')
@@ -61,12 +65,7 @@ export default function concurrentTests() {
       expect(event.data).assertEqual(source)
     })
 
-    it('json_without_override_should_keep_device_id', 0, () => {
-      let result = processEvents([makeEvent()], false, false)
-      expect(decodeJson(result.serialize).deviceId).assertEqual('old-device')
-    })
-
-    it('protobuf_should_replace_device_id_and_preserve_source', 0, () => {
+    it('protobuf_should_replace_pending_marker_and_preserve_source', 0, () => {
       let event = makeEvent()
       let source = event.data
       let result = processEvents([event], true, false, false, 'new-device')
@@ -81,23 +80,50 @@ export default function concurrentTests() {
       expect(event.data).assertEqual(source)
     })
 
-    it('json_with_same_device_id_should_reuse_event', 0, () => {
-      let event = makeEvent()
-      let result = processEvents([event], false, false, false, 'old-device')
-      expect(result.events[0] === event).assertTrue()
-      expect(decodeJson(result.serialize).deviceId).assertEqual('old-device')
+    it('json_should_keep_real_device_ids_and_reuse_events', 0, () => {
+      // 老版本遗留的自动生成 ID、上次启动已确认的访问用户 ID 均不改写
+      let legacy = makeEvent('generated-device', 'uuid-legacy')
+      let confirmed = makeEvent('previous-visitor', 'uuid-confirmed')
+      let result = processEvents([legacy, confirmed], false, false, false, 'new-device')
+      let decoded = decodeJsonList(result.serialize)
+      expect(result.events[0] === legacy).assertTrue()
+      expect(result.events[1] === confirmed).assertTrue()
+      expect(decoded[0].deviceId).assertEqual('generated-device')
+      expect(decoded[1].deviceId).assertEqual('previous-visitor')
     })
 
-    it('protobuf_with_same_device_id_should_reuse_event', 0, () => {
-      let event = makeEvent()
-      let result = processEvents([event], true, false, false, 'old-device')
+    it('protobuf_should_keep_real_device_ids_and_reuse_events', 0, () => {
+      let legacy = makeEvent('generated-device', 'uuid-legacy')
+      let confirmed = makeEvent('previous-visitor', 'uuid-confirmed')
+      let result = processEvents([legacy, confirmed], true, false, false, 'new-device')
       let decoded = event_pb.EventV3List.decode(new Uint8Array(result.serialize))
-      expect(result.events[0] === event).assertTrue()
-      expect(decoded.values.length).assertEqual(1)
-      expect(decoded.values[0].deviceId).assertEqual('old-device')
+      expect(result.events[0] === legacy).assertTrue()
+      expect(result.events[1] === confirmed).assertTrue()
+      expect(decoded.values.length).assertEqual(2)
+      expect(decoded.values[0].deviceId).assertEqual('generated-device')
+      expect(decoded.values[1].deviceId).assertEqual('previous-visitor')
     })
 
-    it('compressed_json_should_replace_device_id', 0, () => {
+    it('mixed_batch_should_only_replace_pending_events', 0, () => {
+      let pending = makeEvent(FORCE_LOGIN_PENDING_DEVICE_ID, 'uuid-pending')
+      let legacy = makeEvent('generated-device', 'uuid-legacy')
+      for (let useProtobuf of [false, true]) {
+        let result = processEvents([pending, legacy], useProtobuf, false, false, 'new-device')
+        expect(result.events.length).assertEqual(2)
+        expect((JSON.parse(result.events[0].data) as SerializedEvent).deviceId).assertEqual('new-device')
+        expect(result.events[1] === legacy).assertTrue()
+        expect(buffer.from(result.serialize).toString().indexOf(FORCE_LOGIN_PENDING_DEVICE_ID)).assertEqual(-1)
+      }
+    })
+
+    it('without_replacement_should_keep_events_untouched', 0, () => {
+      let event = makeEvent('generated-device')
+      let result = processEvents([event], false, false)
+      expect(result.events[0] === event).assertTrue()
+      expect(decodeJson(result.serialize).deviceId).assertEqual('generated-device')
+    })
+
+    it('compressed_json_should_replace_pending_marker', 0, () => {
       let result = processEvents([makeEvent()], false, true, false, 'new-device')
       let uncompressed = snappy.uncompress(result.serialize) as ArrayBuffer
       expect(decodeJson(uncompressed).deviceId).assertEqual('new-device')

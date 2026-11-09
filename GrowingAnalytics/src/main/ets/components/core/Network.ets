@@ -54,7 +54,7 @@ export default class Network {
     urlPath: string,
     context: GrowingContext,
     mergeSaaSClick: boolean = false,
-    deviceId: string = ''
+    pendingDeviceIdReplacement: string = ''
   ): Promise<NetworkResponse> {
     if (!Network.session) {
       return Promise.reject(new Error('Network session not initialized'))
@@ -64,7 +64,9 @@ export default class Network {
     let url = Network.generateUrl(curTime, urlPath, context)
     let generated: GeneratedRequest
     try {
-      generated = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick, deviceId)
+      generated = await Network.generateRequest(
+        curTime, url, events, context, mergeSaaSClick, pendingDeviceIdReplacement
+      )
     } catch (error) {
       LogUtil.error(() => 'Failed to generate request: ' + error)
       return Promise.reject(error)
@@ -80,7 +82,7 @@ export default class Network {
     events: EventPersistence[],
     context: GrowingContext,
     mergeSaaSClick: boolean = false,
-    deviceId: string = ''
+    pendingDeviceIdReplacement: string = ''
   ): Promise<GeneratedRequest> {
     let useProtobuf = context.config.useProtobuf
     if (context.config.mode == ConfigMode.SaaS) {
@@ -89,7 +91,7 @@ export default class Network {
     }
 
     let processTask = new taskpool.Task(
-      processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick, deviceId
+      processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick, pendingDeviceIdReplacement
     )
     let processed: ProcessEventsResult
     try {

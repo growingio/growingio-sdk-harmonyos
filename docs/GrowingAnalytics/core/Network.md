@@ -84,7 +84,7 @@ export default class Network {
     urlPath: string,
     context: GrowingContext,
     mergeSaaSClick: boolean = false,
-    deviceId: string = ''
+    pendingDeviceIdReplacement: string = ''
   ): Promise<NetworkResponse>
 
   // 生成 HTTP 请求，同时保留 TaskPool 返回的实际发送副本
@@ -94,7 +94,7 @@ export default class Network {
     events: EventPersistence[],
     context: GrowingContext,
     mergeSaaSClick: boolean = false,
-    deviceId: string = ''
+    pendingDeviceIdReplacement: string = ''
   ): Promise<GeneratedRequest>
 
   // 生成请求头
@@ -137,7 +137,7 @@ static async request(
   urlPath: string,
   context: GrowingContext,
   mergeSaaSClick: boolean = false,
-  deviceId: string = ''
+  pendingDeviceIdReplacement: string = ''
 ): Promise<NetworkResponse> {
   if (!Network.session) {
     return Promise.reject(new Error('Network session not initialized'))
@@ -147,7 +147,9 @@ static async request(
   let url = Network.generateUrl(curTime, urlPath, context)
   let generated: GeneratedRequest
   try {
-    generated = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick, deviceId)
+    generated = await Network.generateRequest(
+      curTime, url, events, context, mergeSaaSClick, pendingDeviceIdReplacement
+    )
   } catch (error) {
     LogUtil.error(() => 'Failed to generate request: ' + error)
     return Promise.reject(error)
@@ -218,7 +220,7 @@ static async generateRequest(
   events: EventPersistence[],
   context: GrowingContext,
   mergeSaaSClick: boolean = false,
-  deviceId: string = ''
+  pendingDeviceIdReplacement: string = ''
 ): Promise<GeneratedRequest> {
   let useProtobuf = context.config.useProtobuf
   if (context.config.mode == ConfigMode.SaaS) {
@@ -226,7 +228,7 @@ static async generateRequest(
   }
 
   let processTask = new taskpool.Task(
-    processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick, deviceId
+    processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick, pendingDeviceIdReplacement
   )
   let processed: ProcessEventsResult
   try {
@@ -263,11 +265,11 @@ export function processEvents(
   useProtobuf: boolean,
   compressEnabled: boolean,
   mergeSaaSClick: boolean = false,
-  deviceId: string = ''
+  pendingDeviceIdReplacement: string = ''
 ): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
-  if (deviceId.length > 0) {
-    // 复制事件并替换 deviceId，保留 UUID 和数据库原对象
+  if (pendingDeviceIdReplacement.length > 0) {
+    // 仅复制带强制登录待替换标记的事件并替换 deviceId，保留 UUID 和数据库原对象
     ...
   }
   if (useProtobuf) {

@@ -468,7 +468,10 @@ GrowingAnalytics.identify('visitor-id')
 - 校验与 Web SDK 一致：非空字符串即有效，不 trim，超过 1000 字符截断。每次启动只接受首次有效调用。
 - 动态访问用户 ID 使用 `growing_identify_device_id` 独立持久化，不覆盖自动生成的 `growing_device_id`。
 - 解锁状态只在当前进程有效；下次强制登录启动仍需调用 `identify`。
-- 事件构建时使用当前有效访问用户 ID。历史待上报事件保留数据库原文，在 TaskPool 序列化请求时替换其 `deviceId` 副本。
+- 解锁前构建的 NewSaaS 事件以待替换标记 `growingio_force_login_pending`（`FORCE_LOGIN_PENDING_DEVICE_ID`）作为 `deviceId` 入库，解锁后构建的事件直接使用当前有效访问用户 ID。
+- 发送时只在 TaskPool 中把带标记事件的 `deviceId` 副本替换为当前有效设备 ID（已保存的访问用户 ID，否则为自动生成的设备 ID），数据库原文不变；标记不会上报，`identify` 也不接受该值。
+- 已带真实 ID 的事件不改写：老版本 SDK 遗留事件保留自动生成的设备 ID，此前启动 `identify` 后生成的事件保留当时的访问用户 ID。
+- 解锁前公开接口 `getDeviceId()` 仍返回已保存的访问用户 ID 或自动生成的设备 ID，不返回标记。
 - SaaS/CDP 不使用该访问用户 ID，也不受强制登录开关影响。
 
 ### 与登录用户 ID 的区别

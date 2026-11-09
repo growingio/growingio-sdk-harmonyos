@@ -19,7 +19,7 @@
 
 import GrowingContext from './Context'
 import { ConfigMode } from '../interfaces/GrowingConfig'
-import { PREFERENCE_IDENTIFY_DEVICE_ID } from '../utils/Constants'
+import { FORCE_LOGIN_PENDING_DEVICE_ID, PREFERENCE_IDENTIFY_DEVICE_ID } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
@@ -52,8 +52,12 @@ export default class ForceLogin {
       return false
     }
     // 与 Web SDK 校验规则一致：非空字符串即有效，不去除首尾空白，超过 1000 字符截断
-    if (!deviceId || deviceId.length == 0) {
+    if (!deviceId) {
       LogUtil.info(() => 'Failed to identify, deviceId is empty')
+      return false
+    }
+    if (deviceId == FORCE_LOGIN_PENDING_DEVICE_ID) {
+      LogUtil.info(() => 'Failed to identify, deviceId is reserved by GrowingAnalytics')
       return false
     }
 
@@ -69,6 +73,9 @@ export default class ForceLogin {
     return context.config.mode != ConfigMode.NewSaaS || !ForceLogin.isEnabled() || ForceLogin.unlocked
   }
 
+  /**
+   * 当前有效设备 ID：NewSaaS 优先使用已持久化的访问用户 ID，否则使用自动生成的设备 ID
+   */
   static getDeviceId(context: GrowingContext, generatedDeviceId: string): string {
     if (context.config.mode == ConfigMode.NewSaaS && ForceLogin.identifiedDeviceId.length > 0) {
       return ForceLogin.identifiedDeviceId
@@ -76,11 +83,28 @@ export default class ForceLogin {
     return generatedDeviceId
   }
 
-  static getOverrideDeviceId(context: GrowingContext): string {
-    if (context.config.mode == ConfigMode.NewSaaS) {
-      return ForceLogin.identifiedDeviceId
+  /**
+   * 构建事件时使用的设备 ID
+   *
+   * 强制登录未解锁时 NewSaaS 事件写入待替换标记，发送前替换为当时的有效设备 ID；
+   * 已带真实 ID 的事件（老版本遗留、此前启动已确认身份）发送时不改写。
+   */
+  static getEventDeviceId(context: GrowingContext, generatedDeviceId: string): string {
+    // canSend 对 SaaS/CDP 恒为 true，标记只会出现在 NewSaaS 事件中
+    if (!ForceLogin.canSend(context)) {
+      return FORCE_LOGIN_PENDING_DEVICE_ID
     }
-    return ''
+    return ForceLogin.getDeviceId(context, generatedDeviceId)
+  }
+
+  /**
+   * 发送时替换待替换标记的设备 ID；SaaS/CDP 事件不会带标记，返回空字符串表示无需替换
+   */
+  static getPendingReplacement(context: GrowingContext, generatedDeviceId: string): string {
+    if (context.config.mode != ConfigMode.NewSaaS) {
+      return ''
+    }
+    return ForceLogin.getDeviceId(context, generatedDeviceId)
   }
 
   static _reset() {
