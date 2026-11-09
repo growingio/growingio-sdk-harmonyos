@@ -86,6 +86,10 @@ struct Index {
         .onClick(() => {
           Util.startAbility(this.getUIContext(), 'HybridAbility', 'pages/Hybrid')
         }).margin({ top: 15 })
+      Button('forceLogin')
+        .onClick(() => {
+          this.getUIContext().getRouter().pushUrl({ url: 'pages/ForceLogin' })
+        }).margin({ top: 15 })
     }
     .width('100%')
     .height('100%')
