@@ -9,9 +9,6 @@ EventV3Dto
 ResourceItem
 
 -keep-property-name
-# --------- public configuration and API ---------
-forceLogin
-identify
 # --------- hybrid JS bridge methods (registerJavaScriptProxy methodList,
 #           must match the names called from web SDK across the native↔JS boundary) ---------
 # NewSaaS/default bridge: GrowingWebViewJavascriptBridge
