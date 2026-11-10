@@ -78,6 +78,19 @@ export default function forceLoginTests() {
       expect(ForceLogin.canSend(context)).assertFalse()
     })
 
+    it('overlong_id_should_not_split_surrogate_pair', 0, () => {
+      // 第 1000 个 UTF-16 单元是 emoji 高位代理时，在 emoji 之前截断
+      let context = makeMainContext()
+      expect(ForceLogin.identify('x'.repeat(999) + '😀' + 'y')).assertTrue()
+      expect(ForceLogin.getDeviceId(context)).assertEqual('x'.repeat(999))
+    })
+
+    it('truncate_should_keep_complete_emoji_before_limit', 0, () => {
+      // emoji 完整落在前 1000 个单元内时保留
+      expect(ForceLogin.truncateDeviceId('x'.repeat(998) + '😀' + 'y')).assertEqual('x'.repeat(998) + '😀')
+      expect(ForceLogin.truncateDeviceId('short')).assertEqual('short')
+    })
+
     it('whitespace_id_should_be_accepted_like_web', 0, () => {
       let context = makeMainContext()
       expect(ForceLogin.identify('   ')).assertTrue()

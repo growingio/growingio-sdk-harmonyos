@@ -466,6 +466,7 @@ GrowingAnalytics.identify('visitor-id')
 - 强制登录只由主 Tracker 配置决定，NewSaaS 子 Tracker 跟随主 Tracker 阻塞与解锁（与 Web SDK 一致）。
 - 首次有效 `identify` 统一设置所有 NewSaaS 实例的访问用户 ID，并触发全部 NewSaaS 上下文补发。
 - 校验与 Web SDK 一致：非空字符串即有效，不 trim，超过 1000 字符截断。每次启动只接受首次有效调用。
+- 截断按 UTF-16 单元计数；第 1000 个单元是代理对高位时在其前截断（截为 999 个单元），不拆开 emoji 等代理对字符，与 iOS 一致。
 - 动态访问用户 ID 使用 `growing_identify_device_id` 独立持久化，不覆盖自动生成的 `growing_device_id`。
 - 解锁状态只在当前进程有效；下次强制登录启动仍需调用 `identify`。
 - 解锁前构建的 NewSaaS 事件以**自动生成的设备 ID** 作为 `deviceId` 入库，同时在事件表独立列 `FORCE_LOGIN_PENDING` 写入 1（待替换标志不进入事件数据）；解锁后构建的事件直接使用当前有效访问用户 ID。

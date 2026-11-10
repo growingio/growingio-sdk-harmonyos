@@ -58,12 +58,28 @@ export default class ForceLogin {
       return false
     }
 
-    let identifiedDeviceId = deviceId.slice(0, IDENTIFY_DEVICE_ID_MAX_LENGTH)
+    let identifiedDeviceId = ForceLogin.truncateDeviceId(deviceId)
     ForceLogin.identifiedDeviceId = identifiedDeviceId
     ForceLogin.unlocked = true
     SharedPreferences.put(PREFERENCE_IDENTIFY_DEVICE_ID, identifiedDeviceId)
     LogUtil.info(() => 'Identify deviceId for all NewSaaS trackers')
     return true
+  }
+
+  /**
+   * 超过 1000 个 UTF-16 单元时截断；第 1000 个单元是代理对的高位时在其前截断，
+   * 不拆开 emoji 等代理对字符，避免产生孤立代理项导致 JSON/Protobuf 编码异常
+   */
+  static truncateDeviceId(deviceId: string): string {
+    if (deviceId.length <= IDENTIFY_DEVICE_ID_MAX_LENGTH) {
+      return deviceId
+    }
+    let end = IDENTIFY_DEVICE_ID_MAX_LENGTH
+    let code = deviceId.charCodeAt(end - 1)
+    if (code >= 0xD800 && code <= 0xDBFF) {
+      end--
+    }
+    return deviceId.slice(0, end)
   }
 
   static canSend(context: GrowingContext): boolean {
