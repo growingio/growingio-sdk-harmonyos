@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features 功能
+
+* feat: NewSaaS 新增强制登录模式（`config.forceLogin` + `GrowingAnalytics.identify`），调用 `identify` 前暂停上报，之后以访问用户 ID 补发
+
 ## [2.9.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.9.0) (2026-06-24)
 
 ### Features 功能

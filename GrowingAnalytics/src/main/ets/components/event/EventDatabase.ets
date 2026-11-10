@@ -30,7 +30,8 @@ export default class EventDatabase {
   static context: Context
   static eventsCache: relationalStore.ValuesBucket[] = []
   static tableName: string = 'EVENTS'
-  // 强制登录待替换列是否可用；迁移失败时不写该列，避免整条插入失败
+  // 强制登录待替换列是否可写（仅用于写入）；补列失败时不写该列，避免整条插入失败。
+  // 读取不依赖该值：查询任务按结果集实际列名判断，避免数据库初始化完成前的查询漏读标志
   static forceLoginPendingColumnReady: boolean = false
 
   static async initDatabase(context: Context) {
@@ -74,8 +75,15 @@ export default class EventDatabase {
    */
   static async ensureForceLoginPendingColumn(store: relationalStore.RdbStore): Promise<boolean> {
     try {
-      let r = await store.querySql('SELECT * FROM ' + EventDatabase.tableName + ' LIMIT 0')
-      let exists = r.columnNames.indexOf(EVENTS_COLUMN_FORCE_LOGIN_PENDING) >= 0
+      // 通过 PRAGMA table_info 逐行读取列名，不依赖空结果集的 columnNames
+      let r = await store.querySql('PRAGMA table_info(' + EventDatabase.tableName + ')')
+      let exists = false
+      while (r.goToNextRow()) {
+        if (r.getString(r.getColumnIndex('name')) == EVENTS_COLUMN_FORCE_LOGIN_PENDING) {
+          exists = true
+          break
+        }
+      }
       r.close()
       if (!exists) {
         await store.executeSql('ALTER TABLE ' + EventDatabase.tableName
@@ -83,7 +91,12 @@ export default class EventDatabase {
       }
       return true
     } catch (e) {
-      LogUtil.error(() => "Failed to add force login pending column. code = " + e.code + ", message = " + e.message)
+      let message = String(e.message)
+      if (message.indexOf('duplicate column') >= 0) {
+        // 列已存在（检测结果不准确时的兜底）
+        return true
+      }
+      LogUtil.error(() => "Failed to add force login pending column. code = " + e.code + ", message = " + message)
       return false
     }
   }
@@ -174,7 +187,6 @@ export default class EventDatabase {
         context.config.dataSourceId,
         EventDatabase.context,
         DATABASE_NAME,
-        EventDatabase.forceLoginPendingColumnReady,
         eventTypes
       ) as EventPersistence[]
 
@@ -310,7 +322,6 @@ async function queryEventsTask(
   dataSourceId: string,
   context: Context,
   dbName: string,
-  withForceLoginPendingColumn: boolean,
   eventTypes?: string[]
 ): Promise<EventPersistence[]> {
   const events: EventPersistence[] = []
@@ -333,8 +344,12 @@ async function queryEventsTask(
     
     let eventsSize = 0
     let r = await store.query(predicates)
-    let pendingIndex = withForceLoginPendingColumn ? r.getColumnIndex(EVENTS_COLUMN_FORCE_LOGIN_PENDING) : -1
+    // 按结果集实际列名判断待替换列是否存在：表已补列即可读取，不依赖主线程的初始化状态
+    let pendingIndex: number | undefined = undefined
     while (r.goToNextRow() && events.length < count && eventsSize < size) {
+      if (pendingIndex === undefined) {
+        pendingIndex = r.columnNames.indexOf(EVENTS_COLUMN_FORCE_LOGIN_PENDING)
+      }
       const uuid = r.getString(r.getColumnIndex('EVENT_UUID'))
       const data = r.getString(r.getColumnIndex('DATA'))
       const eventType = r.getString(r.getColumnIndex('TYPE'))

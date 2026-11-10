@@ -371,9 +371,10 @@ class EventPersistence {
 
 事件表 `EVENTS` 包含 `FORCE_LOGIN_PENDING INTEGER NOT NULL DEFAULT 0` 列：
 
-- 新建表时直接包含该列；老版本创建的表在 `initDatabase` 中检测列名后执行 `ALTER TABLE ... ADD COLUMN` 补齐。
+- 新建表时直接包含该列；老版本创建的表在 `initDatabase` 中通过 `PRAGMA table_info` 检测列名，缺失时执行 `ALTER TABLE ... ADD COLUMN` 补齐（`duplicate column` 错误视为已存在）。
 - 只有待替换事件写入该列（值为 1），普通事件依赖默认值 0。
-- 补列失败时 `forceLoginPendingColumnReady` 为 `false`：写入时去掉该列、读取时视为 0，事件按入库时的自动生成设备 ID 上报，不影响写入。
+- 补列失败时 `forceLoginPendingColumnReady` 为 `false`：写入时去掉该列，事件按入库时的自动生成设备 ID 上报，不影响写入。
+- 读取不依赖 `forceLoginPendingColumnReady`：`queryEventsTask` 按结果集实际列名（`columnNames`）判断该列是否存在。`initDatabase` 未 await，`identify` 可能在数据库初始化完成前触发发送，此时仍能正确读到此前启动遗留的待替换标志。
 - SDK 降级后老版本忽略该列，待替换事件按自动生成的设备 ID 上报；再次升级时列已存在，老版本写入的行为 0。
 
 ### 持久化流程
