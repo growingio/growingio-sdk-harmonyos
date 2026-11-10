@@ -489,14 +489,14 @@ static create(
   event.orientation = DeviceInfo.orientation
   event.eventType = EventType.Page
   event.referralPage = referralPage ?? undefined
-  PageEvent.setLastPage(event, context)
 
   return EventBuilder.build(event, context)
 }
 ```
 
-NewSaaS 的 Flutter PAGE 会同步更新 `PageEvent.lastPage`，使后续原生及 Flutter CUSTOM 事件可按
-`customEventWithPath` / `customEventWithReferralPath` 配置携带当前页 `path` 和上一页 `referralPage`。
+Flutter PAGE 不更新 `PageEvent.lastPage`。原生及 Flutter CUSTOM 按 `customEventWithPath` /
+`customEventWithReferralPath` 携带的 `path` / `referralPage` 均取自最近一次原生 PAGE，原生 PAGE 的
+`referralPage` 也不受 Flutter PAGE 影响。
 
 ---
 

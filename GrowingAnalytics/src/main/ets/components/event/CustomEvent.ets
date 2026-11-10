@@ -20,6 +20,7 @@ import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
 import PageEvent from './PageEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
+import { PATH_SEPARATOR } from '../utils/Constants'
 
 export default class CustomEvent extends Event {
   eventName: string = ''
@@ -45,14 +46,14 @@ export default class CustomEvent extends Event {
 
     if (context.config.mode == ConfigMode.NewSaaS) {
       let lastPage = PageEvent.getLastPage(context)
-      if (lastPage) {
-        if (context.config.customEventWithPath && lastPage.path != undefined && lastPage.path.length > 0) {
-          event.path = lastPage.path
-        }
-        if (context.config.customEventWithReferralPath && lastPage.referralPage != undefined &&
-          lastPage.referralPage.length > 0) {
-          event.referralPage = lastPage.referralPage
-        }
+      if (context.config.customEventWithPath) {
+        // 与 iOS / Android 一致：无原生 PAGE 时兜底为根路径
+        let lastPath = lastPage?.path
+        event.path = lastPath != undefined && lastPath.length > 0 ? lastPath : PATH_SEPARATOR
+      }
+      if (context.config.customEventWithReferralPath && lastPage && lastPage.referralPage != undefined &&
+        lastPage.referralPage.length > 0) {
+        event.referralPage = lastPage.referralPage
       }
     } else if (context.config.mode == ConfigMode.SaaS) {
       let lastPage = PageEvent.getLastPage(context)

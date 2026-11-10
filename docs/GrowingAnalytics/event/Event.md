@@ -164,8 +164,10 @@ enum EventScene {
 | `LoginUserAttributesEvent` | 登录用户属性 | 无 |
 | `AppClosedEvent` | 应用关闭 | `eventDuration` |
 
-NewSaaS 的原生及 Flutter CUSTOM 默认不携带 `path` 和 `referralPage`。开启 `customEventWithPath` 后携带当前页
-`path`；开启 `customEventWithReferralPath` 后携带上一页面路径作为 `referralPage`，无上一页时不携带。
+NewSaaS 的原生及 Flutter CUSTOM 默认不携带 `path` 和 `referralPage`。两者均取自最近一次原生 PAGE（Flutter PAGE
+不参与）：开启 `customEventWithPath` 后携带其 `path`，无原生 PAGE 时兜底为 `/`（与 iOS / Android 一致）；开启
+`customEventWithReferralPath` 后携带其 `referralPage`，无对应值时不携带。原生 PAGE 仅由无埋点生成，未开启 `autotrackEnabled` 时
+`path` 恒为 `/`，且不携带 `referralPage`。
 Hybrid CUSTOM 独立处理：无条件携带 H5 消息中的 `path`，NewSaaS 下 `referralPage` 有非空值即携带，均不受上述
 两个开关影响。SaaS / CDP 的既有行为不变。
 

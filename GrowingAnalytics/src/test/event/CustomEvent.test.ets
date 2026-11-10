@@ -97,7 +97,7 @@ function resetAll() {
  * 两个事件类在 SaaS 模式下都读取 PageEvent.lastPage：
  *   - CustomEvent：填充 event.path + event.pageShowTimestamp
  *   - AppClosedEvent：填充 event.path
- * CustomEvent 在 NewSaaS 模式下按两个独立配置填充 path 和 referralPage。
+ * CustomEvent 在 NewSaaS 模式下按两个独立配置填充 path（无原生 PAGE 时为 /）和 referralPage。
  *
  * 共同测试点：
  *   SaaS + lastPage 存在 → SaaS 字段填充，不受新配置影响
@@ -220,25 +220,37 @@ export default function customEventTests() {
       expect(e.referralPage === undefined).assertTrue()
     })
 
-    it('Flutter PAGE 后 CUSTOM 可携带当前页 path 和上一页 referralPage', 0, () => {
+    it('页面信息取自最近的原生 PAGE，Flutter PAGE 不影响', 0, () => {
       let ctx = makeCtx('t', ConfigMode.NewSaaS)
       ctx.config.customEventWithPath = true
       ctx.config.customEventWithReferralPath = true
       seedContext(ctx)
-      FlutterPageEvent.create('/flutter/current', 'Current', {}, 1700000000000, '/flutter/previous', ctx)
+      PageEvent.create('/home', 'Home', {}, 1700000000000, ctx)
+      PageEvent.create('/list', 'List', {}, 1700000001000, ctx)
+      FlutterPageEvent.create('/flutter/detail', 'Detail', {}, 1700000002000, '/flutter/previous', ctx)
       let e = CustomEvent.create('add_cart', {}, ctx)
-      expect(e.path).assertEqual('/flutter/current')
-      expect(e.referralPage).assertEqual('/flutter/previous')
+      expect(e.path).assertEqual('/list')
+      expect(e.referralPage).assertEqual('/home')
     })
 
-    it('无 lastPage：两个开关开启也不携带页面字段', 0, () => {
+    it('无 lastPage：path 兜底为 /，referralPage 不携带', 0, () => {
       let ctx = makeCtx('t', ConfigMode.NewSaaS)
       ctx.config.customEventWithPath = true
       ctx.config.customEventWithReferralPath = true
       seedContext(ctx)
       let e = CustomEvent.create('add_cart', {}, ctx)
-      expect(e.path === undefined).assertTrue()
+      expect(e.path).assertEqual('/')
       expect(e.referralPage === undefined).assertTrue()
+      expect(e.toSerialize(ctx)).assertContain('"path":"/"')
+    })
+
+    it('lastPage.path 为空字符串：path 兜底为 /', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.NewSaaS)
+      ctx.config.customEventWithPath = true
+      seedContext(ctx)
+      seedLastPage(ctx, '')
+      let e = CustomEvent.create('add_cart', {}, ctx)
+      expect(e.path).assertEqual('/')
     })
   })
 

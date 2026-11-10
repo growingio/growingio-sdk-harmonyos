@@ -16,7 +16,7 @@
  */
 
 import Event, { EventType, AttributesType } from './../Event'
-import PageEvent, { Page } from './../PageEvent'
+import { Page } from './../PageEvent'
 import EventBuilder from './../EventBuilder'
 import GrowingContext from '../../core/Context'
 import DeviceInfo from '../../core/DeviceInfo'
@@ -43,7 +43,6 @@ export default class FlutterPageEvent extends Event implements Page {
     event.orientation = DeviceInfo.orientation
     event.eventType = EventType.Page
     event.referralPage = referralPage ?? undefined
-    PageEvent.setLastPage(event, context)
 
     return EventBuilder.build(event, context)
   }
