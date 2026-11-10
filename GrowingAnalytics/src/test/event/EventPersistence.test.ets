@@ -103,6 +103,14 @@ export default function eventPersistenceTests() {
       let page = EventPersistence.fromDatabase('u', '{}', 'PAGE', '2.8.0', 'a', 'd')
       expect(page.eventType).assertEqual('PAGE')
     })
+
+    it('强制登录待替换标志默认为 false，显式传入时保留', 0, () => {
+      let normal = EventPersistence.fromDatabase('u', '{}', 'CUSTOM', '2.8.0', 'a', 'd')
+      expect(normal.forceLoginPending).assertFalse()
+
+      let pending = EventPersistence.fromDatabase('u', '{}', 'CUSTOM', '2.8.0', 'a', 'd', true)
+      expect(pending.forceLoginPending).assertTrue()
+    })
   })
 
   // ─── validateEventSize（通过 Util 直接测试，EventPersistence 调用该逻辑）──

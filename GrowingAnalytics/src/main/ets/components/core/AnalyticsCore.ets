@@ -397,7 +397,8 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       return
     }
 
-    let pst = EventPersistence.fromEvent(event, context)
+    // 事件构建与入库在同一同步流程中，此处的强制登录状态与构建 deviceId 时一致
+    let pst = EventPersistence.fromEvent(event, context, ForceLogin.isPending(context))
     await EventDatabase.writeEvent(pst)
     Plugins.onEventWroteToDisk(pst, eventScene)
     if (pst.eventType == EventType.Visit) {

@@ -269,7 +269,7 @@ export function processEvents(
 ): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
   if (pendingDeviceIdReplacement.length > 0) {
-    // 仅复制带强制登录待替换标记的事件并替换 deviceId，保留 UUID 和数据库原对象
+    // 仅复制 forceLoginPending 为 true 的事件并替换 deviceId，保留 UUID 和数据库原对象
     ...
   }
   if (useProtobuf) {

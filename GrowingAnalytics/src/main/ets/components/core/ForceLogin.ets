@@ -20,7 +20,7 @@
 import GrowingContext from './Context'
 import DeviceInfo from './DeviceInfo'
 import { ConfigMode } from '../interfaces/GrowingConfig'
-import { FORCE_LOGIN_PENDING_DEVICE_ID, PREFERENCE_IDENTIFY_DEVICE_ID } from '../utils/Constants'
+import { PREFERENCE_IDENTIFY_DEVICE_ID } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import SharedPreferences from '../utils/SharedPreferences'
 
@@ -57,10 +57,6 @@ export default class ForceLogin {
       LogUtil.info(() => 'Failed to identify, deviceId is empty')
       return false
     }
-    if (deviceId == FORCE_LOGIN_PENDING_DEVICE_ID) {
-      LogUtil.info(() => 'Failed to identify, deviceId is reserved by GrowingAnalytics')
-      return false
-    }
 
     let identifiedDeviceId = deviceId.slice(0, IDENTIFY_DEVICE_ID_MAX_LENGTH)
     ForceLogin.identifiedDeviceId = identifiedDeviceId
@@ -85,21 +81,30 @@ export default class ForceLogin {
   }
 
   /**
+   * 事件是否需要在发送时替换 deviceId
+   *
+   * 强制登录未解锁时构建的 NewSaaS 事件入库时带待替换标志（数据库独立列，不写入事件数据）；
+   * canSend 对 SaaS/CDP 恒为 true，标志只会出现在 NewSaaS 事件中。
+   */
+  static isPending(context: GrowingContext): boolean {
+    return !ForceLogin.canSend(context)
+  }
+
+  /**
    * 构建事件时使用的设备 ID
    *
-   * 强制登录未解锁时 NewSaaS 事件写入待替换标记，发送前替换为当时的有效设备 ID；
-   * 已带真实 ID 的事件（老版本遗留、此前启动已确认身份）发送时不改写。
+   * 待替换事件写入自动生成的设备 ID，与老版本 SDK 一致：SDK 降级后老版本忽略待替换标志，按设备 ID 原样上报；
+   * 新版本发送时只替换带标志的事件，已带真实 ID 的事件（老版本遗留、此前启动已确认身份）不改写。
    */
   static getEventDeviceId(context: GrowingContext): string {
-    // canSend 对 SaaS/CDP 恒为 true，标记只会出现在 NewSaaS 事件中
-    if (!ForceLogin.canSend(context)) {
-      return FORCE_LOGIN_PENDING_DEVICE_ID
+    if (ForceLogin.isPending(context)) {
+      return DeviceInfo.deviceId
     }
     return ForceLogin.getDeviceId(context)
   }
 
   /**
-   * 发送时替换待替换标记的设备 ID；SaaS/CDP 事件不会带标记，返回空字符串表示无需替换
+   * 发送时替换待替换事件 deviceId 所用的值；SaaS/CDP 事件不会带标志，返回空字符串表示无需替换
    */
   static getPendingReplacement(context: GrowingContext): string {
     if (context.config.mode != ConfigMode.NewSaaS) {

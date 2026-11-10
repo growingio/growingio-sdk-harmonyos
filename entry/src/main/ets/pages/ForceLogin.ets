@@ -3,7 +3,6 @@ import Util from '../Util'
 import DemoSettings from '../DemoSettings'
 
 const SDK_MODE_NEW_SAAS: number = 0
-const PENDING_MARKER: string = 'growingio_force_login_pending'
 
 @Entry
 @Component
@@ -62,10 +61,6 @@ struct ForceLogin {
         Button('identify(空)')
           .onClick(() => {
             this.identify('', '空字符串')
-          })
-        Button('identify(标记)')
-          .onClick(() => {
-            this.identify(PENDING_MARKER, '保留标记')
           })
         Button('identify(1001)')
           .onClick(() => {

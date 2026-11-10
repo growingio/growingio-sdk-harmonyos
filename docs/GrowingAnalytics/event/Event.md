@@ -184,7 +184,7 @@ class EventBuilder {
     event.sdkVersion = SDK_VERSION
 
     // 3. 设备信息
-    // 强制登录未解锁时写入待替换标记，否则为当前有效设备 ID
+    // 强制登录未解锁时写入自动生成的设备 ID（入库时另记待替换标志），否则为当前有效设备 ID
     event.deviceId = ForceLogin.getEventDeviceId(context)
     event.platform = DeviceInfo.platform
     event.platformVersion = DeviceInfo.platformVersion
@@ -332,8 +332,13 @@ class EventPersistence {
   sdkVersion: string     // SDK 版本
   accountId: string      // 项目 ID
   dataSourceId: string   // 数据源 ID
+  forceLoginPending: boolean  // 强制登录待替换标志，对应事件表 FORCE_LOGIN_PENDING 列
 
-  static fromEvent<T extends Event>(event: T, context: GrowingContext): EventPersistence {
+  static fromEvent<T extends Event>(
+    event: T,
+    context: GrowingContext,
+    forceLoginPending: boolean = false
+  ): EventPersistence {
     // 1. 验证事件大小
     let validation = Util.validateEventSize(event)
     if (!validation.isValid) {
@@ -354,12 +359,22 @@ class EventPersistence {
       event.eventType,
       event.sdkVersion,
       context.config.accountId,
-      context.config.dataSourceId
+      context.config.dataSourceId,
+      forceLoginPending
     )
     return e
   }
 }
 ```
+
+### 强制登录待替换列
+
+事件表 `EVENTS` 包含 `FORCE_LOGIN_PENDING INTEGER NOT NULL DEFAULT 0` 列：
+
+- 新建表时直接包含该列；老版本创建的表在 `initDatabase` 中检测列名后执行 `ALTER TABLE ... ADD COLUMN` 补齐。
+- 只有待替换事件写入该列（值为 1），普通事件依赖默认值 0。
+- 补列失败时 `forceLoginPendingColumnReady` 为 `false`：写入时去掉该列、读取时视为 0，事件按入库时的自动生成设备 ID 上报，不影响写入。
+- SDK 降级后老版本忽略该列，待替换事件按自动生成的设备 ID 上报；再次升级时列已存在，老版本写入的行为 0。
 
 ### 持久化流程
 
@@ -417,7 +432,7 @@ enum EventSenderType {
 
 ### 发送流程
 
-主 Tracker 为 NewSaaS 且开启 `forceLogin`、本次启动尚未有效 `identify` 时，所有 NewSaaS 发送器（含子 Tracker）在读取数据库批次前返回。首次有效 `identify` 会触发所有 NewSaaS 上下文补发。解锁前生成的 NewSaaS 事件以待替换标记 `FORCE_LOGIN_PENDING_DEVICE_ID` 入库；实际请求传入当前有效设备 ID，由 TaskPool 在 Protobuf/JSON 序列化前只替换带标记事件的 `deviceId` 副本。老版本遗留事件和此前启动已确认身份的事件保留原 ID，数据库原文不变。
+主 Tracker 为 NewSaaS 且开启 `forceLogin`、本次启动尚未有效 `identify` 时，所有 NewSaaS 发送器（含子 Tracker）在读取数据库批次前返回。首次有效 `identify` 会触发所有 NewSaaS 上下文补发。解锁前生成的 NewSaaS 事件以自动生成的设备 ID 入库，并在 `FORCE_LOGIN_PENDING` 列标记待替换；实际请求传入当前有效设备 ID，由 TaskPool 在 Protobuf/JSON 序列化前只替换带待替换标志事件的 `deviceId` 副本。老版本遗留事件和此前启动已确认身份的事件保留原 ID，数据库原文不变。
 
 ```typescript
 class EventSender {

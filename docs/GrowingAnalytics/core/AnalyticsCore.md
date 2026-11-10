@@ -431,8 +431,8 @@ static async writeEventToDisk<T extends Event>(
     return
   }
 
-  // 1. 转换为持久化事件
-  let pst = EventPersistence.fromEvent(event, context)
+  // 1. 转换为持久化事件；事件构建与入库同步执行，此处的强制登录状态与构建 deviceId 时一致
+  let pst = EventPersistence.fromEvent(event, context, ForceLogin.isPending(context))
   
   // 2. 写入数据库
   await EventDatabase.writeEvent(pst)

@@ -25,8 +25,8 @@ export const PREFERENCE_DEVICE_ID = "growing_device_id"
 export const PREFERENCE_IDENTIFY_DEVICE_ID = "growing_identify_device_id"
 export const PREFERENCE_EVENT_SEQUENCE_ID = "growing_event_sequence_ids"
 
-// 强制登录未解锁时 NewSaaS 事件的待替换 deviceId，发送前替换为有效访问用户 ID，不得上报
-export const FORCE_LOGIN_PENDING_DEVICE_ID = "growingio_force_login_pending"
+// 事件表中标记强制登录待替换 deviceId 的列（1 = 待替换），发送时替换为当时的有效设备 ID
+export const EVENTS_COLUMN_FORCE_LOGIN_PENDING = "FORCE_LOGIN_PENDING"
 
 export const DATABASE_NAME = 'growing_analytics_enc_database'
 

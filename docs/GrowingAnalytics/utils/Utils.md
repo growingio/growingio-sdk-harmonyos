@@ -28,11 +28,11 @@ export function processEvents(
 | `useProtobuf` | `boolean` | 是否使用 Protobuf 序列化 |
 | `compressEnabled` | `boolean` | 是否启用 Snappy 压缩 |
 | `mergeSaaSClick` | `boolean` | 是否启用 SaaS 点击合并（仅 JSON 分支生效，默认 `false`） |
-| `pendingDeviceIdReplacement` | `string` | NewSaaS 当前有效设备 ID；非空时把带强制登录待替换标记（`FORCE_LOGIN_PENDING_DEVICE_ID`）的事件复制并替换 `deviceId`，已带真实 ID 的事件不改写 |
+| `pendingDeviceIdReplacement` | `string` | NewSaaS 当前有效设备 ID；非空时把 `forceLoginPending` 为 `true` 的事件复制并替换 `deviceId`，其他事件不改写 |
 
 **返回值：**
 - `serialize: ArrayBuffer`：序列化并按配置压缩后的请求体。
-- `sentEvents: EventPersistence[]`：实际发送副本；仅带待替换标记的事件生成新副本（保留原 UUID 和其他元数据），其余复用原对象，数据库原文不变。
+- `sentEvents: EventPersistence[]`：实际发送副本；仅待替换事件生成新副本（保留原 UUID 和其他元数据），其余复用原对象，数据库原文不变。
 
 **处理流程：**
 
@@ -62,23 +62,20 @@ export function processEvents(
 **实现细节：**
 
 ```typescript
-// 强制登录未解锁时写入的事件带待替换标记；先做字符串预筛，命中才解析。
-// 没有带标记的事件时不分配任何额外数组；出现标记时才复制一次事件数组
+// 强制登录未解锁时写入的事件带待替换标志（数据库独立列），只解析这些事件。
+// 没有待替换事件时不分配任何额外数组；出现时才复制一次事件数组
 let parsedByIndex: Map<number, DeviceIdHolder> | undefined = undefined
 if (pendingDeviceIdReplacement.length > 0) {
     let sentEvents: EventPersistence[] | undefined = undefined
     for (let i = 0; i < events.length; i++) {
         let e = events[i]
-        if (e.data.indexOf(FORCE_LOGIN_PENDING_DEVICE_ID) < 0) {
+        if (!e.forceLoginPending) {
             continue
         }
         let parsed = JSON.parse(e.data) as DeviceIdHolder
+        parsed.deviceId = pendingDeviceIdReplacement
         parsedByIndex = parsedByIndex ?? new Map<number, DeviceIdHolder>()
         parsedByIndex.set(i, parsed)
-        if (parsed.deviceId !== FORCE_LOGIN_PENDING_DEVICE_ID) {
-            continue
-        }
-        parsed.deviceId = pendingDeviceIdReplacement
         sentEvents = sentEvents ?? events.slice()
         sentEvents[i] = EventPersistence.fromDatabase(
             e.uuid, JSON.stringify(parsed), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId

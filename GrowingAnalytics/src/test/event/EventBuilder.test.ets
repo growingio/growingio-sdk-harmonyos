@@ -26,7 +26,8 @@ import GeneralProps from '../../main/ets/components/core/GeneralProps'
 import AppInfo from '../../main/ets/components/core/AppInfo'
 import AnalyticsCore, { SDK_VERSION } from '../../main/ets/components/core/AnalyticsCore'
 import { ConfigMode } from '../../main/ets/components/interfaces/GrowingConfig'
-import { AttributesType, FORCE_LOGIN_PENDING_DEVICE_ID } from '../../main/ets/components/utils/Constants'
+import DeviceInfo from '../../main/ets/components/core/DeviceInfo'
+import { AttributesType } from '../../main/ets/components/utils/Constants'
 import { JsonParser } from '../helpers/JsonParser'
 
 /**
@@ -572,13 +573,14 @@ export default function eventBuilderTests() {
       expect(e.deviceId).assertEqual('visitor')
     })
 
-    it('NewSaaS 强制登录未解锁时应写入待替换标记', 0, () => {
+    it('NewSaaS 强制登录未解锁时应写入自动生成的设备 ID', 0, () => {
       let ctx = makeCtx()
       seedContext(ctx)
       GrowingContext.defaultContext = ctx
       let e = new VisitEvent()
       EventBuilder.build(e, ctx)
-      expect(e.deviceId).assertEqual(FORCE_LOGIN_PENDING_DEVICE_ID)
+      expect(ForceLogin.isPending(ctx)).assertTrue()
+      expect(e.deviceId).assertEqual(DeviceInfo.deviceId)
     })
 
     it('CDP 不应使用 NewSaaS 访问用户 ID', 0, () => {

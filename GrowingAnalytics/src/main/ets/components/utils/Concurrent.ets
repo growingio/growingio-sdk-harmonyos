@@ -20,7 +20,6 @@
 import buffer from '@ohos.buffer'
 
 import EventPersistence from "../event/EventPersistence"
-import { FORCE_LOGIN_PENDING_DEVICE_ID } from './Constants'
 import { LogUtil } from './LogUtil'
 import snappy from 'snappyjs'
 import { event_pb } from './protobuf/event_pb'
@@ -46,26 +45,23 @@ export function processEvents(
   pendingDeviceIdReplacement: string = ''
 ): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
-  // 强制登录未解锁时写入的事件带待替换标记，发送副本替换为有效设备 ID；其他事件原样复用。
-  // 只有出现带标记的事件时才复制数组；解析结果按下标保存，Protobuf 构造 DTO 时复用，避免重复解析
+  // 强制登录未解锁时写入的事件带待替换标志，发送副本替换为有效设备 ID；其他事件原样复用。
+  // 只有出现待替换事件时才复制数组；解析结果按下标保存，Protobuf 构造 DTO 时复用，避免重复解析
   let parsedByIndex: Map<number, DeviceIdHolder> | undefined = undefined
   if (pendingDeviceIdReplacement.length > 0) {
     let sentEvents: EventPersistence[] | undefined = undefined
     for (let i = 0; i < events.length; i++) {
       let e = events[i]
-      if (e.data.indexOf(FORCE_LOGIN_PENDING_DEVICE_ID) < 0) {
+      if (!e.forceLoginPending) {
         continue
       }
       try {
         let parsed = JSON.parse(e.data) as DeviceIdHolder
+        parsed.deviceId = pendingDeviceIdReplacement
         if (!parsedByIndex) {
           parsedByIndex = new Map<number, DeviceIdHolder>()
         }
         parsedByIndex.set(i, parsed)
-        if (parsed.deviceId !== FORCE_LOGIN_PENDING_DEVICE_ID) {
-          continue
-        }
-        parsed.deviceId = pendingDeviceIdReplacement
         if (!sentEvents) {
           sentEvents = events.slice()
         }
@@ -73,6 +69,7 @@ export function processEvents(
           e.uuid, JSON.stringify(parsed), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
         )
       } catch (error) {
+        // 替换失败时按入库时的自动生成设备 ID 上报
         LogUtil.error(() => 'Failed to replace pending deviceId: ' + error)
       }
     }

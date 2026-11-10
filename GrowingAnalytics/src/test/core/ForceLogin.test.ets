@@ -20,7 +20,6 @@ import ForceLogin from '../../main/ets/components/core/ForceLogin'
 import GrowingContext from '../../main/ets/components/core/Context'
 import DeviceInfo from '../../main/ets/components/core/DeviceInfo'
 import { ConfigMode } from '../../main/ets/components/interfaces/GrowingConfig'
-import { FORCE_LOGIN_PENDING_DEVICE_ID } from '../../main/ets/components/utils/Constants'
 import { buildFakeContext } from '../helpers/TestBuilders'
 
 function makeContext(mode: ConfigMode = ConfigMode.NewSaaS, forceLogin: boolean = true): GrowingContext {
@@ -156,35 +155,42 @@ export default function forceLoginTests() {
       expect(ForceLogin.canSend(makeContext(ConfigMode.NewSaaS, true))).assertTrue()
     })
 
-    it('locked_new_saas_events_should_use_pending_marker', 0, () => {
+    it('locked_new_saas_events_should_be_pending_with_generated_id', 0, () => {
       let main = makeMainContext()
       let sub = makeContext(ConfigMode.NewSaaS, false)
-      expect(ForceLogin.getEventDeviceId(main)).assertEqual(FORCE_LOGIN_PENDING_DEVICE_ID)
-      expect(ForceLogin.getEventDeviceId(sub)).assertEqual(FORCE_LOGIN_PENDING_DEVICE_ID)
-      // 公开 getDeviceId 不暴露标记
-      expect(ForceLogin.getDeviceId(main)).assertEqual('generated-id')
+      expect(ForceLogin.isPending(main)).assertTrue()
+      expect(ForceLogin.isPending(sub)).assertTrue()
+      expect(ForceLogin.getEventDeviceId(main)).assertEqual('generated-id')
+      expect(ForceLogin.getEventDeviceId(sub)).assertEqual('generated-id')
+    })
+
+    it('locked_events_should_not_use_previous_identified_id', 0, () => {
+      // 上次启动已 identify，本次启动未解锁：与老版本 SDK 一致写入自动生成的设备 ID，降级后不会归到上次的访问用户
+      let main = makeMainContext()
+      ForceLogin.identify('visitor')
+      ForceLogin.init()
+      expect(ForceLogin.isPending(main)).assertTrue()
+      expect(ForceLogin.getEventDeviceId(main)).assertEqual('generated-id')
     })
 
     it('unlocked_or_disabled_events_should_use_effective_device_id', 0, () => {
       let main = makeMainContext()
       ForceLogin.identify('visitor')
+      expect(ForceLogin.isPending(main)).assertFalse()
       expect(ForceLogin.getEventDeviceId(main)).assertEqual('visitor')
 
       ForceLogin._reset()
       let disabled = makeMainContext(ConfigMode.NewSaaS, false)
+      expect(ForceLogin.isPending(disabled)).assertFalse()
       expect(ForceLogin.getEventDeviceId(disabled)).assertEqual('generated-id')
     })
 
-    it('saas_and_cdp_events_should_never_use_pending_marker', 0, () => {
+    it('saas_and_cdp_events_should_never_be_pending', 0, () => {
       makeMainContext()
+      expect(ForceLogin.isPending(makeContext(ConfigMode.SaaS, true))).assertFalse()
+      expect(ForceLogin.isPending(makeContext(ConfigMode.CDP, true))).assertFalse()
       expect(ForceLogin.getEventDeviceId(makeContext(ConfigMode.SaaS, true))).assertEqual('generated-id')
       expect(ForceLogin.getEventDeviceId(makeContext(ConfigMode.CDP, true))).assertEqual('generated-id')
-    })
-
-    it('pending_marker_should_not_be_accepted_as_identify_id', 0, () => {
-      let context = makeMainContext()
-      expect(ForceLogin.identify(FORCE_LOGIN_PENDING_DEVICE_ID)).assertFalse()
-      expect(ForceLogin.canSend(context)).assertFalse()
     })
 
     it('pending_replacement_should_fall_back_to_generated_id_without_identify', 0, () => {
