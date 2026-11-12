@@ -8,7 +8,10 @@
     "HarmonyOS",
     "GrowingIO"
   ],
-  "author": "GrowingIO",
+  "author": {
+    "name": "GrowingIO",
+    "url": "https://www.growingio.com"
+  },
   "description": "GrowingAnalytics for HarmonyOS SDK.",
   "main": "index.ets",
   "type": "module",
