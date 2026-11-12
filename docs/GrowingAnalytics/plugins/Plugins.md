@@ -199,6 +199,8 @@ static onSDKWillInitialize() {
 
 ### 2. SDK 初始化完成
 
+此回调执行前，SDK 已标记为初始化成功；NewSaaS 强制登录插件可在此调用 `GrowingAnalytics.identify` 设置访问用户 ID 并解锁上报。
+
 ```typescript
 static onSDKDidInitialize(config: GrowingConfig, version: string) {
   Plugins.plugins.forEach(plugin => {
@@ -371,7 +373,7 @@ static onResponseReceive(response: rcp.Response) {
 
 ### 事件发送回调
 
-当事件发送完成后触发：
+当事件发送完成后触发。`events` 是实际发送副本；NewSaaS 强制登录补发历史事件时，其中的 `deviceId` 与请求一致，数据库原事件不受影响。
 
 ```typescript
 static onEventsDidSend(events: EventPersistence[], request: rcp.Request) {

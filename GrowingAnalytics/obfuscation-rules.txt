@@ -165,6 +165,7 @@ CREATE_AT
 SDK_VERSION
 ACCOUNT_ID
 DATASOURCE_ID
+FORCE_LOGIN_PENDING
 # --------- other/reserved ---------
 gioId
 globalSequenceId

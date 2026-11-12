@@ -24,14 +24,65 @@ import { LogUtil } from './LogUtil'
 import snappy from 'snappyjs'
 import { event_pb } from './protobuf/event_pb'
 
+/**
+ * processEvents 的返回结果：请求体与实际用于序列化的发送副本
+ */
+export interface ProcessEventsResult {
+  serialize: ArrayBuffer
+  sentEvents: EventPersistence[]
+}
+
+interface DeviceIdHolder {
+  deviceId: string
+}
+
 @Concurrent
-export function processEvents(events: EventPersistence[], useProtobuf: boolean, compressEnabled: boolean, mergeSaaSClick: boolean = false): ArrayBuffer {
+export function processEvents(
+  events: EventPersistence[],
+  useProtobuf: boolean,
+  compressEnabled: boolean,
+  mergeSaaSClick: boolean = false,
+  pendingDeviceIdReplacement: string = ''
+): ProcessEventsResult {
   let serialize: ArrayBuffer = new ArrayBuffer(0)
+  // 强制登录未解锁时写入的事件带待替换标志，发送副本替换为有效设备 ID；其他事件原样复用。
+  // 只有出现待替换事件时才复制数组；解析结果按下标保存，Protobuf 构造 DTO 时复用，避免重复解析
+  let parsedByIndex: Map<number, DeviceIdHolder> | undefined = undefined
+  if (pendingDeviceIdReplacement.length > 0) {
+    let sentEvents: EventPersistence[] | undefined = undefined
+    for (let i = 0; i < events.length; i++) {
+      let e = events[i]
+      if (!e.forceLoginPending) {
+        continue
+      }
+      try {
+        let parsed = JSON.parse(e.data) as DeviceIdHolder
+        parsed.deviceId = pendingDeviceIdReplacement
+        if (!parsedByIndex) {
+          parsedByIndex = new Map<number, DeviceIdHolder>()
+        }
+        parsedByIndex.set(i, parsed)
+        if (!sentEvents) {
+          sentEvents = events.slice()
+        }
+        sentEvents[i] = EventPersistence.fromDatabase(
+          e.uuid, JSON.stringify(parsed), e.eventType, e.sdkVersion, e.accountId, e.dataSourceId
+        )
+      } catch (error) {
+        // 替换失败时按入库时的自动生成设备 ID 上报
+        LogUtil.error(() => 'Failed to replace pending deviceId: ' + error)
+      }
+    }
+    if (sentEvents) {
+      events = sentEvents
+    }
+  }
+
   if (useProtobuf) {
     let values: event_pb.EventV3Dto[] = []
-    events.forEach(e => {
+    events.forEach((e, i) => {
       try {
-        let event = JSON.parse(e.data) as object
+        let event = parsedByIndex?.get(i) ?? (JSON.parse(e.data) as DeviceIdHolder)
         let dto = event_pb.EventV3Dto.fromObject(event)
         values.push(dto)
       } catch (error) {
@@ -122,5 +173,6 @@ export function processEvents(events: EventPersistence[], useProtobuf: boolean, 
     }
   }
 
-  return serialize
+  let result: ProcessEventsResult = { serialize: serialize, sentEvents: events }
+  return result
 }

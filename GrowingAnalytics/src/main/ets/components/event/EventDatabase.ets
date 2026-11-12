@@ -21,7 +21,7 @@ import taskpool from '@ohos.taskpool'
 
 import EventPersistence from './EventPersistence'
 import GrowingContext from '../core/Context'
-import { DATABASE_NAME, EMIT_EVENT_DATABASE_FLUSH } from '../utils/Constants'
+import { DATABASE_NAME, EMIT_EVENT_DATABASE_FLUSH, EVENTS_COLUMN_FORCE_LOGIN_PENDING } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
 import Util from '../utils/Util'
 
@@ -30,6 +30,9 @@ export default class EventDatabase {
   static context: Context
   static eventsCache: relationalStore.ValuesBucket[] = []
   static tableName: string = 'EVENTS'
+  // 强制登录待替换列是否可写（仅用于写入）；补列失败时不写该列，避免整条插入失败。
+  // 读取不依赖该值：查询任务按结果集实际列名判断，避免数据库初始化完成前的查询漏读标志
+  static forceLoginPendingColumnReady: boolean = false
 
   static async initDatabase(context: Context) {
     const config: relationalStore.StoreConfig = {
@@ -47,7 +50,8 @@ export default class EventDatabase {
       + 'CREATE_AT INTEGER NOT NULL, '
       + 'ACCOUNT_ID TEXT NOT NULL, '
       + 'DATASOURCE_ID TEXT NOT NULL, '
-      + 'SDK_VERSION TEXT NOT NULL)'
+      + 'SDK_VERSION TEXT NOT NULL, '
+      + EVENTS_COLUMN_FORCE_LOGIN_PENDING + ' INTEGER NOT NULL DEFAULT 0)'
 
     let appContext = context.getApplicationContext()
     EventDatabase.context = appContext
@@ -55,12 +59,60 @@ export default class EventDatabase {
     try {
       let store = await relationalStore.getRdbStore(appContext, config)
       await store.executeSql(SQL_CREATE_TABLE)
+      EventDatabase.forceLoginPendingColumnReady = await EventDatabase.ensureForceLoginPendingColumn(store)
       await EventDatabase.cleanExpiredEventIfNeeded(store)
       EventDatabase.store = store
       await EventDatabase.flushCacheIfNeeded()
     } catch (e) {
       LogUtil.error(() => "Failed to create database. code = " + e.code + ", message = " + e.message)
     }
+  }
+
+  /**
+   * 老版本创建的表没有强制登录待替换列，补充该列。
+   * 列默认值为 0：老版本 SDK（降级后）写入的行不带该列，按普通事件处理；
+   * 老版本 SDK 读取时忽略该列，待替换事件按自动生成的设备 ID 原样上报。
+   */
+  static async ensureForceLoginPendingColumn(store: relationalStore.RdbStore): Promise<boolean> {
+    try {
+      // 通过 PRAGMA table_info 逐行读取列名，不依赖空结果集的 columnNames
+      let r = await store.querySql('PRAGMA table_info(' + EventDatabase.tableName + ')')
+      let exists = false
+      while (r.goToNextRow()) {
+        if (r.getString(r.getColumnIndex('name')) == EVENTS_COLUMN_FORCE_LOGIN_PENDING) {
+          exists = true
+          break
+        }
+      }
+      r.close()
+      if (!exists) {
+        await store.executeSql('ALTER TABLE ' + EventDatabase.tableName
+          + ' ADD COLUMN ' + EVENTS_COLUMN_FORCE_LOGIN_PENDING + ' INTEGER NOT NULL DEFAULT 0')
+      }
+      return true
+    } catch (e) {
+      let message = String(e.message)
+      if (message.indexOf('duplicate column') >= 0) {
+        // 列已存在（检测结果不准确时的兜底）
+        return true
+      }
+      LogUtil.error(() => "Failed to add force login pending column. code = " + e.code + ", message = " + message)
+      return false
+    }
+  }
+
+  // 只有待替换事件带该列，普通事件依赖默认值 0
+  static withoutForceLoginPendingIfNeeded(bucket: relationalStore.ValuesBucket): relationalStore.ValuesBucket {
+    if (EventDatabase.forceLoginPendingColumnReady || bucket[EVENTS_COLUMN_FORCE_LOGIN_PENDING] === undefined) {
+      return bucket
+    }
+    let compatible: relationalStore.ValuesBucket = {}
+    Object.keys(bucket).forEach((key: string) => {
+      if (key != EVENTS_COLUMN_FORCE_LOGIN_PENDING) {
+        compatible[key] = bucket[key]
+      }
+    })
+    return compatible
   }
 
   static async flushCacheIfNeeded() {
@@ -73,7 +125,9 @@ export default class EventDatabase {
     }
 
     try {
-      let events = [...EventDatabase.eventsCache]
+      let events = EventDatabase.eventsCache.map(
+        (bucket: relationalStore.ValuesBucket) => EventDatabase.withoutForceLoginPendingIfNeeded(bucket)
+      )
       EventDatabase.eventsCache = []
       await taskpool.execute(batchInsertTask, EventDatabase.tableName, events, EventDatabase.context, DATABASE_NAME)
       LogUtil.info(() => 'Write events that were created before database initialization to disk = '
@@ -97,6 +151,9 @@ export default class EventDatabase {
       'ACCOUNT_ID': event.accountId,
       'DATASOURCE_ID': event.dataSourceId
     }
+    if (event.forceLoginPending) {
+      valueBucket[EVENTS_COLUMN_FORCE_LOGIN_PENDING] = 1
+    }
 
     if (!EventDatabase.store) {
       EventDatabase.eventsCache.push(valueBucket)
@@ -105,7 +162,9 @@ export default class EventDatabase {
 
     try {
       await EventDatabase.flushCacheIfNeeded()
-      await EventDatabase.store.insert(EventDatabase.tableName, valueBucket)
+      await EventDatabase.store.insert(
+        EventDatabase.tableName, EventDatabase.withoutForceLoginPendingIfNeeded(valueBucket)
+      )
       LogUtil.info(() => 'Write event to disk = ' + JSON.stringify(JSON.parse(event.data), null, 4))
     } catch (e) {
       LogUtil.error(() => "Failed to write event to disk. code = " + e.code + ", message = " + e.message)
@@ -285,14 +344,22 @@ async function queryEventsTask(
     
     let eventsSize = 0
     let r = await store.query(predicates)
+    // 按结果集实际列名判断待替换列是否存在：表已补列即可读取，不依赖主线程的初始化状态
+    let pendingIndex: number | undefined = undefined
     while (r.goToNextRow() && events.length < count && eventsSize < size) {
+      if (pendingIndex === undefined) {
+        pendingIndex = r.columnNames.indexOf(EVENTS_COLUMN_FORCE_LOGIN_PENDING)
+      }
       const uuid = r.getString(r.getColumnIndex('EVENT_UUID'))
       const data = r.getString(r.getColumnIndex('DATA'))
       const eventType = r.getString(r.getColumnIndex('TYPE'))
       const sdkVersion = r.getString(r.getColumnIndex('SDK_VERSION'))
       const accountId = r.getString(r.getColumnIndex('ACCOUNT_ID'))
       const dataSourceId = r.getString(r.getColumnIndex('DATASOURCE_ID'))
-      let e = EventPersistence.fromDatabase(uuid, data, eventType, sdkVersion, accountId, dataSourceId)
+      const forceLoginPending = pendingIndex >= 0 && r.getLong(pendingIndex) == 1
+      let e = EventPersistence.fromDatabase(
+        uuid, data, eventType, sdkVersion, accountId, dataSourceId, forceLoginPending
+      )
       events.push(e)
       eventsSize += Util.sizeOfEventString(String(data))
     }

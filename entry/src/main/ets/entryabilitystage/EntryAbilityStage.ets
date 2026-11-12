@@ -2,6 +2,7 @@ import AbilityStage from '@ohos.app.ability.AbilityStage'
 import type Want from '@ohos.app.ability.Want'
 import { GrowingAnalytics, GrowingConfig, GrowingIgnoreFields, GrowingIgnoreFieldsAll } from '@growingio/analytics'
 import { GrowingToolsKit } from '@growingio/tools'
+import DemoSettings from '../DemoSettings'
 
 export default class EntryAbilityStage extends AbilityStage {
   onCreate(): void {
@@ -32,6 +33,8 @@ export default class EntryAbilityStage extends AbilityStage {
     config.autotrackEnabled = true
     config.autotrackAllPages = true
     config.plugins = [new GrowingToolsKit()]
+    // 强制登录：由 demo 的 forceLogin 页面开关控制，下次启动生效
+    config.forceLogin = DemoSettings.isForceLoginEnabled(this.context)
     // config.ignoreField = GrowingIgnoreFieldsAll
     // config.ignoreField = GrowingIgnoreFields.NetworkState | GrowingIgnoreFields.PlatformVersion
     GrowingAnalytics.configure(config)
@@ -71,6 +74,7 @@ export default class EntryAbilityStage extends AbilityStage {
     // GrowingAnalytics.configure(config)
 
     AppStorage.setOrCreate('sdkMode', config.mode)
+    AppStorage.setOrCreate('forceLogin', config.forceLogin)
   }
 
   startAnalytics() {

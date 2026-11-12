@@ -23,9 +23,19 @@ import taskpool from '@ohos.taskpool'
 import GrowingContext from './Context'
 import EventPersistence from '../event/EventPersistence'
 import { ConfigMode } from '../interfaces/GrowingConfig'
-import { processEvents } from '../utils/Concurrent'
+import { processEvents, ProcessEventsResult } from '../utils/Concurrent'
 import Util from '../utils/Util'
 import { LogUtil } from '../utils/LogUtil'
+
+export interface GeneratedRequest {
+  request: rcp.Request
+  sentEvents: EventPersistence[]
+}
+
+export interface NetworkResponse {
+  response: rcp.Response
+  sentEvents: EventPersistence[]
+}
 
 export default class Network {
   static session: rcp.Session
@@ -38,37 +48,58 @@ export default class Network {
     }
   }
 
-  static async request(events: EventPersistence[], urlPath: string, context: GrowingContext, mergeSaaSClick: boolean = false): Promise<rcp.Response> {
+  static async request(
+    events: EventPersistence[],
+    urlPath: string,
+    context: GrowingContext,
+    mergeSaaSClick: boolean = false,
+    pendingDeviceIdReplacement: string = ''
+  ): Promise<NetworkResponse> {
     if (!Network.session) {
       return Promise.reject(new Error('Network session not initialized'))
     }
 
     let curTime = Date.now()
     let url = Network.generateUrl(curTime, urlPath, context)
+    let generated: GeneratedRequest
     try {
-      let request = await Network.generateRequest(curTime, url, events, context, mergeSaaSClick)
-      return Network.session.fetch(request)
+      generated = await Network.generateRequest(
+        curTime, url, events, context, mergeSaaSClick, pendingDeviceIdReplacement
+      )
     } catch (error) {
       LogUtil.error(() => 'Failed to generate request: ' + error)
       return Promise.reject(error)
     }
+    let response = await Network.session.fetch(generated.request)
+    let result: NetworkResponse = { response: response, sentEvents: generated.sentEvents }
+    return result
   }
 
-  static async generateRequest(time: number, url: string, events: EventPersistence[], context: GrowingContext, mergeSaaSClick: boolean = false): Promise<rcp.Request> {
+  static async generateRequest(
+    time: number,
+    url: string,
+    events: EventPersistence[],
+    context: GrowingContext,
+    mergeSaaSClick: boolean = false,
+    pendingDeviceIdReplacement: string = ''
+  ): Promise<GeneratedRequest> {
     let useProtobuf = context.config.useProtobuf
     if (context.config.mode == ConfigMode.SaaS) {
       // SaaS mode have not protobuf support
       useProtobuf = false
     }
 
-    let processTask = new taskpool.Task(processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick)
-    let serialize: ArrayBuffer
+    let processTask = new taskpool.Task(
+      processEvents, events, useProtobuf, context.config.compressEnabled, mergeSaaSClick, pendingDeviceIdReplacement
+    )
+    let processed: ProcessEventsResult
     try {
-      serialize = await taskpool.execute(processTask) as ArrayBuffer
+      processed = await taskpool.execute(processTask) as ProcessEventsResult
     } catch (error) {
       LogUtil.error(() => 'Failed to execute taskpool task: ' + error)
       return Promise.reject(error)
     }
+    let serialize = processed.serialize
     if (context.config.encryptEnabled) {
       serialize = Util.encrypt(serialize, time)
     }
@@ -89,7 +120,8 @@ export default class Network {
       tracing: tracingConfig,
     }
     request.configuration = requestConfig
-    return request
+    let result: GeneratedRequest = { request: request, sentEvents: processed.sentEvents }
+    return result
   }
 
   static generateHeaders(time: number, useProtobuf: boolean, context: GrowingContext): Record<string, string> {

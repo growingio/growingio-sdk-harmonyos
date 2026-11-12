@@ -80,6 +80,7 @@ export class GrowingConfig {
   _sessionInterval: number = 30 * 1000
   _dataUploadInterval: number = 15 * 1000
   dataCollectionEnabled: boolean = true
+  forceLogin: boolean = false
   idMappingEnabled: boolean = false
   encryptEnabled: boolean = true
   compressEnabled: boolean = true
@@ -200,6 +201,7 @@ export class GrowingConfig {
     config._sessionInterval = this._sessionInterval
     config._dataUploadInterval = this._dataUploadInterval
     config.dataCollectionEnabled = this.dataCollectionEnabled
+    config.forceLogin = this.forceLogin
     config.idMappingEnabled = this.idMappingEnabled
     config.encryptEnabled = this.encryptEnabled
     config.compressEnabled = this.compressEnabled

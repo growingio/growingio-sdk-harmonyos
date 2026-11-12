@@ -449,6 +449,44 @@ GrowingAnalytics.tracker('trackerB').setLoginUserId('user456')
 
 ---
 
+## NewSaaS 强制登录与访问用户 ID
+
+`ForceLogin` 管理 NewSaaS 的访问用户 ID 和每次启动的上报解锁状态，与登录用户 ID 分开处理。
+
+```typescript
+let config = new GrowingConfig().NewSaaS('accountId', 'dataSourceId', 'urlScheme')
+config.forceLogin = true
+GrowingAnalytics.start(context, config)
+GrowingAnalytics.identify('visitor-id')
+```
+
+### 行为规则
+
+- 未调用有效 `identify` 前，事件继续生成和入库，但 NewSaaS 发送器不读取批次、不发起请求。
+- 强制登录只由主 Tracker 配置决定，NewSaaS 子 Tracker 跟随主 Tracker 阻塞与解锁（与 Web SDK 一致）。
+- 首次有效 `identify` 统一设置所有 NewSaaS 实例的访问用户 ID，并触发全部 NewSaaS 上下文补发。
+- 校验与 Web SDK 一致：非空字符串即有效，不 trim，超过 1000 字符截断。每次启动只接受首次有效调用。
+- 截断按 UTF-16 单元计数；第 1000 个单元是代理对高位时在其前截断（截为 999 个单元），不拆开 emoji 等代理对字符，与 iOS 一致。
+- 动态访问用户 ID 使用 `growing_identify_device_id` 独立持久化，不覆盖自动生成的 `growing_device_id`。
+- 解锁状态只在当前进程有效；下次强制登录启动仍需调用 `identify`。
+- 解锁前构建的 NewSaaS 事件以**自动生成的设备 ID** 作为 `deviceId` 入库，同时在事件表独立列 `FORCE_LOGIN_PENDING` 写入 1（待替换标志不进入事件数据）；解锁后构建的事件直接使用当前有效访问用户 ID。
+- 发送时只在 TaskPool 中把带待替换标志事件的 `deviceId` 副本替换为当前有效设备 ID（已保存的访问用户 ID，否则为自动生成的设备 ID），数据库原文不变。
+- 已带真实 ID 的事件不改写：老版本 SDK 遗留事件保留自动生成的设备 ID，此前启动 `identify` 后生成的事件保留当时的访问用户 ID。
+- SDK 降级兼容：老版本 SDK 忽略 `FORCE_LOGIN_PENDING` 列，待替换事件按自动生成的设备 ID 原样上报，与老版本自身行为一致；老版本写入的行取列默认值 0。
+- 解锁前公开接口 `getDeviceId()` 返回已保存的访问用户 ID 或自动生成的设备 ID。
+- SaaS/CDP 不使用该访问用户 ID，也不受强制登录开关影响。
+
+### 与登录用户 ID 的区别
+
+| 标识 | 设置接口 | 事件字段 | 用途 |
+|------|----------|----------|------|
+| 访问用户 ID | `GrowingAnalytics.identify` | `deviceId` | NewSaaS 强制登录与访问用户识别 |
+| 登录用户 ID | `GrowingAnalytics.setLoginUserId` | `userId` | 业务登录用户识别与 ID Mapping |
+
+`setLoginUserId` 不会解除强制登录阻塞，`identify` 也不会修改登录用户 ID 或触发 Session 刷新。
+
+---
+
 ## 总结
 
 UserIdentifier 模块提供了完整的用户标识管理功能：

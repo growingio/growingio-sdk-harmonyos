@@ -137,6 +137,7 @@ let config = new GrowingConfig().CDP(
 | Circle 圈选 | ✅ | ❌ | ✅ |
 | Hybrid 无埋点 | ✅ | ✅ (可选) | ✅ |
 | ID Mapping | ✅ | ❌ | ✅ |
+| forceLogin 强制登录 | ✅ | ❌ | ❌ |
 | Protobuf | ✅ | ❌ | ✅ |
 
 ---
@@ -162,7 +163,26 @@ let config = new GrowingConfig().CDP(
 | `autotrackAllPages` | boolean | false | 自动采集所有页面 |
 | `hybridAutotrackEnabled` | boolean | true | H5 无埋点开关（仅 SaaS）|
 | `idMappingEnabled` | boolean | false | ID Mapping 开关 |
+| `forceLogin` | boolean | false | 强制登录模式开关（仅 NewSaaS） |
 | `debugEnabled` | boolean | false | 调试模式开关 |
+
+### 强制登录模式（仅 NewSaaS）
+
+`forceLogin=true` 时，SDK 继续采集并持久化事件，但暂停 NewSaaS 网络上报。调用 `GrowingAnalytics.identify(deviceId)` 后，首次有效访问用户 ID 会写入后续事件，并替换解锁前生成的待上报 NewSaaS 事件的 `deviceId` 后补发；老版本遗留及此前启动已确认身份的事件保留原 ID。
+
+```typescript
+let config = new GrowingConfig().NewSaaS('accountId', 'dataSourceId', 'urlScheme')
+config.forceLogin = true
+GrowingAnalytics.start(context, config)
+
+// 获取业务访问用户 ID 后调用；每次启动仅首次有效调用生效
+GrowingAnalytics.identify('visitor-id')
+```
+
+- SaaS/CDP 不识别该开关，不暂停上报，也不替换 `deviceId`。
+- 访问用户 ID 独立持久化，但解锁状态不持久化；每次以强制登录模式启动都需重新调用 `identify`。
+- 与 Web SDK 一致：仅空字符串不会解锁；不去除首尾空白，超过 1000 字符截断。
+- 强制登录只由主 Tracker 的配置决定：主 Tracker 开启后所有 NewSaaS 子 Tracker 一并阻塞，并由主入口统一解锁；子 Tracker 上设置的 `forceLogin` 不生效。
 
 ### 数据传输配置
 

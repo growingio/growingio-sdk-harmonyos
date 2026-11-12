@@ -619,14 +619,20 @@ export default function utilTests() {
       expect(json.hasKey('idx')).assertFalse()
     })
 
-    it('WIFI → r 字段应为 WIFI', 0, () => {
-      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), 'WIFI'))
-      expect(json.getString('r')).assertEqual('WIFI')
+    it('VIEW_CLICK 在不同网络状态下均不应输出 r 字段', 0, () => {
+      for (let networkState of ['WIFI', '4G']) {
+        let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), networkState))
+        expect(json.hasKey('r')).assertFalse()
+      }
     })
 
-    it('4G → r 字段应为 CELL', 0, () => {
-      let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(makeViewClickEvent(), '4G'))
-      expect(json.getString('r')).assertEqual('CELL')
+    it('VIEW_CHANGE 在不同网络状态下均不应输出 r 字段', 0, () => {
+      let event = makeViewClickEvent()
+      event.eventType = 'VIEW_CHANGE'
+      for (let networkState of ['WIFI', '4G']) {
+        let json = new JsonParser(Util.toSerializeByMeasurementProtocolV2(event, networkState))
+        expect(json.hasKey('r')).assertFalse()
+      }
     })
 
     it('latitude/longitude 有值时 lat/lng 字段应写入', 0, () => {

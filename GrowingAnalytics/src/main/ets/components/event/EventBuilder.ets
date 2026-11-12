@@ -19,6 +19,7 @@ import Event from './Event'
 import AnalyticsCore, { SDK_VERSION } from '../core/AnalyticsCore'
 import AppInfo from '../core/AppInfo'
 import DeviceInfo from '../core/DeviceInfo'
+import ForceLogin from '../core/ForceLogin'
 import GrowingContext from '../core/Context'
 import GrowingGeneralProps from '../core/GeneralProps'
 import Session, { SessionState } from '../core/Session'
@@ -37,7 +38,7 @@ export default class EventBuilder {
     event.sdkVersion = SDK_VERSION
 
     // device info
-    event.deviceId = DeviceInfo.deviceId
+    event.deviceId = ForceLogin.getEventDeviceId(context)
     event.platform = DeviceInfo.platform
     event.platformVersion = DeviceInfo.platformVersion
     event.screenHeight = DeviceInfo.screenHeight

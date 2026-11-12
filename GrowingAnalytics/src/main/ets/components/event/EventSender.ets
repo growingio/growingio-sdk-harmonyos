@@ -20,6 +20,7 @@ import emitter from '@ohos.events.emitter'
 import EventDatabase from './EventDatabase'
 import EventPersistence from './EventPersistence'
 import Network from '../core/Network'
+import ForceLogin from '../core/ForceLogin'
 import GrowingContext from '../core/Context'
 import { EMIT_EVENT_DATABASE_FLUSH, REQUEST_MAX_EVENT_COUNT, REQUEST_MAX_EVENT_SIZE } from '../utils/Constants'
 import { LogUtil } from '../utils/LogUtil'
@@ -32,12 +33,13 @@ const URL_PATH_SAAS_CSTM = '/v3/accountId/harmonyos/cstm'
 const URL_PATH_SAAS_OTHER = '/v3/accountId/harmonyos/other'
 
 /**
- * sendEvents 的返回结果，将 statusCode 和 request 显式绑定，
+ * sendEvents 的返回结果，将 statusCode、request 和实际发送副本显式绑定，
  * 避免调用方通过闭包共享可变状态。
  */
 export interface SendResult {
   statusCode: number
   request: rcp.Request
+  sentEvents: EventPersistence[]
 }
 
 /**
@@ -48,6 +50,7 @@ export interface SendResult {
  * 每个回调职责单一，回调之间不共享可变状态。
  */
 export interface SendCycleIO {
+  canSend?: () => boolean
   fetchEvents: () => Promise<EventPersistence[]>
   sendEvents: (events: EventPersistence[]) => Promise<SendResult>
   removeEvents: (events: EventPersistence[]) => Promise<void>
@@ -59,6 +62,7 @@ export interface SendCycleIO {
  * 单次上报调度循环（纯调度逻辑，不依赖任何平台 API）
  *
  * 决策规则：
+ * - 强制登录未解锁 → 不读取事件，返回 false
  * - DB 为空 → 不发请求，返回 false
  * - 发送成功（2xx-3xx） → 删除事件，若还有更多返回 true，否则 false
  * - 发送失败（4xx/5xx）→ 不删除，返回 false
@@ -67,6 +71,9 @@ export interface SendCycleIO {
  * @returns true 表示还有事件需要继续发送（调用方负责递归）
  */
 export async function runSendCycle(io: SendCycleIO): Promise<boolean> {
+  if (io.canSend && !io.canSend()) {
+    return false
+  }
   const events = await io.fetchEvents()
   if (events.length === 0) {
     return false
@@ -76,7 +83,7 @@ export async function runSendCycle(io: SendCycleIO): Promise<boolean> {
 
   if (result.statusCode >= 200 && result.statusCode < 400) {
     await io.removeEvents(events)
-    io.afterRemove(events, result.request)
+    io.afterRemove(result.sentEvents, result.request)
     const count = await io.countRemaining()
     return count > REQUEST_MAX_EVENT_COUNT
   }
@@ -103,7 +110,7 @@ export default class EventSender {
     switch (type) {
       case EventSenderType.NewSaaS:
         this.urlPath = URL_PATH_NEW_SAAS
-        // 保证首个VISIT及时发送
+        // 非强制登录或已解锁时，保证首个 VISIT 及时发送
         emitter.once(EMIT_EVENT_DATABASE_FLUSH, () => {
           this.sendEvent()
         })
@@ -157,6 +164,7 @@ export default class EventSender {
       const urlPath = this.urlPath
       const eventTypes = this.eventTypes
       const hasMore = await runSendCycle({
+        canSend: () => ForceLogin.canSend(context),
         fetchEvents: () => EventDatabase.getEventsByCount(
           REQUEST_MAX_EVENT_COUNT,
           REQUEST_MAX_EVENT_SIZE,
@@ -164,7 +172,10 @@ export default class EventSender {
           eventTypes
         ),
         sendEvents: async (events: EventPersistence[]): Promise<SendResult> => {
-          let response = await Network.request(events, urlPath, context, this.mergeSaaSClick)
+          let networkResponse = await Network.request(
+            events, urlPath, context, this.mergeSaaSClick, ForceLogin.getPendingReplacement(context)
+          )
+          let response = networkResponse.response
           Plugins.onResponseReceive(response)
           if (response.statusCode >= 200 && response.statusCode < 400) {
             LogUtil.info(() => 'Request Success, Url = ' + response.request.url)
@@ -172,7 +183,10 @@ export default class EventSender {
           } else {
             LogUtil.info(() => 'Request Failure, responseCode: ' + String(response.statusCode))
           }
-          return { statusCode: response.statusCode, request: response.request } as SendResult
+          let result: SendResult = {
+            statusCode: response.statusCode, request: response.request, sentEvents: networkResponse.sentEvents
+          }
+          return result
         },
         removeEvents: (events: EventPersistence[]): Promise<void> => EventDatabase.removeEvents([...events]),
         afterRemove: (events: EventPersistence[], request: rcp.Request) => {

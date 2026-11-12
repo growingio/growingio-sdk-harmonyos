@@ -184,7 +184,8 @@ class EventBuilder {
     event.sdkVersion = SDK_VERSION
 
     // 3. 设备信息
-    event.deviceId = DeviceInfo.deviceId
+    // 强制登录未解锁时写入自动生成的设备 ID（入库时另记待替换标志），否则为当前有效设备 ID
+    event.deviceId = ForceLogin.getEventDeviceId(context)
     event.platform = DeviceInfo.platform
     event.platformVersion = DeviceInfo.platformVersion
     event.screenHeight = DeviceInfo.screenHeight
@@ -331,8 +332,13 @@ class EventPersistence {
   sdkVersion: string     // SDK 版本
   accountId: string      // 项目 ID
   dataSourceId: string   // 数据源 ID
+  forceLoginPending: boolean  // 强制登录待替换标志，对应事件表 FORCE_LOGIN_PENDING 列
 
-  static fromEvent<T extends Event>(event: T, context: GrowingContext): EventPersistence {
+  static fromEvent<T extends Event>(
+    event: T,
+    context: GrowingContext,
+    forceLoginPending: boolean = false
+  ): EventPersistence {
     // 1. 验证事件大小
     let validation = Util.validateEventSize(event)
     if (!validation.isValid) {
@@ -353,12 +359,23 @@ class EventPersistence {
       event.eventType,
       event.sdkVersion,
       context.config.accountId,
-      context.config.dataSourceId
+      context.config.dataSourceId,
+      forceLoginPending
     )
     return e
   }
 }
 ```
+
+### 强制登录待替换列
+
+事件表 `EVENTS` 包含 `FORCE_LOGIN_PENDING INTEGER NOT NULL DEFAULT 0` 列：
+
+- 新建表时直接包含该列；老版本创建的表在 `initDatabase` 中通过 `PRAGMA table_info` 检测列名，缺失时执行 `ALTER TABLE ... ADD COLUMN` 补齐（`duplicate column` 错误视为已存在）。
+- 只有待替换事件写入该列（值为 1），普通事件依赖默认值 0。
+- 补列失败时 `forceLoginPendingColumnReady` 为 `false`：写入时去掉该列，事件按入库时的自动生成设备 ID 上报，不影响写入。
+- 读取不依赖 `forceLoginPendingColumnReady`：`queryEventsTask` 按结果集实际列名（`columnNames`）判断该列是否存在。`initDatabase` 未 await，`identify` 可能在数据库初始化完成前触发发送，此时仍能正确读到此前启动遗留的待替换标志。
+- SDK 降级后老版本忽略该列，待替换事件按自动生成的设备 ID 上报；再次升级时列已存在，老版本写入的行为 0。
 
 ### 持久化流程
 
@@ -412,9 +429,11 @@ enum EventSenderType {
 | SaaS_CSTM | `/v3/accountId/harmonyos/cstm` | 自定义事件 |
 | SaaS_OTHER | `/v3/accountId/harmonyos/other` | 无埋点点击/变更事件（合并格式） |
 
-> **SaaS click 合并上报：** `SaaS_OTHER` 发送时会启用 `mergeSaaSClick` 模式——相同页面、会话、网络环境下的多个点击/变更事件按 `t_u_s_d_p_ptm_r` 为 key 分组，公共字段提升至顶层，每条事件的专属字段（`x`、`gesid`、`esid`、`v`、`idx`、`h` 等）收入 `e[]` 数组，减少冗余字段传输。
+> **SaaS click 合并上报：** `SaaS_OTHER` 发送时会启用 `mergeSaaSClick` 模式，多个点击/变更事件按 `t_u_s_d_p_ptm` 为 key 分组，公共字段提升至顶层，每条事件的专属字段（`x`、`gesid`、`esid`、`v`、`idx`、`h` 等）收入 `e[]` 数组，减少冗余字段传输。分组和输出均不包含网络状态字段 `r`。
 
 ### 发送流程
+
+主 Tracker 为 NewSaaS 且开启 `forceLogin`、本次启动尚未有效 `identify` 时，所有 NewSaaS 发送器（含子 Tracker）在读取数据库批次前返回。首次有效 `identify` 会触发所有 NewSaaS 上下文补发。解锁前生成的 NewSaaS 事件以自动生成的设备 ID 入库，并在 `FORCE_LOGIN_PENDING` 列标记待替换；实际请求传入当前有效设备 ID，由 TaskPool 在 Protobuf/JSON 序列化前只替换带待替换标志事件的 `deviceId` 副本。老版本遗留事件和此前启动已确认身份的事件保留原 ID，数据库原文不变。
 
 ```typescript
 class EventSender {
@@ -425,8 +444,12 @@ class EventSender {
     }
     this.isUploading = true
 
-    // 2. 获取上下文
+    // 2. 获取上下文并检查强制登录发送闸门
     let context = gContext ?? GrowingContext.getContext(this.trackerId)
+    if (!ForceLogin.canSend(context)) {
+      this.isUploading = false
+      return
+    }
 
     // 3. 从数据库获取事件
     let events = await EventDatabase.getEventsByCount(
@@ -440,15 +463,18 @@ class EventSender {
       return
     }
 
-    // 4. 发送请求
+    // 4. 发送请求，后台序列化时替换 NewSaaS 访问用户 ID
     try {
-      let response = await Network.request(events, this.urlPath, context)
+      let networkResponse = await Network.request(
+        events, this.urlPath, context, this.mergeSaaSClick, ForceLogin.getPendingReplacement(context)
+      )
+      let response = networkResponse.response
       Plugins.onResponseReceive(response)
 
       if (response.statusCode >= 200 && response.statusCode < 400) {
-        // 5. 发送成功，删除已发送事件
+        // 5. 原事件用于删除，实际发送副本用于插件回调
         await EventDatabase.removeEvents([...events])
-        Plugins.onEventsDidSend(events, response.request)
+        Plugins.onEventsDidSend(networkResponse.sentEvents, response.request)
         Plugins.onEventsRemoveFromDisk(events.map(e => e.uuid))
         this.isUploading = false
 

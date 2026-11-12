@@ -135,6 +135,7 @@ GrowingAnalytics.deferStart(getContext(this) as common.UIAbilityContext)
 | dataUploadInterval             | number   | 15     | 数据发送的间隔，默认为 15 秒。SDK 会先将事件存入数据库中，然后以每隔默认时间 15 秒向服务器发送事件包 |
 | dataCollectionEnabled          | boolean  | true   | 数据收集，当数据收集关闭时，SDK 将不会再产生事件和上报事件   |
 | idMappingEnabled               | boolean  | false  | 是否开启多用户身份上报                                       |
+| forceLogin                     | boolean  | false  | 强制登录模式，开启后事件照常采集入库，但在调用 `identify` 设置访问用户 ID 前暂停上报，详见[设置访问用户 ID](#设置访问用户-id强制登录) |
 | requestOptions.connectTimeout  | number   | 30     | 事件请求尝试建立连接的最大等待时间，默认为 30 秒             |
 | requestOptions.transferTimeout | number   | 30     | 事件请求允许传输数据的最大等待时间，默认为 30 秒             |
 | dataValidityPeriod             | number   | 7      | 本地未上报的事件数据有效时长，默认为 7 天                    |
@@ -247,6 +248,29 @@ GrowingAnalytics.setLoginUserId('user', 'harmony')
 
 ```typescript
 GrowingAnalytics.cleanLoginUserId()
+```
+
+#### 设置访问用户 ID（强制登录）
+
+`static identify(deviceId: string)`
+
+开启 `config.forceLogin = true` 后，在获取到访问用户 ID（如用户登录）时调用，用该 ID 作为设备 ID 并开始上报
+
+- 每次 App 启动都需要调用一次；本次启动调用前，事件照常采集入库但不上报，调用后立即补发，并统一使用该访问用户 ID
+- 每次启动只有首次有效调用生效；SDK 需已初始化，且仅在开启 `forceLogin` 时有效
+- 访问用户 ID 会被持久化，之后的启动在调用 `identify` 前，`getDeviceId()` 返回上次设置的值
+- 未上报的事件超过 `dataValidityPeriod`（默认 7 天）会被清理，长期不调用 `identify` 会导致这部分数据丢失
+
+##### 参数说明
+
+| 参数       | 参数类型 | 说明                                              |
+| ---------- | -------- | ------------------------------------------------- |
+| `deviceId` | `string` | 访问用户 ID，不能为空字符串，超过 1000 字符会被截断（不拆分 emoji 等代理对字符） |
+
+##### 示例
+
+```typescript
+GrowingAnalytics.identify('visitor_001')
 ```
 
 #### 设置用户的地理位置
@@ -410,7 +434,7 @@ GrowingAnalytics.setLoginUserAttributes({
 
 `static getDeviceId(): string`
 
-获取设备 id，又称为匿名用户 id，SDK 自动生成用来定义唯一设备
+获取设备 id，又称为匿名用户 id，SDK 自动生成用来定义唯一设备；调用过 `identify` 后返回访问用户 ID
 
 ```typescript
 let deviceId = GrowingAnalytics.getDeviceId()
@@ -539,6 +563,7 @@ GrowingAnalytics.startSubTracker(trackerId, config)
 | dataUploadInterval            | 是                   |
 | dataCollectionEnabled         | 是                   |
 | idMappingEnabled              | 是                   |
+| forceLogin                    | 否，以主实例为准     |
 | requestOptions.connectTimeout | 是                   |
 | requestOptions.transferTimeout| 是                   |
 | dataValidityPeriod            | 否，以主实例为准     |

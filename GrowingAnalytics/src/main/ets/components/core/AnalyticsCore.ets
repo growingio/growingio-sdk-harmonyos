@@ -30,6 +30,7 @@ import { ConfigMode, GrowingConfig } from '../interfaces/GrowingConfig'
 import AppInfo from './AppInfo'
 import GrowingContext from './Context'
 import DeviceInfo from './DeviceInfo'
+import ForceLogin from './ForceLogin'
 import EventTimer from './EventTimer'
 import Hybrid from './Hybrid'
 import Session from './Session'
@@ -100,6 +101,7 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     SharedPreferences.initWithContext(context)
     AppInfo.initAppInfo(context)
     DeviceInfo.initDeviceInfo(gContext)
+    ForceLogin.init()
     UserIdentifier.initUser(gContext)
     EventDatabase.initDatabase(context)
     Network.initNetwork(gContext)
@@ -110,16 +112,21 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       EventSender.sendEvent(gContext)
     }, delay)
 
+    core._isInitializedSuccessfully = true
     emitter.emit(EMIT_EVENT_MAIN_TRACKER_INITIALIZE)
     LogUtil.info(() => 'Thank you very much for using GrowingIO. We will do our best to provide you with the best service. '
       + 'GrowingIO version: ' + SDK_VERSION)
     Plugins.onSDKDidInitialize(config, SDK_VERSION)
-    core._isInitializedSuccessfully = true
   }
 
   static startSubTracker(trackerId: string, config: GrowingConfig): boolean {
     if (GrowingContext.hasSimilarContext(trackerId, config)) {
       return false
+    }
+
+    if (config.mode == ConfigMode.NewSaaS && config.forceLogin != ForceLogin.isEnabled()) {
+      LogUtil.warn(() => 'forceLogin of sub tracker ' + trackerId
+        + ' is ignored, NewSaaS sub trackers follow forceLogin of the main tracker')
     }
 
     GrowingContext.setContext(trackerId, config)
@@ -286,8 +293,24 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     LogUtil.info(() => 'Set loginUserAttributes: ' + JSON.stringify(attributes))
   }
 
+  static identify(deviceId: string): void {
+    if (!AnalyticsCore.core.isInitializedSuccessfully()) {
+      LogUtil.info(() => 'Failed to identify, GrowingAnalytics is not initialized')
+      return
+    }
+    if (!ForceLogin.identify(deviceId)) {
+      return
+    }
+    for (let tracker of AnalyticsCore.trackers) {
+      // 强制登录由主 Tracker 配置决定，解锁后所有 NewSaaS Tracker 统一补发
+      if (tracker.context.config.mode == ConfigMode.NewSaaS) {
+        EventSender.sendEvent(tracker.context)
+      }
+    }
+  }
+
   getDeviceId(): string {
-    return DeviceInfo.deviceId
+    return ForceLogin.getDeviceId(this.context)
   }
 
   track(
@@ -374,10 +397,12 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
       return
     }
 
-    let pst = EventPersistence.fromEvent(event, context)
+    // 事件构建与入库在同一同步流程中，此处的强制登录状态与构建 deviceId 时一致
+    let pst = EventPersistence.fromEvent(event, context, ForceLogin.isPending(context))
     await EventDatabase.writeEvent(pst)
     Plugins.onEventWroteToDisk(pst, eventScene)
     if (pst.eventType == EventType.Visit) {
+      // 强制登录未解锁时由发送闸门拦截
       EventSender.sendEvent(context)
     } else if (DeviceInfo.isWearable && pst.eventType == EventType.AppClosed) {
       // 手表退到后台后会被系统快速冻结，定时上报大概率等不到，

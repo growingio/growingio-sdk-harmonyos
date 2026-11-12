@@ -30,6 +30,8 @@ export default class EventPersistence {
   sdkVersion: string
   accountId: string
   dataSourceId: string
+  // 强制登录未解锁时写入：data 中 deviceId 为自动生成的设备 ID，发送时替换为当时的有效设备 ID
+  forceLoginPending: boolean
 
   constructor(
     uuid: string,
@@ -37,7 +39,8 @@ export default class EventPersistence {
     eventType: string,
     sdkVersion: string,
     accountId: string,
-    dataSourceId: string
+    dataSourceId: string,
+    forceLoginPending: boolean = false
   ) {
     this.uuid = uuid
     this.data = data
@@ -45,11 +48,13 @@ export default class EventPersistence {
     this.sdkVersion = sdkVersion
     this.accountId = accountId
     this.dataSourceId = dataSourceId
+    this.forceLoginPending = forceLoginPending
   }
 
   static fromEvent<T extends Event>(
     event: T,
-    context: GrowingContext
+    context: GrowingContext,
+    forceLoginPending: boolean = false
   ): EventPersistence {
     let validation = Util.validateEventSize(event)
     if (!validation.isValid) {
@@ -63,7 +68,7 @@ export default class EventPersistence {
     let sdkVersion = event.sdkVersion
     let accountId = context.config.accountId
     let dataSourceId = context.config.dataSourceId
-    let e = new EventPersistence(uuid, data, eventType, sdkVersion, accountId, dataSourceId)
+    let e = new EventPersistence(uuid, data, eventType, sdkVersion, accountId, dataSourceId, forceLoginPending)
     return e
   }
 
@@ -73,9 +78,10 @@ export default class EventPersistence {
     eventType: string,
     sdkVersion: string,
     accountId: string,
-    dataSourceId: string
+    dataSourceId: string,
+    forceLoginPending: boolean = false
   ): EventPersistence {
-    let e = new EventPersistence(uuid, data, eventType, sdkVersion, accountId, dataSourceId)
+    let e = new EventPersistence(uuid, data, eventType, sdkVersion, accountId, dataSourceId, forceLoginPending)
     return e
   }
 }

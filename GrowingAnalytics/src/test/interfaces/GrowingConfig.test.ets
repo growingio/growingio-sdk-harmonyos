@@ -315,4 +315,16 @@ export default function configTests() {
       expect(original.debugEnabled).assertFalse()
     })
   })
+
+  describe('GrowingConfig_forceLogin', () => {
+    it('默认应为 false', 0, () => {
+      expect(new GrowingConfig().forceLogin).assertFalse()
+    })
+
+    it('copy() 应保留 forceLogin', 0, () => {
+      let original = new GrowingConfig().NewSaaS('acct', 'ds', 'growing.x')
+      original.forceLogin = true
+      expect(original.copy().forceLogin).assertTrue()
+    })
+  })
 }

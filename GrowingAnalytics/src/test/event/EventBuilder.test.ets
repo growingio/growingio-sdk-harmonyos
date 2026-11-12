@@ -20,11 +20,13 @@ import EventBuilder from '../../main/ets/components/event/EventBuilder'
 import VisitEvent from '../../main/ets/components/event/VisitEvent'
 import Session, { SessionState } from '../../main/ets/components/core/Session'
 import UserIdentifier from '../../main/ets/components/core/UserIdentifier'
+import ForceLogin from '../../main/ets/components/core/ForceLogin'
 import GrowingContext from '../../main/ets/components/core/Context'
 import GeneralProps from '../../main/ets/components/core/GeneralProps'
 import AppInfo from '../../main/ets/components/core/AppInfo'
 import AnalyticsCore, { SDK_VERSION } from '../../main/ets/components/core/AnalyticsCore'
 import { ConfigMode } from '../../main/ets/components/interfaces/GrowingConfig'
+import DeviceInfo from '../../main/ets/components/core/DeviceInfo'
 import { AttributesType } from '../../main/ets/components/utils/Constants'
 import { JsonParser } from '../helpers/JsonParser'
 
@@ -46,6 +48,7 @@ interface MinimalBuilderConfig {
   mode: ConfigMode
   idMappingEnabled: boolean
   dataCollectionEnabled: boolean
+  forceLogin: boolean
 }
 
 interface MinimalBuilderContext {
@@ -66,7 +69,8 @@ function makeCtx(
     urlScheme: 'growing.test',
     mode: mode,
     idMappingEnabled: idMappingEnabled,
-    dataCollectionEnabled: false
+    dataCollectionEnabled: false,
+    forceLogin: true
   }
   let ctx: MinimalBuilderContext = { trackerId: trackerId, config: config }
   return ctx as ESObject as GrowingContext
@@ -93,6 +97,8 @@ function resetAll() {
   EventBuilder._reset()
   Session._reset()
   UserIdentifier._reset()
+  ForceLogin._reset()
+  GrowingContext._reset()
   GeneralProps._reset()
   AnalyticsCore.location.latitude = 0
   AnalyticsCore.location.longitude = 0
@@ -551,6 +557,41 @@ export default function eventBuilderTests() {
       let json = new JsonParser(e.toSerialize(ctx))
       expect(json.hasKey('eventType')).assertTrue()
       expect(json.hasKey('timezoneOffset')).assertTrue()
+    })
+  })
+
+  describe('EventBuilder_forceLoginDeviceId', () => {
+    beforeEach(() => { resetAll() })
+
+    it('NewSaaS identify 后应使用访问用户 ID', 0, () => {
+      let ctx = makeCtx()
+      seedContext(ctx)
+      GrowingContext.defaultContext = ctx
+      ForceLogin.identify('visitor')
+      let e = new VisitEvent()
+      EventBuilder.build(e, ctx)
+      expect(e.deviceId).assertEqual('visitor')
+    })
+
+    it('NewSaaS 强制登录未解锁时应写入自动生成的设备 ID', 0, () => {
+      let ctx = makeCtx()
+      seedContext(ctx)
+      GrowingContext.defaultContext = ctx
+      let e = new VisitEvent()
+      EventBuilder.build(e, ctx)
+      expect(ForceLogin.isPending(ctx)).assertTrue()
+      expect(e.deviceId).assertEqual(DeviceInfo.deviceId)
+    })
+
+    it('CDP 不应使用 NewSaaS 访问用户 ID', 0, () => {
+      let newSaaSCtx = makeCtx()
+      GrowingContext.defaultContext = newSaaSCtx
+      ForceLogin.identify('visitor')
+      let cdpCtx = makeCtx('cdp', 'acct', 'ds', false, ConfigMode.CDP)
+      seedContext(cdpCtx)
+      let e = new VisitEvent()
+      EventBuilder.build(e, cdpCtx)
+      expect(e.deviceId).assertEqual('')
     })
   })
 }
