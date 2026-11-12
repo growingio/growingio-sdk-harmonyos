@@ -379,6 +379,10 @@ export default class AnalyticsCore implements GrowingAnalyticsInterface {
     Plugins.onEventWroteToDisk(pst, eventScene)
     if (pst.eventType == EventType.Visit) {
       EventSender.sendEvent(context)
+    } else if (DeviceInfo.isWearable && pst.eventType == EventType.AppClosed) {
+      // 手表退到后台后会被系统快速冻结，定时上报大概率等不到，
+      // 事件会积压到下次冷启动。因此在生成 APP_CLOSED 后立即冲刷一次。
+      EventSender.sendEvent(context)
     }
   }
 

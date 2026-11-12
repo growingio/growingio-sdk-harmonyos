@@ -39,6 +39,18 @@
       ]
     },
     {
+      "name": "entry_wearable",
+      "srcPath": "./entry_wearable",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
       "name": "GrowingAnalytics",
       "srcPath": "./GrowingAnalytics",
     },
