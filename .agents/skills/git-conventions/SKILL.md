@@ -60,9 +60,9 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 采用 SemVer：不兼容 API 修改升主版本，向下兼容新增功能升次版本，问题修复升修订版本。当前版本以对应模块 `oh-package.json5` 为准。
 
-标签约定：
+标签约定（沿用仓库历史，不带 `v` 前缀；附注 tag，消息为 `release <version>`）：
 
-- GrowingAnalytics：`v<version>`。
-- GrowingToolsKit：`toolskit-v<version>`。
+- GrowingAnalytics：`<version>`，如 `2.10.0`。
+- GrowingToolsKit：`giokit-<version>`，如 `giokit-1.4.1`。
 
 只有用户明确要求发版时才修改版本、创建 Jira 发版单、打 tag 或发布 OHPM，流程见 `release`。普通功能 PR 不附带这些操作；分支删除和 master 合并也等待用户明确决定。
