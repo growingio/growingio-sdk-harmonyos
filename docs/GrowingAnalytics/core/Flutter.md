@@ -494,6 +494,10 @@ static create(
 }
 ```
 
+Flutter PAGE 不更新 `PageEvent.lastPage`。原生及 Flutter CUSTOM 按 `customEventWithPath` /
+`customEventWithReferralPath` 携带的 `path` / `referralPage` 均取自最近一次原生 PAGE，原生 PAGE 的
+`referralPage` 也不受 Flutter PAGE 影响。
+
 ---
 
 ## Flutter 点击事件

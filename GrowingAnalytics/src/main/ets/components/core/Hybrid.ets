@@ -240,6 +240,7 @@ export default class Hybrid {
           event.query as string,
           event.timestamp as number,
           event.domain as string,
+          event.referralPage as string,
           this.context
         )
         AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
@@ -573,6 +574,7 @@ class SaaSHybridEventHandler {
             event.q as string,
             event.tm as number,
             d,
+            undefined,
             context)
           e.pageShowTimestamp = event.ptm as number
           AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)

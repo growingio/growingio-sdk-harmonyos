@@ -30,10 +30,10 @@ docs: update integration guide
 refactor: simplify event processing logic
 ```
 
-按项目约定，每个 commit 包含：
+按项目约定，AI 参与的 commit 末尾包含 `Co-Authored-By` 行，模型名填写当前实际使用的模型，不要照抄示例：
 
 ```text
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+Co-Authored-By: Claude <实际模型名> <noreply@anthropic.com>
 ```
 
 ## 分支

@@ -20,12 +20,18 @@ import EventBuilder from './EventBuilder'
 import GrowingContext from '../core/Context'
 import PageEvent from './PageEvent'
 import { ConfigMode } from '../interfaces/GrowingConfig'
+import { PATH_SEPARATOR } from '../utils/Constants'
 
 export default class CustomEvent extends Event {
   eventName: string = ''
 
-  // mode SaaS
+  // mode NewSaaS / SaaS
   path: string | undefined = undefined
+
+  // mode NewSaaS
+  referralPage: string | undefined = undefined
+
+  // mode SaaS
   pageShowTimestamp: number | undefined = undefined
 
   static create(
@@ -38,7 +44,18 @@ export default class CustomEvent extends Event {
     event.attributes = attributes
     event.eventType = EventType.Custom
 
-    if (context.config.mode == ConfigMode.SaaS) {
+    if (context.config.mode == ConfigMode.NewSaaS) {
+      let lastPage = PageEvent.getLastPage(context)
+      if (context.config.customEventWithPath) {
+        // 与 iOS / Android 一致：无原生 PAGE 时兜底为根路径
+        let lastPath = lastPage?.path
+        event.path = lastPath != undefined && lastPath.length > 0 ? lastPath : PATH_SEPARATOR
+      }
+      if (context.config.customEventWithReferralPath && lastPage && lastPage.referralPage != undefined &&
+        lastPage.referralPage.length > 0) {
+        event.referralPage = lastPage.referralPage
+      }
+    } else if (context.config.mode == ConfigMode.SaaS) {
       let lastPage = PageEvent.getLastPage(context)
       if (lastPage) {
         event.path = lastPage.path ?? ''

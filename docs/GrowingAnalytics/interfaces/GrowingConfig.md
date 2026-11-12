@@ -162,6 +162,8 @@ let config = new GrowingConfig().CDP(
 | `autotrackAllPages` | boolean | false | 自动采集所有页面 |
 | `hybridAutotrackEnabled` | boolean | true | H5 无埋点开关（仅 SaaS）|
 | `idMappingEnabled` | boolean | false | ID Mapping 开关 |
+| `customEventWithPath` | boolean | false | 原生及 Flutter CUSTOM 携带最近一次原生 PAGE 的 `path`，无则为 `/`（仅 NewSaaS，Hybrid 不受影响） |
+| `customEventWithReferralPath` | boolean | false | 原生及 Flutter CUSTOM 携带最近一次原生 PAGE 的 `referralPage`（仅 NewSaaS，Hybrid 不受影响） |
 | `debugEnabled` | boolean | false | 调试模式开关 |
 
 ### 数据传输配置

@@ -17,6 +17,7 @@
 
 import { describe, it, expect, beforeEach } from '@ohos/hypium'
 import PageEvent, { Page } from '../../main/ets/components/event/PageEvent'
+import FlutterPageEvent from '../../main/ets/components/event/flutter/FlutterPageEvent'
 import EventBuilder from '../../main/ets/components/event/EventBuilder'
 import Session from '../../main/ets/components/core/Session'
 import UserIdentifier from '../../main/ets/components/core/UserIdentifier'
@@ -214,6 +215,16 @@ export default function pageEventTests() {
       PageEvent.create('/p1', 'P1', {}, 1000, ctx)
       let e2 = PageEvent.create('/p2', 'P2', {}, 2000, ctx)
       expect(e2.referralPage).assertEqual('/p1')
+    })
+
+    it('NewSaaS：Flutter PAGE 不更新 lastPage，原生 referralPage 仍为上一原生页', 0, () => {
+      let ctx = makeCtx('t', ConfigMode.NewSaaS)
+      seedContext(ctx)
+      PageEvent.create('/home', 'Home', {}, 1000, ctx)
+      FlutterPageEvent.create('/flutter/detail', 'Detail', {}, 2000, '/flutter/previous', ctx)
+      expect(PageEvent.getLastPage(ctx)?.path).assertEqual('/home')
+      let e = PageEvent.create('/settings', 'Settings', {}, 3000, ctx)
+      expect(e.referralPage).assertEqual('/home')
     })
 
     it('SaaS：不同 trackerId 的 referralPage 相互独立', 0, () => {

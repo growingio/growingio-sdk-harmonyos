@@ -149,8 +149,8 @@ Hybrid 模块是 GrowingIO SDK 实现原生应用与 H5 页面数据打通的核
 ├─────────────────┤  ├─────────────────┤  │    Event        │
 ├─────────────────┤  ├─────────────────┤  ├─────────────────┤
 │ title           │  │ eventName       │  │ textValue       │
-│ referralPage    │  │ pageShowTimestamp│  │ xpath          │
-│ protocolType    │  │                 │  │ xcontent        │
+│ referralPage    │  │ referralPage    │  │ xpath          │
+│ protocolType    │  │ pageShowTimestamp│  │ xcontent        │
 │ orientation     │  │                 │  │ index           │
 └─────────────────┘  └─────────────────┘  │ hyperlink       │
                                           └─────────────────┘
@@ -310,6 +310,9 @@ constructor(controller: webview.WebviewController, context: GrowingContext) {
 
 ## 事件分发处理
 
+Hybrid CUSTOM 无条件携带 H5 消息中的 `path`；NewSaaS 下 `referralPage` 有非空值即携带。
+两者均不受 `customEventWithPath` / `customEventWithReferralPath` 控制，SaaS / CDP 的既有行为不变。
+
 ### 事件处理流程
 
 ```
@@ -396,6 +399,7 @@ dispatchEvent = (eventString: string): void => {
         event.query as string,
         event.timestamp as number,
         event.domain as string,
+        event.referralPage as string,
         this.context
       )
       AnalyticsCore.writeEventToDisk(e, this.context, EventScene.Hybrid)
@@ -535,7 +539,7 @@ class SaaSHybridEventHandler {
         // 自定义事件
         let eventName: string = event.n as string
         if (eventName.length > 0) {
-          let e = HybridCustomEvent.create(eventName, attributes, p, event.q, event.tm, d, context)
+          let e = HybridCustomEvent.create(eventName, attributes, p, event.q, event.tm, d, undefined, context)
           e.pageShowTimestamp = event.ptm as number
           AnalyticsCore.writeEventToDisk(e, context, EventScene.Hybrid)
         }
