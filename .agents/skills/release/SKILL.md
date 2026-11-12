@@ -17,7 +17,8 @@ description: Use when the user asks to create a Jira release ticket, tag a versi
 ## 1. 确认范围与版本
 
 - 确认发布模块和目标版本，当前版本以模块 `oh-package.json5` 为准。
-- 按 SemVer 和用户决定更新版本，同步对应 CHANGELOG 与公开文档。
+- 按 SemVer 和用户决定更新版本，同步对应 CHANGELOG 与公开文档。版本号需同时改 `oh-package.json5` 与模块根目录的 `BuildProfile.ets`（`HAR_VERSION`）；GrowingAnalytics 的 `README.md` / `README_CDP.md` / `README_SaaS.md` 都有「最新版本」与「MD5 值」两行。
+- `oh-package.json5` 的 `author` 必须是对象，且至少包含 `url` 或 `email`（如 `{"name": "GrowingIO", "url": "https://www.growingio.com"}`）。纯字符串会被 OHPM 中心仓以 400 `no author url or author email` 拒绝发布。
 - 检查分支、工作区和待发布 diff，不混入无关本地修改。
 - 完成 `verification-before-completion` 要求的测试和构建；存在失败时明确阻塞，不发布了再验证。
 
@@ -55,6 +56,8 @@ jira-ticket release create
 
 确认目标签名 HAR 存在后再继续；文件不存在或输出路径不一致时停止排查，不直接 publish。
 
+README 的 MD5 在签名 HAR 构建后，用 `md5 -q <签名HAR路径>` 计算并回填到发版 PR。HAR 内打包的 README 不可能带上自身的 MD5，构建前先填占位文字，不保留上一版的值。之后若再改动任何会打进 HAR 的文件（如 `oh-package.json5`），都要重新构建并重新回填。
+
 ## 4. 发布与 tag
 
 OHPM 同版本不能覆盖发布。执行前再次向用户确认模块、版本和 HAR 路径，然后逐模块执行：
@@ -65,9 +68,14 @@ ohpm publish <签名HAR路径>
 
 未登录时提示用户完成 `ohpm login`，不代替用户交互登录。一个模块发布成功后再处理下一个，任一失败都停止后续发布并报告实际结果。
 
-tag 在发版提交合并到 master 后、用户明确要求时创建：
+tag 在发版提交合并到 master 后、用户明确要求时创建。打在 master 上的发版合并提交，使用附注 tag，消息为 `release <version>`。命名沿用仓库历史，不带 `v` 前缀，CHANGELOG 中的版本链接也依赖这个名字：
 
-- GrowingAnalytics：`v<version>`。
-- GrowingToolsKit：`toolskit-v<version>`。
+- GrowingAnalytics：`<version>`，如 `2.10.0`。
+- GrowingToolsKit：`giokit-<version>`，如 `giokit-1.4.1`。
+
+```bash
+git tag -a <tag> <发版合并提交> -m "release <version>"
+git push origin refs/tags/<tag>
+```
 
 最终报告版本、Jira、构建产物、OHPM 结果、tag 和 PR / 合并状态；未执行的步骤单独列出。
