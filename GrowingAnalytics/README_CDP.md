@@ -10,8 +10,8 @@ GrowingIO 专注于零售、电商、保险、酒旅航司、教育、内容社�
 ## SDK 简介
 **GrowingIO HarmonyOS SDK** 自动采集用户访问事件，并支持手动调用相应埋点 APIs 采集埋点事件。
 
-> 最新版本：2.9.0  
-> MD5 值：e71fdcbc33912edc0cbedc449f9d5190  
+> 最新版本：2.10.0  
+> MD5 值：待构建签名 HAR 后更新  
 > 开发者：北京易数科技有限公司  
 > 隐私协议：https://accounts.growingio.com/user-privacy  
 > 合规指南：https://growingio.github.io/growingio-sdk-docs/knowledge/compliance/harmonyosCompliance  
