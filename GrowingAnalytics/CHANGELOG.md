@@ -1,3 +1,13 @@
+## [2.10.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.10.0) (2026-11-11)
+
+### Features 功能
+
+* feat: 支持 HarmonyOS 智能手表（wearable）设备类型
+
+### Bug Fixes 修复
+
+* fix(flutter): Flutter 页面浏览事件使用 Flutter 侧上报的页面展示时间戳
+
 ## [2.9.0](https://github.com/growingio/growingio-sdk-harmonyos/tree/2.9.0) (2026-06-24)
 
 ### Features 功能
